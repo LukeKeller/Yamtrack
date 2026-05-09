@@ -52,7 +52,12 @@ If install fails, check `/var/log/yunohost/operations/` and the app's log under 
 
 ## Path A-fork: Install the forked YunoHost package
 
-`yunohost-package/` in this repo is a copy of the upstream `YunoHost-Apps/yamtrack_ynh` package with `manifest.toml` rewritten to fetch source from `LukeKeller/Yamtrack` instead of `FuzzyGrim/Yamtrack`. Same install scripts, same OIDC/Dex SSO wiring, same systemd units — only the source pin changes.
+`yunohost-package/` in this repo is a copy of the upstream `YunoHost-Apps/yamtrack_ynh` package with `manifest.toml` rewritten to:
+
+- Fetch source from `LukeKeller/Yamtrack` instead of `FuzzyGrim/Yamtrack`.
+- Use a distinct YunoHost id (`yamtrack_fork`) and display name (`Yamtrack (LukeKeller fork)`), so this build can sit alongside the official `yamtrack` package on the same server. Default install path becomes `/yamtrack-fork`, reverse-proxy port `8096`.
+
+Same install scripts, same OIDC/Dex SSO wiring, same systemd units (just namespaced under `yamtrack_fork-*`).
 
 ### Why the install URL doesn't live on this repo
 
@@ -119,8 +124,8 @@ git push -f origin yunohost-package
 git remote add ynh https://github.com/LukeKeller/yamtrack_ynh.git
 git push -f ynh yunohost-package:main
 
-# 4. On the VPS, run the upgrade
-sudo yunohost app upgrade yamtrack -u https://github.com/LukeKeller/yamtrack_ynh
+# 4. On the VPS, run the upgrade (note: id is yamtrack_fork)
+sudo yunohost app upgrade yamtrack_fork -u https://github.com/LukeKeller/yamtrack_ynh
 ```
 
 `-f` is intentional in steps 2 and 3: those branches are derived artifacts, so force-push after each split is normal.
@@ -129,7 +134,8 @@ sudo yunohost app upgrade yamtrack -u https://github.com/LukeKeller/yamtrack_ynh
 
 - **Source pin moves manually.** The upstream package uses `autoupdate.strategy = "latest_github_release"` and the YunoHost CI bumps it. Your fork doesn't tag releases, so the strategy is removed and you bump via `bump-source.sh`.
 - **PostgreSQL and Redis are required by this package** — same as upstream. The script provisions them via `apt`.
-- **Don't have two installs of yamtrack on the same VPS** under the same name. If switching install methods, `yunohost app remove yamtrack` first.
+- **Coexists with the official `yamtrack` package.** This build uses id `yamtrack_fork` and default path `/yamtrack-fork`, so installing both on the same VPS is supported. They share no state — separate install dir, system user, systemd services, PostgreSQL DB, Redis logical DB, nginx vhost.
+- **If switching install methods within the fork build** (e.g., from local-path back to URL), `yunohost app remove yamtrack_fork` first to keep the YunoHost app database tidy.
 
 ---
 

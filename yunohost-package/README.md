@@ -2,7 +2,22 @@
 
 This is a **fork** of the official YunoHost-Apps/yamtrack_ynh package, modified to install Yamtrack from `https://github.com/LukeKeller/Yamtrack` instead of the upstream `FuzzyGrim/Yamtrack` repository. Everything else (install/upgrade scripts, OIDC/Dex wiring, conf templates) is identical to upstream — credit to the original maintainer.
 
-Use this when you want to test feature work (e.g., the in-flight Hardcover sync) on a YunoHost server before it's merged or released upstream.
+Use this when you want to test feature work (e.g., the in-flight Hardcover sync) on a YunoHost server before it's merged or released upstream — including alongside the official `yamtrack` package, since this build uses a different YunoHost app id.
+
+## App identity (different from the official package)
+
+| Field | This fork build | Official package |
+|---|---|---|
+| YunoHost id | `yamtrack_fork` | `yamtrack` |
+| Display name | `Yamtrack (LukeKeller fork)` | `Yamtrack` |
+| Default install path | `/yamtrack-fork` | `/yamtrack` |
+| Default reverse-proxy port | `8096` | `8095` |
+| System user | `yamtrack_fork` | `yamtrack` |
+| systemd services | `yamtrack_fork`, `yamtrack_fork-celery`, `yamtrack_fork-celery-beat` | `yamtrack`, ... |
+| PostgreSQL DB | `yamtrack_fork` | `yamtrack` |
+| nginx vhost include | `/etc/nginx/conf.d/<domain>.d/yamtrack_fork.conf` | `.../yamtrack.conf` |
+
+Because everything namespaces off the id, you can install both packages on the same YunoHost server without collision.
 
 ## Why a separate `_ynh` repo
 
@@ -90,15 +105,15 @@ git remote add ynh https://github.com/LukeKeller/yamtrack_ynh.git  # one-time
 git push -f ynh yunohost-package:main
 ```
 
-Then on the VPS:
+Then on the VPS (note the id is `yamtrack_fork`, not `yamtrack`):
 
 ```bash
 # Method A
-sudo yunohost app upgrade yamtrack -u https://github.com/LukeKeller/yamtrack_ynh
+sudo yunohost app upgrade yamtrack_fork -u https://github.com/LukeKeller/yamtrack_ynh
 
 # Method B
 cd /tmp/yamtrack-pkg && git pull
-sudo yunohost app upgrade yamtrack -u /tmp/yamtrack-pkg
+sudo yunohost app upgrade yamtrack_fork -u /tmp/yamtrack-pkg
 ```
 
 ## What the package does
