@@ -7,7 +7,7 @@ name = "Yamtrack (LukeKeller fork)"
 description.en = "Yamtrack — fork build (LukeKeller). Media tracker for movies, TV, anime, manga, games, books and more"
 description.fr = "Yamtrack — build de fork (LukeKeller). Suivi de médias pour films, séries, anime, manga, jeux, livres et plus"
 
-version = "0.25.2~ynh10"
+version = "0.25.2~ynh11"
 
 maintainers = ["gmanaud", "lukekeller (fork)"]
 
@@ -57,8 +57,8 @@ ram.runtime = "200M"
     # Pinned to a specific commit on LukeKeller/Yamtrack so the install is reproducible.
     # When you push new code on the fork, run yunohost-package/bump-source.sh
     # to update both fields together.
-    url = "https://github.com/LukeKeller/Yamtrack/archive/45fc3fa6f3325d62104cd629712c0a6e0a4844e1.tar.gz"
-    sha256 = "7edc56e905c94fb842ca21c5b7bce1847e998a8d0244bc265416c527bed7bb84"
+    url = "https://github.com/LukeKeller/Yamtrack/archive/2878ee0a95cd2e83b5dd4789356506827e783ab6.tar.gz"
+    sha256 = "cc9a37b61081233afefc627372d92bcd63c675d5618136fad1cce863fa8d0fe3"
 
     [resources.system_user]
 
