@@ -85,6 +85,13 @@ class Item(CalendarTriggerMixin, models.Model):
     season_number = models.PositiveIntegerField(null=True, blank=True)
     episode_number = models.PositiveIntegerField(null=True, blank=True)
 
+    # Optional aggregation metadata (currently populated by the Discogs importer
+    # for vinyl records; usable for future per-media-type stats like top labels,
+    # top artists, by-decade charts, etc.).
+    artist = models.TextField(blank=True, default="")
+    publisher = models.TextField(blank=True, default="")
+    year = models.PositiveSmallIntegerField(null=True, blank=True)
+
     class Meta:
         """Meta options for the model."""
 

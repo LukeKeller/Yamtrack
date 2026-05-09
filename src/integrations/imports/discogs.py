@@ -184,6 +184,9 @@ class DiscogsImporter:
 
         release_id_str = str(release_id)
         title = build_title(info, release_id_str)
+        artist = build_artist(info)
+        publisher = build_publisher(info)
+        year = info.get("year") or None
 
         if not helpers.should_process_media(
             self.existing_media,
@@ -195,15 +198,30 @@ class DiscogsImporter:
         ):
             return
 
-        item, _ = app.models.Item.objects.get_or_create(
+        item, created = app.models.Item.objects.get_or_create(
             media_id=release_id_str,
             source=Sources.DISCOGS.value,
             media_type=MediaTypes.RECORD.value,
             defaults={
                 "title": title,
                 "image": info.get("cover_image") or settings.IMG_NONE,
+                "artist": artist,
+                "publisher": publisher,
+                "year": year,
             },
         )
+        # Backfill aggregation metadata on items created before these fields
+        # existed (or by other users without the metadata pre-populated).
+        if not created and (
+            (artist and not item.artist)
+            or (publisher and not item.publisher)
+            or (year and not item.year)
+        ):
+            app.models.Item.objects.filter(pk=item.pk).update(
+                artist=artist or item.artist,
+                publisher=publisher or item.publisher,
+                year=year or item.year,
+            )
 
         rating = entry.get("rating")
         score = round(float(rating) * 2, 1) if rating else None
@@ -229,12 +247,27 @@ class DiscogsImporter:
 def build_title(basic_info, release_id):
     """Compose an "Artist - Title" string for a Discogs release."""
     title = basic_info.get("title") or f"Discogs #{release_id}"
-    artists = basic_info.get("artists") or []
-    artist_names = [a.get("name") for a in artists if a.get("name")]
-    artist_str = ", ".join(artist_names)
+    artist_str = build_artist(basic_info)
     if artist_str:
         return f"{artist_str} - {title}"
     return title
+
+
+def build_artist(basic_info):
+    """Join the artists list from a Discogs basic_information block."""
+    artists = basic_info.get("artists") or []
+    return ", ".join(a.get("name") for a in artists if a.get("name"))
+
+
+def build_publisher(basic_info):
+    """Join Discogs labels into a comma-separated publisher string."""
+    labels = basic_info.get("labels") or []
+    names = []
+    for label in labels:
+        name = label.get("name")
+        if name and name not in names:
+            names.append(name)
+    return ", ".join(names)
 
 
 def _parse_discogs_date(raw):

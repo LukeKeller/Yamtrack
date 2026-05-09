@@ -177,6 +177,13 @@ def media_list(request, media_type):
         "status_choices": MediaStatusChoices.choices,
     }
 
+    # Per-media-type stats panel. Only records have one today; the contract is
+    # the view returns ``None`` for "no panel" so the template can skip cleanly.
+    if media_type == MediaTypes.RECORD.value and not request.headers.get(
+        "HX-Request",
+    ):
+        context["record_stats"] = stats.get_record_stats(request.user)
+
     # Handle HTMX requests for partial updates
     if request.headers.get("HX-Request"):
         # Filtering from empty list

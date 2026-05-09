@@ -318,6 +318,116 @@ def get_status_color(status):
         return "rgba(201, 203, 207)"
 
 
+def get_record_stats(user):
+    """Build chart data for the records list page.
+
+    Produces four charts: owned/want split, by-decade bar, top artists, and
+    top labels. Returns ``None`` when the user has no records so callers can
+    skip rendering the section entirely.
+    """
+    record_model = apps.get_model(app_label="app", model_name=MediaTypes.RECORD.value)
+    qs = record_model.objects.filter(user=user).select_related("item")
+    total = qs.count()
+    if total == 0:
+        return None
+
+    owned = qs.filter(status=Status.COMPLETED.value).count()
+    wanted = qs.filter(status=Status.PLANNING.value).count()
+
+    return {
+        "total": total,
+        "owned_vs_want": _build_owned_vs_want(owned, wanted, total),
+        "by_decade": _build_by_decade(qs),
+        "top_artists": _build_top("item__artist", qs),
+        "top_labels": _build_top("item__publisher", qs),
+    }
+
+
+def _build_owned_vs_want(owned, wanted, total):
+    """Donut chart payload for owned vs wanted records."""
+    other = total - owned - wanted
+    chart = {"labels": [], "datasets": [{"data": [], "backgroundColor": []}]}
+    if owned:
+        chart["labels"].append("In collection")
+        chart["datasets"][0]["data"].append(owned)
+        chart["datasets"][0]["backgroundColor"].append(
+            config.get_status_stats_color(Status.COMPLETED.value),
+        )
+    if wanted:
+        chart["labels"].append("Wantlist")
+        chart["datasets"][0]["data"].append(wanted)
+        chart["datasets"][0]["backgroundColor"].append(
+            config.get_status_stats_color(Status.PLANNING.value),
+        )
+    if other:
+        chart["labels"].append("Other")
+        chart["datasets"][0]["data"].append(other)
+        chart["datasets"][0]["backgroundColor"].append("#6b7280")
+    return chart
+
+
+def _build_by_decade(qs):
+    """Bar chart payload showing record count per decade."""
+    rows = (
+        qs.exclude(item__year__isnull=True)
+        .values("item__year")
+        .annotate(count=models.Count("id"))
+    )
+    buckets = defaultdict(int)
+    for row in rows:
+        decade = (row["item__year"] // 10) * 10
+        buckets[decade] += row["count"]
+    if not buckets:
+        return None
+
+    decades = sorted(buckets.keys())
+    color = config.get_stats_color(MediaTypes.RECORD.value)
+    return {
+        "labels": [f"{d}s" for d in decades],
+        "datasets": [
+            {
+                "label": "Records",
+                "data": [buckets[d] for d in decades],
+                "background_color": color,
+            },
+        ],
+    }
+
+
+def _build_top(field, qs, limit=10):
+    """Bar chart payload for the top N values of an aggregation field.
+
+    Skips empty strings (the field default) and splits comma-separated values
+    so a release with multiple artists/labels counts toward each.
+    """
+    rows = (
+        qs.exclude(**{f"{field}": ""})
+        .exclude(**{f"{field}__isnull": True})
+        .values(field)
+    )
+    counts = defaultdict(int)
+    for row in rows:
+        raw = row[field] or ""
+        for chunk in (s.strip() for s in raw.split(",")):
+            if chunk:
+                counts[chunk] += 1
+    if not counts:
+        return None
+
+    top = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0].lower()))[:limit]
+    color = config.get_stats_color(MediaTypes.RECORD.value)
+    return {
+        "labels": [name for name, _ in top],
+        "datasets": [
+            {
+                "label": "Records",
+                "data": [count for _, count in top],
+                "background_color": color,
+            },
+        ],
+    }
+
+
 def get_timeline(user_media):
     """Build a timeline of media consumption organized by month-year."""
     timeline = defaultdict(list)

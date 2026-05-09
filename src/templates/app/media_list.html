@@ -9,6 +9,63 @@
 {% block content %}
   <h1 class="text-3xl font-bold mb-6">{{ media_type|media_type_readable_plural }}</h1>
 
+  {% if record_stats %}
+    <div x-data="{ open: true }" class="mb-6">
+      <button @click="open = !open"
+              class="flex items-center justify-between w-full bg-[#2a2f35] hover:bg-[#343a40] rounded-lg px-4 py-3 mb-3 transition-colors cursor-pointer">
+        <div class="flex items-center gap-2">
+          {% include "app/icons/bars-increasing.svg" with classes="w-5 h-5 text-amber-400" %}
+          <span class="text-sm font-semibold">Collection Stats</span>
+          <span class="text-xs text-gray-400">{{ record_stats.total }} record{{ record_stats.total|pluralize }}</span>
+        </div>
+        <div class="w-4 h-4 transition-transform"
+             :class="{ 'rotate-180': open }">{% include "app/icons/chevron-down.svg" %}</div>
+      </button>
+      <div x-cloak x-show="open" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="bg-[#2a2f35] rounded-lg p-4">
+          <h3 class="text-sm font-medium text-gray-300 mb-3">Owned vs Wanted</h3>
+          {% if record_stats.owned_vs_want.labels %}
+            <div class="h-56 flex justify-center items-center">
+              <canvas id="recordOwnedVsWantChart"></canvas>
+            </div>
+          {% else %}
+            <p class="text-xs text-gray-500">No data.</p>
+          {% endif %}
+        </div>
+        <div class="bg-[#2a2f35] rounded-lg p-4">
+          <h3 class="text-sm font-medium text-gray-300 mb-3">By Decade</h3>
+          {% if record_stats.by_decade %}
+            <div class="h-56">
+              <canvas id="recordByDecadeChart"></canvas>
+            </div>
+          {% else %}
+            <p class="text-xs text-gray-500">No release-year metadata yet.</p>
+          {% endif %}
+        </div>
+        <div class="bg-[#2a2f35] rounded-lg p-4">
+          <h3 class="text-sm font-medium text-gray-300 mb-3">Top Artists</h3>
+          {% if record_stats.top_artists %}
+            <div class="h-72">
+              <canvas id="recordTopArtistsChart"></canvas>
+            </div>
+          {% else %}
+            <p class="text-xs text-gray-500">No artist metadata yet.</p>
+          {% endif %}
+        </div>
+        <div class="bg-[#2a2f35] rounded-lg p-4">
+          <h3 class="text-sm font-medium text-gray-300 mb-3">Top Labels</h3>
+          {% if record_stats.top_labels %}
+            <div class="h-72">
+              <canvas id="recordTopLabelsChart"></canvas>
+            </div>
+          {% else %}
+            <p class="text-xs text-gray-500">No label metadata yet.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
   <div x-data="{ sort: '{{ current_sort }}', status: '{{ current_status }}', layout: '{{ current_layout }}', search: '{{ request.GET.search|default:'' }}', statusLabels: {
     {% for value, label in status_choices %}
       '{{ value }}': '{{ label }}'
@@ -181,3 +238,14 @@
     </div>
   </div>
 {% endblock content %}
+
+{% block js %}
+  {% if record_stats %}
+    {{ record_stats.owned_vs_want|json_script:"record_owned_vs_want_data" }}
+    {{ record_stats.by_decade|json_script:"record_by_decade_data" }}
+    {{ record_stats.top_artists|json_script:"record_top_artists_data" }}
+    {{ record_stats.top_labels|json_script:"record_top_labels_data" }}
+    <script src="{% static 'js/libraries/chartjs-4.4.9.min.js' %}"></script>
+    <script src="{% static 'js/record-charts.js' %}{% get_static_file_mtime 'js/record-charts.js' %}"></script>
+  {% endif %}
+{% endblock js %}
