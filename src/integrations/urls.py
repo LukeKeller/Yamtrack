@@ -52,4 +52,14 @@ urlpatterns = [
         views.emby_webhook,
         name="emby_webhook",
     ),
+    path(
+        "api/scrobble/listenbrainz/1/validate-token",
+        views.listenbrainz_validate_token,
+        name="listenbrainz_validate_token",
+    ),
+    path(
+        "api/scrobble/listenbrainz/1/submit-listens",
+        views.listenbrainz_submit_listens,
+        name="listenbrainz_submit_listens",
+    ),
 ]

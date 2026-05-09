@@ -25,6 +25,9 @@ from app.models import (
     BasicMedia,
     Item,
     MediaTypes,
+    Play,
+    PlaySide,
+    PlaySource,
     Season,
     Sources,
     Status,
@@ -276,6 +279,16 @@ def media_details(request, source, media_type, media_id, title):  # noqa: ARG001
         "watch_providers": watch_providers,
         "watch_provider_region": request.user.watch_provider_region,
     }
+    # Last-spin indicator on the Record detail page (only meaningful for records).
+    if media_type == MediaTypes.RECORD.value:
+        spin_qs = Play.objects.filter(
+            user=request.user,
+            item__media_id=media_id,
+            item__source=source,
+            item__media_type=MediaTypes.RECORD.value,
+        )
+        context["record_spin"] = spin_qs.order_by("-played_at").first()
+        context["record_spin_count"] = spin_qs.count()
     return render(request, "app/media_details.html", context)
 
 
@@ -950,6 +963,44 @@ def statistics(request):
     }
 
     return render(request, "app/statistics.html", context)
+
+
+@require_POST
+def log_record_spin(request, source, media_id):
+    """Log a vinyl spin (manual play) for a record.
+
+    Side comes from POST data — one of "A", "B", "full". Always records
+    ``played_at = now()``. Returns the rendered status fragment so HTMX can
+    swap it into the detail page.
+    """
+    side = request.POST.get("side", "full")
+    if side not in PlaySide.values:
+        return HttpResponseBadRequest(f"Unknown side {side!r}")
+
+    item = Item.objects.filter(
+        media_id=media_id,
+        source=source,
+        media_type=MediaTypes.RECORD.value,
+    ).first()
+    if not item:
+        return HttpResponseBadRequest("Record not found.")
+
+    Play.objects.create(
+        user=request.user,
+        item=item,
+        artist=item.artist,
+        title=item.title,
+        played_at=timezone.now(),
+        source=PlaySource.MANUAL_VINYL.value,
+        side=side,
+    )
+
+    plays = Play.objects.filter(user=request.user, item=item)
+    context = {
+        "record_spin": plays.order_by("-played_at").first(),
+        "record_spin_count": plays.count(),
+    }
+    return render(request, "app/components/record_spin.html", context)
 
 
 @require_GET

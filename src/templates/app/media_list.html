@@ -62,6 +62,16 @@
             <p class="text-xs text-gray-500">No label metadata yet.</p>
           {% endif %}
         </div>
+        <div class="bg-[#2a2f35] rounded-lg p-4 lg:col-span-2">
+          <h3 class="text-sm font-medium text-gray-300 mb-3">Top Played (last 90 days)</h3>
+          {% if record_stats.top_played %}
+            <div class="h-72">
+              <canvas id="recordTopPlayedChart"></canvas>
+            </div>
+          {% else %}
+            <p class="text-xs text-gray-500">No plays logged yet — tap "Side A / B / Full" on a record to log a spin, or point multi-scrobbler at this server.</p>
+          {% endif %}
+        </div>
       </div>
     </div>
   {% endif %}
@@ -245,6 +255,7 @@
     {{ record_stats.by_decade|json_script:"record_by_decade_data" }}
     {{ record_stats.top_artists|json_script:"record_top_artists_data" }}
     {{ record_stats.top_labels|json_script:"record_top_labels_data" }}
+    {{ record_stats.top_played|json_script:"record_top_played_data" }}
     <script src="{% static 'js/libraries/chartjs-4.4.9.min.js' %}"></script>
     <script src="{% static 'js/record-charts.js' %}{% get_static_file_mtime 'js/record-charts.js' %}"></script>
   {% endif %}

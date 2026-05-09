@@ -1905,3 +1905,80 @@ class Record(Media):
     """Model for vinyl records."""
 
     tracker = FieldTracker()
+
+
+class PlaySource(models.TextChoices):
+    """Where a Play row came from."""
+
+    MANUAL_VINYL = "manual_vinyl", "Manual Vinyl"
+    LISTENBRAINZ = "listenbrainz", "ListenBrainz"
+
+
+class PlaySide(models.TextChoices):
+    """Vinyl side designators for manual_vinyl Plays."""
+
+    SIDE_A = "A", "Side A"
+    SIDE_B = "B", "Side B"
+    FULL = "full", "Full Listen"
+
+
+class Play(models.Model):
+    """A single listen / play event.
+
+    Plays come from two sources today: a ListenBrainz-compatible scrobble
+    receiver (digital plays forwarded by multi-scrobbler) and a manual logger
+    on the Record detail page (vinyl spins). Both write to this model so
+    listening charts can be built from one query.
+
+    ``item`` is nullable: scrobbles whose (artist, title) we can't match against
+    an existing Item are still recorded so they can show up in listening
+    activity, just without linking to a tracked record.
+    """
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    item = models.ForeignKey(
+        Item,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    artist = models.TextField(blank=True, default="")
+    title = models.TextField(blank=True, default="")
+    album = models.TextField(blank=True, default="")
+    played_at = models.DateTimeField(db_index=True)
+    duration_seconds = models.PositiveIntegerField(null=True, blank=True)
+    source = models.CharField(max_length=20, choices=PlaySource)
+    side = models.CharField(max_length=10, choices=PlaySide, blank=True, default="")
+
+    class Meta:
+        """Meta options for the model."""
+
+        ordering = ["-played_at"]
+        indexes = [
+            models.Index(
+                fields=["user", "-played_at"],
+                name="app_play_user_played_idx",
+            ),
+            models.Index(
+                fields=["item", "-played_at"],
+                name="app_play_item_played_idx",
+            ),
+        ]
+        constraints = [
+            CheckConstraint(
+                condition=Q(source__in=PlaySource.values),
+                name="app_play_source_valid",
+            ),
+            CheckConstraint(
+                condition=Q(side__in=[*PlaySide.values, ""]),
+                name="app_play_side_valid",
+            ),
+        ]
+
+    def __str__(self):
+        """Return a short label for the play."""
+        if self.title and self.artist:
+            return f"{self.artist} - {self.title} @ {self.played_at:%Y-%m-%d %H:%M}"
+        if self.item:
+            return f"{self.item} @ {self.played_at:%Y-%m-%d %H:%M}"
+        return f"Play @ {self.played_at:%Y-%m-%d %H:%M}"

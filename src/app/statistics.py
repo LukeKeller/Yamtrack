@@ -321,9 +321,8 @@ def get_status_color(status):
 def get_record_stats(user):
     """Build chart data for the records list page.
 
-    Produces four charts: owned/want split, by-decade bar, top artists, and
-    top labels. Returns ``None`` when the user has no records so callers can
-    skip rendering the section entirely.
+    Returns ``None`` when the user has no records so callers can skip
+    rendering the section entirely.
     """
     record_model = apps.get_model(app_label="app", model_name=MediaTypes.RECORD.value)
     qs = record_model.objects.filter(user=user).select_related("item")
@@ -340,6 +339,51 @@ def get_record_stats(user):
         "by_decade": _build_by_decade(qs),
         "top_artists": _build_top("item__artist", qs),
         "top_labels": _build_top("item__publisher", qs),
+        "top_played": _build_top_played(user),
+    }
+
+
+def _build_top_played(user, days=90, limit=10):
+    """Bar chart payload for the most-played records in the last ``days`` days.
+
+    Counts both manual vinyl spins and ListenBrainz scrobbles that resolved
+    to a Record's Item. Records with no plays in the window are excluded.
+    """
+    from app.models import Play  # noqa: PLC0415  avoids import cycle
+
+    cutoff = timezone.now() - datetime.timedelta(days=days)
+    rows = (
+        Play.objects.filter(
+            user=user,
+            played_at__gte=cutoff,
+            item__isnull=False,
+            item__media_type=MediaTypes.RECORD.value,
+        )
+        .values("item_id", "item__artist", "item__title")
+        .annotate(plays=models.Count("id"))
+        .order_by("-plays")[:limit]
+    )
+    rows = list(rows)
+    if not rows:
+        return None
+
+    color = config.get_stats_color(MediaTypes.RECORD.value)
+    return {
+        "labels": [
+            (
+                f"{r['item__artist']} - {r['item__title']}"
+                if r["item__artist"]
+                else r["item__title"] or f"Record #{r['item_id']}"
+            )
+            for r in rows
+        ],
+        "datasets": [
+            {
+                "label": "Plays",
+                "data": [r["plays"] for r in rows],
+                "background_color": color,
+            },
+        ],
     }
 
 

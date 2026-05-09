@@ -18,7 +18,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 import users
 from app import helpers as app_helpers
-from integrations import exports, tasks
+from integrations import exports, scrobble, tasks
 from integrations.imports import anilist, discogs, hardcover, helpers, simkl, trakt
 from integrations.imports.helpers import MediaImportError
 from integrations.webhooks import emby, jellyfin, plex
@@ -621,6 +621,105 @@ def plex_webhook(request, token):
     processor = plex.PlexWebhookProcessor()
     processor.process_payload(payload, user)
     return HttpResponse(status=200)
+
+
+@login_not_required
+@csrf_exempt
+@require_GET
+def listenbrainz_validate_token(request):
+    """ListenBrainz-compatible token validation endpoint.
+
+    Multi-scrobbler hits this on first connect to verify the destination is
+    reachable. Token comes via ``Authorization: Token <user-token>``.
+    """
+    token = scrobble.extract_bearer_token(request)
+    if not token:
+        return HttpResponse(
+            json.dumps(
+                {
+                    "code": 401,
+                    "message": "Missing or malformed Authorization header.",
+                    "valid": False,
+                },
+            ),
+            status=401,
+            content_type="application/json",
+        )
+    try:
+        user = users.models.User.objects.get(token=token)
+    except ObjectDoesNotExist:
+        return HttpResponse(
+            json.dumps(
+                {"code": 401, "message": "Invalid token.", "valid": False},
+            ),
+            status=200,
+            content_type="application/json",
+        )
+    return HttpResponse(
+        json.dumps(
+            {
+                "code": 200,
+                "message": "Token valid.",
+                "valid": True,
+                "user_name": user.username,
+            },
+        ),
+        status=200,
+        content_type="application/json",
+    )
+
+
+@login_not_required
+@csrf_exempt
+@require_POST
+def listenbrainz_submit_listens(request):
+    """ListenBrainz-compatible scrobble receiver.
+
+    Multi-scrobbler / clients POST a JSON body of one or more listens here.
+    Each listen turns into a ``Play`` row, with ``Item`` resolution by
+    case-insensitive ``(artist, title)`` match.
+    """
+    token = scrobble.extract_bearer_token(request)
+    if not token:
+        return HttpResponse(
+            json.dumps(
+                {"code": 401, "error": "Missing Authorization header."},
+            ),
+            status=401,
+            content_type="application/json",
+        )
+    try:
+        user = users.models.User.objects.get(token=token)
+    except ObjectDoesNotExist:
+        return HttpResponse(
+            json.dumps({"code": 401, "error": "Invalid token."}),
+            status=401,
+            content_type="application/json",
+        )
+
+    try:
+        body = json.loads(request.body or b"{}")
+    except json.JSONDecodeError:
+        return HttpResponse(
+            json.dumps({"code": 400, "error": "Body is not valid JSON."}),
+            status=400,
+            content_type="application/json",
+        )
+
+    try:
+        scrobble.submit_listens(user, body)
+    except ValueError as error:
+        return HttpResponse(
+            json.dumps({"code": 400, "error": str(error)}),
+            status=400,
+            content_type="application/json",
+        )
+
+    return HttpResponse(
+        json.dumps({"status": "ok"}),
+        status=200,
+        content_type="application/json",
+    )
 
 
 @login_not_required

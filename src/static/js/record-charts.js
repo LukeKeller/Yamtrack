@@ -105,4 +105,5 @@ document.addEventListener("DOMContentLoaded", function () {
   verticalBar("recordByDecadeChart", readJson("record_by_decade_data"));
   horizontalBar("recordTopArtistsChart", readJson("record_top_artists_data"));
   horizontalBar("recordTopLabelsChart", readJson("record_top_labels_data"));
+  horizontalBar("recordTopPlayedChart", readJson("record_top_played_data"));
 });

@@ -1,0 +1,22 @@
+{% load humanize %}
+{% if record_spin %}
+  <div class="text-xs text-gray-300 bg-[#39404b] rounded-md px-3 py-2 flex items-center justify-between">
+    <span>
+      <span class="text-amber-400">♪</span>
+      Last spun
+      <span class="font-medium">{{ record_spin.played_at|naturaltime }}</span>
+      {% if record_spin.side == "A" %}
+        — Side A
+      {% elif record_spin.side == "B" %}
+        — Side B
+      {% elif record_spin.side == "full" %}
+        — Full listen
+      {% endif %}
+    </span>
+    <span class="text-gray-400">
+      {{ record_spin_count }} play{{ record_spin_count|pluralize }}
+    </span>
+  </div>
+{% else %}
+  <div class="text-xs text-gray-500 italic">No spins logged yet.</div>
+{% endif %}
