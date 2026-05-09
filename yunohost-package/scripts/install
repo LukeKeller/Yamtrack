@@ -23,12 +23,19 @@ ynh_setup_source --dest_dir="$install_dir"
 chown -R "$app:www-data" "$install_dir"
 
 #=================================================
+# PROVISION PYTHON 3.12 (Yamtrack code uses PEP 701)
+#=================================================
+ynh_script_progression "Provisioning Python ${YAMTRACK_PYTHON_VERSION}..."
+
+yamtrack_provision_python
+
+#=================================================
 # INSTALL PYTHON DEPENDENCIES
 #=================================================
 ynh_script_progression "Installing Python dependencies..."
 
 pushd "$install_dir"
-    python3 -m venv venv
+    "$YAMTRACK_PYTHON" -m venv venv
     chown -R "$app:www-data" "$install_dir"
     ynh_hide_warnings ynh_exec_as_app "$install_dir/venv/bin/pip3" install --upgrade pip setuptools wheel
     ynh_hide_warnings ynh_exec_as_app "$install_dir/venv/bin/pip3" install -r "$install_dir/requirements.txt"

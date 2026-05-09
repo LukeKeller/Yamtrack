@@ -20,6 +20,38 @@ yamtrack_setup_certs() {
     chown -R "$app:$app" "$install_dir/certs"
 }
 
+# Yamtrack code on the LukeKeller fork uses PEP 701 multi-line f-strings
+# (Python 3.12+). Debian 12 (which YunoHost 12.x runs on) ships Python 3.11,
+# so we install a relocatable Python 3.12 from astral-sh/python-build-standalone
+# and create the venv from it. Bumping: pick a newer release tag from
+# https://github.com/astral-sh/python-build-standalone/releases and update
+# both YAMTRACK_PYTHON_VERSION and YAMTRACK_PYTHON_PBS_DATE.
+YAMTRACK_PYTHON_VERSION="3.12.13"
+YAMTRACK_PYTHON_PBS_DATE="20260303"
+YAMTRACK_PYTHON_DIR="/opt/python-${YAMTRACK_PYTHON_VERSION}-pbs"
+YAMTRACK_PYTHON="${YAMTRACK_PYTHON_DIR}/bin/python3.12"
+
+yamtrack_provision_python() {
+    if [[ -x "$YAMTRACK_PYTHON" ]]; then
+        return
+    fi
+
+    local arch pbs_arch
+    arch=$(dpkg --print-architecture)
+    case "$arch" in
+        amd64) pbs_arch="x86_64-unknown-linux-gnu" ;;
+        arm64) pbs_arch="aarch64-unknown-linux-gnu" ;;
+        armhf) pbs_arch="armv7-unknown-linux-gnueabihf" ;;
+        *) ynh_die "Unsupported architecture '$arch' for Python 3.12 provisioning. Supported: amd64, arm64, armhf." ;;
+    esac
+
+    local url="https://github.com/astral-sh/python-build-standalone/releases/download/${YAMTRACK_PYTHON_PBS_DATE}/cpython-${YAMTRACK_PYTHON_VERSION}+${YAMTRACK_PYTHON_PBS_DATE}-${pbs_arch}-install_only_stripped.tar.gz"
+
+    mkdir -p "$YAMTRACK_PYTHON_DIR"
+    curl -fsSL --retry 3 "$url" | tar -xz -C "$YAMTRACK_PYTHON_DIR" --strip-components=1
+    chmod -R o+rX "$YAMTRACK_PYTHON_DIR"
+}
+
 # Variables managed by this package (regenerated on every upgrade)
 # Any other variable found in .env will be preserved across upgrades
 YAMTRACK_MANAGED_ENV_VARS='SECRET|DEBUG|ALLOWED_HOSTS|CSRF|URLS|DB_HOST|DB_PORT|DB_NAME|DB_USER|DB_PASSWORD|REDIS_URL|TZ|ACCOUNT_LOGOUT_REDIRECT_URL|REQUESTS_CA_BUNDLE|BASE_URL|REGISTRATION|SOCIAL_PROVIDERS|SOCIALACCOUNT_PROVIDERS|SOCIALACCOUNT_ONLY|REDIRECT_LOGIN_TO_SSO'

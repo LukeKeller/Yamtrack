@@ -7,7 +7,7 @@ name = "Yamtrack (LukeKeller fork)"
 description.en = "Yamtrack — fork build (LukeKeller). Media tracker for movies, TV, anime, manga, games, books and more"
 description.fr = "Yamtrack — build de fork (LukeKeller). Suivi de médias pour films, séries, anime, manga, jeux, livres et plus"
 
-version = "0.25.2~ynh1+fork.lukekeller.1"
+version = "0.25.2~ynh1+fork.lukekeller.2"
 
 maintainers = ["gmanaud", "lukekeller (fork)"]
 

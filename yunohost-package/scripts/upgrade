@@ -36,12 +36,31 @@ ynh_setup_source --dest_dir="$install_dir" --full_replace --keep=".env venv cert
 chown -R "$app:www-data" "$install_dir"
 
 #=================================================
+# PROVISION PYTHON 3.12 (Yamtrack code uses PEP 701)
+#=================================================
+ynh_script_progression "Provisioning Python ${YAMTRACK_PYTHON_VERSION}..."
+
+yamtrack_provision_python
+
+# If the venv was created with a different Python (e.g., system 3.11 from a
+# pre-fix install), recreate it. Otherwise pip install will silently use
+# the wrong interpreter.
+if [[ -d "$install_dir/venv" ]]; then
+    venv_python_version=$("$install_dir/venv/bin/python" -c "import sys; print('%d.%d' % sys.version_info[:2])" 2>/dev/null || echo "missing")
+    if [[ "$venv_python_version" != "3.12" ]]; then
+        rm -rf "$install_dir/venv"
+    fi
+fi
+
+#=================================================
 # INSTALL PYTHON DEPENDENCIES
 #=================================================
 ynh_script_progression "Installing Python dependencies..."
 
 pushd "$install_dir"
-    python3 -m venv venv
+    if [[ ! -x "$install_dir/venv/bin/python" ]]; then
+        "$YAMTRACK_PYTHON" -m venv venv
+    fi
     chown -R "$app:www-data" "$install_dir"
     ynh_hide_warnings ynh_exec_as_app "$install_dir/venv/bin/pip3" install --upgrade pip setuptools wheel
     ynh_hide_warnings ynh_exec_as_app "$install_dir/venv/bin/pip3" install -r "$install_dir/requirements.txt"
