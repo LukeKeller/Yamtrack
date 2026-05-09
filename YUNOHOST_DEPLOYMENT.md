@@ -50,30 +50,56 @@ If install fails, check `/var/log/yunohost/operations/` and the app's log under 
 
 ---
 
-## Path A-fork: Install the forked YunoHost package (this branch's `yunohost-package/`)
+## Path A-fork: Install the forked YunoHost package
 
 `yunohost-package/` in this repo is a copy of the upstream `YunoHost-Apps/yamtrack_ynh` package with `manifest.toml` rewritten to fetch source from `LukeKeller/Yamtrack` instead of `FuzzyGrim/Yamtrack`. Same install scripts, same OIDC/Dex SSO wiring, same systemd units — only the source pin changes.
 
-### One-line install via URL
+### Why the install URL doesn't live on this repo
 
-The orphan `yunohost-package` branch on this repo contains those files at the repo root (which is what `yunohost app install <url>` requires):
+YunoHost's install URL validator (`utils/app_utils.py`) requires the segment after the owner to end in `_ynh`:
 
-```bash
-sudo yunohost app install https://github.com/LukeKeller/Yamtrack/tree/yunohost-package
+```
+^https://<host>/<owner>/<repo>_ynh(/tree/<branch>)?$
 ```
 
-The installer asks the same five questions as Path A (domain, path, permission, admin, enable_sso).
+`LukeKeller/Yamtrack` doesn't match, and a branch suffix can't satisfy it — the `_ynh` has to be on the repo name itself. So we publish these packaging files to a dedicated empty repo at `LukeKeller/yamtrack_ynh`. The main fork keeps a copy under `yunohost-package/` for visibility, and the orphan `yunohost-package` branch on the main fork holds them at the root for local-path installs.
 
-### Alternative: install from a local clone
+### One-time setup of the dedicated `_ynh` repo
 
-If you'd rather inspect or tweak the package before installing:
+1. On <https://github.com/new>, create an **empty** public repo named exactly **`yamtrack_ynh`** under your account. No README, no license, no `.gitignore`.
+
+2. On your dev machine:
+
+   ```bash
+   # Pull just the packaging files (orphan branch on Yamtrack)
+   git clone -b yunohost-package --single-branch \
+     https://github.com/LukeKeller/Yamtrack.git /tmp/yamtrack_ynh
+   cd /tmp/yamtrack_ynh
+
+   # Push to the dedicated repo as 'main'
+   git push https://github.com/LukeKeller/yamtrack_ynh.git yunohost-package:main
+   ```
+
+That's it for the dedicated repo.
+
+### Install on the VPS
+
+#### Option A1 — One-line URL install (after the dedicated repo is published)
+
+```bash
+sudo yunohost app install https://github.com/LukeKeller/yamtrack_ynh
+```
+
+#### Option A2 — Local-path install (works without the dedicated repo)
 
 ```bash
 ssh root@<your-vps>
-git clone -b claude/claude-md-hardcover-plan-E6saG \
-  https://github.com/LukeKeller/Yamtrack.git /tmp/yamtrack
-sudo yunohost app install /tmp/yamtrack/yunohost-package
+git clone -b yunohost-package --single-branch \
+  https://github.com/LukeKeller/Yamtrack.git /tmp/yamtrack-pkg
+sudo yunohost app install /tmp/yamtrack-pkg
 ```
+
+Either way, the installer asks the same five questions as Path A (domain, path, permission, admin, enable_sso).
 
 ### Upgrading the install when you push new code
 
@@ -85,31 +111,25 @@ cd yunohost-package
 ./bump-source.sh                      # uses the current git HEAD of this repo
 git add manifest.toml && git commit -m "Bump yunohost source pin" && git push
 
-# 2. Re-publish the orphan branch (one command — see "Maintaining the orphan branch" below)
+# 2. Refresh the orphan branch on LukeKeller/Yamtrack
 git subtree split --prefix=yunohost-package -b yunohost-package
 git push -f origin yunohost-package
 
-# 3. On the VPS, run the upgrade
-sudo yunohost app upgrade yamtrack \
-  -u https://github.com/LukeKeller/Yamtrack/tree/yunohost-package
+# 3. Refresh main on LukeKeller/yamtrack_ynh (one-time: add the remote)
+git remote add ynh https://github.com/LukeKeller/yamtrack_ynh.git
+git push -f ynh yunohost-package:main
+
+# 4. On the VPS, run the upgrade
+sudo yunohost app upgrade yamtrack -u https://github.com/LukeKeller/yamtrack_ynh
 ```
 
-### Maintaining the orphan `yunohost-package` branch
-
-The branch is generated from the `yunohost-package/` subdirectory via `git subtree split`. It's a one-liner whenever you change anything under that subdirectory:
-
-```bash
-git subtree split --prefix=yunohost-package -b yunohost-package
-git push -f origin yunohost-package
-```
-
-`-f` is intentional: the orphan branch is a derived artifact, so force-pushing it after a re-split is normal. If you'd rather not force-push, append a new commit by hand instead — but the subtree-split workflow is simpler.
+`-f` is intentional in steps 2 and 3: those branches are derived artifacts, so force-push after each split is normal.
 
 ### Caveats specific to this path
 
 - **Source pin moves manually.** The upstream package uses `autoupdate.strategy = "latest_github_release"` and the YunoHost CI bumps it. Your fork doesn't tag releases, so the strategy is removed and you bump via `bump-source.sh`.
 - **PostgreSQL and Redis are required by this package** — same as upstream. The script provisions them via `apt`.
-- **Don't `sudo yunohost app install` while the local-path version and the URL version are both available** — pick one source. If you need to switch, `yunohost app remove yamtrack` first.
+- **Don't have two installs of yamtrack on the same VPS** under the same name. If switching install methods, `yunohost app remove yamtrack` first.
 
 ---
 
