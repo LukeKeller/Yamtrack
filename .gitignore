@@ -1,6 +1,7 @@
 __pycache__
 *.pyc
 .env
+!yunohost-package/conf/.env
 .coverage*
 venv
 src/staticfiles
