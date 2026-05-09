@@ -188,16 +188,10 @@ class DiscogsImporter:
         publisher = build_publisher(info)
         year = info.get("year") or None
 
-        if not helpers.should_process_media(
-            self.existing_media,
-            self.to_delete,
-            MediaTypes.RECORD.value,
-            Sources.DISCOGS.value,
-            release_id_str,
-            self.mode,
-        ):
-            return
-
+        # Item metadata is shared across all users tracking this release. Always
+        # upsert it (independent of "new"/"overwrite" mode, which only governs
+        # per-user Records) so older Items get backfilled with artist/publisher/
+        # year as soon as any user re-imports.
         item, created = app.models.Item.objects.get_or_create(
             media_id=release_id_str,
             source=Sources.DISCOGS.value,
@@ -210,8 +204,6 @@ class DiscogsImporter:
                 "year": year,
             },
         )
-        # Backfill aggregation metadata on items created before these fields
-        # existed (or by other users without the metadata pre-populated).
         if not created and (
             (artist and not item.artist)
             or (publisher and not item.publisher)
@@ -222,6 +214,16 @@ class DiscogsImporter:
                 publisher=publisher or item.publisher,
                 year=year or item.year,
             )
+
+        if not helpers.should_process_media(
+            self.existing_media,
+            self.to_delete,
+            MediaTypes.RECORD.value,
+            Sources.DISCOGS.value,
+            release_id_str,
+            self.mode,
+        ):
+            return
 
         rating = entry.get("rating")
         score = round(float(rating) * 2, 1) if rating else None
