@@ -1,0 +1,79 @@
+#:schema https://raw.githubusercontent.com/YunoHost/apps/master/schemas/manifest.v2.schema.json
+
+packaging_format = 2
+
+id = "yamtrack"
+name = "Yamtrack"
+description.en = "Media tracker for movies, TV shows, anime, manga, games, books and more"
+description.fr = "Suivi de médias pour films, séries, anime, manga, jeux, livres et plus"
+
+version = "0.25.2~ynh1+fork.lukekeller.1"
+
+maintainers = ["gmanaud", "lukekeller (fork)"]
+
+[upstream]
+license = "AGPL-3.0-or-later"
+demo = "https://yamtrack.fuzzygrim.com"
+code = "https://github.com/LukeKeller/Yamtrack"
+
+[integration]
+yunohost = ">= 12.1.39"
+helpers_version = "2.1"
+architectures = "all"
+multi_instance = true
+
+ldap = false
+sso = true
+
+disk = "100M"
+ram.build = "300M"
+ram.runtime = "200M"
+
+[install]
+    [install.domain]
+    type = "domain"
+
+    [install.path]
+    type = "path"
+    default = "/yamtrack"
+
+    [install.init_main_permission]
+    type = "group"
+    default = "all_users"
+
+    [install.admin]
+    type = "user"
+
+    [install.enable_sso]
+    type = "boolean"
+    default = true
+    ask.en = "Enable SSO authentication via Dex (OIDC)?"
+    ask.fr = "Activer l'authentification SSO via Dex (OIDC) ?"
+    help.en = "If enabled and Dex is installed, users will authenticate via YunoHost SSO. Otherwise, Yamtrack uses its own local authentication. Dex must be installed separately: https://apps.yunohost.org/app/dex"
+    help.fr = "Si activé et que Dex est installé, les utilisateurs s'authentifieront via le SSO YunoHost. Sinon, Yamtrack utilisera son propre système d'authentification locale. Dex doit être installé séparément : https://apps.yunohost.org/app/dex"
+
+[resources]
+    [resources.sources.main]
+    # Pinned to a specific commit on LukeKeller/Yamtrack so the install is reproducible.
+    # When you push new code on the fork, run yunohost-package/bump-source.sh
+    # to update both fields together.
+    url = "https://github.com/LukeKeller/Yamtrack/archive/2827ce2709fd3cd1266cd2c44aaad17fc84a96ad.tar.gz"
+    sha256 = "03cfc5c766f6576f5d84e3cb5540069fcc20c1db92350fc549db62daa3c6f1d6"
+
+    [resources.system_user]
+
+    [resources.install_dir]
+
+    [resources.data_dir]
+
+    [resources.permissions]
+    main.url = "/"
+
+    [resources.ports]
+    main.default = 8095
+
+    [resources.apt]
+    packages = "python3, python3-dev, python3-pip, python3-venv, libpq-dev, postgresql, postgresql-contrib, redis-server"
+
+    [resources.database]
+    type = "postgresql"

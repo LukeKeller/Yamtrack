@@ -1,0 +1,110 @@
+#!/bin/bash
+
+source _common.sh
+source /usr/share/yunohost/helpers
+
+#=================================================
+# INITIALIZE AND STORE SETTINGS
+#=================================================
+
+secret=$(ynh_string_random --length=50)
+ynh_app_setting_set --key=secret --value="$secret"
+
+redis_db=$(ynh_redis_get_free_db)
+ynh_app_setting_set --key=redis_db --value="$redis_db"
+
+#=================================================
+# DOWNLOAD, CHECK AND UNPACK SOURCE
+#=================================================
+ynh_script_progression "Setting up source files..."
+
+ynh_setup_source --dest_dir="$install_dir"
+
+chown -R "$app:www-data" "$install_dir"
+
+#=================================================
+# INSTALL PYTHON DEPENDENCIES
+#=================================================
+ynh_script_progression "Installing Python dependencies..."
+
+pushd "$install_dir"
+    python3 -m venv venv
+    chown -R "$app:www-data" "$install_dir"
+    ynh_hide_warnings ynh_exec_as_app "$install_dir/venv/bin/pip3" install --upgrade pip setuptools wheel
+    ynh_hide_warnings ynh_exec_as_app "$install_dir/venv/bin/pip3" install -r "$install_dir/requirements.txt"
+popd
+
+#=================================================
+# CONFIGURE OIDC VIA DEX (IF AVAILABLE)
+#=================================================
+ynh_script_progression "Configuring authentication..."
+
+yamtrack_register_dex
+
+#=================================================
+# ADD A CONFIGURATION
+#=================================================
+ynh_script_progression "Adding $app's configuration..."
+
+yamtrack_setup_certs
+yamtrack_setup_env
+
+#=================================================
+# SETUP THE DATABASE
+#=================================================
+ynh_script_progression "Running database migrations..."
+
+pushd "$install_dir/src"
+    ynh_exec_as_app "$install_dir/venv/bin/python" manage.py migrate --noinput
+    ynh_exec_as_app "$install_dir/venv/bin/python" manage.py collectstatic --noinput
+popd
+
+#=================================================
+# CREATE THE ADMIN USER
+#=================================================
+ynh_script_progression "Creating the admin user..."
+
+admin_email=$(ynh_user_get_info --username="$admin" --key=mail)
+admin_password=$(ynh_string_random --length=24)
+ynh_app_setting_set --key=admin_password --value="$admin_password"
+
+pushd "$install_dir/src"
+    ynh_exec_as_app env DJANGO_SUPERUSER_PASSWORD="$admin_password" \
+        "$install_dir/venv/bin/python" manage.py createsuperuser \
+        --noinput --username "$admin" --email "$admin_email" 2>/dev/null || true
+popd
+
+#=================================================
+# SYSTEM CONFIGURATION
+#=================================================
+ynh_script_progression "Adding system configurations..."
+
+ynh_config_add_nginx
+
+ynh_config_add_systemd
+ynh_config_add_systemd --service="$app-celery" --template="systemd-celery.service"
+ynh_config_add_systemd --service="$app-celery-beat" --template="systemd-celery-beat.service"
+
+mkdir -p "/var/log/$app"
+chown -R "$app:$app" "/var/log/$app"
+
+ynh_config_add_logrotate
+
+yunohost service add "$app" --description="Yamtrack web server" --log="/var/log/$app/$app.log"
+yunohost service add "$app-celery" --description="Yamtrack Celery worker" --log="/var/log/$app/$app-celery.log"
+yunohost service add "$app-celery-beat" --description="Yamtrack Celery beat" --log="/var/log/$app/$app-celery-beat.log"
+
+#=================================================
+# START SYSTEMD SERVICE
+#=================================================
+ynh_script_progression "Starting $app's systemd service..."
+
+ynh_systemctl --service="$app" --action="start"
+ynh_systemctl --service="$app-celery" --action="start" --log_path="/var/log/$app/$app-celery.log"
+ynh_systemctl --service="$app-celery-beat" --action="start" --log_path="/var/log/$app/$app-celery-beat.log"
+
+#=================================================
+# END OF SCRIPT
+#=================================================
+
+ynh_script_progression "Installation of $app completed"

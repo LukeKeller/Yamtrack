@@ -1,11 +1,12 @@
 # Deploying Yamtrack on YunoHost
 
-This guide covers two paths:
+This guide covers three paths:
 
-- **Path A — Official YunoHost package.** Fastest way to confirm Yamtrack runs on your server. Installs upstream's latest packaged release (`0.25.2~ynh1` at time of writing). Does NOT include your Hardcover-sync work.
-- **Path B — Docker Compose from source.** Builds the image from this fork and proxies it through YunoHost's nginx. Use this once you want to verify the Hardcover-sync branch end-to-end.
+- **Path A — Official YunoHost package.** Installs upstream's latest packaged release (`0.25.2~ynh1` at time of writing). Fastest way to verify your YunoHost server itself can host Yamtrack. Does NOT include this fork's in-flight code (e.g., the Hardcover sync work).
+- **Path A-fork — Forked YunoHost package (vendored in `yunohost-package/`).** Same install/upgrade scripts as upstream, but pinned to a commit on `LukeKeller/Yamtrack`. Recommended for verifying this fork's code on YunoHost without a Docker reverse-proxy hack.
+- **Path B — Docker Compose from source.** Builds the image from this fork and proxies it through YunoHost's nginx. Use when you want fast `git pull && docker compose up --build` iteration.
 
-Pick A first to confirm your domain, certs, and nginx are all happy. Switch to B once the baseline works.
+Pick A first if you want to sanity-check the server (~5 min). Pick A-fork once you want this branch's code running natively on YunoHost.
 
 ---
 
@@ -46,6 +47,69 @@ sudo yunohost app upgrade yamtrack \
 ```
 
 If install fails, check `/var/log/yunohost/operations/` and the app's log under **YunoHost admin → Apps → Yamtrack → Logs**.
+
+---
+
+## Path A-fork: Install the forked YunoHost package (this branch's `yunohost-package/`)
+
+`yunohost-package/` in this repo is a copy of the upstream `YunoHost-Apps/yamtrack_ynh` package with `manifest.toml` rewritten to fetch source from `LukeKeller/Yamtrack` instead of `FuzzyGrim/Yamtrack`. Same install scripts, same OIDC/Dex SSO wiring, same systemd units — only the source pin changes.
+
+### One-line install via URL
+
+The orphan `yunohost-package` branch on this repo contains those files at the repo root (which is what `yunohost app install <url>` requires):
+
+```bash
+sudo yunohost app install https://github.com/LukeKeller/Yamtrack/tree/yunohost-package
+```
+
+The installer asks the same five questions as Path A (domain, path, permission, admin, enable_sso).
+
+### Alternative: install from a local clone
+
+If you'd rather inspect or tweak the package before installing:
+
+```bash
+ssh root@<your-vps>
+git clone -b claude/claude-md-hardcover-plan-E6saG \
+  https://github.com/LukeKeller/Yamtrack.git /tmp/yamtrack
+sudo yunohost app install /tmp/yamtrack/yunohost-package
+```
+
+### Upgrading the install when you push new code
+
+Each time you push new commits to your fork (e.g., as Hardcover sync development progresses) and want the YunoHost install to pick them up:
+
+```bash
+# 1. On your dev machine, refresh the source pin in the package
+cd yunohost-package
+./bump-source.sh                      # uses the current git HEAD of this repo
+git add manifest.toml && git commit -m "Bump yunohost source pin" && git push
+
+# 2. Re-publish the orphan branch (one command — see "Maintaining the orphan branch" below)
+git subtree split --prefix=yunohost-package -b yunohost-package
+git push -f origin yunohost-package
+
+# 3. On the VPS, run the upgrade
+sudo yunohost app upgrade yamtrack \
+  -u https://github.com/LukeKeller/Yamtrack/tree/yunohost-package
+```
+
+### Maintaining the orphan `yunohost-package` branch
+
+The branch is generated from the `yunohost-package/` subdirectory via `git subtree split`. It's a one-liner whenever you change anything under that subdirectory:
+
+```bash
+git subtree split --prefix=yunohost-package -b yunohost-package
+git push -f origin yunohost-package
+```
+
+`-f` is intentional: the orphan branch is a derived artifact, so force-pushing it after a re-split is normal. If you'd rather not force-push, append a new commit by hand instead — but the subtree-split workflow is simpler.
+
+### Caveats specific to this path
+
+- **Source pin moves manually.** The upstream package uses `autoupdate.strategy = "latest_github_release"` and the YunoHost CI bumps it. Your fork doesn't tag releases, so the strategy is removed and you bump via `bump-source.sh`.
+- **PostgreSQL and Redis are required by this package** — same as upstream. The script provisions them via `apt`.
+- **Don't `sudo yunohost app install` while the local-path version and the URL version are both available** — pick one source. If you need to switch, `yunohost app remove yamtrack` first.
 
 ---
 
@@ -194,7 +258,9 @@ sudo yunohost domain remove yamtrack.example.com   # only if you also want the d
 | Goal | Use |
 |---|---|
 | Confirm "Yamtrack runs on my YunoHost box at all" | Path A |
-| Test SSO/OIDC integration | Path A (the package does it for you) |
-| Verify the Hardcover sync code on this branch | Path B |
+| Test SSO/OIDC integration with upstream code | Path A |
+| Verify this fork's code (e.g., Hardcover sync) on YunoHost — native install | **Path A-fork** |
+| Verify this fork's code with fast iteration | Path B |
 | Iterate on a feature branch with `git pull && rebuild` | Path B |
-| Run for friends/family long-term | Path A, then `yunohost app upgrade` when the package updates |
+| Run for friends/family long-term on the fork | Path A-fork with periodic `bump-source.sh` |
+| Run for friends/family long-term on upstream | Path A |

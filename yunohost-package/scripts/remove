@@ -1,0 +1,68 @@
+#!/bin/bash
+
+source _common.sh
+source /usr/share/yunohost/helpers
+
+#=================================================
+# REMOVE SERVICE INTEGRATION IN YUNOHOST
+#=================================================
+
+if ynh_hide_warnings yunohost service status "$app" >/dev/null; then
+    yunohost service remove "$app"
+fi
+if ynh_hide_warnings yunohost service status "$app-celery" >/dev/null; then
+    yunohost service remove "$app-celery"
+fi
+if ynh_hide_warnings yunohost service status "$app-celery-beat" >/dev/null; then
+    yunohost service remove "$app-celery-beat"
+fi
+
+#=================================================
+# STOP AND REMOVE SYSTEMD SERVICES
+#=================================================
+
+ynh_config_remove_systemd
+
+ynh_config_remove_systemd "$app-celery"
+ynh_config_remove_systemd "$app-celery-beat"
+
+#=================================================
+# REMOVE LOGROTATE CONFIGURATION
+#=================================================
+
+ynh_config_remove_logrotate
+
+#=================================================
+# REMOVE NGINX CONFIGURATION
+#=================================================
+
+ynh_config_remove_nginx
+
+#=================================================
+# FREE REDIS DATABASE
+#=================================================
+
+ynh_redis_remove_db "$redis_db"
+
+#=================================================
+# REMOVE DEX OIDC CLIENT (IF CONFIGURED)
+#=================================================
+
+saved_app="$app"
+app="dex"
+dex_install_dir=$(ynh_app_setting_get --key=install_dir 2>/dev/null || true)
+app="$saved_app"
+if [[ -n "$dex_install_dir" ]] && [[ -f "$dex_install_dir/config.yaml.d/$app" ]]; then
+    rm -f "$dex_install_dir/config.yaml.d/$app"
+    # Regenerate Dex config and restart
+    if [[ -f "$dex_install_dir/regenerate_config.sh" ]]; then
+        bash "$dex_install_dir/regenerate_config.sh"
+    fi
+    ynh_systemctl --service="dex" --action="restart" 2>/dev/null || true
+fi
+
+#=================================================
+# END OF SCRIPT
+#=================================================
+
+ynh_script_progression "Removal of $app completed"

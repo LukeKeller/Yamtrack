@@ -1,0 +1,83 @@
+version = "1.0"
+
+[main]
+name.en = "Media Import Integrations"
+name.fr = "Intégrations d'import de médias"
+services = ["__APP__", "__APP__-celery", "__APP__-celery-beat"]
+
+    [main.trakt]
+    name.en = "Trakt"
+    name.fr = "Trakt"
+    help.en = "OAuth credentials for importing private Trakt profiles. Create an app at [trakt.tv/oauth/applications](https://trakt.tv/oauth/applications) with redirect URI `https://__DOMAIN____PATH__/import/trakt/private`."
+    help.fr = "Identifiants OAuth pour importer les profils Trakt privés. Créez une application sur [trakt.tv/oauth/applications](https://trakt.tv/oauth/applications) avec l'URI de redirection `https://__DOMAIN____PATH__/import/trakt/private`."
+
+        [main.trakt.trakt_api]
+        ask.en = "Trakt Client ID"
+        ask.fr = "Client ID Trakt"
+        type = "string"
+        bind = "TRAKT_API:__INSTALL_DIR__/.env"
+        optional = true
+
+        [main.trakt.trakt_api_secret]
+        ask.en = "Trakt Client Secret"
+        ask.fr = "Client Secret Trakt"
+        type = "string"
+        redact = true
+        bind = "TRAKT_API_SECRET:__INSTALL_DIR__/.env"
+        optional = true
+
+    [main.simkl]
+    name.en = "Simkl"
+    name.fr = "Simkl"
+    help.en = "OAuth credentials for importing private Simkl profiles. Register an app at [simkl.com/settings/developer](https://simkl.com/settings/developer) with redirect URI `https://__DOMAIN____PATH__/import/simkl/private`."
+    help.fr = "Identifiants OAuth pour importer les profils Simkl privés. Enregistrez une application sur [simkl.com/settings/developer](https://simkl.com/settings/developer) avec l'URI de redirection `https://__DOMAIN____PATH__/import/simkl/private`."
+
+        [main.simkl.simkl_id]
+        ask.en = "Simkl Client ID"
+        ask.fr = "Client ID Simkl"
+        type = "string"
+        bind = "SIMKL_ID:__INSTALL_DIR__/.env"
+        optional = true
+
+        [main.simkl.simkl_secret]
+        ask.en = "Simkl Client Secret"
+        ask.fr = "Client Secret Simkl"
+        type = "string"
+        redact = true
+        bind = "SIMKL_SECRET:__INSTALL_DIR__/.env"
+        optional = true
+
+    [main.anilist]
+    name.en = "AniList"
+    name.fr = "AniList"
+    help.en = "OAuth credentials for importing private AniList profiles. Create a client at [anilist.co/settings/developer](https://anilist.co/settings/developer) with redirect URI `https://__DOMAIN____PATH__/import/anilist/private`."
+    help.fr = "Identifiants OAuth pour importer les profils AniList privés. Créez un client sur [anilist.co/settings/developer](https://anilist.co/settings/developer) avec l'URI de redirection `https://__DOMAIN____PATH__/import/anilist/private`."
+
+        [main.anilist.anilist_id]
+        ask.en = "AniList Client ID"
+        ask.fr = "Client ID AniList"
+        type = "string"
+        bind = "ANILIST_ID:__INSTALL_DIR__/.env"
+        optional = true
+
+        [main.anilist.anilist_secret]
+        ask.en = "AniList Client Secret"
+        ask.fr = "Client Secret AniList"
+        type = "string"
+        redact = true
+        bind = "ANILIST_SECRET:__INSTALL_DIR__/.env"
+        optional = true
+
+    [main.steam]
+    name.en = "Steam"
+    name.fr = "Steam"
+    help.en = "Steam API key required to import game libraries. Get your key at [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey)."
+    help.fr = "Clé API Steam nécessaire pour importer les bibliothèques de jeux. Obtenez votre clé sur [steamcommunity.com/dev/apikey](https://steamcommunity.com/dev/apikey)."
+
+        [main.steam.steam_api_key]
+        ask.en = "Steam API Key"
+        ask.fr = "Clé API Steam"
+        type = "string"
+        redact = true
+        bind = "STEAM_API_KEY:__INSTALL_DIR__/.env"
+        optional = true
