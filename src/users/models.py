@@ -286,6 +286,24 @@ class User(AbstractUser):
         choices=MediaStatusChoices,
     )
 
+    # Media type preferences: Records (vinyl)
+    record_enabled = models.BooleanField(default=True)
+    record_layout = models.CharField(
+        max_length=20,
+        default=LayoutChoices.GRID,
+        choices=LayoutChoices,
+    )
+    record_sort = models.CharField(
+        max_length=20,
+        default=MediaSortChoices.SCORE,
+        choices=MediaSortChoices,
+    )
+    record_status = models.CharField(
+        max_length=20,
+        default=MediaStatusChoices.ALL,
+        choices=MediaStatusChoices,
+    )
+
     # UI preferences
     clickable_media_cards = models.BooleanField(
         default=False,
@@ -441,6 +459,10 @@ class User(AbstractUser):
                 condition=models.Q(book_layout__in=LayoutChoices.values),
             ),
             models.CheckConstraint(
+                name="record_layout_valid",
+                condition=models.Q(record_layout__in=LayoutChoices.values),
+            ),
+            models.CheckConstraint(
                 name="tv_sort_valid",
                 condition=models.Q(tv_sort__in=MediaSortChoices.values),
             ),
@@ -467,6 +489,10 @@ class User(AbstractUser):
             models.CheckConstraint(
                 name="book_sort_valid",
                 condition=models.Q(book_sort__in=MediaSortChoices.values),
+            ),
+            models.CheckConstraint(
+                name="record_sort_valid",
+                condition=models.Q(record_sort__in=MediaSortChoices.values),
             ),
             models.CheckConstraint(
                 name="calendar_layout_valid",
@@ -511,6 +537,10 @@ class User(AbstractUser):
             models.CheckConstraint(
                 name="book_status_valid",
                 condition=models.Q(book_status__in=MediaStatusChoices.values),
+            ),
+            models.CheckConstraint(
+                name="record_status_valid",
+                condition=models.Q(record_status__in=MediaStatusChoices.values),
             ),
             models.CheckConstraint(
                 name="quick_watch_date_valid",
@@ -618,6 +648,7 @@ class User(AbstractUser):
             "imdb": "Import from IMDB",
             "goodreads": "Import from GoodReads",
             "hardcover": "Import from Hardcover",
+            "discogs": "Import from Discogs",
         }
 
         # Reverse mapping to get source from task name

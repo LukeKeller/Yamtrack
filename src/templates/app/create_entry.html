@@ -64,12 +64,17 @@
           return ['parentSeason', 'image', 'episodeNumber', 'endDate'].includes(field);
         }
     
+        // Record fields (Discogs vinyl - owned/wanted only, no progress)
+        else if (this.mediaType === 'record') {
+          return ['title', 'image', 'score', 'status', 'startDate', 'notes'].includes(field);
+        }
+
         // Movie, Anime, Manga, Game, Book fields
         else {
           return ['title', 'image', 'score', 'progress', 'status', 'startDate', 'endDate', 'notes'].includes(field);
         }
       },
-    
+
       getProgressLabel() {
         if (this.mediaType === 'anime') return 'Progress (Episodes)';
         if (this.mediaType === 'manga') return 'Progress (Chapters)';

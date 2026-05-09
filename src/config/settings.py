@@ -424,6 +424,16 @@ COMICVINE_API = config(
     ),
 )
 
+# Discogs personal access token used for catalogue search/lookup.
+# Per-user import tokens come from the import form, not this setting.
+DISCOGS_API = config(
+    "DISCOGS_API",
+    default=secret(
+        "DISCOGS_API_FILE",
+        "",
+    ),
+)
+
 TRAKT_API = config(
     "TRAKT_API",
     default=secret(

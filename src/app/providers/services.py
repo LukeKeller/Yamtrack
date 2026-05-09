@@ -13,6 +13,7 @@ from app.models import MediaTypes, Sources
 from app.providers import (
     bgg,
     comicvine,
+    discogs,
     hardcover,
     igdb,
     mal,
@@ -77,6 +78,10 @@ session.mount(
 session.mount(
     "https://boardgamegeek.com/xmlapi2",
     LimiterAdapter(per_second=2),
+)
+session.mount(
+    "https://api.discogs.com",
+    LimiterAdapter(per_minute=55),
 )
 
 
@@ -241,6 +246,7 @@ def get_media_metadata(
         ),
         MediaTypes.COMIC.value: lambda: comicvine.comic(media_id),
         MediaTypes.BOARDGAME.value: lambda: bgg.boardgame(media_id),
+        MediaTypes.RECORD.value: lambda: discogs.record(media_id),
     }
     return metadata_retrievers[media_type]()
 
@@ -266,5 +272,6 @@ def search(media_type, query, page, source=None):
         ),
         MediaTypes.COMIC.value: lambda: comicvine.search(query, page),
         MediaTypes.BOARDGAME.value: lambda: bgg.search(query, page),
+        MediaTypes.RECORD.value: lambda: discogs.search(query, page),
     }
     return search_handlers[media_type]()

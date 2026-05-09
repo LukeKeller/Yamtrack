@@ -9,6 +9,7 @@ from app.models import MediaTypes
 from app.templatetags import app_tags
 from integrations.imports import (
     anilist,
+    discogs,
     goodreads,
     hardcover,
     helpers,
@@ -160,3 +161,9 @@ def import_goodreads(file, user_id, mode):
 def import_hardcover(user_id, mode, token, username=None):
     """Celery task for importing books from Hardcover."""
     return import_media(hardcover.importer, token, user_id, mode, username)
+
+
+@shared_task(name="Import from Discogs")
+def import_discogs(user_id, mode, token, username=None):
+    """Celery task for importing vinyl records from Discogs."""
+    return import_media(discogs.importer, token, user_id, mode, username)

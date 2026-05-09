@@ -16,6 +16,7 @@ from app.models import (
     Manga,
     MediaTypes,
     Movie,
+    Record,
     Season,
     Sources,
 )
@@ -329,6 +330,27 @@ class BoardgameForm(MediaForm):
                 f"({config.get_unit(MediaTypes.BOARDGAME.value, short=False)}s)"
             ),
         }
+
+
+class RecordForm(MediaForm):
+    """Form for vinyl records.
+
+    Records use a binary owned/wanted model: COMPLETED maps to "in collection",
+    PLANNING to "wantlist". Progress isn't meaningful for a vinyl record so it's
+    omitted from the form.
+    """
+
+    class Meta(MediaForm.Meta):
+        """Bind form to model."""
+
+        model = Record
+        fields = [
+            "score",
+            "status",
+            "start_date",
+            "end_date",
+            "notes",
+        ]
 
 
 class TvForm(MediaForm):

@@ -46,6 +46,7 @@ class Sources(models.TextChoices):
     HARDCOVER = "hardcover", "Hardcover"
     COMICVINE = "comicvine", "Comic Vine"
     BGG = "bgg", "BoardGameGeek"
+    DISCOGS = "discogs", "Discogs"
     MANUAL = "manual", "Manual"
 
 
@@ -62,6 +63,7 @@ class MediaTypes(models.TextChoices):
     BOOK = "book", "Book"
     COMIC = "comic", "Comic"
     BOARDGAME = "boardgame", "Boardgame"
+    RECORD = "record", "Record"
 
 
 class Item(CalendarTriggerMixin, models.Model):
@@ -1888,5 +1890,11 @@ class Comic(Media):
 
 class BoardGame(Media):
     """Model for board games."""
+
+    tracker = FieldTracker()
+
+
+class Record(Media):
+    """Model for vinyl records."""
 
     tracker = FieldTracker()

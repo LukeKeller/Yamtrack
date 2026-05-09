@@ -56,6 +56,10 @@ SOURCES_CONFIG = {
         "name": "Hardcover",
         "logo": static("img/hardcover-logo.svg"),
     },
+    "discogs": {
+        "name": "Discogs",
+        "logo": static("img/discogs-logo.svg"),
+    },
 }
 
 

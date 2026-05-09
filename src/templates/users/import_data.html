@@ -425,6 +425,38 @@
           </form>
         </div>
 
+        {# Discogs #}
+        <div class="bg-[#39404b] p-4 rounded-lg">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center">{% source_display "discogs" %}</div>
+            <a href="https://www.discogs.com/settings/developers"
+               target="_blank"
+               class="text-gray-400 hover:text-indigo-400 transition-colors p-1 rounded-md hover:bg-gray-600/50"
+               title="Get your Discogs personal access token">{% include "app/icons/info.svg" with classes="w-4 h-4" %}</a>
+          </div>
+          <p class="text-sm text-gray-400 mb-3">Import vinyl collection and wantlist with your Discogs token</p>
+          <form class="flex items-center"
+                method="post"
+                action="{% url 'import_discogs' %}">
+            {% csrf_token %}
+            <input type="hidden" name="frequency" x-model="importFrequency">
+            <input type="hidden" name="time" x-model="importTime">
+            <input type="hidden" name="mode" x-model="importMode">
+            <div class="flex w-full">
+              <input placeholder="Discogs personal access token"
+                     name="token"
+                     class="relative w-full py-2 px-3 bg-[#2a2f35] rounded-l-md text-white text-sm border border-gray-600 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                     type="password"
+                     autocomplete="off"
+                     required>
+              <button type="submit"
+                      class="px-3 py-2 bg-indigo-600 text-white rounded-r-md hover:bg-indigo-700 transition-colors text-sm border border-indigo-600 cursor-pointer">
+                Import
+              </button>
+            </div>
+          </form>
+        </div>
+
       </div>
     </div>
 

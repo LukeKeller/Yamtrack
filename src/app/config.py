@@ -60,6 +60,11 @@ COLORS = {
         "background": "bg-sky-400",
         "hex": "#87ceeb",
     },
+    "amber": {
+        "text": "text-amber-400",
+        "background": "bg-amber-400",
+        "hex": "#fbbf24",
+    },
 }
 
 # --- Central Configuration Dictionary ---
@@ -217,6 +222,19 @@ MEDIA_TYPE_CONFIG = {
             <path d="M8 16v-2"/>""",
         "unit": ("#", "Play"),
         "date_key": "year",
+    },
+    MediaTypes.RECORD.value: {
+        "sources": [Sources.DISCOGS],
+        "default_source": Sources.DISCOGS,
+        "sample_query": "Kind of Blue",
+        "unicode_icon": "🎵",
+        "verb": ("listen to", "listened to"),
+        "text_color": COLORS["amber"]["text"],
+        "stats_color": COLORS["amber"]["hex"],
+        "svg_icon": """
+            <circle cx="12" cy="12" r="10"/>
+            <circle cx="12" cy="12" r="3"/>""",
+        "date_key": "released",
     },
 }
 

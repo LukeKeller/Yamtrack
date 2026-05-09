@@ -19,7 +19,7 @@ from django.views.decorators.http import require_GET, require_POST
 import users
 from app import helpers as app_helpers
 from integrations import exports, tasks
-from integrations.imports import anilist, hardcover, helpers, simkl, trakt
+from integrations.imports import anilist, discogs, hardcover, helpers, simkl, trakt
 from integrations.imports.helpers import MediaImportError
 from integrations.webhooks import emby, jellyfin, plex
 
@@ -502,6 +502,49 @@ def import_hardcover(request):
             frequency=frequency,
             import_time=import_time,
             source="Hardcover",
+            token=enc_token,
+        )
+    return redirect("import_data")
+
+
+@require_POST
+def import_discogs(request):
+    """View for importing vinyl records from Discogs via API token."""
+    token = (request.POST.get("token") or "").strip()
+    if not token:
+        messages.error(request, "Discogs API token is required.")
+        return redirect("import_data")
+
+    try:
+        username = discogs.get_username(token)
+    except MediaImportError as error:
+        messages.error(request, str(error))
+        return redirect("import_data")
+
+    enc_token = helpers.encrypt(token)
+    mode = request.POST["mode"]
+    frequency = request.POST["frequency"]
+
+    if frequency == "once":
+        tasks.import_discogs.delay(
+            user_id=request.user.id,
+            mode=mode,
+            token=enc_token,
+            username=username,
+        )
+        messages.info(
+            request,
+            "The task to import vinyl from Discogs has been queued.",
+        )
+    else:
+        import_time = request.POST["time"]
+        helpers.create_import_schedule(
+            username=username,
+            request=request,
+            mode=mode,
+            frequency=frequency,
+            import_time=import_time,
+            source="Discogs",
             token=enc_token,
         )
     return redirect("import_data")
