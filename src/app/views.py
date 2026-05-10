@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 from pathlib import Path
 
 from django.apps import apps
@@ -7,7 +8,7 @@ from django.contrib import messages
 from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db import IntegrityError
-from django.db.models import prefetch_related_objects
+from django.db.models import Count, prefetch_related_objects
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -1001,6 +1002,60 @@ def log_record_spin(request, source, media_id):
         "record_spin_count": plays.count(),
     }
     return render(request, "app/components/record_spin.html", context)
+
+
+@require_GET
+def music_history(request):
+    """Listening history: filterable, paginated list of Play rows.
+
+    Surfaces both manual vinyl spins and ListenBrainz scrobbles so unmatched
+    listens (no Item resolved by artist+title) are visible somewhere in the UI
+    instead of only in the database.
+    """
+    source_filter = request.GET.get("source", "all")
+    match_filter = request.GET.get("match", "all")
+    days_param = request.GET.get("days", "30")
+
+    qs = Play.objects.filter(user=request.user).select_related("item")
+    if source_filter in PlaySource.values:
+        qs = qs.filter(source=source_filter)
+    if match_filter == "matched":
+        qs = qs.exclude(item=None)
+    elif match_filter == "unmatched":
+        qs = qs.filter(item=None)
+
+    if days_param != "all":
+        try:
+            days = max(int(days_param), 1)
+        except ValueError:
+            days = 30
+            days_param = "30"
+        qs = qs.filter(played_at__gte=timezone.now() - timedelta(days=days))
+
+    total = qs.count()
+    matched = qs.exclude(item=None).count()
+    top_artists = list(
+        qs.exclude(artist="")
+        .values("artist")
+        .annotate(play_count=Count("id"))
+        .order_by("-play_count")[:10],
+    )
+
+    paginator = Paginator(qs, 50)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    context = {
+        "page_obj": page_obj,
+        "total": total,
+        "matched_count": matched,
+        "unmatched_count": total - matched,
+        "top_artists": top_artists,
+        "source_filter": source_filter,
+        "match_filter": match_filter,
+        "days": days_param,
+        "play_sources": PlaySource.choices,
+    }
+    return render(request, "app/music_history.html", context)
 
 
 @require_GET
