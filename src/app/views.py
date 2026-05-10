@@ -169,6 +169,18 @@ def media_list(request, media_type):
         media_type,
     )
 
+    # Records have a binary owned/wanted model — narrow the status filter to
+    # just those two options (relabeled) plus All. Other media types keep the
+    # full set.
+    if media_type == MediaTypes.RECORD.value:
+        status_choices = [
+            (MediaStatusChoices.ALL.value, "All"),
+            (Status.COMPLETED.value, "Owned"),
+            (Status.PLANNING.value, "Want"),
+        ]
+    else:
+        status_choices = MediaStatusChoices.choices
+
     context = {
         "media_type": media_type,
         "media_type_plural": app_tags.media_type_readable_plural(media_type).lower(),
@@ -178,7 +190,7 @@ def media_list(request, media_type):
         "current_sort": sort_filter,
         "current_status": status_filter,
         "sort_choices": MediaSortChoices.choices,
-        "status_choices": MediaStatusChoices.choices,
+        "status_choices": status_choices,
     }
 
     # Per-media-type stats panel. Only records have one today; the contract is
