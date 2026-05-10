@@ -17,6 +17,7 @@ from integrations.imports import (
     imdb,
     kitsu,
     mal,
+    scrobbles,
     simkl,
     steam,
     trakt,
@@ -167,3 +168,9 @@ def import_hardcover(user_id, mode, token, username=None):
 def import_discogs(user_id, mode, token, username=None):
     """Celery task for importing vinyl records from Discogs."""
     return import_media(discogs.importer, token, user_id, mode, username)
+
+
+@shared_task(name="Import scrobbles")
+def import_scrobbles(file, user_id, mode):
+    """Celery task for one-time scrobble import from a generic CSV."""
+    return import_media(scrobbles.importer, file, user_id, mode)
