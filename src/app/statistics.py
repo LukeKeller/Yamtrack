@@ -318,6 +318,122 @@ def get_status_color(status):
         return "rgba(201, 203, 207)"
 
 
+def get_record_listen_stats(item, user, top_n=10, recent_n=10, heatmap_days=365):
+    """Build Koito-style listening stats for a single Record detail page.
+
+    Returns a context dict with total_plays, total_minutes, unique_tracks,
+    first_played, last_played, top_tracks (list of {track, plays}),
+    recent_plays (latest N Play rows), and an activity heatmap with the
+    same shape as ``get_activity_data`` so the existing calendar grid
+    template can be reused.
+
+    Returns ``None`` when there are no plays for this record so the
+    template can skip the panel entirely.
+    """
+    from app.models import Play, Track  # noqa: PLC0415  avoids import cycle
+
+    plays = Play.objects.filter(user=user, item=item)
+    total_plays = plays.count()
+    if total_plays == 0:
+        return None
+
+    total_seconds = plays.aggregate(
+        s=models.Sum("duration_seconds"),
+    )["s"] or 0
+    # Fallback to an average 3:30 per track when no duration data is stored
+    # (scrobbles always carry it; manual vinyl spins don't).
+    if total_seconds == 0:
+        total_seconds = total_plays * 210
+    total_minutes = total_seconds // 60
+
+    unique_tracks = (
+        plays.exclude(track__isnull=True).values("track").distinct().count()
+    )
+    first_played = (
+        plays.order_by("played_at").values_list("played_at", flat=True).first()
+    )
+    last_played = (
+        plays.order_by("-played_at").values_list("played_at", flat=True).first()
+    )
+
+    top_track_rows = list(
+        plays.exclude(track__isnull=True)
+        .values("track")
+        .annotate(play_count=models.Count("id"))
+        .order_by("-play_count")[:top_n],
+    )
+    track_ids = [r["track"] for r in top_track_rows]
+    track_map = {t.id: t for t in Track.objects.filter(id__in=track_ids)}
+    top_tracks = [
+        {"track": track_map[r["track"]], "plays": r["play_count"]}
+        for r in top_track_rows
+        if r["track"] in track_map
+    ]
+
+    recent_plays = list(
+        plays.select_related("track").order_by("-played_at")[:recent_n],
+    )
+
+    end_dt = timezone.localtime()
+    start_dt = end_dt - datetime.timedelta(days=heatmap_days)
+    start_aligned = get_aligned_monday(start_dt)
+    local_tz = timezone.get_current_timezone()
+
+    counts_by_date = defaultdict(int)
+    for ts in plays.filter(played_at__gte=start_aligned).values_list(
+        "played_at",
+        flat=True,
+    ):
+        counts_by_date[timezone.localtime(ts, local_tz).date()] += 1
+
+    date_range = [
+        start_aligned.date() + datetime.timedelta(days=x)
+        for x in range((end_dt.date() - start_aligned.date()).days + 1)
+    ]
+    activity_days = [
+        {
+            "date": d.strftime("%Y-%m-%d"),
+            "count": counts_by_date.get(d, 0),
+            "level": get_level(counts_by_date.get(d, 0)),
+        }
+        for d in date_range
+    ]
+    calendar_weeks = [
+        activity_days[i : i + 7] for i in range(0, len(activity_days), 7)
+    ]
+
+    months = []
+    mondays_per_month = []
+    current_month = date_range[0].strftime("%b") if date_range else None
+    monday_count = 0
+    for d in date_range:
+        if d.weekday() == 0:
+            m = d.strftime("%b")
+            if current_month != m:
+                months.append(current_month if monday_count > 1 else "")
+                mondays_per_month.append(monday_count)
+                current_month = m
+                monday_count = 0
+            monday_count += 1
+    if monday_count > 1:
+        months.append(current_month)
+        mondays_per_month.append(monday_count)
+
+    return {
+        "total_plays": total_plays,
+        "total_minutes": total_minutes,
+        "unique_tracks": unique_tracks,
+        "first_played": first_played,
+        "last_played": last_played,
+        "top_tracks": top_tracks,
+        "recent_plays": recent_plays,
+        "activity": {
+            "calendar_weeks": calendar_weeks,
+            "months": list(zip(months, mondays_per_month, strict=False)),
+        },
+    }
+
+
 def get_record_stats(user):
     """Build chart data for the records list page.
 
