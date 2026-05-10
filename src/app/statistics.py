@@ -392,13 +392,13 @@ def _build_owned_vs_want(owned, wanted, total):
     other = total - owned - wanted
     chart = {"labels": [], "datasets": [{"data": [], "backgroundColor": []}]}
     if owned:
-        chart["labels"].append("In collection")
+        chart["labels"].append("Owned")
         chart["datasets"][0]["data"].append(owned)
         chart["datasets"][0]["backgroundColor"].append(
             config.get_status_stats_color(Status.COMPLETED.value),
         )
     if wanted:
-        chart["labels"].append("Wantlist")
+        chart["labels"].append("Want")
         chart["datasets"][0]["data"].append(wanted)
         chart["datasets"][0]["backgroundColor"].append(
             config.get_status_stats_color(Status.PLANNING.value),
