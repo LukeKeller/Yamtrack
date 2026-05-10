@@ -8,6 +8,7 @@ from app.models import (
     Episode,
     Item,
     Play,
+    Track,
     UserMessage,
 )
 
@@ -56,6 +57,19 @@ class PlayAdmin(admin.ModelAdmin):
     date_hierarchy = "played_at"
 
 
+@admin.register(Track)
+class TrackAdmin(admin.ModelAdmin):
+    """Custom admin for Track model.
+
+    Tracks are not Media (no status/score/user), so they need their own
+    ModelAdmin rather than the shared MediaAdmin.
+    """
+
+    search_fields = ["title", "artist", "record_item__title"]
+    list_display = ["__str__", "record_item", "side", "track_number", "duration_seconds"]
+    list_filter = ["side"]
+
+
 class MediaAdmin(admin.ModelAdmin):
     """Custom admin for regular media model with search and filter options."""
 
@@ -69,7 +83,7 @@ class MediaAdmin(admin.ModelAdmin):
 
 # Auto-register remaining models
 app_models = apps.get_app_config("app").get_models()
-SpecialModels = ["Item", "Episode", "BasicMedia", "UserMessage", "Play"]
+SpecialModels = ["Item", "Episode", "BasicMedia", "UserMessage", "Play", "Track"]
 for model in app_models:
     if (
         not model.__name__.startswith("Historical")
