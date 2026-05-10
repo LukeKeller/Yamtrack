@@ -32,9 +32,10 @@ from app.models import (
     Season,
     Sources,
     Status,
+    Track,
     UserMessage,
 )
-from app.providers import manual, services, tmdb
+from app.providers import discogs, manual, services, tmdb
 from app.templatetags import app_tags
 from users.models import (
     DateFormatChoices,
@@ -978,13 +979,59 @@ def statistics(request):
     return render(request, "app/statistics.html", context)
 
 
+def ensure_record_tracks(item):
+    """Lazily fetch + persist the tracklist for a Discogs record Item.
+
+    Returns the list of Track rows. Hits Discogs only on the first call
+    per record (the result is cached by the provider, and tracks are
+    persisted afterwards). Returns [] for non-Discogs records or when
+    the API call fails — callers should fall back to album-level plays.
+    """
+    if (
+        item.media_type != MediaTypes.RECORD.value
+        or item.source != Sources.DISCOGS.value
+    ):
+        return list(item.tracks.all())
+
+    existing = list(item.tracks.all())
+    if existing:
+        return existing
+
+    try:
+        rows = discogs.tracks(item.media_id)
+    except Exception:
+        logger.exception("Failed to fetch Discogs tracklist for %s", item)
+        return []
+
+    Track.objects.bulk_create(
+        [
+            Track(
+                record_item=item,
+                position=row["position"],
+                side=row["side"],
+                track_number=row["track_number"],
+                title=row["title"],
+                artist=row["artist"],
+                duration_seconds=row["duration_seconds"],
+            )
+            for row in rows
+        ],
+        ignore_conflicts=True,
+    )
+    return list(item.tracks.all())
+
+
 @require_POST
 def log_record_spin(request, source, media_id):
     """Log a vinyl spin (manual play) for a record.
 
-    Side comes from POST data — one of "A", "B", "full". Always records
-    ``played_at = now()``. Returns the rendered status fragment so HTMX can
-    swap it into the detail page.
+    Side comes from POST data — one of "A", "B", "full". One Play row is
+    inserted per track on the chosen side (or every track for "full"),
+    so listening history mirrors how scrobbles look. Records without an
+    available tracklist fall back to a single album-level Play.
+
+    Returns the rendered status fragment so HTMX can swap it into the
+    detail page.
     """
     side = request.POST.get("side", "full")
     if side not in PlaySide.values:
@@ -998,15 +1045,40 @@ def log_record_spin(request, source, media_id):
     if not item:
         return HttpResponseBadRequest("Record not found.")
 
-    Play.objects.create(
-        user=request.user,
-        item=item,
-        artist=item.artist,
-        title=item.title,
-        played_at=timezone.now(),
-        source=PlaySource.MANUAL_VINYL.value,
-        side=side,
-    )
+    tracks = ensure_record_tracks(item)
+    if side == PlaySide.FULL.value:
+        side_tracks = tracks
+    else:
+        side_tracks = [t for t in tracks if t.side == side]
+
+    now = timezone.now()
+    if side_tracks:
+        Play.objects.bulk_create(
+            [
+                Play(
+                    user=request.user,
+                    item=item,
+                    track=t,
+                    artist=t.artist or item.artist,
+                    title=t.title,
+                    album=item.title,
+                    played_at=now,
+                    source=PlaySource.MANUAL_VINYL.value,
+                    side=t.side or side,
+                )
+                for t in side_tracks
+            ],
+        )
+    else:
+        Play.objects.create(
+            user=request.user,
+            item=item,
+            artist=item.artist,
+            title=item.title,
+            played_at=now,
+            source=PlaySource.MANUAL_VINYL.value,
+            side=side,
+        )
 
     plays = Play.objects.filter(user=request.user, item=item)
     context = {
@@ -1028,7 +1100,7 @@ def music_history(request):
     match_filter = request.GET.get("match", "all")
     days_param = request.GET.get("days", "30")
 
-    qs = Play.objects.filter(user=request.user).select_related("item")
+    qs = Play.objects.filter(user=request.user).select_related("item", "track")
     if source_filter in PlaySource.values:
         qs = qs.filter(source=source_filter)
     if match_filter == "matched":
