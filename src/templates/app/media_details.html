@@ -245,6 +245,135 @@
     </div>
   </div>
 
+  {# Record listening stats — Koito-style panels for vinyl records #}
+  {% if record_listen_stats %}
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold mb-4">Listening stats</h2>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div class="bg-[#2a2f35] p-4 rounded-lg">
+          <p class="text-xs text-gray-400 uppercase tracking-wide">Total plays</p>
+          <p class="text-2xl font-bold mt-1">{{ record_listen_stats.total_plays|intcomma }}</p>
+        </div>
+        <div class="bg-[#2a2f35] p-4 rounded-lg">
+          <p class="text-xs text-gray-400 uppercase tracking-wide">Minutes listened</p>
+          <p class="text-2xl font-bold mt-1">{{ record_listen_stats.total_minutes|intcomma }}</p>
+        </div>
+        <div class="bg-[#2a2f35] p-4 rounded-lg">
+          <p class="text-xs text-gray-400 uppercase tracking-wide">Unique tracks</p>
+          <p class="text-2xl font-bold mt-1">{{ record_listen_stats.unique_tracks }}</p>
+        </div>
+        <div class="bg-[#2a2f35] p-4 rounded-lg">
+          <p class="text-xs text-gray-400 uppercase tracking-wide">First spin</p>
+          <p class="text-sm font-medium mt-1">{{ record_listen_stats.first_played|date:"M j, Y"|default:"—" }}</p>
+          <p class="text-xs text-gray-500">Last: {{ record_listen_stats.last_played|date:"M j, Y"|default:"—" }}</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="bg-[#2a2f35] rounded-lg overflow-hidden">
+          <div class="px-5 py-3 border-b border-[#39404b]">
+            <h3 class="font-semibold">Top tracks</h3>
+          </div>
+          {% if record_listen_stats.top_tracks %}
+            {% with max_plays=record_listen_stats.top_tracks.0.plays %}
+              <ul class="divide-y divide-[#39404b]">
+                {% for row in record_listen_stats.top_tracks %}
+                  <li class="px-5 py-2">
+                    <div class="flex justify-between items-center text-sm mb-1">
+                      <span class="truncate">
+                        <span class="text-gray-500 mr-2 font-mono text-xs">{{ row.track.position }}</span>{{ row.track.title }}
+                      </span>
+                      <span class="text-gray-400 ml-3 shrink-0">{{ row.plays }}</span>
+                    </div>
+                    <div class="h-1 bg-[#39404b] rounded-full overflow-hidden">
+                      <div class="h-full bg-indigo-500" style="width: {% widthratio row.plays max_plays 100 %}%"></div>
+                    </div>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endwith %}
+          {% else %}
+            <p class="px-5 py-4 text-sm text-gray-400">No per-track plays yet — click a Side button or scrobble through this record.</p>
+          {% endif %}
+        </div>
+
+        <div class="bg-[#2a2f35] rounded-lg overflow-hidden">
+          <div class="px-5 py-3 border-b border-[#39404b]">
+            <h3 class="font-semibold">Recent plays</h3>
+          </div>
+          {% if record_listen_stats.recent_plays %}
+            <ul class="divide-y divide-[#39404b]">
+              {% for play in record_listen_stats.recent_plays %}
+                <li class="px-5 py-2 flex justify-between items-center text-sm">
+                  <span class="truncate">
+                    {% if play.track %}
+                      <span class="text-gray-500 mr-2 font-mono text-xs">{{ play.track.position }}</span>{{ play.track.title }}
+                    {% elif play.title %}
+                      {{ play.title }}
+                    {% else %}
+                      Side {{ play.side|default:"—" }}
+                    {% endif %}
+                  </span>
+                  <span class="text-xs text-gray-400 ml-3 shrink-0">{{ play.played_at|naturaltime }}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="px-5 py-4 text-sm text-gray-400">No plays yet.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="bg-[#2a2f35] rounded-lg p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold">Listening activity</h3>
+          <span class="text-xs text-gray-400">Last 365 days</span>
+        </div>
+        <div class="overflow-x-auto">
+          <div class="p-1">
+            <div class="flex mb-2 pl-[36.68px]">
+              {% for month, week_count in record_listen_stats.activity.months %}
+                <div class="text-xs text-gray-400"
+                     style="width: calc({{ week_count }} * 1rem + ({{ week_count }} * 0.25rem))">{{ month }}</div>
+              {% endfor %}
+            </div>
+            <div class="flex">
+              <div class="flex flex-col justify-between pr-2 text-xs text-gray-400">
+                <div class="h-4 flex items-center">Mon</div>
+                <div class="h-4"></div>
+                <div class="h-4 flex items-center">Wed</div>
+                <div class="h-4"></div>
+                <div class="h-4 flex items-center">Fri</div>
+                <div class="h-4"></div>
+                <div class="h-4 flex items-center">Sun</div>
+              </div>
+              <div class="flex gap-1">
+                {% for week in record_listen_stats.activity.calendar_weeks %}
+                  <div class="flex flex-col gap-1">
+                    {% for day in week %}
+                      <div class="w-4 h-4 rounded-sm transition-colors duration-200 hover:ring-2 hover:ring-white {% if day.level == 0 %}bg-[#2f353e]{% elif day.level == 1 %}bg-indigo-700{% elif day.level == 2 %}bg-indigo-600{% elif day.level == 3 %}bg-indigo-500{% elif day.level == 4 %}bg-indigo-400{% endif %}"
+                           title="{{ day.date }}: {{ day.count }} play{{ day.count|pluralize }}"></div>
+                    {% endfor %}
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 pl-6 text-xs text-gray-400 mt-4">
+            <span>Less</span>
+            <div class="w-4 h-4 rounded-sm bg-[#2f353e]"></div>
+            <div class="w-4 h-4 rounded-sm bg-indigo-700"></div>
+            <div class="w-4 h-4 rounded-sm bg-indigo-600"></div>
+            <div class="w-4 h-4 rounded-sm bg-indigo-500"></div>
+            <div class="w-4 h-4 rounded-sm bg-indigo-400"></div>
+            <span>More</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
   <div class="flex flex-col md:flex-row gap-12 md:gap-10">
     {# Details Column #}
 
