@@ -1942,6 +1942,12 @@ class Play(models.Model):
         null=True,
         blank=True,
     )
+    track = models.ForeignKey(
+        "Track",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
     artist = models.TextField(blank=True, default="")
     title = models.TextField(blank=True, default="")
     album = models.TextField(blank=True, default="")
@@ -1982,3 +1988,40 @@ class Play(models.Model):
         if self.item:
             return f"{self.item} @ {self.played_at:%Y-%m-%d %H:%M}"
         return f"Play @ {self.played_at:%Y-%m-%d %H:%M}"
+
+
+class Track(models.Model):
+    """A single track on a vinyl record (or any record-type Item).
+
+    Populated lazily from Discogs the first time a tracklist is needed
+    (e.g. when a manual spin button is clicked). Position is the raw
+    Discogs string ("A1", "B3", "1.2"); side and track_number are parsed
+    out of position so we can group plays per side without re-parsing.
+    """
+
+    record_item = models.ForeignKey(
+        Item,
+        on_delete=models.CASCADE,
+        related_name="tracks",
+    )
+    position = models.CharField(max_length=10)
+    side = models.CharField(max_length=2, blank=True, default="")
+    track_number = models.PositiveSmallIntegerField(null=True, blank=True)
+    title = models.TextField()
+    artist = models.TextField(blank=True, default="")
+    duration_seconds = models.PositiveIntegerField(null=True, blank=True)
+
+    class Meta:
+        """Order tracks by side then number; keep insertion order as fallback."""
+
+        ordering = ["side", "track_number", "pk"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["record_item", "position"],
+                name="track_unique_position_per_record",
+            ),
+        ]
+
+    def __str__(self):
+        """Render as 'A1: Title' for admin/debug."""
+        return f"{self.position}: {self.title}" if self.position else self.title
