@@ -161,8 +161,19 @@ def media_type_readable_plural(media_type):
 
 
 @register.filter
-def media_status_readable(media_status):
-    """Return the readable media status."""
+def media_status_readable(media_status, media_type=None):
+    """Return the readable media status.
+
+    Records use a binary owned/wanted model and relabel two of the shared
+    Status values: COMPLETED -> "Owned", PLANNING -> "Want". All other
+    statuses (including any legacy non-Want/non-Owned values) fall back
+    to the default Status label.
+    """
+    if media_type == MediaTypes.RECORD.value:
+        if media_status == Status.COMPLETED.value:
+            return "Owned"
+        if media_status == Status.PLANNING.value:
+            return "Want"
     return Status(media_status).label
 
 
