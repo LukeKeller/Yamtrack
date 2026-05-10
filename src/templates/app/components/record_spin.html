@@ -5,7 +5,9 @@
       <span class="text-amber-400">♪</span>
       Last spun
       <span class="font-medium">{{ record_spin.played_at|naturaltime }}</span>
-      {% if record_spin.side == "A" %}
+      {% if record_spin.track %}
+        — {{ record_spin.track.position }} {{ record_spin.track.title }}
+      {% elif record_spin.side == "A" %}
         — Side A
       {% elif record_spin.side == "B" %}
         — Side B
