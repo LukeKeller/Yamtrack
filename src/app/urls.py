@@ -91,5 +91,6 @@ urlpatterns = [
         views.log_record_spin,
         name="log_record_spin",
     ),
+    path("music/history", views.music_history, name="music_history"),
     path("serviceworker.js", views.service_worker, name="service_worker"),
 ]
