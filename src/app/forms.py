@@ -19,6 +19,7 @@ from app.models import (
     Record,
     Season,
     Sources,
+    Status,
 )
 
 
@@ -337,7 +338,8 @@ class RecordForm(MediaForm):
 
     Records use a binary owned/wanted model: COMPLETED maps to "in collection",
     PLANNING to "wantlist". Progress isn't meaningful for a vinyl record so it's
-    omitted from the form.
+    omitted from the form, and the status dropdown is narrowed to just the two
+    relevant options (relabeled "Owned" / "Want").
     """
 
     class Meta(MediaForm.Meta):
@@ -350,6 +352,14 @@ class RecordForm(MediaForm):
             "start_date",
             "end_date",
             "notes",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        """Restrict the status field to Owned / Want."""
+        super().__init__(*args, **kwargs)
+        self.fields["status"].choices = [
+            (Status.COMPLETED.value, "Owned"),
+            (Status.PLANNING.value, "Want"),
         ]
 
 
