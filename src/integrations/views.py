@@ -550,6 +550,33 @@ def import_discogs(request):
     return redirect("import_data")
 
 
+@require_POST
+def import_scrobbles(request):
+    """View for importing scrobble history from a generic CSV.
+
+    Expects columns ``played_at, artist, track`` (and an optional
+    ``album``). One Play row is created per CSV row, matched to a Record
+    by case-insensitive (artist, title) the same way live ListenBrainz
+    scrobbles are.
+    """
+    file = request.FILES.get("scrobbles_csv")
+    if not file:
+        messages.error(request, "Scrobble CSV file is required.")
+        return redirect("import_data")
+
+    mode = request.POST.get("mode", "new")
+    tasks.import_scrobbles.delay(
+        file=file,
+        user_id=request.user.id,
+        mode=mode,
+    )
+    messages.info(
+        request,
+        "The task to import scrobbles has been queued.",
+    )
+    return redirect("import_data")
+
+
 @require_GET
 def export_csv(request):
     """View for exporting all media data to a CSV file."""
