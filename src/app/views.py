@@ -303,6 +303,19 @@ def media_details(request, source, media_type, media_id, title):  # noqa: ARG001
         )
         context["record_spin"] = spin_qs.order_by("-played_at").first()
         context["record_spin_count"] = spin_qs.count()
+
+        # Koito-style listening stats panels: aggregate play history into
+        # totals, top tracks, recent plays, and an activity heatmap.
+        record_item = Item.objects.filter(
+            media_id=media_id,
+            source=source,
+            media_type=MediaTypes.RECORD.value,
+        ).first()
+        if record_item:
+            context["record_listen_stats"] = stats.get_record_listen_stats(
+                record_item,
+                request.user,
+            )
     return render(request, "app/media_details.html", context)
 
 
