@@ -34,7 +34,10 @@ logger = logging.getLogger(__name__)
 REQUIRED_COLUMNS = ("played_at", "artist", "track")
 
 COLUMN_ALIASES = {
-    "played_at": ("timestamp", "listened_at", "date", "utc_time", "uts"),
+    # ``uts`` first — Last.fm exports (e.g. mainstream.ghan.nl) include both
+    # ``uts`` (Unix epoch) and ``utc_time`` ("09 May 2026, 17:57"). Prefer
+    # the epoch because it's unambiguous and round-trips losslessly.
+    "played_at": ("uts", "timestamp", "listened_at", "utc_time", "date"),
     "artist": ("artist_name",),
     "track": ("track_name", "title", "song"),
     "album": ("album_name", "release", "release_name"),
@@ -150,7 +153,10 @@ class ScrobblesImporter:
 
 
 def _parse_played_at(raw):
-    """Accept either a Unix epoch (seconds) or an ISO 8601 timestamp."""
+    """Accept a Unix epoch (seconds), an ISO 8601 timestamp, or any free-form
+    date string that dateutil can recognize (e.g. "09 May 2026, 17:57").
+    Returns ``None`` if nothing parses, in which case the row is skipped.
+    """
     if raw.isdigit():
         try:
             return datetime.fromtimestamp(int(raw), tz=UTC)
@@ -162,6 +168,19 @@ def _parse_played_at(raw):
             dt = timezone.make_aware(dt, UTC)
         return dt
     try:
-        return datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
     except ValueError:
+        dt = None
+    if dt is not None:
+        if dt.tzinfo is None:
+            dt = timezone.make_aware(dt, UTC)
+        return dt
+    # Last-resort: free-form parsing for Last.fm's "09 May 2026, 17:57" etc.
+    try:
+        from dateutil import parser as dateutil_parser  # noqa: PLC0415
+        dt = dateutil_parser.parse(raw)
+    except (ValueError, OverflowError, ImportError):
         return None
+    if dt.tzinfo is None:
+        dt = timezone.make_aware(dt, UTC)
+    return dt
