@@ -649,6 +649,7 @@ class User(AbstractUser):
             "goodreads": "Import from GoodReads",
             "hardcover": "Import from Hardcover",
             "discogs": "Import from Discogs",
+            "scrobbles": "Import scrobbles",
         }
 
         # Reverse mapping to get source from task name

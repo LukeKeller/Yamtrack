@@ -60,6 +60,10 @@ SOURCES_CONFIG = {
         "name": "Discogs",
         "logo": static("img/discogs-logo.svg"),
     },
+    "scrobbles": {
+        "name": "Scrobbles",
+        "logo": static("favicon/apple-touch-icon.png"),
+    },
 }
 
 
