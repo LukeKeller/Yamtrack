@@ -59,6 +59,11 @@ urlpatterns = [
         name="listenbrainz_validate_token",
     ),
     path(
+        "api/scrobble/listenbrainz/1/user/<str:user_name>/listens",
+        views.listenbrainz_get_listens,
+        name="listenbrainz_get_listens",
+    ),
+    path(
         "api/scrobble/listenbrainz/1/submit-listens",
         views.listenbrainz_submit_listens,
         name="listenbrainz_submit_listens",
