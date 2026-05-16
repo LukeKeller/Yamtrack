@@ -9,6 +9,11 @@ listening activity but don't link to a tracked record. Listens of type
 ``playing_now`` are intentionally not persisted (they're transient
 "currently playing" pings, not completed plays).
 
+Multi-scrobbler also calls ``GET /1/user/<name>/listens`` before
+submitting, to deduplicate against what the server already has. We
+implement that here too (``get_user_listens``); without it multi-scrobbler
+treats every scrobble cycle as failed and never submits anything.
+
 Protocol reference:
 https://listenbrainz.readthedocs.io/en/latest/users/api/core.html#post--1-submit-listens
 """
@@ -16,6 +21,7 @@ https://listenbrainz.readthedocs.io/en/latest/users/api/core.html#post--1-submit
 from __future__ import annotations
 
 import logging
+import uuid
 from datetime import UTC, datetime
 
 from django.utils import timezone
@@ -26,6 +32,12 @@ logger = logging.getLogger(__name__)
 
 LISTEN_TYPES_PERSIST = {"single", "import"}
 LISTEN_TYPES_IGNORE = {"playing_now"}
+
+LISTENS_DEFAULT_COUNT = 25
+LISTENS_MAX_COUNT = 1000
+
+# Fixed namespace so a given Play always yields the same recording_msid.
+_LISTEN_MSID_NS = uuid.UUID("9f3a7c1e-0000-4000-8000-000000000001")
 
 
 def extract_bearer_token(request):
@@ -85,6 +97,64 @@ def submit_listens(user, body):
         user.username,
     )
     return len(plays)
+
+
+def get_user_listens(user, min_ts=None, max_ts=None, count=LISTENS_DEFAULT_COUNT):
+    """Build the payload for ``GET /1/user/<name>/listens``.
+
+    Multi-scrobbler fetches this to deduplicate before submitting. The
+    return value is the inner ``payload`` object; the view wraps it as
+    ``{"payload": ...}``. Listens are newest-first, matching ListenBrainz.
+
+    ``min_ts``/``max_ts`` are Unix seconds. ListenBrainz semantics:
+    return listens strictly newer than ``min_ts`` and strictly older
+    than ``max_ts``.
+    """
+    count = max(1, min(int(count), LISTENS_MAX_COUNT))
+
+    qs = Play.objects.filter(user=user)
+    if max_ts is not None:
+        qs = qs.filter(played_at__lt=datetime.fromtimestamp(max_ts, tz=UTC))
+    if min_ts is not None:
+        qs = qs.filter(played_at__gt=datetime.fromtimestamp(min_ts, tz=UTC))
+
+    rows = list(qs.order_by("-played_at")[:count])
+
+    listens = []
+    for play in rows:
+        ts = int(play.played_at.timestamp())
+        listens.append(
+            {
+                "user_name": user.username,
+                "inserted_at": ts,
+                "listened_at": ts,
+                "recording_msid": str(
+                    uuid.uuid5(_LISTEN_MSID_NS, str(play.id)),
+                ),
+                "track_metadata": {
+                    "artist_name": play.artist,
+                    "track_name": play.title,
+                    "release_name": play.album,
+                    "additional_info": {},
+                },
+            },
+        )
+
+    bounds = (
+        Play.objects.filter(user=user)
+        .order_by("played_at")
+        .values_list("played_at", flat=True)
+    )
+    oldest = bounds.first()
+    latest = bounds.last()
+
+    return {
+        "count": len(listens),
+        "user_id": user.username,
+        "latest_listen_ts": int(latest.timestamp()) if latest else 0,
+        "oldest_listen_ts": int(oldest.timestamp()) if oldest else 0,
+        "listens": listens,
+    }
 
 
 def _build_play(user, entry):
