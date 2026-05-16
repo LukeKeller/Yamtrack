@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% load app_tags %}
+{% load humanize %}
+
+{% block title %}
+  Music Stats - Yamtrack
+{% endblock title %}
+
+{% block content %}
+  <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
+    <div>
+      <h1 class="text-3xl font-bold mb-2">Music Stats</h1>
+      <p class="text-gray-400">Breakdowns of your listening — vinyl spins and scrobbles combined.</p>
+    </div>
+    <form method="get" class="flex gap-2 items-end">
+      <div>
+        <label for="days" class="block text-xs text-gray-400 mb-1">Range</label>
+        <select name="days" id="days"
+                class="bg-[#39404b] border border-gray-700 rounded-md text-sm px-3 py-2"
+                onchange="this.form.submit()">
+          <option value="7" {% if days == "7" %}selected{% endif %}>Last 7 days</option>
+          <option value="30" {% if days == "30" %}selected{% endif %}>Last 30 days</option>
+          <option value="90" {% if days == "90" %}selected{% endif %}>Last 90 days</option>
+          <option value="365" {% if days == "365" %}selected{% endif %}>Last year</option>
+          <option value="all" {% if days == "all" %}selected{% endif %}>All time</option>
+        </select>
+      </div>
+      <noscript><button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-md text-sm">Apply</button></noscript>
+    </form>
+  </div>
+
+  {% if not music.has_data %}
+    <div class="bg-[#2a2f35] rounded-lg p-10 text-center text-gray-400">
+      <p class="mb-2 text-lg">No plays in this range yet.</p>
+      <p class="text-sm">Spin a record, scrobble via multi-scrobbler, or
+        <a href="{% url 'import_data' %}" class="text-indigo-400 hover:underline">import a scrobble CSV</a>.</p>
+    </div>
+  {% else %}
+    {# Summary cards #}
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+      <div class="bg-[#2a2f35] p-4 rounded-lg">
+        <p class="text-xs text-gray-400 uppercase tracking-wide">Total plays</p>
+        <p class="text-2xl font-bold mt-1">{{ music.cards.total_plays|intcomma }}</p>
+      </div>
+      <div class="bg-[#2a2f35] p-4 rounded-lg">
+        <p class="text-xs text-gray-400 uppercase tracking-wide">Listening time</p>
+        <p class="text-2xl font-bold mt-1">{{ music.cards.listening_hours|floatformat:0|intcomma }}<span class="text-sm text-gray-400"> h</span></p>
+      </div>
+      <div class="bg-[#2a2f35] p-4 rounded-lg">
+        <p class="text-xs text-gray-400 uppercase tracking-wide">Unique artists</p>
+        <p class="text-2xl font-bold mt-1">{{ music.cards.unique_artists|intcomma }}</p>
+      </div>
+      <div class="bg-[#2a2f35] p-4 rounded-lg">
+        <p class="text-xs text-gray-400 uppercase tracking-wide">Unique tracks</p>
+        <p class="text-2xl font-bold mt-1">{{ music.cards.unique_tracks|intcomma }}</p>
+      </div>
+      <div class="bg-[#2a2f35] p-4 rounded-lg">
+        <p class="text-xs text-gray-400 uppercase tracking-wide">Active days</p>
+        <p class="text-2xl font-bold mt-1">{{ music.cards.active_days|intcomma }}</p>
+      </div>
+      <div class="bg-[#2a2f35] p-4 rounded-lg">
+        <p class="text-xs text-gray-400 uppercase tracking-wide">Current streak</p>
+        <p class="text-2xl font-bold mt-1">{{ music.cards.current_streak }}<span class="text-sm text-gray-400"> d</span></p>
+      </div>
+      <div class="bg-[#2a2f35] p-4 rounded-lg">
+        <p class="text-xs text-gray-400 uppercase tracking-wide">Longest streak</p>
+        <p class="text-2xl font-bold mt-1">{{ music.cards.longest_streak }}<span class="text-sm text-gray-400"> d</span></p>
+      </div>
+      <div class="bg-[#2a2f35] p-4 rounded-lg">
+        <p class="text-xs text-gray-400 uppercase tracking-wide">Busiest day</p>
+        <p class="text-sm font-medium mt-1">{{ music.cards.busiest_day|default:"—" }}</p>
+        {% if music.cards.busiest_day %}<p class="text-xs text-gray-500">{{ music.cards.busiest_day_count }} plays</p>{% endif %}
+      </div>
+    </div>
+
+    {# Plays over time #}
+    <div class="bg-[#2a2f35] rounded-lg p-5 mb-8" data-chart-wrap>
+      <h2 class="font-semibold mb-4">Plays over time</h2>
+      <div class="h-72"><canvas id="chart-by-month"></canvas></div>
+    </div>
+
+    {# Activity heatmap #}
+    <div class="bg-[#2a2f35] rounded-lg p-5 mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-semibold">Listening activity</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <div class="p-1">
+          <div class="flex mb-2 pl-[36.68px]">
+            {% for month, week_count in music.activity.months %}
+              <div class="text-xs text-gray-400"
+                   style="width: calc({{ week_count }} * 1rem + ({{ week_count }} * 0.25rem))">{{ month }}</div>
+            {% endfor %}
+          </div>
+          <div class="flex">
+            <div class="flex flex-col justify-between pr-2 text-xs text-gray-400">
+              <div class="h-4 flex items-center">Mon</div>
+              <div class="h-4"></div>
+              <div class="h-4 flex items-center">Wed</div>
+              <div class="h-4"></div>
+              <div class="h-4 flex items-center">Fri</div>
+              <div class="h-4"></div>
+              <div class="h-4 flex items-center">Sun</div>
+            </div>
+            <div class="flex gap-1">
+              {% for week in music.activity.calendar_weeks %}
+                <div class="flex flex-col gap-1">
+                  {% for day in week %}
+                    <div class="w-4 h-4 rounded-sm transition-colors duration-200 hover:ring-2 hover:ring-white {% if day.level == 0 %}bg-[#2f353e]{% elif day.level == 1 %}bg-indigo-700{% elif day.level == 2 %}bg-indigo-600{% elif day.level == 3 %}bg-indigo-500{% elif day.level == 4 %}bg-indigo-400{% endif %}"
+                         title="{{ day.date }}: {{ day.count }} play{{ day.count|pluralize }}"></div>
+                  {% endfor %}
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 pl-6 text-xs text-gray-400 mt-4">
+          <span>Less</span>
+          <div class="w-4 h-4 rounded-sm bg-[#2f353e]"></div>
+          <div class="w-4 h-4 rounded-sm bg-indigo-700"></div>
+          <div class="w-4 h-4 rounded-sm bg-indigo-600"></div>
+          <div class="w-4 h-4 rounded-sm bg-indigo-500"></div>
+          <div class="w-4 h-4 rounded-sm bg-indigo-400"></div>
+          <span>More</span>
+        </div>
+      </div>
+    </div>
+
+    {# Top artists / albums / tracks #}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div class="bg-[#2a2f35] rounded-lg overflow-hidden">
+        <div class="px-5 py-3 border-b border-[#39404b]"><h2 class="font-semibold">Top artists</h2></div>
+        {% if music.top_artists %}
+          {% with max_plays=music.top_artists.0.plays %}
+            <ul class="divide-y divide-[#39404b]">
+              {% for row in music.top_artists %}
+                <li class="px-5 py-2">
+                  <div class="flex justify-between items-center text-sm mb-1">
+                    <span class="truncate">{{ forloop.counter }}. {{ row.artist }}</span>
+                    <span class="text-gray-400 ml-3 shrink-0">{{ row.plays }}</span>
+                  </div>
+                  <div class="h-1 bg-[#39404b] rounded-full overflow-hidden">
+                    <div class="h-full bg-indigo-500" style="width: {% widthratio row.plays max_plays 100 %}%"></div>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endwith %}
+        {% else %}
+          <p class="px-5 py-4 text-sm text-gray-400">No data.</p>
+        {% endif %}
+      </div>
+
+      <div class="bg-[#2a2f35] rounded-lg overflow-hidden">
+        <div class="px-5 py-3 border-b border-[#39404b]"><h2 class="font-semibold">Top albums</h2></div>
+        {% if music.top_albums %}
+          {% with max_plays=music.top_albums.0.plays %}
+            <ul class="divide-y divide-[#39404b]">
+              {% for row in music.top_albums %}
+                <li class="px-5 py-2">
+                  <div class="flex justify-between items-center text-sm mb-1">
+                    <span class="truncate">{{ forloop.counter }}. {{ row.album }}<span class="text-gray-500"> — {{ row.artist }}</span></span>
+                    <span class="text-gray-400 ml-3 shrink-0">{{ row.plays }}</span>
+                  </div>
+                  <div class="h-1 bg-[#39404b] rounded-full overflow-hidden">
+                    <div class="h-full bg-indigo-500" style="width: {% widthratio row.plays max_plays 100 %}%"></div>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endwith %}
+        {% else %}
+          <p class="px-5 py-4 text-sm text-gray-400">No data.</p>
+        {% endif %}
+      </div>
+
+      <div class="bg-[#2a2f35] rounded-lg overflow-hidden">
+        <div class="px-5 py-3 border-b border-[#39404b]"><h2 class="font-semibold">Top tracks</h2></div>
+        {% if music.top_tracks %}
+          {% with max_plays=music.top_tracks.0.plays %}
+            <ul class="divide-y divide-[#39404b]">
+              {% for row in music.top_tracks %}
+                <li class="px-5 py-2">
+                  <div class="flex justify-between items-center text-sm mb-1">
+                    <span class="truncate">{{ forloop.counter }}. {{ row.title }}<span class="text-gray-500"> — {{ row.artist }}</span></span>
+                    <span class="text-gray-400 ml-3 shrink-0">{{ row.plays }}</span>
+                  </div>
+                  <div class="h-1 bg-[#39404b] rounded-full overflow-hidden">
+                    <div class="h-full bg-indigo-500" style="width: {% widthratio row.plays max_plays 100 %}%"></div>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% endwith %}
+        {% else %}
+          <p class="px-5 py-4 text-sm text-gray-400">No data.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Clock & calendar patterns #}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <div class="bg-[#2a2f35] rounded-lg p-5" data-chart-wrap>
+        <h2 class="font-semibold mb-4">By hour of day</h2>
+        <div class="h-64"><canvas id="chart-by-hour"></canvas></div>
+      </div>
+      <div class="bg-[#2a2f35] rounded-lg p-5" data-chart-wrap>
+        <h2 class="font-semibold mb-4">By day of week</h2>
+        <div class="h-64"><canvas id="chart-by-weekday"></canvas></div>
+      </div>
+    </div>
+
+    {# Discovery #}
+    <div class="bg-[#2a2f35] rounded-lg p-5 mb-4" data-chart-wrap>
+      <h2 class="font-semibold mb-1">New artists discovered</h2>
+      <p class="text-xs text-gray-400 mb-4">First-ever play of each artist, by month (all-time).</p>
+      <div class="h-64"><canvas id="chart-discoveries"></canvas></div>
+    </div>
+
+    {{ music.by_month|json_script:"music-by-month" }}
+    {{ music.by_hour|json_script:"music-by-hour" }}
+    {{ music.by_weekday|json_script:"music-by-weekday" }}
+    {{ music.discoveries|json_script:"music-discoveries" }}
+  {% endif %}
+{% endblock content %}
+
+{% block js %}
+  {% load static %}
+  <script src="{% static 'js/libraries/chartjs-4.4.9.min.js' %}"></script>
+  <script src="{% static 'js/music-stats-charts.js' %}{% get_static_file_mtime 'js/music-stats-charts.js' %}"></script>
+{% endblock js %}
