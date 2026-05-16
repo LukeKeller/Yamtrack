@@ -698,6 +698,58 @@ def listenbrainz_validate_token(request):
 
 @login_not_required
 @csrf_exempt
+@require_GET
+def listenbrainz_get_listens(request, user_name):
+    """ListenBrainz-compatible ``GET /1/user/<user_name>/listens``.
+
+    Multi-scrobbler calls this before submitting, to deduplicate against
+    listens the server already has. Without it the GET 404s and
+    multi-scrobbler aborts the whole scrobble cycle.
+
+    Resolve the user by token if one is supplied (consistent with the
+    other endpoints), otherwise fall back to the username in the URL so
+    this also works for anonymous reads like real ListenBrainz.
+    """
+    token = scrobble.extract_bearer_token(request)
+    user = None
+    if token:
+        user = users.models.User.objects.filter(token=token).first()
+    if user is None:
+        user = users.models.User.objects.filter(username=user_name).first()
+    if user is None:
+        return HttpResponse(
+            json.dumps({"code": 404, "error": "User not found."}),
+            status=404,
+            content_type="application/json",
+        )
+
+    def _int_param(*names):
+        for name in names:
+            raw = request.GET.get(name)
+            if raw is None:
+                continue
+            try:
+                return int(raw)
+            except (TypeError, ValueError):
+                return None
+        return None
+
+    count = _int_param("count") or scrobble.LISTENS_DEFAULT_COUNT
+    payload = scrobble.get_user_listens(
+        user,
+        min_ts=_int_param("min_ts", "from"),
+        max_ts=_int_param("max_ts", "to"),
+        count=count,
+    )
+    return HttpResponse(
+        json.dumps({"payload": payload}),
+        status=200,
+        content_type="application/json",
+    )
+
+
+@login_not_required
+@csrf_exempt
 @require_POST
 def listenbrainz_submit_listens(request):
     """ListenBrainz-compatible scrobble receiver.
