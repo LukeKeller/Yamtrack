@@ -434,6 +434,202 @@ def get_record_listen_stats(item, user, top_n=10, recent_n=10, heatmap_days=365)
     }
 
 
+def get_music_stats(user, days=None, top_n=15):
+    """Aggregate the user's Play rows into a music dashboard payload.
+
+    ``days`` limits the window (``None`` = all-time). Returns a dict with
+    a ``has_data`` flag, summary stat cards, top artists/albums/tracks,
+    plays-by-month, hour-of-day and weekday histograms, an activity
+    heatmap (same shape as ``get_activity_data``), artist-discovery by
+    month, and streak/milestone numbers.
+
+    All aggregation is done in the database (Trunc/Extract) so it scales
+    to large scrobble histories without loading rows into Python.
+    """
+    from django.db.models.functions import (  # noqa: PLC0415
+        ExtractHour,
+        ExtractIsoWeekDay,
+        TruncDate,
+        TruncMonth,
+    )
+
+    from app.models import Play  # noqa: PLC0415  avoids import cycle
+
+    base = Play.objects.filter(user=user)
+    now = timezone.localtime()
+    qs = (
+        base.filter(played_at__gte=now - datetime.timedelta(days=days))
+        if days
+        else base
+    )
+
+    total = qs.count()
+    if total == 0:
+        return {"has_data": False, "days": days}
+
+    total_seconds = qs.aggregate(s=models.Sum("duration_seconds"))["s"] or 0
+    if total_seconds == 0:
+        total_seconds = total * 210  # 3:30 fallback for spins w/o duration
+    listening_hours = round(total_seconds / 3600, 1)
+
+    unique_artists = qs.exclude(artist="").values("artist").distinct().count()
+    unique_tracks = qs.values("artist", "title").distinct().count()
+
+    top_artists = list(
+        qs.exclude(artist="")
+        .values("artist")
+        .annotate(plays=models.Count("id"))
+        .order_by("-plays")[:top_n],
+    )
+    top_albums = list(
+        qs.exclude(album="")
+        .values("album", "artist")
+        .annotate(plays=models.Count("id"))
+        .order_by("-plays")[:top_n],
+    )
+    top_tracks = list(
+        qs.exclude(title="")
+        .values("title", "artist")
+        .annotate(plays=models.Count("id"))
+        .order_by("-plays")[:top_n],
+    )
+
+    month_rows = (
+        qs.annotate(m=TruncMonth("played_at"))
+        .values("m")
+        .annotate(c=models.Count("id"))
+        .order_by("m")
+    )
+    by_month = {
+        "labels": [r["m"].strftime("%b %Y") for r in month_rows if r["m"]],
+        "data": [r["c"] for r in month_rows if r["m"]],
+    }
+
+    hour_counts = [0] * 24
+    for r in (
+        qs.annotate(h=ExtractHour("played_at"))
+        .values("h")
+        .annotate(c=models.Count("id"))
+    ):
+        if r["h"] is not None:
+            hour_counts[int(r["h"])] = r["c"]
+
+    weekday_counts = [0] * 7
+    for r in (
+        qs.annotate(w=ExtractIsoWeekDay("played_at"))
+        .values("w")
+        .annotate(c=models.Count("id"))
+    ):
+        if r["w"] is not None:
+            weekday_counts[int(r["w"]) - 1] = r["c"]
+
+    day_counts = {}
+    for r in (
+        qs.annotate(d=TruncDate("played_at"))
+        .values("d")
+        .annotate(c=models.Count("id"))
+    ):
+        if r["d"]:
+            day_counts[r["d"]] = r["c"]
+
+    heatmap_days = days or 365
+    start_aligned = get_aligned_monday(
+        now - datetime.timedelta(days=heatmap_days),
+    )
+    date_range = [
+        start_aligned.date() + datetime.timedelta(days=x)
+        for x in range((now.date() - start_aligned.date()).days + 1)
+    ]
+    activity_days = [
+        {
+            "date": d.strftime("%Y-%m-%d"),
+            "count": day_counts.get(d, 0),
+            "level": get_level(day_counts.get(d, 0)),
+        }
+        for d in date_range
+    ]
+    calendar_weeks = [
+        activity_days[i : i + 7] for i in range(0, len(activity_days), 7)
+    ]
+    months = []
+    mondays_per_month = []
+    current_month = date_range[0].strftime("%b") if date_range else None
+    monday_count = 0
+    for d in date_range:
+        if d.weekday() == 0:
+            mlabel = d.strftime("%b")
+            if current_month != mlabel:
+                months.append(current_month if monday_count > 1 else "")
+                mondays_per_month.append(monday_count)
+                current_month = mlabel
+                monday_count = 0
+            monday_count += 1
+    if monday_count > 1:
+        months.append(current_month)
+        mondays_per_month.append(monday_count)
+
+    current_streak, longest_streak = calculate_streaks(day_counts, now.date())
+    busiest_day = None
+    busiest_day_count = 0
+    if day_counts:
+        bd, bc = max(day_counts.items(), key=lambda kv: kv[1])
+        busiest_day = bd.strftime("%b %d, %Y")
+        busiest_day_count = bc
+
+    # Artist discovery uses the user's full history (not the window) so the
+    # "new artists per month" growth curve is meaningful.
+    discovery = defaultdict(int)
+    for r in (
+        base.exclude(artist="")
+        .values("artist")
+        .annotate(first=models.Min("played_at"))
+    ):
+        if r["first"]:
+            discovery[timezone.localtime(r["first"]).strftime("%Y-%m")] += 1
+    disc_keys = sorted(discovery.keys())
+    discoveries = {
+        "labels": [
+            datetime.datetime.strptime(k, "%Y-%m")  # noqa: DTZ007
+            .strftime("%b %Y")
+            for k in disc_keys
+        ],
+        "data": [discovery[k] for k in disc_keys],
+    }
+
+    return {
+        "has_data": True,
+        "days": days,
+        "cards": {
+            "total_plays": total,
+            "unique_artists": unique_artists,
+            "unique_tracks": unique_tracks,
+            "listening_hours": listening_hours,
+            "active_days": len(day_counts),
+            "current_streak": current_streak,
+            "longest_streak": longest_streak,
+            "busiest_day": busiest_day,
+            "busiest_day_count": busiest_day_count,
+        },
+        "top_artists": top_artists,
+        "top_albums": top_albums,
+        "top_tracks": top_tracks,
+        "by_month": by_month,
+        "by_hour": {
+            "labels": [f"{h:02d}" for h in range(24)],
+            "data": hour_counts,
+        },
+        "by_weekday": {
+            "labels": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+            "data": weekday_counts,
+        },
+        "discoveries": discoveries,
+        "activity": {
+            "calendar_weeks": calendar_weeks,
+            "months": list(zip(months, mondays_per_month, strict=False)),
+        },
+    }
+
+
 def get_record_stats(user):
     """Build chart data for the records list page.
 
