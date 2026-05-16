@@ -1156,6 +1156,30 @@ def music_history(request):
 
 
 @require_GET
+def music_stats(request):
+    """Music listening dashboard: charts and breakdowns over a date window.
+
+    ``?days=`` accepts 7/30/90/365 or "all". Defaults to the last year.
+    All aggregation happens in stats.get_music_stats.
+    """
+    days_param = request.GET.get("days", "365")
+    if days_param == "all":
+        days = None
+    else:
+        try:
+            days = max(int(days_param), 1)
+        except ValueError:
+            days = 365
+            days_param = "365"
+
+    context = {
+        "music": stats.get_music_stats(request.user, days=days),
+        "days": days_param,
+    }
+    return render(request, "app/music_stats.html", context)
+
+
+@require_GET
 def service_worker():
     """Serve the service worker file."""
     sw_path = Path(settings.STATICFILES_DIRS[0]) / "js" / "serviceworker.js"
