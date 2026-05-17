@@ -103,6 +103,7 @@ def submit_listens(user, body):
 
     if plays:
         Play.objects.bulk_create(plays, batch_size=200)
+        _queue_enrichment(len(plays))
 
     logger.info(
         "Persisted %s ListenBrainz listens (out of %s) for user %s",
@@ -111,6 +112,20 @@ def submit_listens(user, body):
         user.username,
     )
     return len(plays)
+
+
+def _queue_enrichment(count):
+    """Best-effort: queue MusicBrainz enrichment for the new Plays.
+
+    Imported lazily and guarded so a missing/broken Celery worker can
+    never break scrobble ingestion (multi-scrobbler must keep working).
+    """
+    try:
+        from integrations.tasks import enrich_scrobble_mbids  # noqa: PLC0415
+
+        enrich_scrobble_mbids.delay(limit=max(count, 50))
+    except Exception:
+        logger.exception("Could not queue scrobble MBID enrichment")
 
 
 def get_user_listens(user, min_ts=None, max_ts=None, count=LISTENS_DEFAULT_COUNT):

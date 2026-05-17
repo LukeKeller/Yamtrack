@@ -7,6 +7,7 @@ import events
 from app.mixins import disable_fetch_releases
 from app.models import MediaTypes
 from app.templatetags import app_tags
+from integrations import musicbrainz
 from integrations.imports import (
     anilist,
     discogs,
@@ -174,3 +175,9 @@ def import_discogs(user_id, mode, token, username=None):
 def import_scrobbles(file, user_id, mode):
     """Celery task for one-time scrobble import from a generic CSV."""
     return import_media(scrobbles.importer, file, user_id, mode)
+
+
+@shared_task(name="Enrich scrobbles with MusicBrainz IDs")
+def enrich_scrobble_mbids(limit=500):
+    """Resolve MusicBrainz IDs for pending ListenBrainz scrobbles."""
+    return musicbrainz.enrich_pending(limit=limit)
