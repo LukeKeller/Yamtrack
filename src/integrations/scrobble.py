@@ -2,7 +2,8 @@
 
 Multi-scrobbler (and similar tools) send listens via the ListenBrainz API
 v1 protocol. Yamtrack accepts those listens here, maps them to ``Item``
-rows by case-insensitive (artist, title) match, and writes ``Play`` rows.
+(and, when possible, ``Track``) rows by a normalized (artist, title,
+album) match, and writes ``Play`` rows.
 
 Unmatched scrobbles are still persisted as text-only — they show up in
 listening activity but don't link to a tracked record. Listens of type
@@ -21,12 +22,15 @@ https://listenbrainz.readthedocs.io/en/latest/users/api/core.html#post--1-submit
 from __future__ import annotations
 
 import logging
+import re
+import unicodedata
 import uuid
 from datetime import UTC, datetime
 
+from django.db.models import Q
 from django.utils import timezone
 
-from app.models import Item, MediaTypes, Play, PlaySource, Sources
+from app.models import Item, MediaTypes, Play, PlaySource, Track
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +42,16 @@ LISTENS_MAX_COUNT = 1000
 
 # Fixed namespace so a given Play always yields the same recording_msid.
 _LISTEN_MSID_NS = uuid.UUID("9f3a7c1e-0000-4000-8000-000000000001")
+
+# Tokens too generic to disambiguate an artist on their own.
+_ARTIST_STOPWORDS = {"the", "and", "a", "an", "of"}
+_PARENS_RE = re.compile(r"[\(\[\{].*?[\)\]\}]")
+_FEAT_RE = re.compile(
+    r"\b(?:feat|featuring|ft|with|w)\b.*$",
+)
+_ARTIST_SPLIT_RE = re.compile(r"\s*(?:,|/|;|\bvs\b|\bx\b|&|\band\b|\bfeat\b)\s*")
+_NONALNUM_RE = re.compile(r"[^a-z0-9]+")
+_MIN_SUBSTR = 4
 
 
 def extract_bearer_token(request):
@@ -178,16 +192,19 @@ def _build_play(user, entry):
     elif isinstance(additional.get("duration"), int):
         duration_seconds = additional["duration"]
 
+    item, track = match_play(artist, title, album)
+
     return Play(
         user=user,
-        item=match_item(artist, title, album),
+        item=item,
+        track=track,
         artist=artist,
         title=title,
         album=album,
         played_at=listened_at,
         duration_seconds=duration_seconds,
         source=PlaySource.LISTENBRAINZ.value,
-        side="",
+        side=track.side if track else "",
     )
 
 
@@ -198,43 +215,183 @@ def _parse_listened_at(value):
     return timezone.now()
 
 
-def match_item(artist, title, album=""):
-    """Case-insensitive (artist, title) match against existing Items.
+def _norm(value):
+    """Normalize a free-text music string for fuzzy comparison.
 
-    Falls back to (artist, album) so "playing this album" scrobbles still
-    bind to the right record. Returns the first match, or None.
+    Folds accents (so "RÜFÜS" == "RUFUS", "También" == "Tambien"),
+    lowercases, drops parenthetical/bracketed asides ("(Deluxe Edition)",
+    "[Remastered]", Discogs "(2)" disambiguation), strips a trailing
+    "feat. ..." credit, normalizes "&" to "and", reduces to
+    alphanumerics, and drops a leading "the".
+    """
+    if not value:
+        return ""
+    text = unicodedata.normalize("NFKD", value)
+    text = text.encode("ascii", "ignore").decode("ascii").lower().strip()
+    text = _PARENS_RE.sub(" ", text)
+    text = _FEAT_RE.sub(" ", text)
+    text = text.replace("&", " and ")
+    text = _NONALNUM_RE.sub(" ", text).strip()
+    if text.startswith("the "):
+        text = text[4:]
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _artist_keys(value):
+    """Return the set of normalized artist forms for ``value``.
+
+    Includes the whole normalized credit plus each split part for
+    multi-artist credits ("A & B feat. C" -> {"a and b", "a", "b"}).
+    """
+    base = _norm(value)
+    if not base:
+        return set()
+    keys = {base}
+    for chunk in _ARTIST_SPLIT_RE.split(base):
+        chunk = chunk.strip()
+        if chunk:
+            keys.add(chunk)
+    return keys
+
+
+def _artist_match(a_keys, b_keys):
+    """True if two artist key sets refer to the same artist.
+
+    Direct overlap, or one credit's significant tokens are a subset of
+    the other's (handles "the strokes" vs "strokes", extra feat. names).
+    """
+    if not a_keys or not b_keys:
+        return False
+    if a_keys & b_keys:
+        return True
+    for a in a_keys:
+        a_tokens = {t for t in a.split() if t not in _ARTIST_STOPWORDS}
+        if not a_tokens:
+            continue
+        for b in b_keys:
+            b_tokens = {t for t in b.split() if t not in _ARTIST_STOPWORDS}
+            if b_tokens and (a_tokens <= b_tokens or b_tokens <= a_tokens):
+                return True
+    return False
+
+
+def _text_match(a, b):
+    """Loose equality for normalized titles/albums.
+
+    Equal, or the shorter (>= 4 chars) is contained in the longer — so
+    "is this it" matches a record stored as "the strokes - is this it".
+    """
+    if not a or not b:
+        return False
+    if a == b:
+        return True
+    longer, shorter = (a, b) if len(a) >= len(b) else (b, a)
+    return len(shorter) >= _MIN_SUBSTR and shorter in longer
+
+
+def _candidate_records(artist_keys):
+    """RECORD Items plausibly by this artist, prefiltered in SQL.
+
+    Uses an ``artist__icontains`` OR over the longest significant tokens
+    to keep the working set small; falls back to scanning all RECORD
+    Items when the prefilter finds nothing (e.g. accented artist names
+    that can't be folded in SQL). Vinyl collections are small enough
+    that the fallback is cheap.
+    """
+    tokens = sorted(
+        {
+            tok
+            for key in artist_keys
+            for tok in key.split()
+            if len(tok) > 2 and tok not in _ARTIST_STOPWORDS
+        },
+        key=len,
+        reverse=True,
+    )
+    base = Item.objects.filter(media_type=MediaTypes.RECORD.value).only(
+        "id",
+        "artist",
+        "title",
+    )
+    if tokens:
+        query = Q()
+        for tok in tokens[:4]:
+            query |= Q(artist__icontains=tok)
+        prefiltered = list(base.filter(query))
+        if prefiltered:
+            return prefiltered
+    return list(base)
+
+
+def _match(artist, title, album):
+    """Resolve a scrobble to ``(Item | None, Track | None)``.
+
+    Order of preference:
+      1. A Track on a same-artist record whose title matches -> links
+         both the record Item and the Track.
+      2. A same-artist record whose title matches the album.
+      3. A same-artist record whose title matches the track (singles,
+         and Discogs records stored as "Artist - Song").
     """
     if not artist:
-        return None
+        return None, None
 
-    # Match against the Item.title exactly first (Discogs records are stored
-    # as "Artist - Title" today, so the track scrobble's ``release_name``
-    # often matches the record's ``title`` via the (artist,) prefix).
-    if title:
-        track = Item.objects.filter(
-            media_type=MediaTypes.RECORD.value,
-            artist__iexact=artist,
-            title__iexact=title,
-        ).first()
-        if track:
-            return track
+    a_keys = _artist_keys(artist)
+    if not a_keys:
+        return None, None
+    n_title = _norm(title)
+    n_album = _norm(album)
 
-    if album:
-        record = Item.objects.filter(
-            media_type=MediaTypes.RECORD.value,
-            source=Sources.DISCOGS.value,
-            artist__iexact=artist,
-            title__icontains=album,
-        ).first()
-        if record:
-            return record
+    records = [
+        r for r in _candidate_records(a_keys) if _artist_match(a_keys, _artist_keys(r.artist))
+    ]
+    if not records:
+        return None, None
+    by_id = {r.id: r for r in records}
 
-    # Last-resort: any item by this artist where the title contains the track.
-    if title:
-        return Item.objects.filter(
-            media_type=MediaTypes.RECORD.value,
-            artist__iexact=artist,
-            title__icontains=title,
-        ).first()
+    if n_title:
+        tracks = Track.objects.filter(record_item_id__in=by_id).only(
+            "id",
+            "record_item_id",
+            "title",
+            "artist",
+            "side",
+        )
+        for track in tracks:
+            if _norm(track.title) != n_title:
+                continue
+            record = by_id[track.record_item_id]
+            if (
+                not track.artist
+                or _artist_match(a_keys, _artist_keys(track.artist))
+                or _artist_match(a_keys, _artist_keys(record.artist))
+            ):
+                return record, track
 
-    return None
+    if n_album:
+        for record in records:
+            if _text_match(_norm(record.title), n_album):
+                return record, None
+
+    if n_title:
+        for record in records:
+            if _text_match(_norm(record.title), n_title):
+                return record, None
+
+    return None, None
+
+
+def match_play(artist, title, album=""):
+    """Resolve a scrobble to ``(Item | None, Track | None)``."""
+    return _match(artist, title, album)
+
+
+def match_item(artist, title, album=""):
+    """Resolve a scrobble to an ``Item`` (or ``None``).
+
+    Back-compat entry point for the CSV scrobble importer, which only
+    stores ``Play.item``. New callers should prefer ``match_play`` so
+    ``Play.track`` is populated too.
+    """
+    item, _track = _match(artist, title, album)
+    return item
