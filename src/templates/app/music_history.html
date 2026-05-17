@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load app_tags %}
+{% load mb_tags %}
 
 {% block title %}
   Music - Yamtrack
@@ -64,6 +65,7 @@
         <span class="text-sm text-gray-400">{{ page_obj.paginator.count }} result{{ page_obj.paginator.count|pluralize }}</span>
       </div>
       {% if page_obj.object_list %}
+        {% mb_links_map page_obj.object_list as mbmap %}
         <ul class="divide-y divide-[#39404b]">
           {% for play in page_obj.object_list %}
             <li class="px-5 py-3 flex items-center gap-4">
@@ -83,6 +85,13 @@
                   {% if play.album %}{{ play.album }} · {% endif %}
                   {{ play.played_at|date:"M j, Y H:i" }}
                   {% if play.side and play.side != "full" %} · Side {{ play.side }}{% elif play.side == "full" %} · Full listen{% endif %}
+                  {% with mb=mbmap|dict_get:play.id %}
+                    {% if mb %}
+                      {% if mb.recording_mbid %} · <a class="text-sky-400 hover:underline" target="_blank" rel="noopener noreferrer" href="https://musicbrainz.org/recording/{{ mb.recording_mbid }}">track ↗</a>{% endif %}
+                      {% if mb.release_mbid %} · <a class="text-sky-400 hover:underline" target="_blank" rel="noopener noreferrer" href="https://musicbrainz.org/release/{{ mb.release_mbid }}">release ↗</a>{% endif %}
+                      {% if mb.artist_mbid %} · <a class="text-sky-400 hover:underline" target="_blank" rel="noopener noreferrer" href="https://musicbrainz.org/artist/{{ mb.artist_mbid }}">artist ↗</a>{% endif %}
+                    {% endif %}
+                  {% endwith %}
                 </div>
               </div>
               <div class="shrink-0 text-right">
