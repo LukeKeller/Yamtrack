@@ -1,25 +1,29 @@
-"""Resolve scrobbles to MusicBrainz IDs via the ListenBrainz API.
+"""Resolve scrobbles to MusicBrainz IDs via the MusicBrainz web service.
 
-We don't need the listen to match a record the user tracks — the point
-is to give every scrobble a stable link out to MusicBrainz (and, by
-extension, ListenBrainz) for "more details".
+We don't need the listen to match a record the user tracks - the point
+is to give every scrobble a stable link out to MusicBrainz for "more
+details".
 
-The ListenBrainz metadata lookup endpoint maps a free-text
-(artist, recording) pair to canonical MBIDs:
+We query the public MusicBrainz search API (no auth, unlike the
+ListenBrainz metadata lookup which requires a user token):
 
-    GET https://api.listenbrainz.org/1/metadata/lookup/
-        ?artist_name=...&recording_name=...
+    GET https://musicbrainz.org/ws/2/recording/
+        ?query=recording:"..." AND artist:"..."&fmt=json
 
-No API key required. Responses are cached (including misses) so repeats
-of the same track — very common in a scrobble history — cost one request.
-Results are persisted as :class:`integrations.models.PlayMBID` rows; a
-row with empty MBIDs records a definitive miss so backfill is idempotent.
+MusicBrainz asks for <= 1 request/second and a descriptive User-Agent;
+``enrich_pending`` throttles accordingly. Responses are cached
+(including genuine "no match") so repeats of the same track - very
+common in a scrobble history - cost one request. Transient failures
+(timeouts, 5xx, 503 rate-limit) return ``None`` and are NOT cached or
+recorded, so they're retried on the next run instead of poisoning the
+history with permanent misses.
 """
 
 from __future__ import annotations
 
 import hashlib
 import logging
+import re
 import time
 
 import requests
@@ -27,72 +31,117 @@ from django.core.cache import cache
 
 logger = logging.getLogger(__name__)
 
-LOOKUP_URL = "https://api.listenbrainz.org/1/metadata/lookup/"
-USER_AGENT = "Yamtrack/1.0 (+https://github.com/LukeKeller/Yamtrack)"
+SEARCH_URL = "https://musicbrainz.org/ws/2/recording/"
+# MusicBrainz requires a meaningful UA identifying the app + contact/URL.
+USER_AGENT = "Yamtrack/1.0 ( https://github.com/LukeKeller/Yamtrack )"
 CACHE_TTL = 60 * 60 * 24 * 30  # 30 days
-REQUEST_TIMEOUT = 8
-HTTP_TOO_MANY = 429
+REQUEST_TIMEOUT = 12
 HTTP_OK = 200
+# Minimum MusicBrainz search score (0-100) to accept the top hit. High
+# enough to avoid wrong links, low enough to catch punctuation/case drift.
+MIN_SCORE = 85
 
 
 def _cache_key(artist, recording):
     digest = hashlib.sha1(  # noqa: S324  non-crypto cache key
         f"{artist}\x1f{recording}".lower().encode("utf-8", "ignore"),
     ).hexdigest()
-    return f"lb-mb:{digest}"
+    return f"mb-rec:{digest}"
 
 
-def lookup(artist, recording, release=""):  # noqa: ARG001  release kept for callers
-    """Return the ListenBrainz mapping dict for (artist, recording).
+def _lucene_escape(text):
+    """Escape characters significant to the MusicBrainz/Lucene query parser."""
+    return re.sub(r'(["\\])', r"\\\1", text)
 
-    Returns ``{}`` for a definitive "no match" (cached), or ``None`` for a
-    transient failure (rate limited / network / bad JSON) so the caller
-    can leave the Play for a later retry instead of recording a miss.
+
+def _select_release(recording, album):
+    """Pick the release MBID, preferring one whose title matches the album."""
+    releases = recording.get("releases") or []
+    if not releases:
+        return ""
+    if album:
+        target = album.strip().lower()
+        for rel in releases:
+            if (rel.get("title") or "").strip().lower() == target:
+                return rel.get("id") or ""
+    return releases[0].get("id") or ""
+
+
+def lookup(artist, recording, release=""):
+    """Return ``{recording_mbid, release_mbid, artist_mbids}`` for a listen.
+
+    ``{}`` means a definitive no-match (cached). ``None`` means a
+    transient failure (network / 5xx / rate-limit / bad JSON) - the
+    caller should skip it and retry later, NOT record a miss.
     """
     artist = (artist or "").strip()
-    recording = (recording or "").strip()
-    if not artist or not recording:
+    recording_name = (recording or "").strip()
+    if not artist or not recording_name:
         return {}
 
-    key = _cache_key(artist, recording)
+    key = _cache_key(artist, recording_name)
     cached = cache.get(key)
     if cached is not None:
         return cached
 
+    query = (
+        f'recording:"{_lucene_escape(recording_name)}" '
+        f'AND artist:"{_lucene_escape(artist)}"'
+    )
     try:
         resp = requests.get(
-            LOOKUP_URL,
-            params={"artist_name": artist, "recording_name": recording},
+            SEARCH_URL,
+            params={"query": query, "fmt": "json", "limit": 3},
             headers={"User-Agent": USER_AGENT},
             timeout=REQUEST_TIMEOUT,
         )
     except requests.RequestException:
-        logger.debug("ListenBrainz lookup failed for %s - %s", artist, recording)
+        logger.debug("MusicBrainz lookup failed for %s - %s", artist, recording)
         return None
 
-    if resp.status_code == HTTP_TOO_MANY:
-        return None
     if resp.status_code != HTTP_OK:
-        # 4xx (other than rate limit) is a definitive miss; cache it.
-        cache.set(key, {}, CACHE_TTL)
-        return {}
+        # 503 = rate limited, 5xx = server. Transient: don't cache/record.
+        logger.debug("MusicBrainz HTTP %s for %s", resp.status_code, query)
+        return None
 
     try:
         data = resp.json()
     except ValueError:
         return None
-    if not isinstance(data, dict):
-        data = {}
 
-    cache.set(key, data, CACHE_TTL)
-    return data
+    recordings = data.get("recordings") or []
+    if not recordings:
+        cache.set(key, {}, CACHE_TTL)  # genuine no-match
+        return {}
+
+    best = recordings[0]
+    try:
+        score = int(best.get("score") or 0)
+    except (TypeError, ValueError):
+        score = 0
+    if score < MIN_SCORE:
+        cache.set(key, {}, CACHE_TTL)
+        return {}
+
+    credit = best.get("artist-credit") or []
+    artist_mbid = ""
+    if credit:
+        artist_mbid = (credit[0].get("artist") or {}).get("id") or ""
+
+    result = {
+        "recording_mbid": best.get("id") or "",
+        "release_mbid": _select_release(best, release),
+        "artist_mbids": [artist_mbid] if artist_mbid else [],
+    }
+    cache.set(key, result, CACHE_TTL)
+    return result
 
 
-def enrich_pending(limit=500, sleep=0.1):
+def enrich_pending(limit=500, sleep=1.1):
     """Resolve MBIDs for ListenBrainz Plays that have no PlayMBID yet.
 
-    Returns a counts dict. ``sleep`` throttles requests to be polite to
-    the ListenBrainz API (cache hits don't sleep).
+    Returns a counts dict. ``sleep`` throttles live MusicBrainz requests
+    (default ~1/s per MB policy); cache hits don't sleep.
     """
     from app.models import Play, PlaySource  # noqa: PLC0415
     from integrations.models import PlayMBID  # noqa: PLC0415
