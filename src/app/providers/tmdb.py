@@ -807,6 +807,142 @@ def watch_provider_regions():
     return data
 
 
+TMDB_MAX_PAGE = 500
+DEFAULT_WATCH_REGION = "US"
+STREAMING_WINDOW_DAYS = 180
+
+MOVIE_BROWSE_CATEGORIES = (
+    ("popular", "Popular"),
+    ("now_playing", "In Theaters"),
+    ("streaming", "Streaming Now"),
+    ("trending", "Trending"),
+    ("upcoming", "Upcoming"),
+    ("top_rated", "Top Rated"),
+)
+
+TV_BROWSE_CATEGORIES = (
+    ("popular", "Popular"),
+    ("on_the_air", "On The Air"),
+    ("streaming", "Streaming Now"),
+    ("trending", "Trending"),
+    ("top_rated", "Top Rated"),
+)
+
+
+def browse_categories(media_type):
+    """Return the list of browse categories available for a media type."""
+    raw = (
+        TV_BROWSE_CATEGORIES
+        if media_type == MediaTypes.TV.value
+        else MOVIE_BROWSE_CATEGORIES
+    )
+    return [{"value": value, "label": label} for value, label in raw]
+
+
+def browse_request_config(media_type, category, watch_region):
+    """Return the (url, extra_params) for a browse category.
+
+    Unknown categories fall back to the "popular" endpoint so the page
+    always renders something instead of erroring on a stale bookmark.
+    """
+    today = timezone.localdate()
+    recent_floor = (today - timedelta(days=STREAMING_WINDOW_DAYS)).isoformat()
+
+    if media_type == MediaTypes.MOVIE.value:
+        simple = {
+            "popular": "movie/popular",
+            "now_playing": "movie/now_playing",
+            "upcoming": "movie/upcoming",
+            "top_rated": "movie/top_rated",
+            "trending": "trending/movie/week",
+        }
+        default_path = "movie/popular"
+        streaming_path = "discover/movie"
+        streaming_params = {
+            "sort_by": "primary_release_date.desc",
+            "with_watch_monetization_types": "flatrate",
+            "watch_region": watch_region,
+            "primary_release_date.gte": recent_floor,
+            "primary_release_date.lte": today.isoformat(),
+            "vote_count.gte": 20,
+        }
+    else:
+        simple = {
+            "popular": "tv/popular",
+            "on_the_air": "tv/on_the_air",
+            "top_rated": "tv/top_rated",
+            "trending": "trending/tv/week",
+        }
+        default_path = "tv/popular"
+        streaming_path = "discover/tv"
+        streaming_params = {
+            "sort_by": "first_air_date.desc",
+            "with_watch_monetization_types": "flatrate",
+            "watch_region": watch_region,
+            "first_air_date.gte": recent_floor,
+            "first_air_date.lte": today.isoformat(),
+            "vote_count.gte": 20,
+        }
+
+    if category == "streaming":
+        path, extra_params = streaming_path, streaming_params
+    else:
+        path, extra_params = simple.get(category, default_path), {}
+
+    return f"{base_url}/{path}", extra_params
+
+
+def browse(media_type, category, page, watch_region=None):
+    """Return a paginated, browsable list of movies or TV shows from TMDB."""
+    if not watch_region or watch_region == "UNSET":
+        watch_region = DEFAULT_WATCH_REGION
+
+    page = min(max(int(page), 1), TMDB_MAX_PAGE)
+
+    cache_key = (
+        f"browse_{Sources.TMDB.value}_{media_type}_{category}_{watch_region}_{page}"
+    )
+    data = cache.get(cache_key)
+    if data is not None:
+        return data
+
+    url, extra_params = browse_request_config(media_type, category, watch_region)
+    params = {**base_params, "page": page, **extra_params}
+    if settings.TMDB_NSFW:
+        params["include_adult"] = "true"
+
+    try:
+        response = services.api_request(
+            Sources.TMDB.value,
+            "GET",
+            url,
+            params=params,
+        )
+    except requests.exceptions.HTTPError as error:
+        handle_error(error)
+
+    results = [
+        {
+            "media_id": media["id"],
+            "source": Sources.TMDB.value,
+            "media_type": media_type,
+            "title": get_title(media),
+            "image": get_image_url(media.get("poster_path")),
+        }
+        for media in response.get("results", [])
+    ]
+
+    data = {
+        "page": page,
+        "total_results": response.get("total_results", len(results)),
+        "total_pages": min(response.get("total_pages", 1), TMDB_MAX_PAGE),
+        "results": results,
+    }
+
+    cache.set(cache_key, data)
+    return data
+
+
 def get_changed_ids(media_type):
     """Return changed TMDB ids for the given media type over the last days."""
     url = f"{base_url}/{media_type}/changes"

@@ -257,6 +257,44 @@ def media_search(request):
 
 
 @require_GET
+def browse(request):
+    """Browse curated TMDB lists of movies and TV shows."""
+    media_type = request.GET.get("media_type", MediaTypes.MOVIE.value)
+    if media_type not in (MediaTypes.MOVIE.value, MediaTypes.TV.value):
+        media_type = MediaTypes.MOVIE.value
+
+    categories = tmdb.browse_categories(media_type)
+    valid_categories = {category["value"] for category in categories}
+    category = request.GET.get("category", categories[0]["value"])
+    if category not in valid_categories:
+        category = categories[0]["value"]
+
+    page = int(request.GET.get("page", 1))
+    layout = request.GET.get("layout", "grid")
+
+    data = tmdb.browse(
+        media_type,
+        category,
+        page,
+        request.user.watch_provider_region,
+    )
+
+    if data.get("results"):
+        data["results"] = helpers.enrich_items_with_user_data(
+            request, data["results"], "browse"
+        )
+
+    context = {
+        "data": data,
+        "media_type": media_type,
+        "category": category,
+        "categories": categories,
+        "layout": layout,
+    }
+    return render(request, "app/browse.html", context)
+
+
+@require_GET
 def media_details(request, source, media_type, media_id, title):  # noqa: ARG001 title for URL
     """Return the details page for a media item."""
     media_metadata = services.get_media_metadata(media_type, media_id, source)
