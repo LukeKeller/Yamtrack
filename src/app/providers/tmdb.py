@@ -286,7 +286,7 @@ def enrich_season_with_tv_data(season_data, tv_data, media_id, season_number):
 def fetch_and_cache_seasons(media_id, season_numbers, tv_data):
     """Fetch uncached seasons from API and cache them."""
     url = f"{base_url}/tv/{media_id}"
-    base_append = "recommendations,external_ids,watch/providers"
+    base_append = "recommendations,external_ids,watch/providers,credits"
     max_seasons_per_request = 8
     fetched_tv_data = tv_data
     result_data = {}
@@ -388,9 +388,10 @@ def tv(media_id):
 
     if data is None:
         url = f"{base_url}/tv/{media_id}"
+        appends = "recommendations,external_ids,watch/providers,credits"
         params = {
             **base_params,
-            "append_to_response": "recommendations,external_ids,watch/providers",
+            "append_to_response": appends,
         }
 
         try:
@@ -414,6 +415,16 @@ def process_tv(response):
     num_episodes = response["number_of_episodes"]
     next_episode = response.get("next_episode_to_air")
     last_episode = response.get("last_episode_to_air")
+    cast = response.get("credits", {}).get("cast", []) or []
+    filtered_cast = [
+        {
+            "id": member.get("id"),
+            "name": member.get("name"),
+            "character": member.get("character"),
+            "image": get_image_url(member.get("profile_path")),
+        }
+        for member in cast[:30]
+    ]
     return {
         "media_id": response["id"],
         "source": Sources.TMDB.value,
@@ -454,6 +465,8 @@ def process_tv(response):
         "last_episode_season": last_episode["season_number"] if last_episode else None,
         "next_episode_season": next_episode["season_number"] if next_episode else None,
         "providers": response.get("watch/providers", {}).get("results", {}),
+        "cast": filtered_cast,
+        "total_cast_count": len(cast),
     }
 
 
@@ -987,3 +1000,102 @@ def tv_changes():
 def movie_changes():
     """Return changed movie ids from TMDB for the last days across all pages."""
     return get_changed_ids(MediaTypes.MOVIE.value)
+
+
+def _credit_release_date(credit):
+    """Return the most appropriate release date for sorting credit entries."""
+    return credit.get("release_date") or credit.get("first_air_date") or ""
+
+
+def _process_credit(credit, role_kind):
+    """Convert one raw TMDB combined-credit entry to our internal shape."""
+    media_type = credit.get("media_type")
+    if media_type not in (MediaTypes.MOVIE.value, MediaTypes.TV.value):
+        return None
+
+    title = get_title(credit)
+    if not title:
+        return None
+
+    release_date = _credit_release_date(credit)
+    return {
+        "media_id": credit["id"],
+        "source": Sources.TMDB.value,
+        "media_type": media_type,
+        "title": title,
+        "image": get_image_url(credit.get("poster_path")),
+        "role_kind": role_kind,
+        "role": credit.get("character") if role_kind == "cast" else credit.get("job"),
+        "department": credit.get("department"),
+        "release_date": release_date or None,
+        "popularity": credit.get("popularity") or 0,
+        "vote_average": credit.get("vote_average") or 0,
+    }
+
+
+def person(person_id):
+    """Return profile + combined credits for a TMDB person."""
+    cache_key = f"{Sources.TMDB.value}_person_{person_id}"
+    data = cache.get(cache_key)
+
+    if data is not None:
+        return data
+
+    url = f"{base_url}/person/{person_id}"
+    params = {
+        **base_params,
+        "append_to_response": "combined_credits,external_ids",
+    }
+
+    try:
+        response = services.api_request(
+            Sources.TMDB.value,
+            "GET",
+            url,
+            params=params,
+        )
+    except requests.exceptions.HTTPError as error:
+        handle_error(error)
+
+    combined = response.get("combined_credits", {}) or {}
+    cast_credits = [
+        processed
+        for credit in combined.get("cast", []) or []
+        if (processed := _process_credit(credit, "cast")) is not None
+    ]
+    crew_credits = [
+        processed
+        for credit in combined.get("crew", []) or []
+        if (processed := _process_credit(credit, "crew")) is not None
+    ]
+
+    # De-duplicate crew entries that appear once per job. Keep the first
+    # job title so the page still surfaces a representative role.
+    seen_crew = {}
+    for credit in crew_credits:
+        key = (credit["media_id"], credit["media_type"])
+        if key not in seen_crew:
+            seen_crew[key] = credit
+    crew_credits = list(seen_crew.values())
+
+    image = get_image_url(response.get("profile_path"))
+
+    data = {
+        "id": response.get("id"),
+        "name": response.get("name") or "",
+        "image": image,
+        "biography": (response.get("biography") or "").strip() or None,
+        "birthday": response.get("birthday"),
+        "deathday": response.get("deathday"),
+        "place_of_birth": response.get("place_of_birth"),
+        "known_for_department": response.get("known_for_department"),
+        "also_known_as": response.get("also_known_as") or [],
+        "homepage": response.get("homepage"),
+        "source_url": f"https://www.themoviedb.org/person/{person_id}",
+        "external_links": get_external_links(response.get("external_ids", {})),
+        "cast_credits": cast_credits,
+        "crew_credits": crew_credits,
+    }
+
+    cache.set(cache_key, data)
+    return data

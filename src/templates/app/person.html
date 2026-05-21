@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% load app_tags %}
+
+{% block title %}
+  {{ person.name }} - Yamtrack
+{% endblock title %}
+
+{% block content %}
+  {# Header #}
+  <div class="flex flex-col md:flex-row gap-8 md:gap-10 mb-10">
+    <div class="w-full md:w-1/4 max-w-[250px] mx-auto md:mx-0">
+      <img alt="{{ person.name }}"
+           class="w-full rounded-lg shadow-lg bg-[#2a2f35] {% if person.image != IMG_NONE %}object-cover{% endif %}"
+           src="{{ person.image }}">
+    </div>
+
+    <div class="w-full md:w-3/4">
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+        <div>
+          <h1 class="text-3xl font-bold mb-2">{{ person.name }}</h1>
+          {% if person.known_for_department %}
+            <p class="text-sm text-gray-400">Known for {{ person.known_for_department }}</p>
+          {% endif %}
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="{{ person.source_url }}"
+             target="_blank"
+             rel="noopener"
+             class="px-3 py-2 rounded-md bg-[#39404b] hover:bg-[#454d5a] text-white text-sm flex items-center gap-2"
+             title="Open TMDB page for {{ person.name }}">
+            {% include "app/icons/external-link.svg" with classes="w-4 h-4" %}
+            TMDB
+          </a>
+        </div>
+      </div>
+
+      {# Personal details #}
+      {% if person.birthday or person.deathday or person.place_of_birth %}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm text-gray-300 mb-4">
+          {% if person.birthday %}
+            <div>
+              <span class="text-gray-400">Born:</span>
+              {{ person.birthday|iso_date_format:request.user }}
+            </div>
+          {% endif %}
+          {% if person.deathday %}
+            <div>
+              <span class="text-gray-400">Died:</span>
+              {{ person.deathday|iso_date_format:request.user }}
+            </div>
+          {% endif %}
+          {% if person.place_of_birth %}
+            <div class="sm:col-span-2">
+              <span class="text-gray-400">From:</span>
+              {{ person.place_of_birth }}
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {# Biography #}
+      {% if person.biography %}
+        <div class="mb-6">
+          <div x-data="{ isExpanded: false, isClamped: false, checkClamp() { const element = this.$refs.bioText; this.isClamped = element.scrollHeight > element.clientHeight; } }"
+               x-init="$nextTick(() => checkClamp())">
+            <p x-ref="bioText"
+               :class="isExpanded ? '' : 'line-clamp-5'"
+               class="text-gray-300 text-pretty">{{ person.biography|linebreaksbr }}</p>
+            <button x-show="isClamped"
+                    @click="isExpanded = !isExpanded"
+                    class="text-indigo-400 hover:text-indigo-300 text-sm mt-2 focus:outline-none transition-colors cursor-pointer">
+              <span x-text="isExpanded ? 'Show less' : 'Read more'"></span>
+            </button>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# Filters #}
+  <div class="flex flex-col gap-y-4 mb-6">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-y-3">
+      <h2 class="text-xl font-bold">
+        Filmography
+        <span class="text-sm text-gray-400 font-normal">({{ total_count }} title{{ total_count|pluralize }})</span>
+      </h2>
+
+      <div class="flex items-center gap-x-3 flex-wrap">
+        <label class="text-sm text-gray-400">Sort</label>
+        <select onchange="window.location.search = new URLSearchParams({...Object.fromEntries(new URLSearchParams(window.location.search)), sort: this.value}).toString()"
+                class="bg-[#39404b] text-white text-sm rounded-md px-3 py-1.5 border border-transparent focus:border-indigo-500 outline-none cursor-pointer">
+          {% for value, label in sort_choices %}
+            <option value="{{ value }}" {% if value == sort_by %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <span class="text-sm text-gray-400 self-center mr-1">Role:</span>
+      {% for value, label in role_choices %}
+        <a href="?role={{ value }}&type={{ type_filter }}&sort={{ sort_by }}"
+           class="px-3 py-1.5 text-sm rounded-md transition-colors duration-200 cursor-pointer {% if role_filter == value %}bg-indigo-600 text-white{% else %}bg-gray-700 text-gray-300 hover:bg-gray-600{% endif %}">
+          {{ label }}
+        </a>
+      {% endfor %}
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <span class="text-sm text-gray-400 self-center mr-1">Type:</span>
+      {% for value, label in type_choices %}
+        <a href="?role={{ role_filter }}&type={{ value }}&sort={{ sort_by }}"
+           class="px-3 py-1.5 text-sm rounded-md transition-colors duration-200 cursor-pointer {% if type_filter == value %}bg-indigo-600 text-white{% else %}bg-gray-700 text-gray-300 hover:bg-gray-600{% endif %}">
+          {{ label }}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# Results grid #}
+  {% if results %}
+    <div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
+      {% for result in results %}
+        <div class="flex flex-col gap-1">
+          {% include "app/components/media_card.html" with item=result.item title=result.item.title media=result.media %}
+          {% if result.item.role %}
+            <div class="text-xs text-gray-400 px-1 line-clamp-1"
+                 title="{{ result.item.role }}{% if result.item.release_date %} ({{ result.item.release_date|slice:':4' }}){% endif %}">
+              {% if result.item.role_kind == "crew" %}
+                <span class="text-gray-500">{{ result.item.department|default:'Crew' }}:</span>
+              {% endif %}
+              {{ result.item.role }}
+              {% if result.item.release_date %}
+                <span class="text-gray-500">({{ result.item.release_date|slice:":4" }})</span>
+              {% endif %}
+            </div>
+          {% elif result.item.release_date %}
+            <div class="text-xs text-gray-500 px-1">{{ result.item.release_date|slice:":4" }}</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="flex flex-col items-center justify-center py-24 px-4 bg-[#2a2f35] rounded-lg">
+      <div class="bg-[#39404b] rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+        {% include "app/icons/person.svg" with classes="w-8 h-8 text-gray-400" %}
+      </div>
+      <h3 class="text-xl font-semibold mb-2">No titles match</h3>
+      <p class="text-gray-400 text-center max-w-md">Try a different combination of role and type filters.</p>
+    </div>
+  {% endif %}
+{% endblock content %}

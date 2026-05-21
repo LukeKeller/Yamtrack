@@ -357,6 +357,121 @@ def media_details(request, source, media_type, media_id, title):  # noqa: ARG001
     return render(request, "app/media_details.html", context)
 
 
+PERSON_SORT_CHOICES = (
+    ("date_desc", "Newest"),
+    ("date_asc", "Oldest"),
+    ("popularity", "Popularity"),
+    ("title", "Title"),
+)
+
+PERSON_TYPE_CHOICES = (
+    ("all", "All"),
+    (MediaTypes.MOVIE.value, "Movies"),
+    (MediaTypes.TV.value, "TV Shows"),
+)
+
+PERSON_ROLE_CHOICES = (
+    ("acting", "Acting"),
+    ("crew", "Crew"),
+    ("all", "All"),
+)
+
+
+def _sort_person_credits(entries, sort_by):
+    """Return person credits sorted according to the requested key."""
+    if sort_by == "date_asc":
+        return sorted(
+            entries,
+            key=lambda c: (c.get("release_date") or "9999-99-99", c["title"].lower()),
+        )
+    if sort_by == "popularity":
+        return sorted(
+            entries,
+            key=lambda c: (-(c.get("popularity") or 0), c["title"].lower()),
+        )
+    if sort_by == "title":
+        return sorted(entries, key=lambda c: c["title"].lower())
+    return sorted(
+        entries,
+        key=lambda c: (c.get("release_date") or "", c["title"].lower()),
+        reverse=True,
+    )
+
+
+def _select_person_credits(person_metadata, role_filter, type_filter):
+    """Return person credits matching the role and type filters."""
+    if role_filter == "acting":
+        entries = list(person_metadata["cast_credits"])
+    elif role_filter == "crew":
+        entries = list(person_metadata["crew_credits"])
+    else:
+        entries = list(person_metadata["cast_credits"]) + list(
+            person_metadata["crew_credits"]
+        )
+
+    if type_filter != "all":
+        entries = [c for c in entries if c["media_type"] == type_filter]
+
+    return entries
+
+
+@require_GET
+def person_details(request, person_id, name):  # noqa: ARG001 name for URL
+    """Render the filmography page for a TMDB person."""
+    person_metadata = tmdb.person(person_id)
+
+    sort_by = request.GET.get("sort", "date_desc")
+    if sort_by not in {key for key, _ in PERSON_SORT_CHOICES}:
+        sort_by = "date_desc"
+
+    type_filter = request.GET.get("type", "all")
+    if type_filter not in {key for key, _ in PERSON_TYPE_CHOICES}:
+        type_filter = "all"
+
+    role_filter = request.GET.get("role", "acting")
+    if role_filter not in {key for key, _ in PERSON_ROLE_CHOICES}:
+        role_filter = "acting"
+
+    entries = _select_person_credits(person_metadata, role_filter, type_filter)
+    entries = _sort_person_credits(entries, sort_by)
+
+    # enrich_items_with_user_data needs a homogeneous media_type per call,
+    # so split by media type and stitch the per-credit user data back on.
+    by_type = {}
+    for credit in entries:
+        by_type.setdefault(credit["media_type"], []).append(credit)
+
+    user_media_by_key = {}
+    for media_type, items in by_type.items():
+        enriched = helpers.enrich_items_with_user_data(request, items, "filmography")
+        for entry in enriched:
+            key = (media_type, str(entry["item"]["media_id"]))
+            user_media_by_key[key] = entry["media"]
+
+    results = [
+        {
+            "item": credit,
+            "media": user_media_by_key.get(
+                (credit["media_type"], str(credit["media_id"])),
+            ),
+        }
+        for credit in entries
+    ]
+
+    context = {
+        "person": person_metadata,
+        "results": results,
+        "total_count": len(results),
+        "sort_by": sort_by,
+        "sort_choices": PERSON_SORT_CHOICES,
+        "type_filter": type_filter,
+        "type_choices": PERSON_TYPE_CHOICES,
+        "role_filter": role_filter,
+        "role_choices": PERSON_ROLE_CHOICES,
+    }
+    return render(request, "app/person.html", context)
+
+
 @require_GET
 def season_details(request, source, media_id, title, season_number):  # noqa: ARG001 For URL
     """Return the details page for a season."""
