@@ -37,6 +37,7 @@ from app.models import (
 )
 from app.providers import discogs, manual, services, tmdb
 from app.templatetags import app_tags
+from events.views import build_calendar_context
 from users.models import (
     DateFormatChoices,
     HomeSortChoices,
@@ -94,6 +95,7 @@ def home(request):
         "current_sort": sort_by,
         "sort_choices": HomeSortChoices.choices,
         "items_limit": items_limit,
+        **build_calendar_context(request.user),
     }
     return render(request, "app/home.html", context)
 

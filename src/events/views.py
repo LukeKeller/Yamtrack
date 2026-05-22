@@ -19,17 +19,10 @@ from users.models import User
 logger = logging.getLogger(__name__)
 
 
-@require_GET
-def calendar(request):
-    """Display the calendar page."""
-    # Handle view type
-    view_type = request.user.update_preference(
-        "calendar_layout",
-        request.GET.get("view"),
-    )
-
-    month = request.GET.get("month")
-    year = request.GET.get("year")
+def build_calendar_context(user, month=None, year=None, view_type=None):
+    """Build the context dict needed to render the calendar card."""
+    if view_type is None:
+        view_type = user.calendar_layout
 
     try:
         current_date = (
@@ -41,7 +34,6 @@ def calendar(request):
         current_date = timezone.localdate()
         month, year = current_date.month, current_date.year
 
-    # Calculate navigation dates
     is_december = month == 12  # noqa: PLR2004
     is_january = month == 1
 
@@ -51,7 +43,6 @@ def calendar(request):
     next_month = 1 if is_december else month + 1
     next_year = year + 1 if is_december else year
 
-    # Calculate date range for events
     first_day = date(year, month, 1)
     last_day = date(
         year + 1 if is_december else year,
@@ -59,26 +50,20 @@ def calendar(request):
         1,
     ) - timedelta(days=1)
 
-    # Get calendar data
     calendar_format = cal.monthcalendar(year, month)
     month_name = cal.month_name[month]
 
-    # Get events and organize by day
-    releases = Event.objects.get_user_events(request.user, first_day, last_day)
+    releases = Event.objects.get_user_events(user, first_day, last_day)
 
     release_dict = {}
     for release in releases:
-        # Convert UTC datetime to user's timezone and extract day
         local_datetime = timezone.localtime(release.datetime)
         day = local_datetime.day
         if day not in release_dict:
             release_dict[day] = []
         release_dict[day].append(release)
 
-    # Get today's date for highlighting
-    today = timezone.localdate()
-
-    context = {
+    return {
         "calendar": calendar_format,
         "month": month,
         "month_name": month_name,
@@ -88,9 +73,25 @@ def calendar(request):
         "next_month": next_month,
         "next_year": next_year,
         "release_dict": release_dict,
-        "today": today,
+        "today": timezone.localdate(),
         "view_type": view_type,
     }
+
+
+@require_GET
+def calendar(request):
+    """Display the calendar page."""
+    view_type = request.user.update_preference(
+        "calendar_layout",
+        request.GET.get("view"),
+    )
+
+    context = build_calendar_context(
+        request.user,
+        month=request.GET.get("month"),
+        year=request.GET.get("year"),
+        view_type=view_type,
+    )
     return render(request, "events/calendar.html", context)
 
 

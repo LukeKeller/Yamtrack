@@ -36,6 +36,8 @@
       </div>
     </div>
 
+    {% include "events/components/calendar_card.html" %}
+
     <div class="space-y-15">
       {% for section in home_sections %}
         {% include "app/components/home_section.html" with section=section %}
