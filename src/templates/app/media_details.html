@@ -355,6 +355,69 @@
   </div>
   {# end hero gradient #}
 
+  {# Section tabs (mocks/media-details-movie.html). Anchor-jump rather than
+     show/hide — keeps every section in the DOM (search-engines / Ctrl+F /
+     screen readers all see the full page) and avoids restructuring the
+     existing two-column body. Smooth-scrolls via scroll-margin-top so the
+     sticky topbar doesn't cover section headings. #}
+  <nav class="sticky top-14 z-10 -mx-4 lg:-mx-8 px-4 lg:px-8 mb-6 bg-canvas border-b border-border-default">
+    <div class="flex items-center gap-1 overflow-x-auto no-scrollbar"
+         x-data="{ tab: 'overview' }"
+         x-init="() => {
+           const setFromHash = () => { const h = (location.hash || '#overview').slice(1); if (h) tab = h; };
+           setFromHash();
+           window.addEventListener('hashchange', setFromHash);
+         }">
+      <a href="#overview"
+         @click="tab='overview'"
+         class="px-4 py-2.5 text-sm font-medium relative shrink-0 transition-colors"
+         :class="tab === 'overview' ? 'text-fg' : 'text-fg-muted hover:text-fg'">
+        Overview
+        <span class="absolute bottom-0 inset-x-0 h-0.5 bg-accent"
+              x-show="tab === 'overview'"
+              x-cloak></span>
+      </a>
+      {% if media.episodes %}
+        <a href="#episodes"
+           @click="tab='episodes'"
+           class="px-4 py-2.5 text-sm font-medium relative shrink-0 transition-colors"
+           :class="tab === 'episodes' ? 'text-fg' : 'text-fg-muted hover:text-fg'">
+          Episodes
+          <span class="ml-1 pill pill-meta text-[10px] px-1.5">{{ media.episodes|length }}</span>
+          <span class="absolute bottom-0 inset-x-0 h-0.5 bg-accent" x-show="tab === 'episodes'" x-cloak></span>
+        </a>
+      {% endif %}
+      {% if media.cast %}
+        <a href="#cast"
+           @click="tab='cast'"
+           class="px-4 py-2.5 text-sm font-medium relative shrink-0 transition-colors"
+           :class="tab === 'cast' ? 'text-fg' : 'text-fg-muted hover:text-fg'">
+          Cast
+          <span class="absolute bottom-0 inset-x-0 h-0.5 bg-accent" x-show="tab === 'cast'" x-cloak></span>
+        </a>
+      {% endif %}
+      {% if media.related %}
+        <a href="#related"
+           @click="tab='related'"
+           class="px-4 py-2.5 text-sm font-medium relative shrink-0 transition-colors"
+           :class="tab === 'related' ? 'text-fg' : 'text-fg-muted hover:text-fg'">
+          Related
+          <span class="absolute bottom-0 inset-x-0 h-0.5 bg-accent" x-show="tab === 'related'" x-cloak></span>
+        </a>
+      {% endif %}
+      <a href="#history"
+         @click="tab='history'"
+         class="px-4 py-2.5 text-sm font-medium relative shrink-0 transition-colors"
+         :class="tab === 'history' ? 'text-fg' : 'text-fg-muted hover:text-fg'">
+        Your history
+        <span class="absolute bottom-0 inset-x-0 h-0.5 bg-accent" x-show="tab === 'history'" x-cloak></span>
+      </a>
+    </div>
+  </nav>
+
+  {# Anchor target for the Overview tab so scroll-margin-top works cleanly. #}
+  <span id="overview" class="block" style="scroll-margin-top: 7rem"></span>
+
   {# Record listening stats — Koito-style panels for vinyl records #}
   {% if record_listen_stats %}
     <section class="mb-12">
@@ -490,7 +553,7 @@
   <div class="flex flex-col md:flex-row gap-12 md:gap-10">
     {# Details Column #}
 
-    <div class="w-full md:w-1/4 md:max-w-[250px] mx-auto lg:mx-0">
+    <div class="w-full md:w-1/4 md:max-w-[250px] mx-auto lg:mx-0" id="history" style="scroll-margin-top: 7rem">
       {# Your History #}
       {% if user_medias|length > 1 or current_instance.start_date or current_instance.end_date or current_instance.progress and media.media_type != MediaTypes.MOVIE.value %}
         <div class="flex items-center justify-between mb-4">
@@ -773,7 +836,7 @@
 
     <div class="w-full md:w-3/4">
       {% if media.cast %}
-        <section class="mb-8">
+        <section class="mb-8" id="cast" style="scroll-margin-top: 7rem">
           <h2 class="text-xl font-bold mb-4">Cast</h2>
           <div class="flex overflow-x-auto gap-x-4 pb-5">
             {% for cast in media.cast %}
@@ -796,6 +859,7 @@
 
       {# Related Media #}
       {% if media.related %}
+        <div id="related" style="scroll-margin-top: 7rem">
         {% for name, related_items in media.related.items %}
           {% if related_items %}
             <section class="{% if not forloop.last %}mb-8{% endif %}">
@@ -819,11 +883,12 @@
             </section>
           {% endif %}
         {% endfor %}
+        </div>
       {% endif %}
 
       {# Episodes List — compact rows (mocks/media-details-tv.html) #}
       {% if media.episodes %}
-        <div class="w-full">
+        <div class="w-full" id="episodes" style="scroll-margin-top: 7rem">
           <h2 class="text-xl font-semibold mb-3">Episodes</h2>
           <ul class="bg-surface-1 rounded-lg overflow-hidden divide-y"
               style="border: 1px solid var(--color-border-subtle);">
