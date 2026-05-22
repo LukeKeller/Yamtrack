@@ -99,19 +99,45 @@
               </button>
             </div>
           {% else %}
-            {# Not tracked → keep the original drawer-opening behavior so the
-               first-add flow lets the user pick status + dates + score in one
-               place. #}
+            {# Not tracked → status sheet picks a status + opens the drawer
+               with it preset. Same popover surface as the tracked branch so
+               picking a status is one tap (not "open drawer, pick from
+               dropdown, save"). #}
             <button type="button"
                     class="mt-4 px-4 py-3 rounded-lg w-full flex items-center justify-center gap-2 font-medium cursor-pointer btn-primary"
-                    hx-get="{% media_view_url 'track_modal' media %}"
-                    hx-vals='{"return_url": "{{ request.get_full_path|urlencode }}", "instance_id": "{{ current_instance.id }}"}'
-                    hx-target="#{% component_id 'track' media current_instance.id %}"
-                    hx-trigger="click"
-                    @click="trackOpen = true">
+                    @click="sheetOpen = !sheetOpen"
+                    aria-haspopup="menu"
+                    :aria-expanded="sheetOpen.toString()">
               {% include "app/icons/plus.svg" with classes="w-4 h-4" %}
               <span>Add to library</span>
+              <svg class="w-4 h-4 ml-1 opacity-70 transition-transform"
+                   :class="{ 'rotate-180': sheetOpen }"
+                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
             </button>
+
+            <div x-show="sheetOpen"
+                 x-cloak
+                 x-transition.opacity.duration.150ms
+                 @click.outside="sheetOpen = false"
+                 @keydown.escape.window="sheetOpen = false"
+                 class="absolute z-20 mt-2 w-full p-1.5 rounded-lg bg-surface-1"
+                 style="border: 1px solid var(--color-border-default); box-shadow: var(--shadow-elev-2);"
+                 role="menu">
+              <p class="text-[11px] uppercase tracking-wider text-fg-faint px-2 pt-1 pb-1.5">Start tracking as</p>
+              {% for s in Status %}
+                <button type="button"
+                        hx-get="{% media_view_url 'track_modal' media %}?status={{ s.value|urlencode }}"
+                        hx-vals='{"return_url": "{{ request.get_full_path|urlencode }}"}'
+                        hx-target="#{% component_id 'track' media current_instance.id %}"
+                        hx-trigger="click"
+                        @click="sheetOpen = false; trackOpen = true"
+                        class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-surface-2 transition-colors"
+                        role="menuitem">
+                  <span class="status-dot status-dot-{{ s.value|status_slug }}"></span>
+                  {{ s.value|media_status_readable:media_type }}
+                </button>
+              {% endfor %}
+            </div>
           {% endif %}
 
           {# Track Drawer (loaded on demand via HTMX, used by both branches) #}

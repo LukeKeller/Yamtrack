@@ -827,6 +827,13 @@ def track_modal(
         "instance_id": instance_id,
     }
 
+    # Status sheet on untracked media opens this view with a preset status,
+    # so picking "Completed" / "Planning" etc. from the popover lands the user
+    # in a drawer with that status already chosen.
+    initial_status = request.GET.get("status")
+    if initial_status and initial_status in {s.value for s in Status}:
+        initial_data["status"] = initial_status
+
     if media:
         title = media.item
         if media_type == MediaTypes.GAME.value:
