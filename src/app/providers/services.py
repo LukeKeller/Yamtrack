@@ -83,6 +83,12 @@ session.mount(
     "https://api.discogs.com",
     LimiterAdapter(per_minute=55),
 )
+# OMDb free tier: 1,000 req/day. Be polite at 30/min so a bulk page render
+# can't burn the daily budget in one minute.
+session.mount(
+    "https://www.omdbapi.com",
+    LimiterAdapter(per_minute=30),
+)
 
 
 class ProviderAPIError(Exception):

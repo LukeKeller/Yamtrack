@@ -349,6 +349,17 @@ TMDB_API = config(
 TMDB_NSFW = config("TMDB_NSFW", default=False, cast=bool)
 TMDB_LANG = config("TMDB_LANG", default="en")
 
+# OMDb enriches movies/TV with Rotten Tomatoes, Metacritic, IMDb ratings, and
+# US box office. Optional: leave empty to disable. Free tier at
+# https://www.omdbapi.com/apikey.aspx allows 1,000 requests/day.
+OMDB_API = config(
+    "OMDB_API",
+    default=secret(
+        "OMDB_API_FILE",
+        "",
+    ),
+)
+
 TVDB_API = config(
     "TVDB_API",
     default=secret(
