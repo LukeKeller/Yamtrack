@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en" data-theme="default">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings — Yamtrack (redesign mock)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="_assets/tokens.css">
+  <style>
+    .toggle { position: relative; display: inline-block; width: 36px; height: 20px; }
+    .toggle input { display: none; }
+    .toggle-slider { position: absolute; inset: 0; background: var(--surface-3); border-radius: 999px; transition: 180ms; }
+    .toggle-slider::before { content: ""; position: absolute; left: 2px; top: 2px; width: 16px; height: 16px; background: white; border-radius: 999px; transition: 180ms; }
+    .toggle input:checked + .toggle-slider { background: var(--accent-strong); }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(16px); }
+    .swatch { display: flex; gap: 2px; }
+    .swatch span { width: 14px; height: 22px; }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="flex min-h-screen">
+    <aside class="hidden lg:flex w-[220px] bg-surface-0 border-r-default flex-col h-screen sticky top-0 shrink-0">
+      <div class="h-14 px-4 flex items-center gap-2 border-b-default">
+        <div class="w-8 h-8 rounded-md bg-accent flex items-center justify-center font-bold text-white">Y</div>
+        <div class="font-semibold">Yamtrack</div>
+      </div>
+      <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+        <div>
+          <a class="nav-item" href="home.html">Home</a>
+          <a class="nav-item active" href="#">Settings</a>
+        </div>
+      </nav>
+    </aside>
+
+    <div class="flex-1 min-w-0 flex flex-col">
+      <header class="sticky top-0 z-30 h-14 bg-surface-0 border-b-default px-4 lg:px-6 flex items-center gap-3">
+        <h1 class="text-base font-semibold">Settings</h1>
+        <div class="flex-1"></div>
+        <div class="w-7 h-7 rounded-full bg-accent flex items-center justify-center text-white text-xs font-semibold">L</div>
+      </header>
+
+      <main class="flex-1 max-w-6xl w-full mx-auto px-4 lg:px-8 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-8">
+
+          <!-- Settings nav -->
+          <aside class="md:sticky md:top-20 self-start">
+            <div class="relative mb-3">
+              <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-fg-faint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="11" cy="11" r="7"/></svg>
+              <input class="input h-8 pl-8 pr-3 text-sm" placeholder="Find setting…">
+            </div>
+            <ul class="text-sm space-y-0.5">
+              <li><a class="flex items-center gap-2 px-2.5 py-1.5 rounded-sm text-fg-muted hover:bg-surface-2" href="#"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="7" r="4"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg>Account</a></li>
+              <li><a class="flex items-center gap-2 px-2.5 py-1.5 rounded-sm bg-surface-2 text-fg" href="#"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>Appearance</a></li>
+              <li><a class="flex items-center gap-2 px-2.5 py-1.5 rounded-sm text-fg-muted hover:bg-surface-2" href="#"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 7h18M3 12h18M3 17h18"/></svg>Library</a></li>
+              <li><a class="flex items-center gap-2 px-2.5 py-1.5 rounded-sm text-fg-muted hover:bg-surface-2" href="#"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/></svg>Notifications</a></li>
+              <li><a class="flex items-center gap-2 px-2.5 py-1.5 rounded-sm text-fg-muted hover:bg-surface-2" href="#"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 7h18M3 12h18M3 17h18"/></svg>Integrations</a></li>
+              <li><a class="flex items-center gap-2 px-2.5 py-1.5 rounded-sm text-fg-muted hover:bg-surface-2" href="#"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>Import / Export</a></li>
+              <li><a class="flex items-center gap-2 px-2.5 py-1.5 rounded-sm text-fg-muted hover:bg-surface-2" href="#"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Keyboard shortcuts</a></li>
+              <li><a class="flex items-center gap-2 px-2.5 py-1.5 rounded-sm text-fg-muted hover:bg-surface-2" href="#"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 2 4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6z"/></svg>Advanced</a></li>
+              <li><a class="flex items-center gap-2 px-2.5 py-1.5 rounded-sm text-fg-muted hover:bg-surface-2" href="#"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>About</a></li>
+            </ul>
+          </aside>
+
+          <!-- Content -->
+          <div class="space-y-6 min-w-0">
+
+            <div>
+              <h2 class="text-2xl font-semibold mb-1">Appearance</h2>
+              <p class="text-sm text-fg-muted">How Yamtrack looks. Changes apply immediately.</p>
+            </div>
+
+            <!-- Theme picker -->
+            <section class="card">
+              <h3 class="font-semibold mb-4">Theme</h3>
+              <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                <button class="card text-left ring-2 ring-accent">
+                  <div class="swatch mb-2"><span style="background: #0d0f12"></span><span style="background: #1c2027"></span><span style="background: #6366f1"></span><span style="background: #34d399"></span></div>
+                  <div class="text-sm font-medium">Default</div>
+                  <div class="text-xs text-fg-faint">Slate · indigo</div>
+                </button>
+                <button class="card text-left hover:bg-surface-2">
+                  <div class="swatch mb-2"><span style="background: #181a24"></span><span style="background: #282a36"></span><span style="background: #bd93f9"></span><span style="background: #50fa7b"></span></div>
+                  <div class="text-sm font-medium">Dracula</div>
+                  <div class="text-xs text-fg-faint">Purple · vivid</div>
+                </button>
+                <button class="card text-left hover:bg-surface-2">
+                  <div class="swatch mb-2"><span style="background: #11111b"></span><span style="background: #1e1e2e"></span><span style="background: #cba6f7"></span><span style="background: #a6e3a1"></span></div>
+                  <div class="text-sm font-medium">Catppuccin Mocha</div>
+                  <div class="text-xs text-fg-faint">Mauve · warm</div>
+                </button>
+                <button class="card text-left hover:bg-surface-2">
+                  <div class="swatch mb-2"><span style="background: #242933"></span><span style="background: #3b4252"></span><span style="background: #88c0d0"></span><span style="background: #a3be8c"></span></div>
+                  <div class="text-sm font-medium">Nord</div>
+                  <div class="text-xs text-fg-faint">Glacier · cool</div>
+                </button>
+                <button class="card text-left hover:bg-surface-2">
+                  <div class="swatch mb-2"><span style="background: #16161e"></span><span style="background: #1f2335"></span><span style="background: #7aa2f7"></span><span style="background: #9ece6a"></span></div>
+                  <div class="text-sm font-medium">Tokyo Night</div>
+                  <div class="text-xs text-fg-faint">Cyan · neon</div>
+                </button>
+                <button class="card text-left hover:bg-surface-2">
+                  <div class="swatch mb-2"><span style="background: #1d2021"></span><span style="background: #282828"></span><span style="background: #d79921"></span><span style="background: #b8bb26"></span></div>
+                  <div class="text-sm font-medium">Gruvbox Dark</div>
+                  <div class="text-xs text-fg-faint">Amber · earthy</div>
+                </button>
+              </div>
+            </section>
+
+            <!-- Density -->
+            <section class="card">
+              <h3 class="font-semibold mb-3">Density</h3>
+              <p class="text-sm text-fg-muted mb-3">How tightly cards and rows are packed.</p>
+              <div class="flex gap-2">
+                <button class="card flex-1 text-center hover:bg-surface-2">
+                  <div class="space-y-1 mb-2">
+                    <div class="h-1.5 bg-surface-3 rounded-full"></div>
+                    <div class="h-1.5 bg-surface-3 rounded-full"></div>
+                    <div class="h-1.5 bg-surface-3 rounded-full"></div>
+                    <div class="h-1.5 bg-surface-3 rounded-full"></div>
+                  </div>
+                  <div class="text-sm font-medium">Compact</div>
+                </button>
+                <button class="card flex-1 text-center ring-2 ring-accent">
+                  <div class="space-y-2 mb-2">
+                    <div class="h-1.5 bg-surface-3 rounded-full"></div>
+                    <div class="h-1.5 bg-surface-3 rounded-full"></div>
+                    <div class="h-1.5 bg-surface-3 rounded-full"></div>
+                  </div>
+                  <div class="text-sm font-medium">Comfortable</div>
+                </button>
+                <button class="card flex-1 text-center hover:bg-surface-2">
+                  <div class="space-y-3 mb-2">
+                    <div class="h-1.5 bg-surface-3 rounded-full"></div>
+                    <div class="h-1.5 bg-surface-3 rounded-full"></div>
+                  </div>
+                  <div class="text-sm font-medium">Cozy</div>
+                </button>
+              </div>
+            </section>
+
+            <!-- Sidebar -->
+            <section class="card">
+              <h3 class="font-semibold mb-3">Sidebar</h3>
+              <div class="space-y-3">
+                <label class="flex items-center justify-between gap-3 py-1">
+                  <div>
+                    <div class="text-sm">Start collapsed</div>
+                    <div class="text-xs text-fg-muted">Sidebar opens to icon-only mode on load.</div>
+                  </div>
+                  <span class="toggle"><input type="checkbox"><span class="toggle-slider"></span></span>
+                </label>
+                <label class="flex items-center justify-between gap-3 py-1">
+                  <div>
+                    <div class="text-sm">Show item counts</div>
+                    <div class="text-xs text-fg-muted">Numbers next to each library entry in the sidebar.</div>
+                  </div>
+                  <span class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></span>
+                </label>
+                <label class="flex items-center justify-between gap-3 py-1">
+                  <div>
+                    <div class="text-sm">Color-tinted media types</div>
+                    <div class="text-xs text-fg-muted">Tint each media-type icon with its accent color.</div>
+                  </div>
+                  <span class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></span>
+                </label>
+              </div>
+            </section>
+
+            <!-- Cards -->
+            <section class="card">
+              <h3 class="font-semibold mb-3">Cards &amp; lists</h3>
+              <div class="space-y-3">
+                <label class="flex items-center justify-between gap-3 py-1">
+                  <div>
+                    <div class="text-sm">Show progress bars</div>
+                    <div class="text-xs text-fg-muted">A thin colored bar across the bottom of each poster.</div>
+                  </div>
+                  <span class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></span>
+                </label>
+                <label class="flex items-center justify-between gap-3 py-1">
+                  <div>
+                    <div class="text-sm">Hide zero ratings</div>
+                    <div class="text-xs text-fg-muted">Items with no score don't show a star badge.</div>
+                  </div>
+                  <span class="toggle"><input type="checkbox"><span class="toggle-slider"></span></span>
+                </label>
+                <label class="flex items-center justify-between gap-3 py-1">
+                  <div>
+                    <div class="text-sm">Obfuscate unseen episodes</div>
+                    <div class="text-xs text-fg-muted">Blur thumbnails and synopses of episodes you haven't watched.</div>
+                  </div>
+                  <span class="toggle"><input type="checkbox" checked><span class="toggle-slider"></span></span>
+                </label>
+                <div class="flex items-center justify-between gap-3 py-1">
+                  <div>
+                    <div class="text-sm">Default layout</div>
+                    <div class="text-xs text-fg-muted">Grid or table when opening a media list.</div>
+                  </div>
+                  <select class="input h-9 w-32">
+                    <option>Grid</option>
+                    <option>Table</option>
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            <!-- Save -->
+            <div class="flex items-center justify-between">
+              <p class="text-xs text-fg-faint">Changes save automatically.</p>
+              <button class="btn btn-secondary btn-sm">Restore defaults</button>
+            </div>
+
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

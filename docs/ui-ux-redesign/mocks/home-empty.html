@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en" data-theme="default">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home (empty) — Yamtrack (redesign mock)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="_assets/tokens.css">
+</head>
+<body class="min-h-screen">
+  <div class="flex min-h-screen">
+    <aside class="hidden lg:flex w-[220px] bg-surface-0 border-r-default flex-col h-screen sticky top-0 shrink-0">
+      <div class="h-14 px-4 flex items-center gap-2 border-b-default">
+        <div class="w-8 h-8 rounded-md bg-accent flex items-center justify-center font-bold text-white">Y</div>
+        <div class="font-semibold">Yamtrack</div>
+      </div>
+      <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+        <div>
+          <div class="px-3 mb-1 text-[11px] uppercase tracking-wider text-fg-faint">Library</div>
+          <a class="nav-item active" href="#">Home</a>
+          <a class="nav-item" href="search.html">Discover</a>
+          <a class="nav-item type-tv" href="media-list-grid.html">TV shows<span class="ml-auto text-xs text-fg-faint">0</span></a>
+          <a class="nav-item type-movie" href="#">Movies<span class="ml-auto text-xs text-fg-faint">0</span></a>
+        </div>
+        <div>
+          <div class="px-3 mb-1 text-[11px] uppercase tracking-wider text-fg-faint">Tools</div>
+          <a class="nav-item" href="calendar.html">Calendar</a>
+          <a class="nav-item" href="lists.html">Lists</a>
+          <a class="nav-item" href="statistics.html">Statistics</a>
+        </div>
+      </nav>
+    </aside>
+
+    <div class="flex-1 min-w-0 flex flex-col">
+      <header class="sticky top-0 z-30 h-14 bg-surface-0 border-b-default px-4 lg:px-6 flex items-center gap-3">
+        <div class="flex-1 max-w-xl mx-auto relative">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-faint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="11" cy="11" r="7"/></svg>
+          <input class="input pl-9 pr-16 h-9" placeholder="Search…">
+          <span class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1"><kbd>⌘</kbd><kbd>K</kbd></span>
+        </div>
+        <div class="w-7 h-7 rounded-full bg-accent flex items-center justify-center text-white text-xs font-semibold">L</div>
+      </header>
+
+      <main class="flex-1 px-4 lg:px-8 py-12 max-w-5xl w-full mx-auto">
+
+        <!-- Hero greeting -->
+        <section class="text-center mb-12">
+          <p class="text-sm text-fg-faint mb-2">Welcome to Yamtrack</p>
+          <h1 class="text-3xl font-semibold mb-3">Let's add your first thing.</h1>
+          <p class="text-fg-muted max-w-md mx-auto">Track what you watch, read, and play in one library. Start with the action that fits your week.</p>
+        </section>
+
+        <!-- Cards -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-10">
+
+          <a class="card hover:bg-surface-2 transition group cursor-pointer" href="search.html">
+            <div class="w-12 h-12 rounded-md mb-3 flex items-center justify-center" style="background: var(--accent-soft); color: var(--accent)">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            </div>
+            <h2 class="font-semibold mb-1">Search for a title</h2>
+            <p class="text-sm text-fg-muted mb-3">Movies, TV, anime, books, games — find it across providers and add it in one click.</p>
+            <div class="inline-flex items-center gap-1 text-sm text-accent group-hover:gap-2 transition-all">
+              Start typing
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
+
+          <a class="card hover:bg-surface-2 transition group cursor-pointer" href="#">
+            <div class="w-12 h-12 rounded-md mb-3 flex items-center justify-center" style="background: rgba(52,211,153,0.16); color: var(--status-completed)">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+            </div>
+            <h2 class="font-semibold mb-1">Import from another tracker</h2>
+            <p class="text-sm text-fg-muted mb-3">Trakt, MAL, AniList, Simkl, Kitsu, Steam, GoodReads, Hardcover, IMDb, HLTB, Discogs, CSV.</p>
+            <div class="inline-flex items-center gap-1 text-sm text-accent group-hover:gap-2 transition-all">
+              Start an import
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
+
+          <a class="card hover:bg-surface-2 transition group cursor-pointer" href="#">
+            <div class="w-12 h-12 rounded-md mb-3 flex items-center justify-center" style="background: rgba(56,189,248,0.16); color: var(--type-tv)">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M8 3l4 4 4-4"/></svg>
+            </div>
+            <h2 class="font-semibold mb-1">Connect a media server</h2>
+            <p class="text-sm text-fg-muted mb-3">Jellyfin / Plex / Emby webhooks auto-track whatever you watch on your home server.</p>
+            <div class="inline-flex items-center gap-1 text-sm text-accent group-hover:gap-2 transition-all">
+              Pick a server
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </a>
+        </section>
+
+        <!-- Discover hint -->
+        <section class="card text-center" style="padding: 32px">
+          <div class="text-sm text-fg-faint uppercase tracking-wider mb-2">Or just browse</div>
+          <h2 class="text-xl font-semibold mb-2">See what's trending right now</h2>
+          <p class="text-sm text-fg-muted mb-4">Curated lists from TMDB, MAL, IGDB, and OpenLibrary — discover something to track.</p>
+          <a class="btn btn-secondary" href="search.html">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9"/><path d="m16 8-6 2-2 6 6-2z"/></svg>
+            Open Discover
+          </a>
+        </section>
+
+      </main>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en" data-theme="default">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Onboarding — Yamtrack (redesign mock)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="_assets/tokens.css">
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-3xl">
+
+    <!-- Progress / stepper -->
+    <div class="flex items-center justify-center gap-2 mb-8">
+      <div class="flex items-center gap-2">
+        <div class="w-6 h-6 rounded-full bg-accent flex items-center justify-center text-white text-xs font-semibold">1</div>
+        <span class="text-sm font-medium">Pick what you track</span>
+      </div>
+      <div class="w-8 h-px bg-border" style="background: var(--border)"></div>
+      <div class="flex items-center gap-2">
+        <div class="w-6 h-6 rounded-full bg-surface-2 text-fg-muted flex items-center justify-center text-xs font-semibold">2</div>
+        <span class="text-sm text-fg-muted">Connect (optional)</span>
+      </div>
+      <div class="w-8 h-px bg-border" style="background: var(--border)"></div>
+      <div class="flex items-center gap-2">
+        <div class="w-6 h-6 rounded-full bg-surface-2 text-fg-muted flex items-center justify-center text-xs font-semibold">3</div>
+        <span class="text-sm text-fg-muted">Pick a theme</span>
+      </div>
+    </div>
+
+    <!-- Card -->
+    <div class="card" style="padding: 32px">
+
+      <div class="mb-6 text-center">
+        <h1 class="text-3xl font-semibold mb-2">What do you track?</h1>
+        <p class="text-fg-muted">Pick the media types you'll use. You can change this anytime in Settings.</p>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
+
+        <button class="card flex items-center gap-3 text-left ring-2 ring-accent">
+          <div class="w-10 h-10 rounded-md flex items-center justify-center shrink-0" style="background: rgba(56,189,248,0.18); color: var(--type-tv)">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M8 3l4 4 4-4"/></svg>
+          </div>
+          <div>
+            <div class="font-medium text-sm">TV shows</div>
+            <div class="text-xs text-fg-muted">Seasons · episodes</div>
+          </div>
+          <svg class="w-4 h-4 ml-auto text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+        </button>
+
+        <button class="card flex items-center gap-3 text-left ring-2 ring-accent">
+          <div class="w-10 h-10 rounded-md flex items-center justify-center shrink-0" style="background: rgba(129,140,248,0.18); color: var(--type-movie)">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M17 5v14"/></svg>
+          </div>
+          <div>
+            <div class="font-medium text-sm">Movies</div>
+            <div class="text-xs text-fg-muted">TMDB · OMDb · TVmaze</div>
+          </div>
+          <svg class="w-4 h-4 ml-auto text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+        </button>
+
+        <button class="card flex items-center gap-3 text-left ring-2 ring-accent">
+          <div class="w-10 h-10 rounded-md flex items-center justify-center shrink-0" style="background: rgba(244,114,182,0.18); color: var(--type-anime)">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/></svg>
+          </div>
+          <div>
+            <div class="font-medium text-sm">Anime</div>
+            <div class="text-xs text-fg-muted">MyAnimeList · AniList</div>
+          </div>
+          <svg class="w-4 h-4 ml-auto text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+        </button>
+
+        <button class="card flex items-center gap-3 text-left hover:bg-surface-2 transition">
+          <div class="w-10 h-10 rounded-md flex items-center justify-center shrink-0" style="background: rgba(192,132,252,0.18); color: var(--type-manga)">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/></svg>
+          </div>
+          <div>
+            <div class="font-medium text-sm">Manga</div>
+            <div class="text-xs text-fg-muted">MangaUpdates · MAL</div>
+          </div>
+        </button>
+
+        <button class="card flex items-center gap-3 text-left ring-2 ring-accent">
+          <div class="w-10 h-10 rounded-md flex items-center justify-center shrink-0" style="background: rgba(52,211,153,0.18); color: var(--type-game)">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="6" width="20" height="12" rx="4"/></svg>
+          </div>
+          <div>
+            <div class="font-medium text-sm">Games</div>
+            <div class="text-xs text-fg-muted">IGDB · Steam</div>
+          </div>
+          <svg class="w-4 h-4 ml-auto text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+        </button>
+
+        <button class="card flex items-center gap-3 text-left ring-2 ring-accent">
+          <div class="w-10 h-10 rounded-md flex items-center justify-center shrink-0" style="background: rgba(251,191,36,0.18); color: var(--type-book)">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/></svg>
+          </div>
+          <div>
+            <div class="font-medium text-sm">Books</div>
+            <div class="text-xs text-fg-muted">OpenLibrary · Hardcover</div>
+          </div>
+          <svg class="w-4 h-4 ml-auto text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+        </button>
+
+        <button class="card flex items-center gap-3 text-left hover:bg-surface-2 transition">
+          <div class="w-10 h-10 rounded-md flex items-center justify-center shrink-0" style="background: rgba(251,146,60,0.18); color: var(--type-comic)">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="m8 8 4 4 4-4"/></svg>
+          </div>
+          <div>
+            <div class="font-medium text-sm">Comics</div>
+            <div class="text-xs text-fg-muted">ComicVine</div>
+          </div>
+        </button>
+
+        <button class="card flex items-center gap-3 text-left hover:bg-surface-2 transition">
+          <div class="w-10 h-10 rounded-md flex items-center justify-center shrink-0" style="background: rgba(163,230,53,0.18); color: var(--type-boardgame)">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1"/><circle cx="16" cy="8" r="1"/><circle cx="8" cy="16" r="1"/><circle cx="16" cy="16" r="1"/><circle cx="12" cy="12" r="1"/></svg>
+          </div>
+          <div>
+            <div class="font-medium text-sm">Board games</div>
+            <div class="text-xs text-fg-muted">BoardGameGeek</div>
+          </div>
+        </button>
+
+        <button class="card flex items-center gap-3 text-left hover:bg-surface-2 transition">
+          <div class="w-10 h-10 rounded-md flex items-center justify-center shrink-0" style="background: rgba(251,113,133,0.18); color: var(--type-record)">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/></svg>
+          </div>
+          <div>
+            <div class="font-medium text-sm">Records</div>
+            <div class="text-xs text-fg-muted">Discogs vinyl</div>
+          </div>
+        </button>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <a class="text-sm text-fg-muted hover:text-fg" href="home-empty.html">Skip for now</a>
+        <div class="flex gap-2">
+          <button class="btn btn-ghost" disabled>Back</button>
+          <button class="btn btn-primary">
+            Continue
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <p class="text-center text-xs text-fg-faint mt-6">Step 1 of 3 · ~30 seconds total</p>
+  </div>
+</body>
+</html>

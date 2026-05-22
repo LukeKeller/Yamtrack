@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en" data-theme="default">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Statistics — Yamtrack (redesign mock)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="_assets/tokens.css">
+  <style>
+    .heatmap-cell { width: 12px; height: 12px; border-radius: 2px; background: var(--surface-2); transition: background 120ms; }
+    .heatmap-cell:hover { outline: 1px solid var(--accent); }
+    .heatmap-cell.l1 { background: rgba(99,102,241,0.30); }
+    .heatmap-cell.l2 { background: rgba(99,102,241,0.55); }
+    .heatmap-cell.l3 { background: rgba(99,102,241,0.80); }
+    .heatmap-cell.l4 { background: var(--accent); }
+    .bar { background: var(--surface-3); height: 6px; border-radius: 999px; overflow: hidden; }
+    .bar > div { background: var(--accent); height: 100%; }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="flex min-h-screen">
+    <aside class="hidden lg:flex w-[220px] bg-surface-0 border-r-default flex-col h-screen sticky top-0 shrink-0">
+      <div class="h-14 px-4 flex items-center gap-2 border-b-default">
+        <div class="w-8 h-8 rounded-md bg-accent flex items-center justify-center font-bold text-white">Y</div>
+        <div class="font-semibold">Yamtrack</div>
+      </div>
+      <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+        <div>
+          <div class="px-3 mb-1 text-[11px] uppercase tracking-wider text-fg-faint">Library</div>
+          <a class="nav-item" href="home.html">Home</a>
+          <a class="nav-item type-tv" href="media-list-grid.html">TV shows</a>
+        </div>
+        <div>
+          <div class="px-3 mb-1 text-[11px] uppercase tracking-wider text-fg-faint">Tools</div>
+          <a class="nav-item" href="calendar.html">Calendar</a>
+          <a class="nav-item" href="lists.html">Lists</a>
+          <a class="nav-item active" href="#">Statistics</a>
+        </div>
+      </nav>
+    </aside>
+
+    <div class="flex-1 min-w-0 flex flex-col">
+      <header class="sticky top-0 z-30 h-14 bg-surface-0 border-b-default px-4 lg:px-6 flex items-center gap-3">
+        <div class="flex-1 max-w-xl mx-auto relative">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-faint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="11" cy="11" r="7"/></svg>
+          <input class="input pl-9 pr-16 h-9" placeholder="Search…">
+        </div>
+        <div class="w-7 h-7 rounded-full bg-accent flex items-center justify-center text-white text-xs font-semibold">L</div>
+      </header>
+
+      <main class="flex-1 px-4 lg:px-8 py-8 max-w-7xl w-full mx-auto space-y-8">
+
+        <div class="flex items-end justify-between mb-2 flex-wrap gap-4">
+          <div>
+            <h1 class="text-2xl font-semibold">Statistics</h1>
+            <p class="text-sm text-fg-muted mt-0.5">Insights across everything you track</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="btn btn-secondary btn-sm">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="5" width="18" height="16" rx="2"/></svg>
+              This year
+              <svg class="w-3.5 h-3.5 ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+            <button class="btn btn-secondary btn-sm">Export</button>
+          </div>
+        </div>
+
+        <!-- Year recap hero -->
+        <section class="card relative overflow-hidden" style="background: linear-gradient(135deg, var(--accent) 0%, #4338ca 50%, #1e1b4b 100%); padding: 32px;">
+          <div class="relative z-10 max-w-3xl">
+            <div class="flex items-center gap-2 text-white/70 text-xs uppercase tracking-wider mb-2">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9 12 2"/></svg>
+              <span>Your 2025 in media</span>
+            </div>
+            <h2 class="text-3xl font-bold text-white mb-2">187 things consumed · 78 favorites · 14 different worlds visited</h2>
+            <p class="text-white/80 max-w-xl">Six chapters · two-minute read · share when you're done.</p>
+            <div class="mt-5 flex items-center gap-2">
+              <button class="btn btn-lg" style="background: white; color: #312e81;">
+                Open recap
+                <svg class="w-4 h-4 ml-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
+              <button class="btn btn-lg btn-ghost text-white">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M16 6l-4-4-4 4M12 2v13M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/></svg>
+                Share image
+              </button>
+            </div>
+          </div>
+          <!-- Decorative discs -->
+          <div class="absolute -right-20 -top-20 w-80 h-80 rounded-full" style="background: radial-gradient(circle, rgba(255,255,255,0.15), transparent 70%);"></div>
+          <div class="absolute right-32 -bottom-10 w-40 h-40 rounded-full" style="background: radial-gradient(circle, rgba(255,255,255,0.10), transparent 70%);"></div>
+        </section>
+
+        <!-- KPI row -->
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div class="card">
+            <div class="flex items-center gap-3 mb-1">
+              <div class="w-9 h-9 rounded-md flex items-center justify-center" style="background: var(--status-completed-bg); color: var(--status-completed)">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+              </div>
+              <p class="text-xs text-fg-faint uppercase tracking-wider">Completed</p>
+            </div>
+            <p class="text-3xl font-semibold num">187</p>
+            <p class="text-xs text-fg-muted">+24% vs. last year</p>
+          </div>
+          <div class="card">
+            <div class="flex items-center gap-3 mb-1">
+              <div class="w-9 h-9 rounded-md flex items-center justify-center" style="background: var(--accent-soft); color: var(--accent)">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9 12 2"/></svg>
+              </div>
+              <p class="text-xs text-fg-faint uppercase tracking-wider">Average score</p>
+            </div>
+            <p class="text-3xl font-semibold num">7.3<span class="text-fg-faint text-base">/10</span></p>
+            <p class="text-xs text-fg-muted">Median 8 · 142 rated</p>
+          </div>
+          <div class="card">
+            <div class="flex items-center gap-3 mb-1">
+              <div class="w-9 h-9 rounded-md flex items-center justify-center" style="background: rgba(244,114,182,0.16); color: var(--type-anime)">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12c-1 2-3 4-9 4s-8-2-9-4M3 6c1 2 3 4 9 4s8-2 9-4M3 18c1 2 3 4 9 4s8-2 9-4"/></svg>
+              </div>
+              <p class="text-xs text-fg-faint uppercase tracking-wider">Top genre</p>
+            </div>
+            <p class="text-2xl font-semibold">Sci-Fi</p>
+            <p class="text-xs text-fg-muted">29% of completions</p>
+          </div>
+          <div class="card">
+            <div class="flex items-center gap-3 mb-1">
+              <div class="w-9 h-9 rounded-md flex items-center justify-center" style="background: var(--status-paused-bg); color: var(--status-paused)">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg>
+              </div>
+              <p class="text-xs text-fg-faint uppercase tracking-wider">Streak</p>
+            </div>
+            <p class="text-3xl font-semibold num">23 <span class="text-fg-faint text-base">days</span></p>
+            <p class="text-xs text-fg-muted">Longest this year</p>
+          </div>
+        </section>
+
+        <!-- Activity heatmap -->
+        <section class="card">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="font-semibold">Activity</h2>
+              <p class="text-xs text-fg-muted">Each cell is a day — click to drill in</p>
+            </div>
+            <div class="flex items-center gap-1 text-xs text-fg-faint">
+              <span>Less</span>
+              <div class="heatmap-cell"></div>
+              <div class="heatmap-cell l1"></div>
+              <div class="heatmap-cell l2"></div>
+              <div class="heatmap-cell l3"></div>
+              <div class="heatmap-cell l4"></div>
+              <span>More</span>
+            </div>
+          </div>
+          <div class="flex gap-1 overflow-x-auto no-scrollbar pb-2">
+            <!-- 52 columns of 7 cells -->
+            <!-- generated procedurally -->
+            <script>
+              const container = document.currentScript;
+              const cells = [];
+              const seed = 123;
+              const rand = (i) => Math.abs(Math.sin(seed * (i + 1))) % 1;
+              for (let w = 0; w < 52; w++) {
+                let cols = '<div class="flex flex-col gap-1">';
+                for (let d = 0; d < 7; d++) {
+                  const r = rand(w * 7 + d);
+                  let cls = '';
+                  if (r > 0.85) cls = 'l4';
+                  else if (r > 0.7) cls = 'l3';
+                  else if (r > 0.5) cls = 'l2';
+                  else if (r > 0.3) cls = 'l1';
+                  cols += `<div class="heatmap-cell ${cls}" title="day ${w}-${d}"></div>`;
+                }
+                cols += '</div>';
+                cells.push(cols);
+              }
+              container.outerHTML = cells.join('');
+            </script>
+          </div>
+          <div class="mt-3 grid grid-cols-12 text-[10px] text-fg-faint">
+            <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Dec</span>
+          </div>
+        </section>
+
+        <!-- Two columns -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+
+          <!-- Distribution by media type -->
+          <div class="card">
+            <h2 class="font-semibold mb-4">By media type</h2>
+            <ul class="space-y-2.5 text-sm">
+              <li>
+                <div class="flex justify-between mb-1"><span class="flex items-center gap-2"><span class="status-dot" style="background: var(--type-movie)"></span>Movies</span><span class="text-fg-muted num">62</span></div>
+                <div class="bar"><div style="width: 78%; background: var(--type-movie)"></div></div>
+              </li>
+              <li>
+                <div class="flex justify-between mb-1"><span class="flex items-center gap-2"><span class="status-dot" style="background: var(--type-tv)"></span>TV shows</span><span class="text-fg-muted num">42</span></div>
+                <div class="bar"><div style="width: 53%; background: var(--type-tv)"></div></div>
+              </li>
+              <li>
+                <div class="flex justify-between mb-1"><span class="flex items-center gap-2"><span class="status-dot" style="background: var(--type-anime)"></span>Anime</span><span class="text-fg-muted num">35</span></div>
+                <div class="bar"><div style="width: 44%; background: var(--type-anime)"></div></div>
+              </li>
+              <li>
+                <div class="flex justify-between mb-1"><span class="flex items-center gap-2"><span class="status-dot" style="background: var(--type-book)"></span>Books</span><span class="text-fg-muted num">22</span></div>
+                <div class="bar"><div style="width: 28%; background: var(--type-book)"></div></div>
+              </li>
+              <li>
+                <div class="flex justify-between mb-1"><span class="flex items-center gap-2"><span class="status-dot" style="background: var(--type-game)"></span>Games</span><span class="text-fg-muted num">18</span></div>
+                <div class="bar"><div style="width: 23%; background: var(--type-game)"></div></div>
+              </li>
+              <li>
+                <div class="flex justify-between mb-1"><span class="flex items-center gap-2"><span class="status-dot" style="background: var(--type-manga)"></span>Manga</span><span class="text-fg-muted num">8</span></div>
+                <div class="bar"><div style="width: 10%; background: var(--type-manga)"></div></div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Score distribution -->
+          <div class="card">
+            <h2 class="font-semibold mb-4">Score distribution</h2>
+            <div class="flex items-end justify-between gap-1 h-32">
+              <div class="flex flex-col items-center gap-1 flex-1"><div class="bg-surface-3 w-full" style="height: 8%"></div><div class="text-[10px] text-fg-faint">1</div></div>
+              <div class="flex flex-col items-center gap-1 flex-1"><div class="bg-surface-3 w-full" style="height: 5%"></div><div class="text-[10px] text-fg-faint">2</div></div>
+              <div class="flex flex-col items-center gap-1 flex-1"><div class="bg-surface-3 w-full" style="height: 10%"></div><div class="text-[10px] text-fg-faint">3</div></div>
+              <div class="flex flex-col items-center gap-1 flex-1"><div class="bg-surface-3 w-full" style="height: 18%"></div><div class="text-[10px] text-fg-faint">4</div></div>
+              <div class="flex flex-col items-center gap-1 flex-1"><div class="bg-surface-3 w-full" style="height: 32%"></div><div class="text-[10px] text-fg-faint">5</div></div>
+              <div class="flex flex-col items-center gap-1 flex-1"><div class="bg-surface-3 w-full" style="height: 45%"></div><div class="text-[10px] text-fg-faint">6</div></div>
+              <div class="flex flex-col items-center gap-1 flex-1"><div class="bg-accent w-full" style="height: 72%"></div><div class="text-[10px] text-fg-faint">7</div></div>
+              <div class="flex flex-col items-center gap-1 flex-1"><div class="bg-accent w-full" style="height: 100%"></div><div class="text-[10px] text-fg-faint">8</div></div>
+              <div class="flex flex-col items-center gap-1 flex-1"><div class="bg-accent w-full" style="height: 65%"></div><div class="text-[10px] text-fg-faint">9</div></div>
+              <div class="flex flex-col items-center gap-1 flex-1"><div class="bg-accent w-full" style="height: 30%"></div><div class="text-[10px] text-fg-faint">10</div></div>
+            </div>
+            <p class="text-xs text-fg-muted mt-3">Median 8 · 142 of 187 items rated</p>
+          </div>
+        </section>
+
+        <!-- Top rated -->
+        <section class="card">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-semibold">Top rated this year</h2>
+            <a class="text-sm text-accent hover:underline" href="#">See all 32 →</a>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div>
+              <div class="poster mb-2" style="background: linear-gradient(160deg, #f9a8d4, #500724)"></div>
+              <div class="text-sm font-medium truncate">Past Lives</div>
+              <div class="text-xs text-fg-muted flex items-center gap-1"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9 12 2"/></svg>4.5</div>
+            </div>
+            <div>
+              <div class="poster mb-2" style="background: linear-gradient(160deg, #93c5fd, #172554)"></div>
+              <div class="text-sm font-medium truncate">Severance</div>
+              <div class="text-xs text-fg-muted flex items-center gap-1"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9 12 2"/></svg>5.0</div>
+            </div>
+            <div>
+              <div class="poster mb-2" style="background: linear-gradient(160deg, #fbbf24, #422006)"></div>
+              <div class="text-sm font-medium truncate">Frieren</div>
+              <div class="text-xs text-fg-muted flex items-center gap-1"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9 12 2"/></svg>5.0</div>
+            </div>
+            <div>
+              <div class="poster mb-2" style="background: linear-gradient(160deg, #f59e0b, #451a03)"></div>
+              <div class="text-sm font-medium truncate">Shogun</div>
+              <div class="text-xs text-fg-muted flex items-center gap-1"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9 12 2"/></svg>4.5</div>
+            </div>
+            <div>
+              <div class="poster mb-2" style="background: linear-gradient(160deg, #fda4af, #881337)"></div>
+              <div class="text-sm font-medium truncate">Before Sunset</div>
+              <div class="text-xs text-fg-muted flex items-center gap-1"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9 12 2"/></svg>4.5</div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+</body>
+</html>

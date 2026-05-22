@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en" data-theme="default">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in — Yamtrack (redesign mock)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="_assets/tokens.css">
+</head>
+<body class="min-h-screen">
+  <div class="grid lg:grid-cols-[1.1fr_1fr] min-h-screen">
+
+    <!-- Marketing pane -->
+    <section class="hidden lg:flex flex-col justify-between p-12 relative overflow-hidden" style="background: linear-gradient(135deg, #1e1b4b 0%, #0d0f12 50%, #1c2027 100%);">
+      <div class="relative z-10">
+        <div class="flex items-center gap-2 mb-12">
+          <div class="w-9 h-9 rounded-md bg-accent flex items-center justify-center font-bold text-white">Y</div>
+          <div class="font-semibold text-lg">Yamtrack</div>
+        </div>
+        <h1 class="text-4xl font-semibold leading-tight mb-4 max-w-md">Track the things you watch, read, and play — on your own server.</h1>
+        <p class="text-fg-muted max-w-md">Movies, TV, anime, manga, games, books, comics, board games, vinyl. One library. Calendar of upcoming releases. Trakt / Plex / Jellyfin sync. Self-hosted. AGPL.</p>
+
+        <ul class="mt-8 space-y-3 text-sm max-w-md">
+          <li class="flex items-start gap-2"><svg class="w-4 h-4 mt-0.5 shrink-0" style="color: var(--accent)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span>9 media types in one library.</span></li>
+          <li class="flex items-start gap-2"><svg class="w-4 h-4 mt-0.5 shrink-0" style="color: var(--accent)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span>Import from Trakt, MAL, AniList, Simkl, Steam, GoodReads, Hardcover, IMDb…</span></li>
+          <li class="flex items-start gap-2"><svg class="w-4 h-4 mt-0.5 shrink-0" style="color: var(--accent)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span>Calendar + ICS subscription. Push notifications via Apprise.</span></li>
+          <li class="flex items-start gap-2"><svg class="w-4 h-4 mt-0.5 shrink-0" style="color: var(--accent)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg><span>Jellyfin · Plex · Emby webhooks auto-track what you watch.</span></li>
+        </ul>
+      </div>
+      <div class="relative z-10 flex items-center justify-between text-xs text-fg-faint">
+        <div class="flex items-center gap-4">
+          <a href="#" class="hover:text-fg">Documentation</a>
+          <a href="#" class="hover:text-fg">GitHub</a>
+          <a href="#" class="hover:text-fg">Demo</a>
+        </div>
+        <div>v0.25.2-ynh41</div>
+      </div>
+
+      <!-- decoration -->
+      <div class="absolute -right-32 -top-32 w-96 h-96 rounded-full" style="background: radial-gradient(circle, rgba(99,102,241,0.20), transparent 70%);"></div>
+      <div class="absolute -left-20 bottom-0 w-64 h-64 rounded-full" style="background: radial-gradient(circle, rgba(244,114,182,0.12), transparent 70%);"></div>
+    </section>
+
+    <!-- Sign-in pane -->
+    <section class="flex items-center justify-center p-8 lg:p-12">
+      <div class="w-full max-w-sm">
+        <div class="lg:hidden flex items-center gap-2 mb-8">
+          <div class="w-9 h-9 rounded-md bg-accent flex items-center justify-center font-bold text-white">Y</div>
+          <div class="font-semibold text-lg">Yamtrack</div>
+        </div>
+
+        <h2 class="text-2xl font-semibold mb-2">Welcome back</h2>
+        <p class="text-sm text-fg-muted mb-6">Sign in to your homelab instance.</p>
+
+        <form class="space-y-3">
+          <div>
+            <label class="block text-xs text-fg-muted mb-1.5">Username</label>
+            <input class="input" type="text" placeholder="luke">
+          </div>
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="block text-xs text-fg-muted">Password</label>
+              <a href="#" class="text-xs text-accent hover:underline">Forgot?</a>
+            </div>
+            <input class="input" type="password" placeholder="••••••••">
+          </div>
+          <label class="flex items-center gap-2 text-sm py-1">
+            <input class="rounded-sm bg-surface-2 border-none" type="checkbox" checked>
+            <span class="text-fg-muted">Keep me signed in</span>
+          </label>
+          <button type="button" class="btn btn-primary btn-lg w-full">
+            Sign in
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+          </button>
+        </form>
+
+        <div class="my-6 flex items-center gap-3">
+          <div class="flex-1 h-px bg-border" style="background: var(--border)"></div>
+          <span class="text-xs text-fg-faint uppercase">Or continue with</span>
+          <div class="flex-1 h-px bg-border" style="background: var(--border)"></div>
+        </div>
+
+        <!-- Social grid -->
+        <div class="grid grid-cols-3 gap-2 mb-6">
+          <button class="card flex flex-col items-center gap-1.5 py-3 hover:bg-surface-2 transition">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="#fff"><path d="M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0Z"/></svg>
+            <span class="text-xs">Google</span>
+          </button>
+          <button class="card flex flex-col items-center gap-1.5 py-3 hover:bg-surface-2 transition">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="#fff"><path d="M12 .5C5.4.5 0 5.9 0 12.5c0 5.3 3.4 9.8 8.2 11.4.6.1.8-.3.8-.6v-2.2c-3.3.7-4-1.4-4-1.4-.6-1.4-1.4-1.8-1.4-1.8-1.1-.8.1-.8.1-.8 1.3.1 1.9 1.3 1.9 1.3 1.1 1.9 2.9 1.3 3.6 1 .1-.8.4-1.3.8-1.6-2.6-.3-5.4-1.3-5.4-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2.9-.3 2-.4 3-.4s2.1.1 3 .4c2.3-1.5 3.3-1.2 3.3-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.4 5.9.4.4.8 1.2.8 2.3v3.5c0 .3.2.7.8.6 4.8-1.6 8.2-6.1 8.2-11.4C24 5.9 18.6.5 12 .5Z"/></svg>
+            <span class="text-xs">GitHub</span>
+          </button>
+          <button class="card flex flex-col items-center gap-1.5 py-3 hover:bg-surface-2 transition">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="#5865F2"><path d="M20 4.6A19 19 0 0 0 15.5 3l-.2.4a17 17 0 0 1 4 1.4c-1.5-.8-3-1.3-4.4-1.5l-.2-.3a17 17 0 0 0-4.4 0l-.2.3c-1.4.2-2.9.7-4.4 1.5a17 17 0 0 1 4-1.4L9.5 3A19 19 0 0 0 4 4.6 21 21 0 0 0 1 14.4a17 17 0 0 0 5 2.5l.7-1.2-1.7-.7.4-.3a14 14 0 0 0 9.3 0l.4.3-1.7.7.7 1.2c1.9-.6 3.5-1.4 5-2.5A21 21 0 0 0 20 4.6ZM9 13.7c-1 0-1.7-.8-1.7-1.8s.8-1.8 1.7-1.8 1.7.8 1.7 1.8-.8 1.8-1.7 1.8Zm6 0c-1 0-1.7-.8-1.7-1.8s.8-1.8 1.7-1.8 1.7.8 1.7 1.8-.7 1.8-1.7 1.8Z"/></svg>
+            <span class="text-xs">Discord</span>
+          </button>
+          <button class="card flex flex-col items-center gap-1.5 py-3 hover:bg-surface-2 transition">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="#fff"><circle cx="12" cy="12" r="11"/></svg>
+            <span class="text-xs">OIDC</span>
+          </button>
+          <button class="card flex flex-col items-center gap-1.5 py-3 hover:bg-surface-2 transition">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="#fff"><path d="M16 8.5a4 4 0 1 1-8 0V8a4 4 0 1 1 8 0v.5Z"/></svg>
+            <span class="text-xs">Authentik</span>
+          </button>
+          <button class="card flex flex-col items-center justify-center hover:bg-surface-2 transition text-xs text-fg-muted">
+            <span>+ 100 more</span>
+          </button>
+        </div>
+
+        <p class="text-center text-sm text-fg-muted">
+          New here?
+          <a href="#" class="text-accent hover:underline">Create an account</a>
+        </p>
+
+        <p class="text-center text-xs text-fg-faint mt-8">
+          Try the public demo: <a href="https://yamtrack.fuzzygrim.com" class="text-accent hover:underline">yamtrack.fuzzygrim.com</a><br>
+          <span class="opacity-70">username/password: demo / demo</span>
+        </p>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
