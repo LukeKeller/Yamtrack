@@ -7,12 +7,10 @@
       <span class="font-medium">{{ record_spin.played_at|naturaltime }}</span>
       {% if record_spin.track %}
         — {{ record_spin.track.position }} {{ record_spin.track.title }}
-      {% elif record_spin.side == "A" %}
-        — Side A
-      {% elif record_spin.side == "B" %}
-        — Side B
       {% elif record_spin.side == "full" %}
         — Full listen
+      {% elif record_spin.side %}
+        — Side {{ record_spin.side }}
       {% endif %}
     </span>
     <span class="text-gray-400">

@@ -354,7 +354,29 @@ def media_details(request, source, media_type, media_id, title):  # noqa: ARG001
                 record_item,
                 request.user,
             )
+
+        # Sides offered by the spin logger come from the actual tracklist
+        # (Discogs releases past LPs as A/B/C/D… up to box sets). Fall back
+        # to A/B so 7"s and untracked records still show useful buttons.
+        context["record_spin_sides"] = _record_side_choices(record_item)
     return render(request, "app/media_details.html", context)
+
+
+def _record_side_choices(record_item):
+    """Return ordered list of unique side letters for a record."""
+    sides = []
+    if record_item is not None:
+        # Lazily populate Tracks from Discogs on first view so box sets show
+        # their real sides (C/D/E/F/…) instead of defaulting to A/B.
+        tracks = ensure_record_tracks(record_item)
+        seen = set()
+        for track in tracks:
+            if track.side and track.side not in seen:
+                seen.add(track.side)
+                sides.append(track.side)
+    if not sides:
+        sides = ["A", "B"]
+    return sorted(sides)
 
 
 PERSON_SORT_CHOICES = (
@@ -1191,10 +1213,13 @@ def ensure_record_tracks(item):
 def log_record_spin(request, source, media_id):
     """Log a vinyl spin (manual play) for a record.
 
-    Side comes from POST data — one of "A", "B", "full". One Play row is
-    inserted per track on the chosen side (or every track for "full"),
+    Side comes from POST data — any letter "A".."Z" or "full". One Play row
+    is inserted per track on the chosen side (or every track for "full"),
     so listening history mirrors how scrobbles look. Records without an
     available tracklist fall back to a single album-level Play.
+
+    The Item row is created lazily here so users can log a spin straight
+    from the detail page without first adding the record to their tracker.
 
     Returns the rendered status fragment so HTMX can swap it into the
     detail page.
@@ -1208,8 +1233,25 @@ def log_record_spin(request, source, media_id):
         source=source,
         media_type=MediaTypes.RECORD.value,
     ).first()
-    if not item:
-        return HttpResponseBadRequest("Record not found.")
+    if item is None:
+        try:
+            metadata = services.get_media_metadata(
+                MediaTypes.RECORD.value,
+                media_id,
+                source,
+            )
+        except services.ProviderAPIError:
+            return HttpResponseBadRequest("Record not found.")
+        item, _ = Item.objects.get_or_create(
+            media_id=str(media_id),
+            source=source,
+            media_type=MediaTypes.RECORD.value,
+            defaults={
+                "title": metadata.get("title") or "",
+                "image": metadata.get("image") or "",
+                "artist": (metadata.get("details") or {}).get("artist") or "",
+            },
+        )
 
     tracks = ensure_record_tracks(item)
     if side == PlaySide.FULL.value:

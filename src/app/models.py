@@ -1915,10 +1915,38 @@ class PlaySource(models.TextChoices):
 
 
 class PlaySide(models.TextChoices):
-    """Vinyl side designators for manual_vinyl Plays."""
+    """Vinyl side designators for manual_vinyl Plays.
+
+    Covers single LPs (A/B) through box sets (up to Z). The "full" value
+    means the entire record was played in one go.
+    """
 
     SIDE_A = "A", "Side A"
     SIDE_B = "B", "Side B"
+    SIDE_C = "C", "Side C"
+    SIDE_D = "D", "Side D"
+    SIDE_E = "E", "Side E"
+    SIDE_F = "F", "Side F"
+    SIDE_G = "G", "Side G"
+    SIDE_H = "H", "Side H"
+    SIDE_I = "I", "Side I"
+    SIDE_J = "J", "Side J"
+    SIDE_K = "K", "Side K"
+    SIDE_L = "L", "Side L"
+    SIDE_M = "M", "Side M"
+    SIDE_N = "N", "Side N"
+    SIDE_O = "O", "Side O"
+    SIDE_P = "P", "Side P"
+    SIDE_Q = "Q", "Side Q"
+    SIDE_R = "R", "Side R"
+    SIDE_S = "S", "Side S"
+    SIDE_T = "T", "Side T"
+    SIDE_U = "U", "Side U"
+    SIDE_V = "V", "Side V"
+    SIDE_W = "W", "Side W"
+    SIDE_X = "X", "Side X"
+    SIDE_Y = "Y", "Side Y"
+    SIDE_Z = "Z", "Side Z"
     FULL = "full", "Full Listen"
 
 
