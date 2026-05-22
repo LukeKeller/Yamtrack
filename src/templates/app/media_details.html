@@ -1014,18 +1014,28 @@
                     {% endif %}
                   </div>
                   <div class="flex items-center gap-1 shrink-0 pt-1">
-                    {# Track Episode #}
+                    {# Track Episode — when watched, a subtle ghost checkmark
+                       (action: edit). When unwatched, a labeled "+1" button
+                       (action: mark watched). Both open the same modal so
+                       the user can pick a date / status. #}
                     <div x-data="{ trackOpen: false }">
-                      <button @click="trackOpen = true"
-                              type="button"
-                              title="Track Episode"
-                              class="btn btn-icon btn-sm {% if episode.history %}btn-ghost{% else %}btn-secondary{% endif %}">
-                        {% if episode.history %}
-                          {% include "app/icons/eye.svg" with classes="w-3.5 h-3.5" %}
-                        {% else %}
-                          {% include "app/icons/eye-closed.svg" with classes="w-3.5 h-3.5" %}
-                        {% endif %}
-                      </button>
+                      {% if episode.history %}
+                        <button @click="trackOpen = true"
+                                type="button"
+                                title="Edit watch"
+                                class="btn btn-icon btn-sm btn-ghost"
+                                style="color: var(--color-status-completed);">
+                          {% include "app/icons/checkmark.svg" with classes="w-3.5 h-3.5" %}
+                        </button>
+                      {% else %}
+                        <button @click="trackOpen = true"
+                                type="button"
+                                title="Mark watched"
+                                class="btn btn-sm btn-primary">
+                          {% include "app/icons/plus.svg" with classes="w-3 h-3" %}
+                          <span>1</span>
+                        </button>
+                      {% endif %}
                       {% include "app/components/fill_track_episode.html" with request=request media=media episode=episode episode_title=episode.title csrf_token=csrf_token TRACK_TIME=TRACK_TIME only %}
                     </div>
                     {# Lists #}
