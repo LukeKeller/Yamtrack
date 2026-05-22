@@ -261,9 +261,11 @@
         </div>
       </div>
 
-      {# Density — controls --grid-min and --card-pad via the [data-density]
+      {% comment %}
+        Density — controls --grid-min and --card-pad via the [data-density]
          attribute on <html>. JS preview swaps the attribute live so the user
-         can feel the change before saving; POST persists it. #}
+         can feel the change before saving; POST persists it.
+      {% endcomment %}
       <div class="mb-5"
            x-data="{ density: '{{ user.density|default:'comfortable' }}' }"
            x-init="$watch('density', v => document.documentElement.dataset.density = v)">

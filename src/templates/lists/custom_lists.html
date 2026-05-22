@@ -23,9 +23,11 @@
       </button>
     </div>
 
-    {# Compact filter row matching mocks/lists.html — smaller search input
+    {% comment %}
+      Compact filter row matching mocks/lists.html — smaller search input
        capped on desktop, sort button at the same .btn-secondary btn-sm
-       height for a unified strip. #}
+       height for a unified strip.
+    {% endcomment %}
     <div class="flex flex-wrap items-center gap-2 mb-5"
          x-data="{ sort: '{{ current_sort }}', query: '{{ request.GET.q|default:''|escapejs }}', sortLabels: { last_item_added: 'Last item added', name: 'Name', newest_first: 'Newest first', items_count: 'Items count' } }">
 
@@ -53,15 +55,13 @@
       </div>
 
       <div class="relative" x-data="{ open: false }">
-        <button type="button"
-                @click="open = !open"
-                class="btn btn-secondary btn-sm">
+        <button type="button" @click="open = !open" class="btn btn-secondary btn-sm">
           {% include "app/icons/arrows-up-down.svg" with classes="w-3.5 h-3.5" %}
           <span x-text="sortLabels[sort] || sort"></span>
           {% include "app/icons/chevron-down.svg" with classes="w-3.5 h-3.5 opacity-60" %}
         </button>
         <div class="absolute right-0 z-10 mt-2 py-1 w-48 rounded-md shadow-lg overflow-hidden bg-surface-2"
-             style="border: 1px solid var(--color-border-default);"
+             style="border: 1px solid var(--color-border-default)"
              x-cloak
              x-show="open"
              @click.outside="open = false"

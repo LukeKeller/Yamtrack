@@ -10,9 +10,11 @@
 
     <div class="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-8"
          x-data="{ filter: '' }">
-      {# Sticky sub-nav matching mocks/settings.html. Settings-search input on
+      {% comment %}
+        Sticky sub-nav matching mocks/settings.html. Settings-search input on
          top filters nav items live by label (client-side; covers the eight
-         entries we have today, scales fine without a backend). #}
+         entries we have today, scales fine without a backend).
+      {% endcomment %}
       <aside class="md:sticky md:top-20 self-start">
         <div class="relative mb-3">
           {% include "app/icons/magnifying-glass.svg" with classes="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-fg-faint pointer-events-none" %}
@@ -22,16 +24,7 @@
                  x-model="filter">
         </div>
         <nav class="space-y-0.5"
-             x-data="{ items: [
-               { label: 'Account',       url: '{% url 'account' %}' },
-               { label: 'Preferences',   url: '{% url 'preferences' %}' },
-               { label: 'Notifications', url: '{% url 'notifications' %}' },
-               { label: 'Integrations',  url: '{% url 'integrations' %}' },
-               { label: 'Import Data',   url: '{% url 'import_data' %}' },
-               { label: 'Export Data',   url: '{% url 'export_data' %}' },
-               { label: 'Advanced',      url: '{% url 'advanced' %}' },
-               { label: 'About',         url: '{% url 'about' %}' },
-             ] }">
+             x-data="{ items: [ { label: 'Account',       url: '{% url 'account' %}' }, { label: 'Preferences',   url: '{% url 'preferences' %}' }, { label: 'Notifications', url: '{% url 'notifications' %}' }, { label: 'Integrations',  url: '{% url 'integrations' %}' }, { label: 'Import Data',   url: '{% url 'import_data' %}' }, { label: 'Export Data',   url: '{% url 'export_data' %}' }, { label: 'Advanced',      url: '{% url 'advanced' %}' }, { label: 'About',         url: '{% url 'about' %}' }, ] }">
           {% url 'account' as account_url %}
           <div x-show="!filter || 'account'.includes(filter.toLowerCase())">
             {% include "users/_settings_nav_item.html" with url=account_url label="Account" icon_template="app/icons/person.svg" %}
@@ -67,8 +60,10 @@
         </nav>
       </aside>
 
-      {# Main content area. min-w-0 prevents flex overflow on long words like
-         Simkl-import URLs. #}
+      {% comment %}
+        Main content area. min-w-0 prevents flex overflow on long words like
+         Simkl-import URLs.
+      {% endcomment %}
       <div class="min-w-0">
         {% block settings_content %}
         {% endblock settings_content %}

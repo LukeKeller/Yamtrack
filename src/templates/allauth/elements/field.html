@@ -2,8 +2,7 @@
 
 <div>
   {% if attrs.type != "checkbox" and attrs.type != "radio" %}
-    <label for="{{ attrs.id }}"
-           class="block text-sm font-medium mb-2 text-fg">
+    <label for="{{ attrs.id }}" class="block text-sm font-medium mb-2 text-fg">
       {% slot label %}
       {% endslot %}
     </label>

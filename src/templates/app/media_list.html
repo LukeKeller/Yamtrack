@@ -101,11 +101,13 @@
       <input type="hidden" name="layout" x-model="layout">
     </form>
 
-    {# Compact filter bar (mocks/media-list-grid.html): smaller search input
+    {% comment %}
+      Compact filter bar (mocks/media-list-grid.html): smaller search input
        capped on desktop, status filter behind a single Filter button with an
        active-state dot, sort dropdown, view toggle in a segmented control.
        All controls share the same .btn-secondary btn-sm height so the row
-       reads as a single strip. #}
+       reads as a single strip.
+    {% endcomment %}
     <div class="flex flex-wrap items-center gap-2 mb-5">
       <div class="relative flex-1 max-w-sm">
         {% include "app/icons/magnifying-glass.svg" with classes="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-faint pointer-events-none" %}
@@ -125,9 +127,7 @@
       </div>
 
       <div class="relative" x-data="{ open: false }">
-        <button type="button"
-                @click="open = !open"
-                class="btn btn-secondary btn-sm">
+        <button type="button" @click="open = !open" class="btn btn-secondary btn-sm">
           {% include "app/icons/funnel.svg" with classes="w-3.5 h-3.5" %}
           <span>Filter</span>
           <span x-show="status !== 'all'"
@@ -136,7 +136,7 @@
           {% include "app/icons/chevron-down.svg" with classes="w-3.5 h-3.5 opacity-60" %}
         </button>
         <div class="absolute z-10 mt-2 py-1 w-48 rounded-md shadow-lg overflow-hidden bg-surface-2"
-             style="border: 1px solid var(--color-border-default);"
+             style="border: 1px solid var(--color-border-default)"
              x-cloak
              x-show="open"
              @click.outside="open = false"
@@ -156,15 +156,13 @@
       </div>
 
       <div class="relative" x-data="{ open: false }">
-        <button type="button"
-                @click="open = !open"
-                class="btn btn-secondary btn-sm">
+        <button type="button" @click="open = !open" class="btn btn-secondary btn-sm">
           {% include "app/icons/arrows-up-down.svg" with classes="w-3.5 h-3.5" %}
           <span x-text="sortLabels[sort] || sort"></span>
           {% include "app/icons/chevron-down.svg" with classes="w-3.5 h-3.5 opacity-60" %}
         </button>
         <div class="absolute z-10 mt-2 py-1 w-48 rounded-md shadow-lg overflow-hidden bg-surface-2"
-             style="border: 1px solid var(--color-border-default);"
+             style="border: 1px solid var(--color-border-default)"
              x-cloak
              x-show="open"
              @click.outside="open = false"
@@ -183,7 +181,7 @@
       </div>
 
       <div class="flex border rounded-md overflow-hidden"
-           style="border-color: var(--color-border-default);">
+           style="border-color: var(--color-border-default)">
         <a :href="`{% url 'medialist' media_type %}?${search ? 'search=' + search + '&' : ''}${status !== 'all' ? 'status=' + status + '&' : ''}${sort !== 'score' ? 'sort=' + sort + '&' : ''}layout=grid`"
            class="h-7 w-7 flex items-center justify-center cursor-pointer transition-colors"
            :class="layout === 'grid' ? 'bg-accent text-white' : 'bg-surface-2 text-fg-muted hover:bg-surface-3'"

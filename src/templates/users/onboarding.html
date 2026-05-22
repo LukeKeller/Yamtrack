@@ -26,7 +26,8 @@
       </div>
     </div>
 
-    <div class="bg-surface-1 rounded-lg p-6 md:p-8" style="border: 1px solid var(--color-border-subtle)">
+    <div class="bg-surface-1 rounded-lg p-6 md:p-8"
+         style="border: 1px solid var(--color-border-subtle)">
 
       <header class="text-center mb-6">
         <h1 class="text-2xl font-semibold mb-2">What do you track?</h1>
@@ -45,7 +46,7 @@
                      checked
                      class="sr-only">
               <span class="w-10 h-10 rounded-md flex items-center justify-center type-{{ media_type|media_type_slug }} shrink-0"
-                    style="background: var(--color-surface-2);">
+                    style="background: var(--color-surface-2)">
                 {% icon media_type is_active=True extra_classes="w-5 h-5" %}
               </span>
               <span class="min-w-0">
@@ -55,24 +56,35 @@
                    viewBox="0 0 24 24"
                    fill="none"
                    stroke="currentColor"
-                   stroke-width="2"><path d="M20 6 9 17l-5-5" /></svg>
+                   stroke-width="2">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
             </label>
           {% endfor %}
         </div>
 
-        <div class="flex items-center justify-between pt-2 border-t" style="border-color: var(--color-border-subtle)">
+        <div class="flex items-center justify-between pt-2 border-t"
+             style="border-color: var(--color-border-subtle)">
           <a href="{% url 'home' %}" class="text-sm text-fg-muted hover:text-fg">Skip for now</a>
           <button type="submit" class="btn btn-primary">
             Save &amp; continue
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+            <svg class="w-4 h-4"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
           </button>
         </div>
       </form>
 
-      <div class="border-t mt-6 pt-6" style="border-color: var(--color-border-subtle)">
+      <div class="border-t mt-6 pt-6"
+           style="border-color: var(--color-border-subtle)">
         <p class="text-xs uppercase tracking-wider text-fg-faint mb-3">Already track elsewhere?</p>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <a href="{% url 'import_data' %}" class="card flex items-center gap-3 hover:bg-surface-2 transition-colors">
+          <a href="{% url 'import_data' %}"
+             class="card flex items-center gap-3 hover:bg-surface-2 transition-colors">
             <span class="w-9 h-9 rounded-md flex items-center justify-center bg-surface-2 text-accent">
               {% include "app/icons/database.svg" with classes="w-4 h-4" %}
             </span>
@@ -81,7 +93,8 @@
               <span class="block text-xs text-fg-muted">Trakt · MAL · AniList · Simkl · Steam · GoodReads</span>
             </span>
           </a>
-          <a href="{% url 'integrations' %}" class="card flex items-center gap-3 hover:bg-surface-2 transition-colors">
+          <a href="{% url 'integrations' %}"
+             class="card flex items-center gap-3 hover:bg-surface-2 transition-colors">
             <span class="w-9 h-9 rounded-md flex items-center justify-center bg-surface-2 text-accent">
               {% include "app/icons/server.svg" with classes="w-4 h-4" %}
             </span>

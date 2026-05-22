@@ -229,7 +229,7 @@
 
           {# Page content #}
           <main class="flex-1 relative bg-canvas"
-                style="padding-bottom: max(5rem, calc(env(safe-area-inset-bottom) + 4.5rem));">
+                style="padding-bottom: max(5rem, calc(env(safe-area-inset-bottom) + 4.5rem))">
             <div class="container mx-auto px-4 lg:px-8 py-8 lg:py-10">
               {% block content %}
               {% endblock content %}
@@ -251,7 +251,8 @@
       {% url 'browse' as browse_url %}
       {% url 'lists' as lists_url %}
       <nav class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-surface-0 border-t border-border-default flex items-center justify-around px-1"
-           style="height: calc(3.5rem + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom);"
+           style="height: calc(3.5rem + env(safe-area-inset-bottom));
+                  padding-bottom: env(safe-area-inset-bottom)"
            aria-label="Primary">
         <a href="{{ home_url }}"
            class="flex flex-col items-center gap-0.5 px-2 py-1.5 text-[10px] {% if request.path|str_equals:home_url %}text-accent{% else %}text-fg-muted{% endif %}">
