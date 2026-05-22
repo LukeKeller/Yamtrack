@@ -1,0 +1,24 @@
+<!-- Shared sidebar markup — reference only. Copy into each mock so they're
+     standalone HTML files. Active state is set per mock via the .active class. -->
+<aside class="hidden lg:flex w-[220px] bg-surface-0 border-r-default flex-col h-screen sticky top-0 shrink-0">
+  <div class="h-14 px-4 flex items-center gap-2 border-b-default">
+    <div class="w-8 h-8 rounded-md bg-accent flex items-center justify-center font-bold text-white">Y</div>
+    <div class="font-semibold text-fg">Yamtrack</div>
+  </div>
+  <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+    <div>
+      <div class="px-3 mb-1 text-[11px] uppercase tracking-wider text-fg-faint">Library</div>
+      <a class="nav-item" data-nav="home"      href="home.html">Home</a>
+      <a class="nav-item" data-nav="discover"  href="search.html">Discover</a>
+      <a class="nav-item type-tv"    data-nav="tv"    href="media-list-grid.html">TV shows</a>
+      <a class="nav-item type-movie" data-nav="movie" href="media-list-grid.html">Movies</a>
+      <a class="nav-item type-anime" data-nav="anime" href="media-list-grid.html">Anime</a>
+    </div>
+    <div>
+      <div class="px-3 mb-1 text-[11px] uppercase tracking-wider text-fg-faint">Tools</div>
+      <a class="nav-item" data-nav="calendar"   href="calendar.html">Calendar</a>
+      <a class="nav-item" data-nav="lists"      href="lists.html">Lists</a>
+      <a class="nav-item" data-nav="statistics" href="statistics.html">Statistics</a>
+    </div>
+  </nav>
+</aside>

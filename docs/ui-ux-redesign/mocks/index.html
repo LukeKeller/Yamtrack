@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en" data-theme="default" data-density="comfortable">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yamtrack redesign — mock gallery</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="_assets/tokens.css">
+  <style>
+    .preview-card { transition: transform 180ms var(--ease, ease), box-shadow 180ms var(--ease, ease); }
+    .preview-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-elev-2); }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="max-w-6xl mx-auto px-6 py-12">
+    <header class="mb-10">
+      <p class="text-fg-faint text-sm tracking-wide uppercase mb-2">Yamtrack — UI/UX redesign</p>
+      <h1 class="text-3xl font-semibold mb-3">Mock gallery</h1>
+      <p class="text-fg-muted max-w-2xl">
+        Click any tile to open the full mock. Each one is a static HTML page —
+        Tailwind v3 is loaded via CDN and design tokens live in
+        <code class="font-mono text-xs bg-surface-2 px-1.5 py-0.5 rounded">_assets/tokens.css</code>.
+        Mocks demonstrate the target visual; behavior is illustrative.
+      </p>
+    </header>
+
+    <section class="mb-12">
+      <h2 class="text-lg font-semibold mb-4 text-fg">Primary surfaces</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <a class="preview-card card block" href="home.html">
+          <div class="aspect-[4/3] bg-surface-2 rounded-md mb-3 relative overflow-hidden flex items-center justify-center text-fg-faint">
+            <svg viewBox="0 0 24 24" class="w-12 h-12 opacity-40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12 12 3l9 9"/><path d="M5 10v10h14V10"/></svg>
+          </div>
+          <div class="font-semibold">Home</div>
+          <div class="text-sm text-fg-muted">Up next rail · activity feed · calendar · in-progress sections</div>
+        </a>
+        <a class="preview-card card block" href="media-details-movie.html">
+          <div class="aspect-[4/3] bg-surface-2 rounded-md mb-3 relative overflow-hidden flex items-center justify-center text-fg-faint">
+            <svg viewBox="0 0 24 24" class="w-12 h-12 opacity-40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M17 5v14M3 12h18"/></svg>
+          </div>
+          <div class="font-semibold">Movie detail</div>
+          <div class="text-sm text-fg-muted">Hero backdrop · single CTA · half-star score · cast rail</div>
+        </a>
+        <a class="preview-card card block" href="media-details-tv.html">
+          <div class="aspect-[4/3] bg-surface-2 rounded-md mb-3 relative overflow-hidden flex items-center justify-center text-fg-faint">
+            <svg viewBox="0 0 24 24" class="w-12 h-12 opacity-40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M8 3l4 4 4-4"/></svg>
+          </div>
+          <div class="font-semibold">TV detail</div>
+          <div class="text-sm text-fg-muted">Season picker · compact episode rows · mark-up-to-here</div>
+        </a>
+        <a class="preview-card card block" href="media-list-grid.html">
+          <div class="aspect-[4/3] bg-surface-2 rounded-md mb-3 relative overflow-hidden flex items-center justify-center text-fg-faint">
+            <svg viewBox="0 0 24 24" class="w-12 h-12 opacity-40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          </div>
+          <div class="font-semibold">Media list — grid</div>
+          <div class="text-sm text-fg-muted">Filter popover · density toggle · status pills · selection bar</div>
+        </a>
+        <a class="preview-card card block" href="media-list-table.html">
+          <div class="aspect-[4/3] bg-surface-2 rounded-md mb-3 relative overflow-hidden flex items-center justify-center text-fg-faint">
+            <svg viewBox="0 0 24 24" class="w-12 h-12 opacity-40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+          </div>
+          <div class="font-semibold">Media list — table</div>
+          <div class="text-sm text-fg-muted">Dense tabular layout · inline edits · keyboard nav</div>
+        </a>
+        <a class="preview-card card block" href="search.html">
+          <div class="aspect-[4/3] bg-surface-2 rounded-md mb-3 relative overflow-hidden flex items-center justify-center text-fg-faint">
+            <svg viewBox="0 0 24 24" class="w-12 h-12 opacity-40" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          </div>
+          <div class="font-semibold">Search</div>
+          <div class="text-sm text-fg-muted">Source pills · quick-add row actions · "already tracked" hint</div>
+        </a>
+        <a class="preview-card card block" href="calendar.html">
+          <div class="aspect-[4/3] bg-surface-2 rounded-md mb-3 relative overflow-hidden flex items-center justify-center text-fg-faint">
+            <svg viewBox="0 0 24 24" class="w-12 h-12 opacity-40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg>
+          </div>
+          <div class="font-semibold">Calendar</div>
+          <div class="text-sm text-fg-muted">Auto-density · filter chips · ICS copy</div>
+        </a>
+        <a class="preview-card card block" href="lists.html">
+          <div class="aspect-[4/3] bg-surface-2 rounded-md mb-3 relative overflow-hidden flex items-center justify-center text-fg-faint">
+            <svg viewBox="0 0 24 24" class="w-12 h-12 opacity-40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+          </div>
+          <div class="font-semibold">Lists</div>
+          <div class="text-sm text-fg-muted">2×2 cover mosaics · collaborator avatars · template starters</div>
+        </a>
+        <a class="preview-card card block" href="list-detail.html">
+          <div class="aspect-[4/3] bg-surface-2 rounded-md mb-3 relative overflow-hidden flex items-center justify-center text-fg-faint">
+            <svg viewBox="0 0 24 24" class="w-12 h-12 opacity-40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+          </div>
+          <div class="font-semibold">List detail</div>
+          <div class="text-sm text-fg-muted">Drag-handle rows · share link · public/private indicator</div>
+        </a>
+        <a class="preview-card card block" href="statistics.html">
+          <div class="aspect-[4/3] bg-surface-2 rounded-md mb-3 relative overflow-hidden flex items-center justify-center text-fg-faint">
+            <svg viewBox="0 0 24 24" class="w-12 h-12 opacity-40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="7"/><rect x="13" y="6" width="3" height="12"/><rect x="19" y="14" width="3" height="4"/></svg>
+          </div>
+          <div class="font-semibold">Statistics</div>
+          <div class="text-sm text-fg-muted">Year-recap CTA · activity heatmap · refined chart wall</div>
+        </a>
+        <a class="preview-card card block" href="settings.html">
+          <div class="aspect-[4/3] bg-surface-2 rounded-md mb-3 relative overflow-hidden flex items-center justify-center text-fg-faint">
+            <svg viewBox="0 0 24 24" class="w-12 h-12 opacity-40" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </div>
+          <div class="font-semibold">Settings</div>
+          <div class="text-sm text-fg-muted">Section hub · theme swatches · density · keyboard map</div>
+        </a>
+      </div>
+    </section>
+
+    <section class="mb-12">
+      <h2 class="text-lg font-semibold mb-4 text-fg">Flows &amp; overlays</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <a class="preview-card card block" href="command-palette.html">
+          <div class="aspect-[4/3] bg-surface-2 rounded-md mb-3 flex items-center justify-center text-fg-faint">
+            <svg viewBox="0 0 24 24" class="w-12 h-12 opacity-40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M7 12h10"/></svg>
+          </div>
+          <div class="font-semibold">Command palette (⌘K)</div>
+          <div class="text-sm text-fg-muted">Search · jump · act — keyboard-first overlay</div>
+        </a>
+        <a class="preview-card card block" href="track-drawer.html">
+          <div class="aspect-[4/3] bg-surface-2 rounded-md mb-3 flex items-center justify-center text-fg-faint">
+            <svg viewBox="0 0 24 24" class="w-12 h-12 opacity-40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 3h6v18h-6"/><path d="M3 12h12M11 8l4 4-4 4"/></svg>
+          </div>
+          <div class="font-semibold">Track drawer</div>
+          <div class="text-sm text-fg-muted">Drawer (desktop) · quick actions · "Edit details" reveal</div>
+        </a>
+        <a class="preview-card card block" href="onboarding.html">
+          <div class="aspect-[4/3] bg-surface-2 rounded-md mb-3 flex items-center justify-center text-fg-faint">
+            <svg viewBox="0 0 24 24" class="w-12 h-12 opacity-40" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18" cy="12" r="2"/></svg>
+          </div>
+          <div class="font-semibold">Onboarding</div>
+          <div class="text-sm text-fg-muted">3-step wizard: media types · import · theme</div>
+        </a>
+        <a class="preview-card card block" href="login.html">
+          <div class="aspect-[4/3] bg-surface-2 rounded-md mb-3 flex items-center justify-center text-fg-faint">
+            <svg viewBox="0 0 24 24" class="w-12 h-12 opacity-40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+          </div>
+          <div class="font-semibold">Login</div>
+          <div class="text-sm text-fg-muted">Marketing pane · social tile grid · demo CTA</div>
+        </a>
+        <a class="preview-card card block" href="home-empty.html">
+          <div class="aspect-[4/3] bg-surface-2 rounded-md mb-3 flex items-center justify-center text-fg-faint">
+            <svg viewBox="0 0 24 24" class="w-12 h-12 opacity-40" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14"/></svg>
+          </div>
+          <div class="font-semibold">Home — empty</div>
+          <div class="text-sm text-fg-muted">First-run state with two concrete CTAs</div>
+        </a>
+      </div>
+    </section>
+
+    <section class="mb-12">
+      <h2 class="text-lg font-semibold mb-4 text-fg">Mobile</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <a class="preview-card card block" href="mobile-home.html">
+          <div class="aspect-[4/3] bg-surface-2 rounded-md mb-3 flex items-center justify-center text-fg-faint">
+            <svg viewBox="0 0 24 24" class="w-12 h-12 opacity-40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="7" y="2" width="10" height="20" rx="2"/></svg>
+          </div>
+          <div class="font-semibold">Mobile home</div>
+          <div class="text-sm text-fg-muted">Bottom nav · up-next carousel · stacked rails</div>
+        </a>
+        <a class="preview-card card block" href="mobile-details.html">
+          <div class="aspect-[4/3] bg-surface-2 rounded-md mb-3 flex items-center justify-center text-fg-faint">
+            <svg viewBox="0 0 24 24" class="w-12 h-12 opacity-40" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M10 7h4"/></svg>
+          </div>
+          <div class="font-semibold">Mobile detail</div>
+          <div class="text-sm text-fg-muted">Hero backdrop · bottom-sheet track flow</div>
+        </a>
+      </div>
+    </section>
+
+    <footer class="text-xs text-fg-faint mt-16">
+      <p>Mocks use Tailwind v3 via CDN to render without a build step; the
+        production build will use Tailwind v4 with the tokens declared in
+        <code class="font-mono">@theme</code>. Visual fidelity should match
+        within ~2 pixels.</p>
+    </footer>
+  </div>
+</body>
+</html>

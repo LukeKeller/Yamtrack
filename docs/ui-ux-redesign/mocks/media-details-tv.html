@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en" data-theme="default" data-density="comfortable">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Severance — Yamtrack (redesign mock)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="_assets/tokens.css">
+  <style>
+    .backdrop {
+      position: absolute; inset: 0;
+      background:
+        linear-gradient(180deg, transparent 0%, transparent 35%, var(--bg) 100%),
+        linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.55) 100%),
+        radial-gradient(120% 100% at 50% 0%, #1e40af 0%, #172554 50%, #020617 80%);
+      z-index: 0;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="flex min-h-screen">
+
+    <aside class="hidden lg:flex w-[60px] bg-surface-0 border-r-default flex-col h-screen sticky top-0 shrink-0 py-3 items-center gap-1">
+      <div class="w-9 h-9 rounded-md bg-accent flex items-center justify-center font-bold text-white mb-3">Y</div>
+      <button class="nav-item w-9 h-9 p-0 justify-center" title="Home"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 12 12 3l9 9"/><path d="M5 10v10h14V10"/></svg></button>
+      <button class="nav-item w-9 h-9 p-0 justify-center active type-tv" title="TV"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="2" y="7" width="20" height="13" rx="2"/><path d="M8 3l4 4 4-4"/></svg></button>
+      <button class="nav-item w-9 h-9 p-0 justify-center type-movie" title="Movies"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="5" width="18" height="14" rx="2"/></svg></button>
+      <button class="nav-item w-9 h-9 p-0 justify-center type-anime" title="Anime"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="8"/></svg></button>
+      <div class="flex-1"></div>
+    </aside>
+
+    <div class="flex-1 min-w-0 flex flex-col">
+
+      <header class="sticky top-0 z-30 h-14 bg-surface-0/85 backdrop-blur border-b-default px-4 lg:px-6 flex items-center gap-3">
+        <button class="btn btn-icon btn-ghost" title="Back"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="m15 18-6-6 6-6"/></svg></button>
+        <nav class="text-sm text-fg-muted flex items-center gap-1.5 flex-1">
+          <a class="hover:text-fg" href="media-list-grid.html">TV shows</a>
+          <svg class="w-3 h-3 text-fg-faint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          <span class="text-fg">Severance</span>
+        </nav>
+        <div class="flex items-center gap-1">
+          <button class="btn btn-icon btn-ghost"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg></button>
+          <div class="w-7 h-7 rounded-full bg-accent flex items-center justify-center text-white text-xs font-semibold">L</div>
+        </div>
+      </header>
+
+      <!-- Hero -->
+      <div class="relative">
+        <div class="backdrop h-[380px]"></div>
+        <div class="relative z-10 max-w-6xl mx-auto px-4 lg:px-8 pt-24 lg:pt-32">
+          <div class="flex flex-col md:flex-row gap-6 items-end">
+            <div class="w-36 md:w-48 shrink-0">
+              <div class="poster shadow-2xl" style="aspect-ratio: 2/3; background: linear-gradient(160deg, #93c5fd 0%, #1e3a8a 50%, #020617 100%);"></div>
+            </div>
+            <div class="flex-1 min-w-0 pb-2">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="pill" style="background: var(--type-tv); color: white; opacity: .9">TV show</span>
+                <span class="pill pill-meta">2022 – present</span>
+                <span class="pill pill-meta">2 seasons · 19 episodes</span>
+                <span class="pill pill-meta">Sci-Fi · Thriller</span>
+              </div>
+              <h1 class="text-3xl md:text-4xl font-semibold tracking-tight">Severance</h1>
+              <p class="text-sm text-fg-muted mt-2 max-w-2xl">Apple TV+ · Created by Dan Erickson · Adam Scott, Britt Lower, Tramell Tillman</p>
+
+              <div class="flex flex-wrap items-center gap-x-5 gap-y-2 mt-5 text-sm">
+                <span class="flex items-center gap-1.5"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="#fbbf24"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9 12 2"/></svg><span class="font-semibold">8.7</span><span class="text-fg-faint">IMDb</span></span>
+                <span class="flex items-center gap-1.5"><span class="font-semibold" style="color: var(--status-completed)">97%</span><span class="text-fg-faint">RT</span></span>
+                <span class="text-fg-faint hidden md:inline">·</span>
+                <span class="flex items-center gap-1.5">
+                  <span class="text-fg-faint">You</span>
+                  <span class="stars">
+                    <span class="star" style="--star-fill: 100%"></span>
+                    <span class="star" style="--star-fill: 100%"></span>
+                    <span class="star" style="--star-fill: 100%"></span>
+                    <span class="star" style="--star-fill: 100%"></span>
+                    <span class="star" style="--star-fill: 100%"></span>
+                  </span>
+                  <span class="font-semibold text-accent">5.0</span>
+                </span>
+              </div>
+
+              <div class="flex items-center gap-2 mt-5">
+                <button class="btn btn-primary btn-lg">
+                  <span class="status-dot status-dot-in-progress"></span>
+                  Up next: S02E05 — Trojan's Horse
+                  <svg class="w-4 h-4 ml-1 opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+                <button class="btn btn-secondary btn-lg" title="Status">In progress</button>
+                <button class="btn btn-secondary btn-lg btn-icon" title="More">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
+                </button>
+              </div>
+
+              <!-- progress -->
+              <div class="mt-4 max-w-md">
+                <div class="flex justify-between text-xs text-fg-muted mb-1.5">
+                  <span>Season 2 progress</span>
+                  <span>4 / 10 episodes</span>
+                </div>
+                <div class="h-1.5 rounded-full bg-surface-2 overflow-hidden">
+                  <div class="h-full bg-accent" style="width: 40%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="relative z-10 max-w-6xl mx-auto px-4 lg:px-8 mt-10">
+        <div class="flex items-center gap-1 border-b-default overflow-x-auto no-scrollbar">
+          <button class="px-4 py-2.5 text-sm font-medium text-fg-muted hover:text-fg">Overview</button>
+          <button class="px-4 py-2.5 text-sm font-medium relative" style="color: var(--fg)">
+            Episodes
+            <span class="absolute bottom-0 inset-x-0 h-0.5 bg-accent"></span>
+          </button>
+          <button class="px-4 py-2.5 text-sm font-medium text-fg-muted hover:text-fg">Cast &amp; crew</button>
+          <button class="px-4 py-2.5 text-sm font-medium text-fg-muted hover:text-fg">Related</button>
+          <button class="px-4 py-2.5 text-sm font-medium text-fg-muted hover:text-fg">Your history</button>
+        </div>
+      </div>
+
+      <main class="max-w-6xl mx-auto px-4 lg:px-8 mt-6 mb-12 grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8">
+
+        <!-- Episodes -->
+        <div class="space-y-6 min-w-0">
+
+          <!-- Season picker -->
+          <div class="flex items-center justify-between gap-4 flex-wrap">
+            <div class="flex items-center gap-2">
+              <button class="btn btn-secondary btn-sm">
+                Season 2
+                <svg class="w-3.5 h-3.5 ml-1 opacity-70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+              </button>
+              <span class="text-sm text-fg-muted">10 episodes · 4 watched</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="btn btn-ghost btn-sm">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M20 6 9 17l-5-5"/></svg>
+                Mark up to here
+              </button>
+              <button class="btn btn-ghost btn-sm btn-icon" title="Search episodes"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></button>
+            </div>
+          </div>
+
+          <!-- Episode list (compact rows) -->
+          <ul class="card divide-y" style="padding: 0; border-color: var(--border-subtle)">
+            <li class="flex gap-4 items-center px-4 py-3 hover:bg-surface-2 transition">
+              <div class="text-fg-faint text-xs w-6 text-right font-mono">01</div>
+              <div class="w-24 aspect-video bg-surface-2 rounded-sm overflow-hidden shrink-0" style="background: linear-gradient(135deg, #6366f1, #1e1b4b)"></div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <div class="font-medium truncate">Hello, Ms. Cobel</div>
+                  <span class="pill pill-status-completed text-[10px]">Watched</span>
+                </div>
+                <div class="text-xs text-fg-muted truncate mt-0.5">Aired Jan 17 · 39 min · Watched Jan 24, 2025</div>
+              </div>
+              <button class="btn btn-icon btn-sm btn-ghost" title="Watched"><svg class="w-3.5 h-3.5 text-status-completed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--status-completed)"><path d="M20 6 9 17l-5-5"/></svg></button>
+            </li>
+            <li class="flex gap-4 items-center px-4 py-3 hover:bg-surface-2 transition">
+              <div class="text-fg-faint text-xs w-6 text-right font-mono">02</div>
+              <div class="w-24 aspect-video bg-surface-2 rounded-sm overflow-hidden shrink-0" style="background: linear-gradient(135deg, #6366f1, #1e1b4b)"></div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <div class="font-medium truncate">Goodbye, Mrs. Selvig</div>
+                  <span class="pill pill-status-completed text-[10px]">Watched</span>
+                </div>
+                <div class="text-xs text-fg-muted truncate mt-0.5">Aired Jan 24 · 56 min · Watched Jan 30, 2025</div>
+              </div>
+              <button class="btn btn-icon btn-sm btn-ghost" title="Watched"><svg class="w-3.5 h-3.5" style="color: var(--status-completed)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></button>
+            </li>
+            <li class="flex gap-4 items-center px-4 py-3 hover:bg-surface-2 transition">
+              <div class="text-fg-faint text-xs w-6 text-right font-mono">03</div>
+              <div class="w-24 aspect-video bg-surface-2 rounded-sm overflow-hidden shrink-0" style="background: linear-gradient(135deg, #6366f1, #1e1b4b)"></div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <div class="font-medium truncate">Who Is Alive?</div>
+                  <span class="pill pill-status-completed text-[10px]">Watched</span>
+                </div>
+                <div class="text-xs text-fg-muted truncate mt-0.5">Aired Jan 31 · 41 min · Watched Feb 6, 2025</div>
+              </div>
+              <button class="btn btn-icon btn-sm btn-ghost" title="Watched"><svg class="w-3.5 h-3.5" style="color: var(--status-completed)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></button>
+            </li>
+            <li class="flex gap-4 items-center px-4 py-3 hover:bg-surface-2 transition">
+              <div class="text-fg-faint text-xs w-6 text-right font-mono">04</div>
+              <div class="w-24 aspect-video bg-surface-2 rounded-sm overflow-hidden shrink-0" style="background: linear-gradient(135deg, #6366f1, #1e1b4b)"></div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <div class="font-medium truncate">Woe's Hollow</div>
+                  <span class="pill pill-status-completed text-[10px]">Watched</span>
+                </div>
+                <div class="text-xs text-fg-muted truncate mt-0.5">Aired Feb 7 · 47 min · Watched Feb 12, 2025</div>
+              </div>
+              <button class="btn btn-icon btn-sm btn-ghost" title="Watched"><svg class="w-3.5 h-3.5" style="color: var(--status-completed)" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></button>
+            </li>
+            <li class="flex gap-4 items-center px-4 py-3 bg-accent-soft hover:bg-surface-3 transition border-l-2" style="border-left-color: var(--accent)">
+              <div class="text-accent text-xs w-6 text-right font-mono font-semibold">05</div>
+              <div class="w-24 aspect-video bg-surface-2 rounded-sm overflow-hidden shrink-0" style="background: linear-gradient(135deg, #818cf8, #312e81)"></div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <div class="font-medium truncate">Trojan's Horse</div>
+                  <span class="pill pill-accent text-[10px]">Up next</span>
+                </div>
+                <div class="text-xs text-fg-muted truncate mt-0.5">Aired Feb 14 · 38 min · 3 days ago</div>
+              </div>
+              <button class="btn btn-primary btn-sm" title="Mark watched">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                +1
+              </button>
+            </li>
+            <li class="flex gap-4 items-center px-4 py-3 hover:bg-surface-2 transition opacity-70">
+              <div class="text-fg-faint text-xs w-6 text-right font-mono">06</div>
+              <div class="w-24 aspect-video bg-surface-2 rounded-sm overflow-hidden shrink-0 blur-sm" style="background: linear-gradient(135deg, #6366f1, #1e1b4b)"></div>
+              <div class="flex-1 min-w-0">
+                <div class="font-medium truncate">Attila</div>
+                <div class="text-xs text-fg-muted truncate mt-0.5">Aired Feb 21 · 43 min — synopsis hidden until watched</div>
+              </div>
+              <button class="btn btn-icon btn-sm btn-ghost" title="Unwatched"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg></button>
+            </li>
+            <li class="flex gap-4 items-center px-4 py-3 hover:bg-surface-2 transition opacity-70">
+              <div class="text-fg-faint text-xs w-6 text-right font-mono">07</div>
+              <div class="w-24 aspect-video bg-surface-2 rounded-sm overflow-hidden shrink-0 blur-sm" style="background: linear-gradient(135deg, #6366f1, #1e1b4b)"></div>
+              <div class="flex-1 min-w-0">
+                <div class="font-medium truncate">Chikhai Bardo</div>
+                <div class="text-xs text-fg-muted truncate mt-0.5">Aired Feb 28 · 48 min</div>
+              </div>
+              <button class="btn btn-icon btn-sm btn-ghost" title="Unwatched"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg></button>
+            </li>
+            <li class="flex gap-4 items-center px-4 py-3 hover:bg-surface-2 transition opacity-70">
+              <div class="text-fg-faint text-xs w-6 text-right font-mono">08</div>
+              <div class="w-24 aspect-video bg-surface-2 rounded-sm overflow-hidden shrink-0 blur-sm" style="background: linear-gradient(135deg, #6366f1, #1e1b4b)"></div>
+              <div class="flex-1 min-w-0">
+                <div class="font-medium truncate">Sweet Vitriol</div>
+                <div class="text-xs text-fg-muted truncate mt-0.5">Aired Mar 7 · 45 min</div>
+              </div>
+              <button class="btn btn-icon btn-sm btn-ghost" title="Unwatched"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg></button>
+            </li>
+            <li class="flex gap-4 items-center px-4 py-3 hover:bg-surface-2 transition opacity-70">
+              <div class="text-fg-faint text-xs w-6 text-right font-mono">09</div>
+              <div class="w-24 aspect-video bg-surface-2 rounded-sm overflow-hidden shrink-0 blur-sm" style="background: linear-gradient(135deg, #6366f1, #1e1b4b)"></div>
+              <div class="flex-1 min-w-0">
+                <div class="font-medium truncate">The After Hours</div>
+                <div class="text-xs text-fg-muted truncate mt-0.5">Aired Mar 14 · 52 min</div>
+              </div>
+              <button class="btn btn-icon btn-sm btn-ghost" title="Unwatched"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg></button>
+            </li>
+            <li class="flex gap-4 items-center px-4 py-3 hover:bg-surface-2 transition opacity-70">
+              <div class="text-fg-faint text-xs w-6 text-right font-mono">10</div>
+              <div class="w-24 aspect-video bg-surface-2 rounded-sm overflow-hidden shrink-0 blur-sm" style="background: linear-gradient(135deg, #6366f1, #1e1b4b)"></div>
+              <div class="flex-1 min-w-0">
+                <div class="font-medium truncate">Cold Harbor (finale)</div>
+                <div class="text-xs text-fg-muted truncate mt-0.5">Aired Mar 21 · 72 min</div>
+              </div>
+              <button class="btn btn-icon btn-sm btn-ghost" title="Unwatched"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/></svg></button>
+            </li>
+          </ul>
+
+          <p class="text-xs text-fg-faint">Episode artwork and synopses for unwatched episodes are hidden — toggle in <a class="text-accent hover:underline" href="settings.html">Preferences</a>.</p>
+
+        </div>
+
+        <!-- Right rail -->
+        <aside class="space-y-4">
+          <div class="card">
+            <h3 class="text-base font-semibold mb-3">Seasons</h3>
+            <ul class="space-y-1.5 text-sm">
+              <li>
+                <a class="flex items-center justify-between p-2 rounded-md hover:bg-surface-2 transition" href="#">
+                  <span class="flex items-center gap-2">
+                    <span class="status-dot status-dot-completed"></span>
+                    Season 1
+                  </span>
+                  <span class="text-fg-faint">9/9</span>
+                </a>
+              </li>
+              <li>
+                <a class="flex items-center justify-between p-2 rounded-md bg-surface-2" href="#">
+                  <span class="flex items-center gap-2 font-medium">
+                    <span class="status-dot status-dot-in-progress"></span>
+                    Season 2
+                  </span>
+                  <span class="text-fg-muted">4/10</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h3 class="text-base font-semibold mb-3">Network</h3>
+            <div class="flex items-center gap-2">
+              <div class="w-10 h-10 rounded bg-gradient-to-br from-zinc-500 to-zinc-800 text-white font-bold text-xs flex items-center justify-center"></div>
+              <div>
+                <div class="text-sm">Apple TV+</div>
+                <div class="text-xs text-fg-faint">Subscription</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 class="text-base font-semibold mb-3">Details</h3>
+            <dl class="text-sm space-y-2">
+              <div class="flex justify-between"><dt class="text-fg-faint">Status</dt><dd>Returning series</dd></div>
+              <div class="flex justify-between"><dt class="text-fg-faint">First aired</dt><dd>Feb 18, 2022</dd></div>
+              <div class="flex justify-between"><dt class="text-fg-faint">Episode length</dt><dd>40–55 min</dd></div>
+              <div class="flex justify-between"><dt class="text-fg-faint">Country</dt><dd>USA</dd></div>
+            </dl>
+          </div>
+        </aside>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
