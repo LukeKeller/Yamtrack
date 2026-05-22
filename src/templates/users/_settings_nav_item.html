@@ -1,0 +1,10 @@
+{% load app_tags %}
+{% comment %}
+  Settings sub-nav row. Each settings page links here.
+   Required: url, label, icon_template.
+{% endcomment %}
+<a href="{{ url }}"
+   class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-md transition-colors text-sm {% if request.path|str_equals:url %}bg-surface-2 text-fg{% else %}text-fg-muted hover:bg-surface-2 hover:text-fg{% endif %}">
+  {% include icon_template with classes="w-4 h-4 shrink-0" %}
+  <span>{{ label }}</span>
+</a>
