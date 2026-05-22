@@ -234,6 +234,40 @@
 
       <div class="bg-[#39404b] p-5 rounded-lg mb-6">
         <div class="flex items-center mb-3">
+          {% include "app/icons/book-open.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
+          <h3 class="text-base font-medium">Suwayomi Manga Reader</h3>
+        </div>
+        <p class="text-gray-400 mb-4 text-sm">
+          Link your <a href="https://github.com/Suwayomi/Suwayomi-Server" target="_blank" rel="noopener noreferrer" class="text-indigo-400 hover:underline">Suwayomi-Server</a>
+          so manga detail pages get a "Read on Suwayomi" button that jumps to a global search for the title.
+          Suwayomi already syncs progress to AniList/MAL/MangaUpdates, which Yamtrack can import.
+        </p>
+        <div class="bg-[#262a2f] p-3 rounded-md">
+          <form method="post" action="{% url 'update_suwayomi_url' %}" class="space-y-2">
+            {% csrf_token %}
+            <div>
+              <label for="suwayomi_url" class="block text-sm font-medium text-gray-300 mb-2">Suwayomi base URL</label>
+              <input id="suwayomi_url"
+                     name="suwayomi_url"
+                     class="w-full py-2 px-3 bg-[#39404b] rounded-md text-white text-sm border border-gray-600 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                     type="url"
+                     placeholder="https://manga.example.com"
+                     value="{{ request.user.suwayomi_url }}">
+              <p class="text-xs text-gray-500 mt-1">Leave blank to hide the button. The deep link uses <span class="font-mono">/global-search?query=&lt;title&gt;</span>.</p>
+            </div>
+            <div class="pt-2">
+              <button type="submit"
+                      class="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer">
+                {% include "app/icons/save.svg" with classes="w-4 h-4 mr-2" %}
+                Save Changes
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="bg-[#39404b] p-5 rounded-lg mb-6">
+        <div class="flex items-center mb-3">
           {% include "app/icons/server.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
           <h3 class="text-base font-medium">Emby Integration</h3>
         </div>

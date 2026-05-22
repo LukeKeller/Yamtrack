@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
@@ -357,6 +358,31 @@ def update_plex_usernames(request):
         request.user.save(update_fields=["plex_usernames"])
         messages.success(request, "Plex usernames updated successfully")
 
+    return redirect("integrations")
+
+
+@require_POST
+def update_suwayomi_url(request):
+    """Update the Suwayomi base URL for the user."""
+    raw = request.POST.get("suwayomi_url", "").strip().rstrip("/")
+
+    if raw == request.user.suwayomi_url:
+        return redirect("integrations")
+
+    user = request.user
+    user.suwayomi_url = raw
+    try:
+        user.full_clean(exclude=None, validate_unique=False)
+    except ValidationError as exc:
+        for msg in exc.message_dict.get("suwayomi_url", ["Invalid Suwayomi URL"]):
+            messages.error(request, msg)
+        return redirect("integrations")
+
+    user.save(update_fields=["suwayomi_url"])
+    if raw:
+        messages.success(request, "Suwayomi URL saved")
+    else:
+        messages.success(request, "Suwayomi URL cleared")
     return redirect("integrations")
 
 

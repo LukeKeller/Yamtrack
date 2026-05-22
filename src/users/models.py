@@ -416,6 +416,14 @@ class User(AbstractUser):
         blank=True,
         help_text="Comma-separated list of Plex usernames for webhook matching",
     )
+    suwayomi_url = models.URLField(
+        blank=True,
+        help_text=(
+            "Base URL of your Suwayomi-Server WebUI (e.g. https://manga.example.com). "
+            "When set, manga detail pages show a 'Read on Suwayomi' button that opens "
+            "a global search for the title."
+        ),
+    )
 
     class Meta:
         """Meta options for the model."""

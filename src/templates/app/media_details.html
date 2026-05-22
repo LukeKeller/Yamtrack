@@ -48,6 +48,17 @@
         </div>
       </div>
 
+      {% if media.media_type == MediaTypes.MANGA.value and request.user.suwayomi_url %}
+        <a href="{{ request.user.suwayomi_url }}/global-search?query={{ media.title|urlencode }}"
+           target="_blank"
+           rel="noopener noreferrer"
+           class="mt-3 p-3 rounded-lg w-full flex items-center text-white transition duration-300 cursor-pointer bg-emerald-600 hover:bg-emerald-700">
+          <div class="flex-1 text-center font-medium">Read on Suwayomi</div>
+          <div class="h-5 mx-2 border-l border-white/30"></div>
+          {% include "app/icons/book-open.svg" with classes="w-5 h-5 shrink-0" %}
+        </a>
+      {% endif %}
+
       {% if media.media_type == MediaTypes.RECORD.value %}
         {# Now spinning — manual vinyl play logger. One tap per side. #}
         <div id="record-spin-status" class="mt-3">

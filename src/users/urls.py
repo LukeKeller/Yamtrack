@@ -35,4 +35,9 @@ urlpatterns = [
         views.update_plex_usernames,
         name="update_plex_usernames",
     ),
+    path(
+        "update_suwayomi_url",
+        views.update_suwayomi_url,
+        name="update_suwayomi_url",
+    ),
 ]
