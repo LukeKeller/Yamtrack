@@ -57,49 +57,73 @@
       </div>
     {% endif %}
 
-    <div class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover-tap:opacity-100{% if user.clickable_media_cards %} pointer-coarse:hidden{% endif %}">
-      <a href="{{ item|media_url }}" class="absolute inset-0"></a>
-
-      <div class="relative flex items-center justify-center space-x-2.5">
-        {% if item.media_type == MediaTypes.EPISODE.value %}
-          <button @click="trackOpen = true"
-                  class="p-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full hover:scale-110 hover:shadow-[0_0_15px_rgba(99,102,241,0.5)] transition-all duration-200 cursor-pointer">
-            {% if media %}
-              {% include "app/icons/eye.svg" with classes="w-4 h-4" %}
-            {% else %}
-              {% include "app/icons/eye-closed.svg" with classes="w-4 h-4" %}
-            {% endif %}
-          </button>
+    {# Hover affordance: card click navigates to detail (the existing <a>
+       wraps the poster). Secondary actions (Track / Lists / History) live
+       behind a kebab popover in the top-right so the artwork stays clean.
+       Episodes get a single primary action (mark watched) instead of the
+       kebab because the eye-toggle is the main thing you want there. #}
+    {% if item.media_type == MediaTypes.EPISODE.value %}
+      <button @click="trackOpen = true"
+              class="absolute top-2 right-2 btn btn-icon btn-sm opacity-0 hover-tap:opacity-100 transition-opacity{% if user.clickable_media_cards %} pointer-coarse:hidden{% endif %}"
+              style="background: rgb(0 0 0 / 0.55); color: white; backdrop-filter: blur(8px);"
+              title="Mark watched">
+        {% if media %}
+          {% include "app/icons/eye.svg" with classes="w-3.5 h-3.5" %}
         {% else %}
-          {# Track Button #}
-          <button class="p-2.5 bg-indigo-600 text-white rounded-full hover:bg-indigo-500 hover:scale-110 hover:shadow-[0_0_15px_rgba(99,102,241,0.5)] transition-all duration-200 cursor-pointer"
-                  title="Add to tracker"
+          {% include "app/icons/eye-closed.svg" with classes="w-3.5 h-3.5" %}
+        {% endif %}
+      </button>
+    {% else %}
+      <div class="absolute top-2 right-2 opacity-0 hover-tap:opacity-100 transition-opacity{% if user.clickable_media_cards %} pointer-coarse:hidden{% endif %}"
+           x-data="{ kebabOpen: false }"
+           @click.away="kebabOpen = false">
+        <button @click.prevent.stop="kebabOpen = !kebabOpen"
+                type="button"
+                class="btn btn-icon btn-sm"
+                style="background: rgb(0 0 0 / 0.55); color: white; backdrop-filter: blur(8px);"
+                title="Actions">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>
+          </svg>
+        </button>
+        <div x-show="kebabOpen"
+             x-cloak
+             x-transition.opacity.duration.150ms
+             class="absolute right-0 top-full mt-1 z-20 w-44 py-1 rounded-md shadow-lg bg-surface-1"
+             style="border: 1px solid var(--color-border-default); box-shadow: var(--shadow-elev-2);">
+          <button type="button"
+                  class="w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-surface-2 transition-colors text-left"
                   hx-get="{% media_view_url 'track_modal' item %}"
                   hx-vals='{"return_url": "{{ request.get_full_path|urlencode }}", "instance_id": "{{ media.id }}"}'
                   hx-target="#{% component_id 'track' item media.id %}"
                   hx-trigger="click once"
-                  @click="trackOpen = true">{% include "app/icons/edit.svg" with classes="w-4 h-4" %}</button>
-        {% endif %}
-
-        {# Lists Button #}
-        <button class="p-2.5 bg-emerald-600 text-white rounded-full hover:bg-emerald-500 hover:scale-110 hover:shadow-[0_0_15px_rgba(16,185,129,0.5)] transition-all duration-200 cursor-pointer"
-                title="Add to custom lists"
-                hx-get="{% media_view_url 'lists_modal' item %}"
-                hx-vals='{"return_url": "{{ request.get_full_path|urlencode }}"}'
-                hx-target="#{% component_id 'lists' item %}"
-                hx-trigger="click once"
-                @click="listsOpen = true">{% include "app/icons/list-add.svg" with classes="w-4 h-4" %}</button>
-
-        {# History Button #}
-        <button class="p-2.5 bg-amber-600 text-white rounded-full hover:bg-amber-500 hover:scale-110 hover:shadow-[0_0_15px_rgba(245,158,11,0.5)] transition-all duration-200 cursor-pointer"
-                title="View your activity history"
-                hx-get="{% media_view_url 'history_modal' item %}"
-                hx-vals='{"return_url": "{{ request.get_full_path|urlencode }}"}'
-                hx-target="#{% component_id 'history' item %}"
-                hx-trigger="click once"
-                @click="historyOpen = true">{% include "app/icons/history.svg" with classes="w-4 h-4" %}</button>
+                  @click.prevent.stop="kebabOpen = false; trackOpen = true">
+            {% include "app/icons/edit.svg" with classes="w-3.5 h-3.5 text-fg-muted" %}
+            {% if media %}Edit tracking…{% else %}Add to library…{% endif %}
+          </button>
+          <button type="button"
+                  class="w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-surface-2 transition-colors text-left"
+                  hx-get="{% media_view_url 'lists_modal' item %}"
+                  hx-vals='{"return_url": "{{ request.get_full_path|urlencode }}"}'
+                  hx-target="#{% component_id 'lists' item %}"
+                  hx-trigger="click once"
+                  @click.prevent.stop="kebabOpen = false; listsOpen = true">
+            {% include "app/icons/list-add.svg" with classes="w-3.5 h-3.5 text-fg-muted" %}
+            Add to list…
+          </button>
+          <button type="button"
+                  class="w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-surface-2 transition-colors text-left"
+                  hx-get="{% media_view_url 'history_modal' item %}"
+                  hx-vals='{"return_url": "{{ request.get_full_path|urlencode }}"}'
+                  hx-target="#{% component_id 'history' item %}"
+                  hx-trigger="click once"
+                  @click.prevent.stop="kebabOpen = false; historyOpen = true">
+            {% include "app/icons/history.svg" with classes="w-3.5 h-3.5 text-fg-muted" %}
+            View history
+          </button>
+        </div>
       </div>
-    </div>
+    {% endif %}
   </div>
 
   <div class="p-3">
