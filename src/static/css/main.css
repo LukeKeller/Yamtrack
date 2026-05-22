@@ -665,6 +665,9 @@
   .h-1\.5 {
     height: calc(var(--spacing) * 1.5);
   }
+  .h-2 {
+    height: calc(var(--spacing) * 2);
+  }
   .h-3 {
     height: calc(var(--spacing) * 3);
   }
@@ -1042,6 +1045,9 @@
   }
   .grid-cols-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .grid-cols-7 {
     grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -3264,9 +3270,11 @@
 .media-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: calc(var(--spacing) * 4);
-  @media (width >= 30rem) {
-    grid-template-columns: repeat(auto-fill,minmax(180px,1fr));
+  gap: 1rem;
+}
+@media (min-width: 30rem) {
+  .media-grid {
+    grid-template-columns: repeat(auto-fill, minmax(var(--grid-min, 180px), 1fr));
   }
 }
 .pill {

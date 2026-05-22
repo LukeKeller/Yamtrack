@@ -129,8 +129,19 @@
 }
 
 
+/* Media grid is driven by the density tokens — [data-density="compact"]
+ * etc. on <html> overrides --grid-min so the auto-fill calculation responds
+ * automatically. Pre-xs the grid drops to 2 columns so cards don't get
+ * squished on small phones. */
 .media-grid {
-  @apply grid grid-cols-2 xs:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+@media (min-width: 30rem) {
+  .media-grid {
+    grid-template-columns: repeat(auto-fill, minmax(var(--grid-min, 180px), 1fr));
+  }
 }
 
 /* ============================================================================

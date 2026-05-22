@@ -5,7 +5,7 @@
 <html lang="en"
       class="scheme-dark bg-canvas"
       data-theme="{% if request.user.is_authenticated %}{{ request.user.theme|default:'default' }}{% else %}default{% endif %}"
-      data-density="comfortable">
+      data-density="{% if request.user.is_authenticated %}{{ request.user.density|default:'comfortable' }}{% else %}comfortable{% endif %}">
   <head>
     {# Required meta tags #}
     <meta charset="UTF-8">

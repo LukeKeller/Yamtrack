@@ -120,6 +120,14 @@ class ThemeChoices(models.TextChoices):
     TOKYO_NIGHT = "tokyo-night", "Tokyo Night"
 
 
+class DensityChoices(models.TextChoices):
+    """UI density presets — control --grid-min and --card-pad CSS variables."""
+
+    COMPACT = "compact", "Compact"
+    COMFORTABLE = "comfortable", "Comfortable"
+    COZY = "cozy", "Cozy"
+
+
 class User(AbstractUser):
     """Custom user model."""
 
@@ -443,6 +451,13 @@ class User(AbstractUser):
         default=ThemeChoices.DEFAULT,
         choices=ThemeChoices,
         help_text="Color theme for the web UI.",
+    )
+
+    density = models.CharField(
+        max_length=16,
+        default=DensityChoices.COMFORTABLE,
+        choices=DensityChoices,
+        help_text="Grid / card density for media lists.",
     )
 
     class Meta:

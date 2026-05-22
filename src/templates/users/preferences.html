@@ -261,6 +261,49 @@
         </div>
       </div>
 
+      {# Density — controls --grid-min and --card-pad via the [data-density]
+         attribute on <html>. JS preview swaps the attribute live so the user
+         can feel the change before saving; POST persists it. #}
+      <div class="mb-5"
+           x-data="{ density: '{{ user.density|default:'comfortable' }}' }"
+           x-init="$watch('density', v => document.documentElement.dataset.density = v)">
+        <div class="p-3 bg-surface-2 rounded-md">
+          <div class="flex items-center text-fg mb-1">
+            {% include "app/icons/four-square.svg" with classes="w-5 h-5 mr-2" %}
+            <span class="text-sm font-medium">Density</span>
+          </div>
+          <p class="text-xs text-fg-muted ml-7 mb-3">How tightly grid cards and card padding pack together.</p>
+          <div class="grid grid-cols-3 gap-2">
+            {% for choice in density_choices %}
+              <label class="cursor-pointer rounded-md p-2 text-center transition-colors hover:bg-surface-3"
+                     :class="density === '{{ choice.0 }}' ? 'ring-2 ring-accent bg-surface-3' : ''">
+                <input type="radio"
+                       name="density"
+                       value="{{ choice.0 }}"
+                       x-model="density"
+                       class="sr-only">
+                <span class="block mb-1.5 space-y-1">
+                  {% if choice.0 == "compact" %}
+                    <span class="block h-1 bg-surface-3 rounded-full"></span>
+                    <span class="block h-1 bg-surface-3 rounded-full"></span>
+                    <span class="block h-1 bg-surface-3 rounded-full"></span>
+                    <span class="block h-1 bg-surface-3 rounded-full"></span>
+                  {% elif choice.0 == "comfortable" %}
+                    <span class="block h-1.5 bg-surface-3 rounded-full mt-0.5"></span>
+                    <span class="block h-1.5 bg-surface-3 rounded-full mt-1"></span>
+                    <span class="block h-1.5 bg-surface-3 rounded-full mt-1"></span>
+                  {% else %}
+                    <span class="block h-2 bg-surface-3 rounded-full mt-1"></span>
+                    <span class="block h-2 bg-surface-3 rounded-full mt-1.5"></span>
+                  {% endif %}
+                </span>
+                <span class="text-sm font-medium">{{ choice.1 }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
       {# Watch Provider Region #}
       <div class="mb-5">
         <div class="flex items-center justify-between p-3 bg-surface-2 rounded-md">

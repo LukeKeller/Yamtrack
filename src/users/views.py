@@ -18,6 +18,7 @@ from app.providers import tmdb
 from users.forms import NotificationSettingsForm, PasswordChangeForm, UserUpdateForm
 from users.models import (
     DateFormatChoices,
+    DensityChoices,
     QuickWatchDateChoices,
     ThemeChoices,
     TimeFormatChoices,
@@ -232,6 +233,7 @@ def preferences(request):
                 "date_format_choices": DateFormatChoices.choices,
                 "time_format_choices": TimeFormatChoices.choices,
                 "theme_choices": ThemeChoices.choices,
+                "density_choices": DensityChoices.choices,
                 "watch_provider_choices": watch_provider_regions,
             },
         )
@@ -264,6 +266,9 @@ def preferences(request):
     theme_value = request.POST.get("theme", ThemeChoices.DEFAULT)
     if theme_value in ThemeChoices.values:
         request.user.theme = theme_value
+    density_value = request.POST.get("density", DensityChoices.COMFORTABLE)
+    if density_value in DensityChoices.values:
+        request.user.density = density_value
     media_types_checked = request.POST.getlist("media_types_checkboxes")
 
     provider_region = request.POST.get("watch_provider_region", "")
