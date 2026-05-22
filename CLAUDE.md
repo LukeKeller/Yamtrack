@@ -201,10 +201,32 @@ CI (`app-tests.yml`) runs `ruff check src` and the test suite. **The PR check fa
 ## Branching and PR flow (this repo's expectations)
 
 - Develop on the feature branch given in the task brief (e.g., `claude/...` or `feature/...`).
-- Upstream's main development branch is `dev`; `main` is for releases. Open PRs against `dev` unless told otherwise.
+- Upstream's main development branch is `dev`; `main` is for releases.
+- **In this fork (LukeKeller/Yamtrack)**, `dev` is the canonical integration branch — keep it up to date with every shipped change. Feature work gets merged into `dev` (fast-forward / linear rebase preferred to match existing style) as soon as it's ready, not parked on long-lived feature branches.
 - Don't `--no-verify` past pre-commit hooks. If `makemigrations --check` fails, run it locally and commit the migration.
-- Don't push to `main` or `dev` directly.
+- Don't push to `main` directly. Pushing to `dev` is allowed when the user authorizes a release (see "Shipping a release" below).
 - Don't modify `.github/workflows/**`.
+
+## Shipping a release (Yamtrack + YunoHost package)
+
+This fork ships through the `yamtrack_ynh` companion repo (`LukeKeller/yamtrack_ynh`), which pins a YunoHost manifest to a specific commit on this repo. The end-to-end flow when you finish a feature:
+
+1. **Merge feature branch into `dev`** here. Prefer fast-forward / linear history (rebase the feature branch first if needed). Example:
+   ```bash
+   git checkout dev && git pull --ff-only
+   git checkout claude/<feature> && git rebase dev
+   git checkout dev && git merge --ff-only claude/<feature>
+   ```
+2. **Add an empty bump-marker commit on `dev`** so the version number is visible in `git log` here too:
+   ```bash
+   git commit --allow-empty -m "Bump fork package to 0.25.2~ynhNN (<short feature description>)"
+   ```
+   Increment `NN` by one over the previous marker. Find the previous one with `git log --oneline --grep="Bump fork package" -1`.
+3. **Push `dev`**: `git push origin dev`. Record the new HEAD SHA — you'll need it next.
+4. **Switch to the `yamtrack_ynh` checkout** and bump the package against that SHA (see that repo's `CLAUDE.md` / `README.md`).
+5. After the YunoHost upgrade succeeds, the feature branch is safe to delete locally and on the remote.
+
+If a feature spans multiple commits, you can use a non-fast-forward merge with `--no-ff` to keep them as a logical group — but still land it on `dev` and add the bump marker on top.
 
 ## Hardcover sync project (in flight)
 
