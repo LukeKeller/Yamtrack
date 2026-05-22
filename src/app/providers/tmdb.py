@@ -897,15 +897,25 @@ MOVIE_BROWSE_CATEGORIES = (
     ("trending", "Trending"),
     ("upcoming", "Upcoming"),
     ("top_rated", "Top Rated"),
+    ("hidden_gems", "Hidden Gems"),
+    ("classics", "Classics"),
 )
 
 TV_BROWSE_CATEGORIES = (
     ("popular", "Popular"),
     ("on_the_air", "On The Air"),
+    ("airing_today", "Airing Today"),
     ("streaming", "Streaming Now"),
     ("trending", "Trending"),
     ("top_rated", "Top Rated"),
+    ("hidden_gems", "Hidden Gems"),
+    ("classics", "Classics"),
 )
+
+# Cutoff used by "classics" categories. Items released on or before this date
+# are eligible. Picked as the millennium boundary so the bucket maps to
+# "20th century cinema / TV" intuitively.
+CLASSICS_CUTOFF = "1999-12-31"
 
 
 def browse_categories(media_type):
@@ -936,7 +946,7 @@ def browse_request_config(media_type, category, watch_region):
             "trending": "trending/movie/week",
         }
         default_path = "movie/popular"
-        streaming_path = "discover/movie"
+        discover_path = "discover/movie"
         streaming_params = {
             "sort_by": "primary_release_date.desc",
             "with_watch_monetization_types": "flatrate",
@@ -945,15 +955,31 @@ def browse_request_config(media_type, category, watch_region):
             "primary_release_date.lte": today.isoformat(),
             "vote_count.gte": 20,
         }
+        # Well-reviewed films that haven't hit the mainstream radar — vote
+        # ceiling keeps blockbusters out, floor keeps unrated/spam out.
+        hidden_gems_params = {
+            "sort_by": "vote_average.desc",
+            "vote_average.gte": 7.5,
+            "vote_count.gte": 300,
+            "vote_count.lte": 3000,
+        }
+        # Pre-2000 highly-rated films, ranked by score.
+        classics_params = {
+            "sort_by": "vote_average.desc",
+            "primary_release_date.lte": CLASSICS_CUTOFF,
+            "vote_average.gte": 7.5,
+            "vote_count.gte": 500,
+        }
     else:
         simple = {
             "popular": "tv/popular",
             "on_the_air": "tv/on_the_air",
+            "airing_today": "tv/airing_today",
             "top_rated": "tv/top_rated",
             "trending": "trending/tv/week",
         }
         default_path = "tv/popular"
-        streaming_path = "discover/tv"
+        discover_path = "discover/tv"
         streaming_params = {
             "sort_by": "first_air_date.desc",
             "with_watch_monetization_types": "flatrate",
@@ -962,9 +988,26 @@ def browse_request_config(media_type, category, watch_region):
             "first_air_date.lte": today.isoformat(),
             "vote_count.gte": 20,
         }
+        hidden_gems_params = {
+            "sort_by": "vote_average.desc",
+            "vote_average.gte": 7.5,
+            "vote_count.gte": 100,
+            "vote_count.lte": 1500,
+        }
+        classics_params = {
+            "sort_by": "vote_average.desc",
+            "first_air_date.lte": CLASSICS_CUTOFF,
+            "vote_average.gte": 7.5,
+            "vote_count.gte": 100,
+        }
 
-    if category == "streaming":
-        path, extra_params = streaming_path, streaming_params
+    discover_overrides = {
+        "streaming": streaming_params,
+        "hidden_gems": hidden_gems_params,
+        "classics": classics_params,
+    }
+    if category in discover_overrides:
+        path, extra_params = discover_path, discover_overrides[category]
     else:
         path, extra_params = simple.get(category, default_path), {}
 

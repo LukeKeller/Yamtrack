@@ -35,7 +35,7 @@ from app.models import (
     Track,
     UserMessage,
 )
-from app.providers import discogs, manual, services, tmdb
+from app.providers import discogs, manual, services, tmdb, trakt
 from app.templatetags import app_tags
 from events.views import build_calendar_context
 from users.models import (
@@ -334,14 +334,36 @@ def media_search(request):
     return render(request, "app/search.html", context)
 
 
+BROWSE_SOURCES = (
+    {"value": Sources.TMDB.value, "label": "TMDB", "module": tmdb},
+    {"value": "trakt", "label": "Trakt", "module": trakt},
+)
+
+
+def _available_browse_sources():
+    """Return the browse sources that have valid credentials configured."""
+    return [
+        source
+        for source in BROWSE_SOURCES
+        if source["value"] == Sources.TMDB.value or trakt.is_configured()
+    ]
+
+
 @require_GET
 def browse(request):
-    """Browse curated TMDB lists of movies and TV shows."""
+    """Browse curated movie / TV lists from one of several providers."""
     media_type = request.GET.get("media_type", MediaTypes.MOVIE.value)
     if media_type not in (MediaTypes.MOVIE.value, MediaTypes.TV.value):
         media_type = MediaTypes.MOVIE.value
 
-    categories = tmdb.browse_categories(media_type)
+    available_sources = _available_browse_sources()
+    source_lookup = {entry["value"]: entry for entry in available_sources}
+    source = request.GET.get("source", Sources.TMDB.value)
+    if source not in source_lookup:
+        source = Sources.TMDB.value
+    provider = source_lookup[source]["module"]
+
+    categories = provider.browse_categories(media_type)
     valid_categories = {category["value"] for category in categories}
     category = request.GET.get("category", categories[0]["value"])
     if category not in valid_categories:
@@ -350,12 +372,15 @@ def browse(request):
     page = int(request.GET.get("page", 1))
     layout = request.GET.get("layout", "grid")
 
-    data = tmdb.browse(
-        media_type,
-        category,
-        page,
-        request.user.watch_provider_region,
-    )
+    if source == Sources.TMDB.value:
+        data = provider.browse(
+            media_type,
+            category,
+            page,
+            request.user.watch_provider_region,
+        )
+    else:
+        data = provider.browse(media_type, category, page)
 
     if data.get("results"):
         data["results"] = helpers.enrich_items_with_user_data(
@@ -368,6 +393,11 @@ def browse(request):
         "category": category,
         "categories": categories,
         "layout": layout,
+        "source": source,
+        "sources": [
+            {"value": entry["value"], "label": entry["label"]}
+            for entry in available_sources
+        ],
     }
     return render(request, "app/browse.html", context)
 

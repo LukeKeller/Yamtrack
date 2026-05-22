@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from app.models import MediaTypes, Sources
@@ -106,6 +106,79 @@ class BrowseViewTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         mock_browse.assert_called_once_with(
+            MediaTypes.MOVIE.value,
+            "popular",
+            1,
+            self.user.watch_provider_region,
+        )
+
+    @patch("app.providers.tmdb.browse")
+    def test_browse_tmdb_hidden_gems_category(self, mock_browse):
+        """Hidden Gems is a valid TMDB browse category."""
+        mock_browse.return_value = {
+            "page": 1,
+            "total_results": 0,
+            "total_pages": 0,
+            "results": [],
+        }
+
+        response = self.client.get(
+            reverse("browse") + "?media_type=movie&category=hidden_gems",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        mock_browse.assert_called_once_with(
+            MediaTypes.MOVIE.value,
+            "hidden_gems",
+            1,
+            self.user.watch_provider_region,
+        )
+
+    @override_settings(TRAKT_API="dummy-trakt-key")
+    @patch("app.providers.trakt.browse")
+    def test_browse_trakt_source(self, mock_trakt_browse):
+        """Selecting Trakt as a source dispatches to the Trakt provider."""
+        mock_trakt_browse.return_value = {
+            "page": 1,
+            "total_results": 1,
+            "total_pages": 1,
+            "results": [
+                {
+                    "media_id": "238",
+                    "title": "Test Movie",
+                    "media_type": MediaTypes.MOVIE.value,
+                    "source": Sources.TMDB.value,
+                    "image": "http://example.com/image.jpg",
+                },
+            ],
+        }
+
+        response = self.client.get(
+            reverse("browse") + "?source=trakt&category=anticipated",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        mock_trakt_browse.assert_called_once_with(
+            MediaTypes.MOVIE.value,
+            "anticipated",
+            1,
+        )
+
+    @override_settings(TRAKT_API="")
+    @patch("app.providers.tmdb.browse")
+    def test_browse_trakt_without_credentials_falls_back(self, mock_tmdb_browse):
+        """When Trakt is unconfigured, requesting it silently falls back to TMDB."""
+        mock_tmdb_browse.return_value = {
+            "page": 1,
+            "total_results": 0,
+            "total_pages": 0,
+            "results": [],
+        }
+
+        response = self.client.get(reverse("browse") + "?source=trakt")
+
+        self.assertEqual(response.status_code, 200)
+        mock_tmdb_browse.assert_called_once_with(
             MediaTypes.MOVIE.value,
             "popular",
             1,
