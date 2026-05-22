@@ -38,34 +38,87 @@
              class="w-full rounded-lg shadow-2xl bg-surface-1 object-cover"
              src="{{ media.image }}">
 
-        <div x-data="{ trackOpen: false }">
-          <button class="mt-4 px-4 py-3 rounded-lg w-full flex items-center justify-center gap-2 font-medium transition-colors cursor-pointer btn-primary"
-                  hx-get="{% media_view_url 'track_modal' media %}"
-                  hx-vals='{"return_url": "{{ request.get_full_path|urlencode }}", "instance_id": "{{ current_instance.id }}"}'
-                  hx-target="#{% component_id 'track' media current_instance.id %}"
-                  hx-trigger="click"
-                  @click="trackOpen = true">
-            {% if user_medias and current_instance.status %}
-              {% include "app/components/ui/status_dot.html" with status=current_instance.status %}
-              <span>{{ current_instance.status|media_status_readable:media_type }}</span>
-            {% else %}
+        <div x-data="{ trackOpen: false, sheetOpen: false, currentStatus: '{{ current_instance.status|default:'' }}' }" class="relative">
+          {% if user_medias and current_instance.status %}
+            {# Tracked → tap opens the status sheet for quick changes. Status text
+               reflects optimistic UI so it updates the moment a sheet button is
+               clicked, before the POST round-trips. #}
+            <button type="button"
+                    class="mt-4 px-4 py-3 rounded-lg w-full flex items-center justify-center gap-2 font-medium cursor-pointer btn-primary"
+                    @click="sheetOpen = !sheetOpen"
+                    aria-haspopup="menu"
+                    :aria-expanded="sheetOpen.toString()">
+              <span class="status-dot" :class="'status-dot-' + (currentStatus.toLowerCase().replace(' ', '-'))"></span>
+              <span x-text="currentStatus || 'Set status'"></span>
+              <svg class="w-4 h-4 ml-1 opacity-70 transition-transform"
+                   :class="{ 'rotate-180': sheetOpen }"
+                   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+
+            {# Status sheet popover #}
+            <div x-show="sheetOpen"
+                 x-cloak
+                 x-transition.opacity.duration.150ms
+                 @click.outside="sheetOpen = false"
+                 @keydown.escape.window="sheetOpen = false"
+                 class="absolute z-20 mt-2 w-full p-1.5 rounded-lg bg-surface-1"
+                 style="border: 1px solid var(--color-border-default); box-shadow: var(--shadow-elev-2);"
+                 role="menu">
+              <p class="text-[11px] uppercase tracking-wider text-fg-faint px-2 pt-1 pb-1.5">Set status</p>
+              {% for s in Status %}
+                <button type="button"
+                        @click="currentStatus = '{{ s.value }}'; sheetOpen = false"
+                        hx-post="{% url 'update_media_status' media_type current_instance.id %}"
+                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                        hx-vals='{"status": "{{ s.value }}"}'
+                        hx-swap="none"
+                        class="w-full flex items-center justify-between gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-surface-2 transition-colors"
+                        :class="currentStatus === '{{ s.value }}' ? 'bg-surface-2' : ''"
+                        role="menuitem">
+                  <span class="flex items-center gap-2">
+                    <span class="status-dot status-dot-{{ s.value|status_slug }}"></span>
+                    {{ s.label|media_status_readable:media_type }}
+                  </span>
+                  <svg class="w-4 h-4 text-accent"
+                       x-show="currentStatus === '{{ s.value }}'"
+                       viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+                </button>
+              {% endfor %}
+              <div class="border-t my-1" style="border-color: var(--color-border-default);"></div>
+              <button type="button"
+                      class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-surface-2 text-fg-muted transition-colors"
+                      @click="sheetOpen = false; trackOpen = true"
+                      hx-get="{% media_view_url 'track_modal' media %}"
+                      hx-vals='{"return_url": "{{ request.get_full_path|urlencode }}", "instance_id": "{{ current_instance.id }}"}'
+                      hx-target="#{% component_id 'track' media current_instance.id %}"
+                      hx-trigger="click">
+                {% include "app/icons/edit.svg" with classes="w-4 h-4" %}
+                Edit details…
+              </button>
+            </div>
+          {% else %}
+            {# Not tracked → keep the original drawer-opening behavior so the
+               first-add flow lets the user pick status + dates + score in one
+               place. #}
+            <button type="button"
+                    class="mt-4 px-4 py-3 rounded-lg w-full flex items-center justify-center gap-2 font-medium cursor-pointer btn-primary"
+                    hx-get="{% media_view_url 'track_modal' media %}"
+                    hx-vals='{"return_url": "{{ request.get_full_path|urlencode }}", "instance_id": "{{ current_instance.id }}"}'
+                    hx-target="#{% component_id 'track' media current_instance.id %}"
+                    hx-trigger="click"
+                    @click="trackOpen = true">
               {% include "app/icons/plus.svg" with classes="w-4 h-4" %}
               <span>Add to library</span>
-            {% endif %}
-            <span class="h-4 ms-2 border-l border-white/30"></span>
-            {% include "app/icons/edit.svg" with classes="w-4 h-4 shrink-0 opacity-80" %}
-          </button>
+            </button>
+          {% endif %}
 
-          {# Track Modal #}
+          {# Track Drawer (loaded on demand via HTMX, used by both branches) #}
           <div x-show="trackOpen"
                @keydown.escape.window="trackOpen = false"
                x-cloak
                class="fixed inset-0 z-50">
-            <div class="absolute inset-0 bg-black/40"
-                 @click="trackOpen = false"
-                 aria-hidden="true"></div>
+            <div class="absolute inset-0 bg-black/40" @click="trackOpen = false" aria-hidden="true"></div>
             <div class="drawer-shell" @click.outside="trackOpen = false" @click.stop>
-              {# stop click propagation to avoid resetting the modal because this one doesn't have click once #}
               <div id="{% component_id 'track' media current_instance.id %}"></div>
             </div>
           </div>

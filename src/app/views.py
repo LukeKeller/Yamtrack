@@ -602,6 +602,28 @@ def update_media_score(request, media_type, instance_id):
 
 
 @require_POST
+def update_media_status(request, media_type, instance_id):
+    """Update the status for an already-tracked media item.
+
+    Powers the status-sheet popover on the detail page: a click on one of the
+    five status pills (Completed / In progress / Planning / Paused / Dropped)
+    POSTs here and the popover updates without leaving the page. Falls through
+    to Media.save() so the existing process_status() hook still fires (progress
+    bumps, end_date stamping, calendar refresh, simple_history audit row).
+    """
+    status = request.POST.get("status")
+    valid = {s.value for s in Status}
+    if status not in valid:
+        return JsonResponse({"success": False, "error": "invalid status"}, status=400)
+
+    media = BasicMedia.objects.get_media(request.user, media_type, instance_id)
+    media.status = status
+    media.save()
+    logger.info("%s status updated to %s", media, status)
+    return JsonResponse({"success": True, "status": status})
+
+
+@require_POST
 def sync_metadata(request, source, media_type, media_id, season_number=None):
     """Refresh the metadata for a media item."""
     if source == Sources.MANUAL.value:
