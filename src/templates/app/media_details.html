@@ -603,10 +603,16 @@
     </section>
   {% endif %}
 
-  <div class="flex flex-col md:flex-row gap-12 md:gap-10">
+  {# Two-column body: main content on the left (cast / related / episodes),
+     metadata rail (Your history / Actions / Streaming / Details) on the
+     right. Mock has the rail on the right because the main content needs
+     reading width; metadata wants ~280px. md:flex-row-reverse flips visual
+     order without changing DOM order, so the #history anchor still scrolls
+     to the same element. #}
+  <div class="flex flex-col md:flex-row-reverse gap-12 md:gap-8">
     {# Details Column #}
 
-    <div class="w-full md:w-1/4 md:max-w-[250px] mx-auto lg:mx-0" id="history" style="scroll-margin-top: 7rem">
+    <div class="w-full md:w-[300px] md:shrink-0 mx-auto md:mx-0" id="history" style="scroll-margin-top: 7rem">
       {# Your History #}
       {% if user_medias|length > 1 or current_instance.start_date or current_instance.end_date or current_instance.progress and media.media_type != MediaTypes.MOVIE.value %}
         <div class="flex items-center justify-between mb-4">
@@ -887,7 +893,7 @@
       </div>
     </div>
 
-    <div class="w-full md:w-3/4">
+    <div class="w-full md:flex-1 min-w-0">
       {% if media.cast %}
         <section class="mb-8" id="cast" style="scroll-margin-top: 7rem">
           <h2 class="text-xl font-bold mb-4">Cast</h2>
