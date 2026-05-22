@@ -77,7 +77,7 @@
                         role="menuitem">
                   <span class="flex items-center gap-2">
                     <span class="status-dot status-dot-{{ s.value|status_slug }}"></span>
-                    {{ s.label|media_status_readable:media_type }}
+                    {{ s.value|media_status_readable:media_type }}
                   </span>
                   <svg class="w-4 h-4 text-accent"
                        x-show="currentStatus === '{{ s.value }}'"
