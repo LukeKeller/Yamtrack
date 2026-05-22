@@ -1,0 +1,9 @@
+{% load app_tags %}
+{# Sidebar nav link for a media type.
+   Required: item (with .media_type and .display_name), media_type (current page's type).
+#}
+<a href="{% url 'medialist' media_type=item.media_type %}"
+   class="nav-item type-{{ item.media_type|media_type_slug }}{% if media_type|str_equals:item.media_type %} active{% endif %}">
+  {% icon item.media_type is_active=media_type|str_equals:item.media_type extra_classes="w-4 h-4 shrink-0" %}
+  <span>{{ item.display_name }}</span>
+</a>

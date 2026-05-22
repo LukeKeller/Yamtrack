@@ -1,0 +1,11 @@
+{% load app_tags %}
+{# Sidebar nav link.
+   Required: url (resolved URL), label (display text), icon_template (path under templates/).
+   Optional: active_match (URL to compare; defaults to url), accent_type (e.g. "tv"),
+             badge (str), label_class (extra classes on label span). #}
+<a href="{{ url }}"
+   class="nav-item{% if request.path|str_equals:active_match|default:url %} active{% endif %}{% if accent_type %} type-{{ accent_type }}{% endif %}">
+  {% include icon_template with classes="w-4 h-4 shrink-0" %}
+  <span class="{{ label_class }}">{{ label }}</span>
+  {% if badge %}<span class="ml-auto pill pill-meta text-[10px] px-1.5">{{ badge }}</span>{% endif %}
+</a>

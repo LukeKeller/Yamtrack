@@ -1,0 +1,107 @@
+{% load static %}
+{% load app_tags %}
+{# Command palette (⌘K). Opens via the keyboard shortcut; submit goes to the
+   normal /search endpoint. Future iterations can wire live HTMX results into
+   the .cmdk-results list. #}
+<div x-data="{ open: false }"
+     x-on:keydown.window.prevent.meta.k="open = true"
+     x-on:keydown.window.prevent.ctrl.k="open = true"
+     x-on:keydown.escape.window="open = false"
+     x-on:cmdk-open.window="open = true">
+
+  <div x-show="open"
+       x-cloak
+       class="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4"
+       x-transition.opacity.duration.150ms>
+    <div class="fixed inset-0 bg-black/40 backdrop-blur-sm" @click="open = false" aria-hidden="true"></div>
+
+    <div class="relative w-full max-w-2xl rounded-lg overflow-hidden border bg-surface-0"
+         style="border-color: var(--color-border-default); box-shadow: var(--shadow-elev-2);"
+         role="dialog"
+         aria-modal="true"
+         aria-label="Command palette">
+
+      {# Input — submits to /search on enter #}
+      <form method="get" action="{% url 'search' %}" class="flex items-center gap-3 px-4 py-3 border-b" style="border-color: var(--color-border-default);">
+        {% include "app/icons/magnifying-glass.svg" with classes="w-5 h-5 text-fg-faint" %}
+        <input type="search"
+               name="q"
+               x-ref="cmdkInput"
+               x-init="$watch('open', v => { if (v) $nextTick(() => $refs.cmdkInput.focus()) })"
+               autocomplete="off"
+               class="flex-1 bg-transparent border-0 outline-none text-base placeholder-fg-faint text-fg"
+               placeholder="Search or jump…">
+        <span class="text-xs text-fg-faint flex items-center gap-1"><kbd>Esc</kbd></span>
+      </form>
+
+      <div class="max-h-[60vh] overflow-y-auto py-2">
+
+        <div class="px-3 pt-1 pb-1.5 text-[10px] uppercase tracking-wider text-fg-faint">Jump to</div>
+        <ul class="px-1.5 pb-2 space-y-0.5">
+          <li><a class="flex items-center gap-3 px-2.5 py-2 rounded-md hover:bg-surface-2 text-sm" href="{% url 'home' %}">
+            <span class="w-7 h-7 rounded-md bg-surface-2 flex items-center justify-center text-fg-muted shrink-0">{% include "app/icons/house.svg" with classes="w-4 h-4" %}</span>
+            <span class="flex-1">Home</span>
+            <span class="text-xs text-fg-faint"><kbd>G</kbd><kbd>H</kbd></span>
+          </a></li>
+          <li><a class="flex items-center gap-3 px-2.5 py-2 rounded-md hover:bg-surface-2 text-sm" href="{% url 'browse' %}">
+            <span class="w-7 h-7 rounded-md bg-surface-2 flex items-center justify-center text-fg-muted shrink-0">{% include "app/icons/flame.svg" with classes="w-4 h-4" %}</span>
+            <span class="flex-1">Browse</span>
+          </a></li>
+          <li><a class="flex items-center gap-3 px-2.5 py-2 rounded-md hover:bg-surface-2 text-sm" href="{% url 'calendar' %}">
+            <span class="w-7 h-7 rounded-md bg-surface-2 flex items-center justify-center text-fg-muted shrink-0">{% include "app/icons/calendar.svg" with classes="w-4 h-4" %}</span>
+            <span class="flex-1">Calendar</span>
+            <span class="text-xs text-fg-faint"><kbd>G</kbd><kbd>D</kbd></span>
+          </a></li>
+          <li><a class="flex items-center gap-3 px-2.5 py-2 rounded-md hover:bg-surface-2 text-sm" href="{% url 'lists' %}">
+            <span class="w-7 h-7 rounded-md bg-surface-2 flex items-center justify-center text-fg-muted shrink-0">{% include "app/icons/folder-plus.svg" with classes="w-4 h-4" %}</span>
+            <span class="flex-1">Lists</span>
+            <span class="text-xs text-fg-faint"><kbd>G</kbd><kbd>L</kbd></span>
+          </a></li>
+          <li><a class="flex items-center gap-3 px-2.5 py-2 rounded-md hover:bg-surface-2 text-sm" href="{% url 'statistics' %}">
+            <span class="w-7 h-7 rounded-md bg-surface-2 flex items-center justify-center text-fg-muted shrink-0">{% include "app/icons/bars-pyramid.svg" with classes="w-4 h-4" %}</span>
+            <span class="flex-1">Statistics</span>
+          </a></li>
+        </ul>
+
+        {% get_sidebar_media_types user as sidebar_media_types %}
+        <div class="px-3 pt-1 pb-1.5 text-[10px] uppercase tracking-wider text-fg-faint">Library</div>
+        <ul class="px-1.5 pb-2 space-y-0.5">
+          {% for item in sidebar_media_types %}
+            <li><a class="flex items-center gap-3 px-2.5 py-2 rounded-md hover:bg-surface-2 text-sm" href="{% url 'medialist' media_type=item.media_type %}">
+              <span class="w-7 h-7 rounded-md bg-surface-2 flex items-center justify-center type-{{ item.media_type|media_type_slug }} shrink-0">
+                {% icon item.media_type is_active=True extra_classes="w-4 h-4" %}
+              </span>
+              <span class="flex-1">{{ item.display_name }}</span>
+            </a></li>
+          {% endfor %}
+        </ul>
+
+        <div class="px-3 pt-1 pb-1.5 text-[10px] uppercase tracking-wider text-fg-faint">Actions</div>
+        <ul class="px-1.5 pb-2 space-y-0.5">
+          <li><a class="flex items-center gap-3 px-2.5 py-2 rounded-md hover:bg-surface-2 text-sm" href="{% url 'create_entry' %}">
+            <span class="w-7 h-7 rounded-md bg-surface-2 flex items-center justify-center text-fg-muted shrink-0">{% include "app/icons/circle-plus.svg" with classes="w-4 h-4" %}</span>
+            <span class="flex-1">Create a custom entry</span>
+          </a></li>
+          <li><a class="flex items-center gap-3 px-2.5 py-2 rounded-md hover:bg-surface-2 text-sm" href="{% url 'import_data' %}">
+            <span class="w-7 h-7 rounded-md bg-surface-2 flex items-center justify-center text-fg-muted shrink-0">{% include "app/icons/database.svg" with classes="w-4 h-4" %}</span>
+            <span class="flex-1">Import from another tracker…</span>
+          </a></li>
+          <li><a class="flex items-center gap-3 px-2.5 py-2 rounded-md hover:bg-surface-2 text-sm" href="{% url 'preferences' %}">
+            <span class="w-7 h-7 rounded-md bg-surface-2 flex items-center justify-center text-fg-muted shrink-0">{% include "app/icons/horizontal-sliders.svg" with classes="w-4 h-4" %}</span>
+            <span class="flex-1">Switch theme…</span>
+          </a></li>
+        </ul>
+      </div>
+
+      <div class="px-4 py-2 border-t flex items-center justify-between text-xs text-fg-faint bg-surface-0" style="border-color: var(--color-border-default);">
+        <div class="flex items-center gap-3">
+          <span><kbd>↵</kbd> Open</span>
+          <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span>Press</span><kbd>?</kbd><span>for shortcuts</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
