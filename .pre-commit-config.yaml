@@ -36,6 +36,15 @@ repos:
         language: system
         types: [html]
         require_serial: true
+      - id: check-multiline-django-comments
+        name: check-multiline-django-comments
+        # Django's `{# … #}` is single-line only; multi-line blocks render as
+        # literal text. This guard catches them before commit so we stop
+        # shipping leaked comment text to users.
+        entry: ./scripts/check-multiline-comments.sh
+        language: system
+        types: [html]
+        require_serial: true
       - id: tailwind-build
         name: tailwind-build
         # Rebuilds src/static/css/main.css from input.css + the template tree.
