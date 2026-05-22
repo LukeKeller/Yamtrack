@@ -1,7 +1,9 @@
 {% load widget_tweaks %}
 
-{# Drawer-shaped track form. Lives inside an outer overlay (provided by the
-   call sites) that handles open/close state via Alpine's trackOpen variable. #}
+{% comment %}
+  Drawer-shaped track form. Lives inside an outer overlay (provided by the
+   call sites) that handles open/close state via Alpine's trackOpen variable.
+{% endcomment %}
 <div class="flex flex-col h-full max-h-[90svh] md:max-h-screen bg-surface-0 md:rounded-none rounded-t-xl overflow-hidden">
 
   {# Header — sticky #}

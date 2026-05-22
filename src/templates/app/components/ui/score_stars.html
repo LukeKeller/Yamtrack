@@ -1,7 +1,8 @@
-{# Half-star score widget.
+{% comment %}
+  Half-star score widget.
    Required: score (0-10 decimal or None).
    Optional: large (truthy → 24 px stars), show_value (truthy → renders numeric label after).
-#}
+{% endcomment %}
 {% load app_tags %}
 {% if score is not None %}
   {% star_widget score large=large %}

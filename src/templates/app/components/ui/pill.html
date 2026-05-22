@@ -1,12 +1,13 @@
 {% load app_tags %}
-{# Pill / chip.
+{% comment %}
+  Pill / chip.
    Required: variant ('status-completed' | 'status-in-progress' | 'status-planning' |
                       'status-paused' | 'status-dropped' | 'meta' | 'accent' | 'type-tv' |
                       'type-movie' | 'type-anime' | 'type-manga' | 'type-game' | 'type-book' |
                       'type-comic' | 'type-boardgame' | 'type-record')
    Either: label (string), or include with body content via include's nested HTML.
    Optional: extra_classes (string), icon_svg_path (string — single SVG path d="…" for prefix icon).
-#}
+{% endcomment %}
 <span class="pill pill-{{ variant }}{% if extra_classes %} {{ extra_classes }}{% endif %}">
   {% if icon_svg_path %}
     <svg class="w-3 h-3 shrink-0"

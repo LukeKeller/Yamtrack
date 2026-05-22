@@ -1,8 +1,10 @@
 {% load static %}
 {% load app_tags %}
-{# Command palette (⌘K). Opens via the keyboard shortcut; submit goes to the
+{% comment %}
+  Command palette (⌘K). Opens via the keyboard shortcut; submit goes to the
    normal /search endpoint. Future iterations can wire live HTMX results into
-   the .cmdk-results list. #}
+   the .cmdk-results list.
+{% endcomment %}
 <div x-data="{ open: false }"
      x-on:keydown.window.prevent.meta.k="open = true"
      x-on:keydown.window.prevent.ctrl.k="open = true"

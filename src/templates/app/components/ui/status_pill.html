@@ -1,8 +1,9 @@
 {% load app_tags %}
-{# Status pill — shorthand wrapper that maps a Status text value to the pill variant.
+{% comment %}
+  Status pill — shorthand wrapper that maps a Status text value to the pill variant.
    Required: status (matches app.models.Status text values: 'Completed' | 'In progress' |
                      'Planning' | 'Paused' | 'Dropped').
    Optional: label_override (string; otherwise renders the status text), media_type (string;
              when supplied, label gets media_status_readable filter applied).
-#}
+{% endcomment %}
 {% include "app/components/ui/pill.html" with variant="status-"|add:status|status_slug label=label_override|default:status %}

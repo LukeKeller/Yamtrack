@@ -236,10 +236,12 @@
         </div>
       </div>
 
-      {# Mobile bottom navigation. Visible below the `lg` breakpoint where the
+            {% comment %}
+        Mobile bottom navigation. Visible below the `lg` breakpoint where the
          sidebar is collapsed by default. Five primary destinations match the
          mobile-home.html mock; the avatar tile opens the slide-in sidebar
-         (same trigger as the hamburger). #}
+         (same trigger as the hamburger).
+      {% endcomment %}
       <nav class="lg:hidden fixed bottom-0 inset-x-0 z-40 h-14 bg-surface-0 border-t border-border-default flex items-center justify-around px-1"
            aria-label="Primary">
         <a href="{% url 'home' %}"
