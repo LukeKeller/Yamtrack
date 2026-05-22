@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from app import helpers
 from app.models import MediaTypes, Sources
-from app.providers import services
+from app.providers import omdb, services, tvmaze
 
 logger = logging.getLogger(__name__)
 base_url = "https://api.themoviedb.org/3"
@@ -226,6 +226,16 @@ def movie(media_id):
                 "release_date": get_start_date(response["release_date"]),
                 "status": response["status"],
                 "runtime": get_readable_duration(response["runtime"]),
+                **(
+                    {"budget": format_money(response.get("budget"))}
+                    if format_money(response.get("budget"))
+                    else {}
+                ),
+                **(
+                    {"revenue": format_money(response.get("revenue"))}
+                    if format_money(response.get("revenue"))
+                    else {}
+                ),
                 "studios": get_companies(response["production_companies"]),
                 "country": get_country(response["production_countries"]),
                 "languages": get_languages(response["spoken_languages"]),
@@ -244,6 +254,9 @@ def movie(media_id):
             ),
             "providers": response.get("watch/providers", {}).get("results", {}),
         }
+
+        imdb_id = response.get("external_ids", {}).get("imdb_id")
+        data["details"].update(omdb.enrich(imdb_id))
 
         cache.set(cache_key, data)
 
@@ -280,6 +293,23 @@ def enrich_season_with_tv_data(season_data, tv_data, media_id, season_number):
     season_data["genres"] = tv_data["genres"]
     if season_data["synopsis"] == "No synopsis available.":
         season_data["synopsis"] = tv_data["synopsis"]
+
+    # Fill in missing episode air dates from TVmaze when TMDB has gaps
+    # (common for upcoming/obscure shows). Single lookup per show; cached.
+    imdb_id = tv_data.get("imdb_id")
+    missing_air_dates = any(
+        not ep.get("air_date") for ep in season_data.get("episodes", [])
+    )
+    if imdb_id and missing_air_dates:
+        tvmaze_dates = tvmaze.episode_air_dates_by_imdb(imdb_id)
+        if tvmaze_dates:
+            for ep in season_data["episodes"]:
+                if ep.get("air_date"):
+                    continue
+                fallback = tvmaze_dates.get((season_number, ep["episode_number"]))
+                if fallback:
+                    ep["air_date"] = fallback
+
     return season_data
 
 
@@ -425,6 +455,8 @@ def process_tv(response):
         }
         for member in cast[:30]
     ]
+    imdb_id = response.get("external_ids", {}).get("imdb_id")
+    omdb_enrichment = omdb.enrich(imdb_id)
     return {
         "media_id": response["id"],
         "source": Sources.TMDB.value,
@@ -448,6 +480,7 @@ def process_tv(response):
             "studios": get_companies(response["production_companies"]),
             "country": get_country(response["production_countries"]),
             "languages": get_languages(response["spoken_languages"]),
+            **omdb_enrichment,
         },
         "related": {
             "seasons": get_related(
@@ -461,6 +494,7 @@ def process_tv(response):
             ),
         },
         "tvdb_id": response.get("external_ids", {}).get("tvdb_id"),
+        "imdb_id": imdb_id,
         "external_links": get_external_links(response.get("external_ids", {})),
         "last_episode_season": last_episode["season_number"] if last_episode else None,
         "next_episode_season": next_episode["season_number"] if next_episode else None,
@@ -612,6 +646,24 @@ def get_languages(languages):
     if languages:
         return [language["english_name"] for language in languages]
     return None
+
+
+MONEY_BILLION = 1_000_000_000
+MONEY_MILLION = 1_000_000
+MONEY_THOUSAND = 1_000
+
+
+def format_money(amount):
+    """Format a USD figure as a human-readable string ($1.5B, $250M, $42K)."""
+    if not amount or amount <= 0:
+        return None
+    if amount >= MONEY_BILLION:
+        return f"${amount / MONEY_BILLION:.2f}B"
+    if amount >= MONEY_MILLION:
+        return f"${amount / MONEY_MILLION:.1f}M"
+    if amount >= MONEY_THOUSAND:
+        return f"${amount / MONEY_THOUSAND:.0f}K"
+    return f"${amount:,}"
 
 
 def get_companies(companies):
