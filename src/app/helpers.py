@@ -102,6 +102,34 @@ def format_search_response(page, per_page, total_results, results):
     }
 
 
+def parse_air_date(air_date):
+    """Parse a provider air-date value into a ``date``, returning None if unparseable.
+
+    Accepts ``"YYYY-MM-DD"``, ``"YYYY-MM"``, ``"YYYY"``, ``date``, or
+    ``datetime``. Partial strings collapse to Jan 1 / day 1, matching
+    ``is_released_date``.
+    """
+    if isinstance(air_date, datetime):
+        if timezone.is_naive(air_date):
+            return air_date.date()
+        return timezone.localtime(air_date).date()
+    if isinstance(air_date, date):
+        return air_date
+    if not isinstance(air_date, str) or air_date == "":
+        return None
+
+    parts = air_date.split("-")
+    if len(parts) == YEAR_ONLY_PARTS:
+        air_date = f"{air_date}-01-01"
+    elif len(parts) == YEAR_MONTH_PARTS:
+        air_date = f"{air_date}-01"
+
+    try:
+        return date.fromisoformat(air_date)
+    except ValueError:
+        return None
+
+
 def is_released_date(air_date, current_date=None):
     """Return whether the supplied air date has already passed."""
     current_date = current_date or timezone.localdate()

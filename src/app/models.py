@@ -85,6 +85,11 @@ class Item(CalendarTriggerMixin, models.Model):
     season_number = models.PositiveIntegerField(null=True, blank=True)
     episode_number = models.PositiveIntegerField(null=True, blank=True)
 
+    # Populated for episode items so air dates can be sorted/filtered without
+    # re-hitting the provider on every page render. Nullable because not every
+    # source (or import path) carries this data.
+    air_date = models.DateField(null=True, blank=True)
+
     # Optional aggregation metadata (currently populated by the Discogs importer
     # for vinyl records; usable for future per-media-type stats like top labels,
     # top artists, by-decade charts, etc.).
@@ -1646,15 +1651,10 @@ class Season(Media):
                 self.item.source,
             )
 
-            # creating tv with multiple seasons from a completed season
-            if (
-                self.status == Status.COMPLETED.value
-                and tv_metadata["details"]["seasons"] > 1
-            ):
-                status = Status.IN_PROGRESS.value
-            else:
-                status = self.status
-
+            # Mirror the season's status onto the auto-created TV rather than
+            # silently bumping a completed-season import to IN_PROGRESS just
+            # because the show has other seasons — that masked user intent
+            # (e.g. "I only watched S1") with no way to undo it.
             item, _ = Item.objects.get_or_create(
                 media_id=self.item.media_id,
                 source=Sources.TMDB.value,
@@ -1668,7 +1668,7 @@ class Season(Media):
             tv = TV(
                 item=item,
                 score=None,
-                status=status,
+                status=self.status,
                 notes="",
                 user=self.user,
             )
@@ -1728,6 +1728,7 @@ class Season(Media):
             )
 
         image = settings.IMG_NONE
+        air_date_raw = None
         for episode in season_metadata["episodes"]:
             if episode["episode_number"] == int(episode_number):
                 if episode.get("still_path"):
@@ -1739,9 +1740,12 @@ class Season(Media):
                     image = episode["image"]
                 else:
                     image = settings.IMG_NONE
+                air_date_raw = episode.get("air_date")
                 break
 
-        item, _ = Item.objects.get_or_create(
+        air_date = app.helpers.parse_air_date(air_date_raw)
+
+        item, created = Item.objects.get_or_create(
             media_id=self.item.media_id,
             source=self.item.source,
             media_type=MediaTypes.EPISODE.value,
@@ -1750,8 +1754,14 @@ class Season(Media):
             defaults={
                 "title": self.item.title,
                 "image": image,
+                "air_date": air_date,
             },
         )
+
+        # Backfill air_date on items created before this field existed.
+        if not created and item.air_date is None and air_date is not None:
+            Item.objects.filter(pk=item.pk).update(air_date=air_date)
+            item.air_date = air_date
 
         return item
 

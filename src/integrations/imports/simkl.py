@@ -293,6 +293,7 @@ class SimklImporter:
             # Process episodes
             for episode in episodes:
                 ep_img = self._get_episode_image(episode, season_number, metadata)
+                ep_air = self._get_episode_air_date(episode, season_number, metadata)
                 episode_item, _ = app.models.Item.objects.get_or_create(
                     media_id=tmdb_id,
                     source=Sources.TMDB.value,
@@ -302,6 +303,7 @@ class SimklImporter:
                     defaults={
                         "title": metadata["title"],
                         "image": ep_img,
+                        "air_date": ep_air,
                     },
                 )
 
@@ -326,6 +328,14 @@ class SimklImporter:
                     f"https://image.tmdb.org/t/p/w500{episode_metadata['still_path']}"
                 )
         return settings.IMG_NONE
+
+    def _get_episode_air_date(self, episode, season_number, metadata):
+        """Return the parsed air date for the episode, or None."""
+        season_meta = metadata.get(f"season/{season_number}", {})
+        for episode_metadata in season_meta.get("episodes", []):
+            if episode_metadata["episode_number"] == episode["number"]:
+                return app_helpers.parse_air_date(episode_metadata.get("air_date"))
+        return None
 
     def _process_movie_list(self, movie_list):
         """Process movie list from Simkl."""
