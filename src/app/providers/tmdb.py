@@ -217,6 +217,7 @@ def movie(media_id):
             "title": response["title"],
             "max_progress": 1,
             "image": get_image_url(response["poster_path"]),
+            "backdrop": get_backdrop_url(response.get("backdrop_path")),
             "synopsis": get_synopsis(response["overview"]),
             "genres": get_genres(response["genres"]),
             "score": get_score(response["vote_average"]),
@@ -465,6 +466,7 @@ def process_tv(response):
         "title": response["name"],
         "max_progress": num_episodes,
         "image": get_image_url(response["poster_path"]),
+        "backdrop": get_backdrop_url(response.get("backdrop_path")),
         "synopsis": get_synopsis(response["overview"]),
         "genres": get_genres(response["genres"]),
         "score": get_score(response["vote_average"]),
@@ -560,6 +562,18 @@ def get_image_url(path):
     if path:
         return f"https://image.tmdb.org/t/p/w500{path}"
     return settings.IMG_NONE
+
+
+def get_backdrop_url(path):
+    """Return a wide backdrop URL for hero use, or None if TMDB has no backdrop.
+
+    Movies/shows without a backdrop_path get None (not IMG_NONE) so the
+    detail-page hero can decide whether to render the image or fall back to
+    the ambient gradient.
+    """
+    if path:
+        return f"https://image.tmdb.org/t/p/w1280{path}"
+    return None
 
 
 def get_title(response):

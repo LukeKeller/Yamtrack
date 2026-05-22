@@ -9,15 +9,27 @@
 {% endblock title %}
 
 {% block content %}
-    {% comment %}
-    Hero: ambient gradient that wraps the poster + title row. We don't have a
-     real backdrop image from most providers, so the gradient picks up the
-     accent color for visual presence without requiring new metadata. The
-     negative margins extend it to the page edges; pt-12 lifts content off the
-     top edge of the surface beneath.
+  {% comment %}
+    Hero: if the provider returned a backdrop (currently TMDB movies / TV via
+    backdrop_path → media.backdrop), render it as a wide image with a
+    gradient fade to canvas. Otherwise fall back to an ambient gradient
+    tinted by --color-accent-soft. The negative margins extend the hero to
+    the page edges; pt-12 lifts content off the top of the surface beneath.
   {% endcomment %}
-  <div class="relative -mx-4 lg:-mx-8 -mt-8 lg:-mt-10 mb-8 px-4 lg:px-8 pt-12 lg:pt-16 pb-2"
-       style="background: linear-gradient(180deg, transparent 0%, transparent 30%, var(--color-canvas) 100%), radial-gradient(80% 70% at 50% 0%, var(--color-accent-soft) 0%, transparent 70%)">
+  <div class="relative -mx-4 lg:-mx-8 -mt-8 lg:-mt-10 mb-8 px-4 lg:px-8 pt-12 lg:pt-16 pb-2 overflow-hidden">
+    {% if media.backdrop %}
+      <img alt=""
+           aria-hidden="true"
+           src="{{ media.backdrop }}"
+           class="absolute inset-0 w-full h-full object-cover opacity-60 -z-10"
+           style="mask-image: linear-gradient(180deg, black 0%, black 35%, transparent 100%);
+                  -webkit-mask-image: linear-gradient(180deg, black 0%, black 35%, transparent 100%);">
+      <div class="absolute inset-0 -z-10"
+           style="background: linear-gradient(180deg, rgb(0 0 0 / 0.30) 0%, rgb(0 0 0 / 0.55) 60%, var(--color-canvas) 100%);"></div>
+    {% else %}
+      <div class="absolute inset-0 -z-10"
+           style="background: linear-gradient(180deg, transparent 0%, transparent 30%, var(--color-canvas) 100%), radial-gradient(80% 70% at 50% 0%, var(--color-accent-soft) 0%, transparent 70%);"></div>
+    {% endif %}
 
     {# Top section #}
     <div class="flex flex-col md:flex-row gap-8 md:gap-10 mb-12 md:mb-8">
