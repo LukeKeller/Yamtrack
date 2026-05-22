@@ -4,7 +4,7 @@
      x-cloak
      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
   <div @click.outside="showModal = false"
-       class="bg-[#2a2f35] p-6 rounded-lg w-152 max-h-[90vh] overflow-y-auto">
+       class="bg-surface-1 p-6 rounded-lg w-152 max-h-[90vh] overflow-y-auto">
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-2xl font-bold">
         {% if form.instance.pk %}
@@ -14,7 +14,7 @@
         {% endif %}
       </h2>
       <button @click="showModal = false"
-              class="text-gray-400 hover:text-white transition-colors cursor-pointer">
+              class="text-fg-muted hover:text-white transition-colors cursor-pointer">
         {% include "app/icons/x.svg" with classes="w-6 h-6" %}
       </button>
     </div>
@@ -23,9 +23,9 @@
       <input type="hidden" name="list_id" value="{{ custom_list.id }}">
       {% for field in form %}
         <div>
-          <label class="block text text-sm font-medium mb-2 text-gray-300">{{ field.label }}</label>
+          <label class="block text text-sm font-medium mb-2 text-fg">{{ field.label }}</label>
           {% if field.name != 'collaborators' %}
-            {{ field|add_class:"w-full p-2 bg-[#39404b] rounded-md text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#4a9eff] appearance-none" }}
+            {{ field|add_class:"w-full p-2 bg-surface-2 rounded-md text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#4a9eff] appearance-none" }}
           {% else %}
             {{ field }}
           {% endif %}
@@ -41,7 +41,7 @@
           </button>
           <button type="submit"
                   formaction="{% url 'list_delete' %}?next={{ request.path }}"
-                  class="px-4 py-2 rounded-md transition duration-300 {% if request.user == custom_list.owner %}bg-red-700 text-white hover:bg-red-800 cursor-pointer{% else %}bg-gray-600 text-gray-300 cursor-not-allowed{% endif %}"
+                  class="px-4 py-2 rounded-md transition duration-300 {% if request.user == custom_list.owner %}bg-red-700 text-white hover:bg-red-800 cursor-pointer{% else %}bg-gray-600 text-fg cursor-not-allowed{% endif %}"
                   {% if not request.user == custom_list.owner %}disabled{% endif %}>Delete</button>
         </div>
       {% else %}

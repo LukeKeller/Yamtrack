@@ -12,65 +12,65 @@
   {% if record_stats %}
     <div x-data="{ open: true }" class="mb-6">
       <button @click="open = !open"
-              class="flex items-center justify-between w-full bg-[#2a2f35] hover:bg-[#343a40] rounded-lg px-4 py-3 mb-3 transition-colors cursor-pointer">
+              class="flex items-center justify-between w-full bg-surface-1 hover:bg-surface-3 rounded-lg px-4 py-3 mb-3 transition-colors cursor-pointer">
         <div class="flex items-center gap-2">
           {% include "app/icons/bars-increasing.svg" with classes="w-5 h-5 text-amber-400" %}
           <span class="text-sm font-semibold">Collection Stats</span>
-          <span class="text-xs text-gray-400">{{ record_stats.total }} record{{ record_stats.total|pluralize }}</span>
+          <span class="text-xs text-fg-muted">{{ record_stats.total }} record{{ record_stats.total|pluralize }}</span>
         </div>
         <div class="w-4 h-4 transition-transform" :class="{ 'rotate-180': open }">
           {% include "app/icons/chevron-down.svg" %}
         </div>
       </button>
       <div x-cloak x-show="open" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div class="bg-[#2a2f35] rounded-lg p-4">
-          <h3 class="text-sm font-medium text-gray-300 mb-3">Owned vs Wanted</h3>
+        <div class="bg-surface-1 rounded-lg p-4">
+          <h3 class="text-sm font-medium text-fg mb-3">Owned vs Wanted</h3>
           {% if record_stats.owned_vs_want.labels %}
             <div class="h-56 flex justify-center items-center">
               <canvas id="recordOwnedVsWantChart"></canvas>
             </div>
           {% else %}
-            <p class="text-xs text-gray-500">No data.</p>
+            <p class="text-xs text-fg-faint">No data.</p>
           {% endif %}
         </div>
-        <div class="bg-[#2a2f35] rounded-lg p-4">
-          <h3 class="text-sm font-medium text-gray-300 mb-3">By Decade</h3>
+        <div class="bg-surface-1 rounded-lg p-4">
+          <h3 class="text-sm font-medium text-fg mb-3">By Decade</h3>
           {% if record_stats.by_decade %}
             <div class="h-56">
               <canvas id="recordByDecadeChart"></canvas>
             </div>
           {% else %}
-            <p class="text-xs text-gray-500">No release-year metadata yet.</p>
+            <p class="text-xs text-fg-faint">No release-year metadata yet.</p>
           {% endif %}
         </div>
-        <div class="bg-[#2a2f35] rounded-lg p-4">
-          <h3 class="text-sm font-medium text-gray-300 mb-3">Top Artists</h3>
+        <div class="bg-surface-1 rounded-lg p-4">
+          <h3 class="text-sm font-medium text-fg mb-3">Top Artists</h3>
           {% if record_stats.top_artists %}
             <div class="h-72">
               <canvas id="recordTopArtistsChart"></canvas>
             </div>
           {% else %}
-            <p class="text-xs text-gray-500">No artist metadata yet.</p>
+            <p class="text-xs text-fg-faint">No artist metadata yet.</p>
           {% endif %}
         </div>
-        <div class="bg-[#2a2f35] rounded-lg p-4">
-          <h3 class="text-sm font-medium text-gray-300 mb-3">Top Labels</h3>
+        <div class="bg-surface-1 rounded-lg p-4">
+          <h3 class="text-sm font-medium text-fg mb-3">Top Labels</h3>
           {% if record_stats.top_labels %}
             <div class="h-72">
               <canvas id="recordTopLabelsChart"></canvas>
             </div>
           {% else %}
-            <p class="text-xs text-gray-500">No label metadata yet.</p>
+            <p class="text-xs text-fg-faint">No label metadata yet.</p>
           {% endif %}
         </div>
-        <div class="bg-[#2a2f35] rounded-lg p-4 lg:col-span-2">
-          <h3 class="text-sm font-medium text-gray-300 mb-3">Top Played (last 90 days)</h3>
+        <div class="bg-surface-1 rounded-lg p-4 lg:col-span-2">
+          <h3 class="text-sm font-medium text-fg mb-3">Top Played (last 90 days)</h3>
           {% if record_stats.top_played %}
             <div class="h-72">
               <canvas id="recordTopPlayedChart"></canvas>
             </div>
           {% else %}
-            <p class="text-xs text-gray-500">
+            <p class="text-xs text-fg-faint">
               No plays logged yet — tap "Side A / B / Full" on a record to log a spin, or point multi-scrobbler at this server.
             </p>
           {% endif %}
@@ -105,7 +105,7 @@
       <!-- Search -->
       <div class="relative grow">
         <input placeholder="Search {{ media_type_plural }} in your list..."
-               class="w-full py-2 pl-10 pr-4 bg-[#39404b] rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#4a9eff] appearance-none"
+               class="w-full py-2 pl-10 pr-4 bg-surface-2 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#4a9eff] appearance-none"
                type="text"
                x-model="search"
                hx-get="{% url 'medialist' media_type %}"
@@ -113,7 +113,7 @@
                {% if media_list %} hx-target="{{ layout_class }}" {% else %} hx-target="#empty_list" {% endif %}
                hx-include="#filter-form"
                hx-indicator="#search-indicator">
-        {% include "app/icons/magnifying-glass.svg" with classes="w-6 h-6 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" %}
+        {% include "app/icons/magnifying-glass.svg" with classes="w-6 h-6 absolute left-3 top-1/2 transform -translate-y-1/2 text-fg-muted" %}
         <div id="search-indicator"
              class="htmx-indicator absolute right-3 top-1/2 transform -translate-y-1/2">
           <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500"></div>
@@ -123,7 +123,7 @@
       <div class="flex gap-2 flex-wrap">
         <!-- Filter by Status -->
         <div class="relative" x-data="{ open: false }">
-          <button class="flex items-center px-4 py-2 bg-[#39404b] rounded-md hover:bg-[#454d5a] transition-colors cursor-pointer"
+          <button class="flex items-center px-4 py-2 bg-surface-2 rounded-md hover:bg-surface-3 transition-colors cursor-pointer"
                   @click="open = !open"
                   type="button">
             {% include "app/icons/funnel.svg" with classes="w-4 h-4 mr-2" %}
@@ -131,7 +131,7 @@
             {% include "app/icons/chevron-down.svg" with classes="w-4 h-4 ml-2" %}
           </button>
 
-          <div class="absolute z-10 mt-2 py-1 w-48 bg-[#39404b] rounded-md shadow-lg overflow-hidden border border-gray-700"
+          <div class="absolute z-10 mt-2 py-1 w-48 bg-surface-2 rounded-md shadow-lg overflow-hidden border border-gray-700"
                x-cloak
                x-show="open"
                @click.outside="open = false"
@@ -147,7 +147,7 @@
                       hx-include="#filter-form"
                       hx-indicator="#loading-indicator"
                       class="block w-full px-4 py-2 text-left text-sm transition-colors cursor-pointer"
-                      :class="status === '{{ value }}' ? 'bg-indigo-600 text-white font-medium' : 'text-gray-300 hover:bg-[#454d5a] hover:text-white'"
+                      :class="status === '{{ value }}' ? 'bg-indigo-600 text-white font-medium' : 'text-fg hover:bg-surface-3 hover:text-white'"
                       @click="status = '{{ value }}'; open = false"
                       type="button">{{ label }}</button>
             {% endfor %}
@@ -156,7 +156,7 @@
 
         <!-- Sort by -->
         <div class="relative" x-data="{ open: false }">
-          <button class="flex items-center px-4 py-2 bg-[#39404b] rounded-md hover:bg-[#454d5a] transition-colors cursor-pointer"
+          <button class="flex items-center px-4 py-2 bg-surface-2 rounded-md hover:bg-surface-3 transition-colors cursor-pointer"
                   @click="open = !open"
                   type="button">
             {% include "app/icons/arrows-up-down.svg" with classes="w-4 h-4 mr-2" %}
@@ -164,7 +164,7 @@
             {% include "app/icons/chevron-down.svg" with classes="w-4 h-4 ml-2" %}
           </button>
 
-          <div class="absolute z-10 mt-2 py-1 w-48 bg-[#39404b] rounded-md shadow-lg overflow-hidden border border-gray-700"
+          <div class="absolute z-10 mt-2 py-1 w-48 bg-surface-2 rounded-md shadow-lg overflow-hidden border border-gray-700"
                x-cloak
                x-show="open"
                @click.outside="open = false"
@@ -180,7 +180,7 @@
                       hx-include="#filter-form"
                       hx-indicator="#loading-indicator"
                       class="block w-full px-4 py-2 text-left text-sm transition-colors cursor-pointer"
-                      :class="sort === '{{ value }}' ? 'bg-indigo-600 text-white font-medium' : 'text-gray-300 hover:bg-[#454d5a] hover:text-white'"
+                      :class="sort === '{{ value }}' ? 'bg-indigo-600 text-white font-medium' : 'text-fg hover:bg-surface-3 hover:text-white'"
                       @click="sort = '{{ value }}'; open = false"
                       type="button">{{ label }}</button>
             {% endfor %}
@@ -191,12 +191,12 @@
         <div class="flex rounded-md overflow-hidden border border-gray-700">
           <a :href="`{% url 'medialist' media_type %}?${search ? 'search=' + search + '&' : ''}${status !== 'all' ? 'status=' + status + '&' : ''}${sort !== 'score' ? 'sort=' + sort + '&' : ''}layout=grid`"
              class="p-2 cursor-pointer"
-             :class="layout === 'grid' ? 'bg-indigo-600 text-white' : 'bg-[#39404b] hover:bg-[#454d5a]'"
+             :class="layout === 'grid' ? 'bg-indigo-600 text-white' : 'bg-surface-2 hover:bg-surface-3'"
              title="Grid View"
              @click="layout = 'grid'">{% include "app/icons/four-square.svg" with classes="w-5 h-5" %}</a>
           <a :href="`{% url 'medialist' media_type %}?${search ? 'search=' + search + '&' : ''}${status !== 'all' ? 'status=' + status + '&' : ''}${sort !== 'score' ? 'sort=' + sort + '&' : ''}layout=table`"
              class="p-2 cursor-pointer"
-             :class="layout === 'table' ? 'bg-indigo-600 text-white' : 'bg-[#39404b] hover:bg-[#454d5a]'"
+             :class="layout === 'table' ? 'bg-indigo-600 text-white' : 'bg-surface-2 hover:bg-surface-3'"
              title="Table View"
              @click="layout = 'table'">{% include "app/icons/table.svg" with classes="w-5 h-5" %}</a>
         </div>
@@ -205,13 +205,13 @@
 
     {% if not media_list %}
       <div id="empty_list"
-           class="flex flex-col items-center justify-center py-16 bg-[#2a2f35] rounded-lg">
+           class="flex flex-col items-center justify-center py-16 bg-surface-1 rounded-lg">
         <div class="text-center max-w-md mx-auto p-6">
-          <div class="bg-[#39404b] rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-            {% include "app/icons/edit.svg" with classes="w-8 h-8 text-gray-400" %}
+          <div class="bg-surface-2 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+            {% include "app/icons/edit.svg" with classes="w-8 h-8 text-fg-muted" %}
           </div>
           <h3 class="text-xl font-semibold mb-2">No {{ media_type|media_type_readable_plural }} Tracked Yet</h3>
-          <p class="text-gray-400 mb-6">
+          <p class="text-fg-muted mb-6">
             Start tracking your {{ media_type_plural }} to keep a record of what you've {{ media_type|media_past_verb }}.
           </p>
           <a href="{{ media_type|sample_search }}"
@@ -223,9 +223,9 @@
     {% elif current_layout == "grid" %}
       <div class="media-grid">{% include "app/components/media_grid_items.html" %}</div>
     {% else %}
-      <div class="bg-[#2a2f35] p-4 rounded-lg overflow-hidden max-w-[calc(100svw-4rem)] overflow-x-scroll">
-        <table class="w-full bg-[#2a2f35]">
-          <thead class="text-left text-gray-400 text-sm">
+      <div class="bg-surface-1 p-4 rounded-lg overflow-hidden max-w-[calc(100svw-4rem)] overflow-x-scroll">
+        <table class="w-full bg-surface-1">
+          <thead class="text-left text-fg-muted text-sm">
             <tr>
               <th class="p-2 w-15"></th>
               <th class="p-2 pe-8 w-2/5">Title</th>

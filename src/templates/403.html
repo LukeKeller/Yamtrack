@@ -6,16 +6,16 @@
 {% endblock title %}
 
 {% block body %}
-  <div class="min-h-screen bg-[#212529] flex flex-col items-center justify-center text-white p-4">
+  <div class="min-h-screen bg-canvas flex flex-col items-center justify-center text-white p-4">
     <div class="text-center max-w-md">
       <div class="mb-6">
         <div class="text-9xl font-bold text-red-400">403</div>
         <h1 class="text-3xl font-bold mt-4 mb-2">Access Forbidden</h1>
-        <p class="text-gray-400 mb-4">
+        <p class="text-fg-muted mb-4">
           You don't have permission to access this resource. Please log in or contact an administrator.
         </p>
 
-        <p class="text-sm text-gray-500 mb-6">
+        <p class="text-sm text-fg-faint mb-6">
           If you believe this was a bug, please <a href="https://github.com/fuzzygrim/yamtrack/issues"
     class="text-indigo-400 hover:underline">report the issue.</a>
         </p>
@@ -27,7 +27,7 @@
           <span>Log In</span></a>
 
         <a href="{% url 'home' %}"
-           class="flex items-center justify-center gap-2 px-6 py-3 bg-[#39404b] text-white rounded-md hover:bg-[#454d5a] transition-colors">
+           class="flex items-center justify-center gap-2 px-6 py-3 bg-surface-2 text-white rounded-md hover:bg-surface-3 transition-colors">
           {% include "app/icons/house.svg" with classes="w-5 h-5" %}
           <span>Back to Home</span></a>
       </div>

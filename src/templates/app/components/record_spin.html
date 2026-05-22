@@ -1,6 +1,6 @@
 {% load humanize %}
 {% if record_spin %}
-  <div class="text-xs text-gray-300 bg-[#39404b] rounded-md px-3 py-2 flex items-center justify-between">
+  <div class="text-xs text-fg bg-surface-2 rounded-md px-3 py-2 flex items-center justify-between">
     <span>
       <span class="text-amber-400">♪</span>
       Last spun
@@ -13,8 +13,8 @@
         — Side {{ record_spin.side }}
       {% endif %}
     </span>
-    <span class="text-gray-400">{{ record_spin_count }} play{{ record_spin_count|pluralize }}</span>
+    <span class="text-fg-muted">{{ record_spin_count }} play{{ record_spin_count|pluralize }}</span>
   </div>
 {% else %}
-  <div class="text-xs text-gray-500 italic">No spins logged yet.</div>
+  <div class="text-xs text-fg-faint italic">No spins logged yet.</div>
 {% endif %}

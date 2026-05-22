@@ -1,11 +1,11 @@
 {% load app_tags %}
 
-<div class="shrink-0 bg-[#2a2f35] rounded-lg overflow-hidden shadow-lg group flex flex-col w-44 aspect-2/3 relative">
+<div class="shrink-0 bg-surface-1 rounded-lg overflow-hidden shadow-lg group flex flex-col w-44 aspect-2/3 relative">
   <a href="{% url 'person_details' person_id=cast.id name=cast.name|slug %}"
      class="relative w-full flex-1"
      title="View filmography for {{ cast.name }}">
     <img alt="{{ cast.name }}"
-         class="lazyload absolute inset-0 w-full h-full bg-[#3e454d] transition-opacity duration-300 {% if cast.image != IMG_NONE %}object-cover{% endif %}"
+         class="lazyload absolute inset-0 w-full h-full bg-surface-2 transition-opacity duration-300 {% if cast.image != IMG_NONE %}object-cover{% endif %}"
          src="{{ IMG_NONE }}"
          data-src="{{ cast.image }}">
     <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -27,7 +27,7 @@
   <div class="px-3 py-2 flex flex-col justify-center">
     <div class="text-sm font-semibold text-white line-clamp-1"
          title="{{ cast.name }}">{{ cast.name }}</div>
-    <div class="text-xs text-gray-400 line-clamp-1 mt-0.5"
+    <div class="text-xs text-fg-muted line-clamp-1 mt-0.5"
          title="{{ cast.character }}">{{ cast.character }}</div>
   </div>
 </div>

@@ -1,7 +1,7 @@
 {% load app_tags %}
 
 {% for media in media_list %}
-  <tr class="hover:bg-[#39404b] transition-colors cursor-pointer hover-tap"
+  <tr class="hover:bg-surface-2 transition-colors cursor-pointer hover-tap"
       x-data="{ trackOpen: false }"
       {% if forloop.last and media_list.has_next %} hx-get="{% url 'medialist' media_type %}?page={{ media_list.next_page_number }}" hx-trigger="revealed threshold:200px" hx-swap="afterend" hx-include="#filter-form" hx-indicator="#loading-indicator" {% endif %}>
     <td class="p-2 relative">
@@ -74,7 +74,7 @@
       <td class="p-2 text-center">{{ media.start_date|date_format:user }}</td>
     {% else %}
       <td class="p-2 text-center">
-        <span class="text-gray-500">-</span>
+        <span class="text-fg-faint">-</span>
       </td>
     {% endif %}
 
@@ -82,7 +82,7 @@
       <td class="p-2 text-center">{{ media.end_date|date_format:user }}</td>
     {% else %}
       <td class="p-2 text-center">
-        <span class="text-gray-500">-</span>
+        <span class="text-fg-faint">-</span>
       </td>
     {% endif %}
   </tr>

@@ -9,33 +9,33 @@
 {% block content %}
   <div class="mb-8">
     <h1 class="text-3xl font-bold mb-2">Music</h1>
-    <p class="text-gray-400">
+    <p class="text-fg-muted">
       Recent listens — manual vinyl spins and ListenBrainz scrobbles forwarded by multi-scrobbler / other clients.
     </p>
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-    <div class="bg-[#2a2f35] rounded-lg p-5">
-      <p class="text-gray-400 text-sm">Total plays</p>
+    <div class="bg-surface-1 rounded-lg p-5">
+      <p class="text-fg-muted text-sm">Total plays</p>
       <p class="text-3xl font-bold mt-1">{{ total }}</p>
     </div>
-    <div class="bg-[#2a2f35] rounded-lg p-5">
-      <p class="text-gray-400 text-sm">Matched to a tracked record</p>
+    <div class="bg-surface-1 rounded-lg p-5">
+      <p class="text-fg-muted text-sm">Matched to a tracked record</p>
       <p class="text-3xl font-bold mt-1 text-emerald-400">{{ matched_count }}</p>
     </div>
-    <div class="bg-[#2a2f35] rounded-lg p-5">
-      <p class="text-gray-400 text-sm">Unmatched</p>
+    <div class="bg-surface-1 rounded-lg p-5">
+      <p class="text-fg-muted text-sm">Unmatched</p>
       <p class="text-3xl font-bold mt-1 text-amber-400">{{ unmatched_count }}</p>
     </div>
   </div>
 
   <form method="get"
-        class="bg-[#2a2f35] rounded-lg p-4 mb-6 flex flex-wrap gap-3 items-end">
+        class="bg-surface-1 rounded-lg p-4 mb-6 flex flex-wrap gap-3 items-end">
     <div>
-      <label for="source" class="block text-xs text-gray-400 mb-1">Source</label>
+      <label for="source" class="block text-xs text-fg-muted mb-1">Source</label>
       <select name="source"
               id="source"
-              class="bg-[#39404b] border border-gray-700 rounded-md text-sm px-3 py-2">
+              class="bg-surface-2 border border-gray-700 rounded-md text-sm px-3 py-2">
         <option value="all" {% if source_filter == "all" %}selected{% endif %}>All</option>
         {% for value, label in play_sources %}
           <option value="{{ value }}"
@@ -44,10 +44,10 @@
       </select>
     </div>
     <div>
-      <label for="match" class="block text-xs text-gray-400 mb-1">Match</label>
+      <label for="match" class="block text-xs text-fg-muted mb-1">Match</label>
       <select name="match"
               id="match"
-              class="bg-[#39404b] border border-gray-700 rounded-md text-sm px-3 py-2">
+              class="bg-surface-2 border border-gray-700 rounded-md text-sm px-3 py-2">
         <option value="all" {% if match_filter == "all" %}selected{% endif %}>All</option>
         <option value="matched" {% if match_filter == "matched" %}selected{% endif %}>Matched only</option>
         <option value="unmatched"
@@ -55,10 +55,10 @@
       </select>
     </div>
     <div>
-      <label for="days" class="block text-xs text-gray-400 mb-1">Range</label>
+      <label for="days" class="block text-xs text-fg-muted mb-1">Range</label>
       <select name="days"
               id="days"
-              class="bg-[#39404b] border border-gray-700 rounded-md text-sm px-3 py-2">
+              class="bg-surface-2 border border-gray-700 rounded-md text-sm px-3 py-2">
         <option value="7" {% if days == "7" %}selected{% endif %}>Last 7 days</option>
         <option value="30" {% if days == "30" %}selected{% endif %}>Last 30 days</option>
         <option value="90" {% if days == "90" %}selected{% endif %}>Last 90 days</option>
@@ -71,10 +71,10 @@
   </form>
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <div class="lg:col-span-2 bg-[#2a2f35] rounded-lg overflow-hidden">
-      <div class="px-5 py-3 border-b border-[#39404b] flex justify-between items-center">
+    <div class="lg:col-span-2 bg-surface-1 rounded-lg overflow-hidden">
+      <div class="px-5 py-3 border-b border-border-default flex justify-between items-center">
         <h2 class="font-semibold">Recent plays</h2>
-        <span class="text-sm text-gray-400">{{ page_obj.paginator.count }} result{{ page_obj.paginator.count|pluralize }}</span>
+        <span class="text-sm text-fg-muted">{{ page_obj.paginator.count }} result{{ page_obj.paginator.count|pluralize }}</span>
       </div>
       {% if page_obj.object_list %}
         {% mb_links_map page_obj.object_list as mbmap %}
@@ -91,9 +91,9 @@
                   {% else %}
                     <span>{{ play.title|default:"(untitled)" }}</span>
                   {% endif %}
-                  {% if play.artist %}<span class="text-gray-400">— {{ play.artist }}</span>{% endif %}
+                  {% if play.artist %}<span class="text-fg-muted">— {{ play.artist }}</span>{% endif %}
                 </div>
-                <div class="text-xs text-gray-500 mt-1">
+                <div class="text-xs text-fg-faint mt-1">
                   {% if play.album %}{{ play.album }} ·{% endif %}
                   {{ play.played_at|date:"M j, Y H:i" }}
                   {% if play.side and play.side != "full" %}
@@ -137,22 +137,22 @@
           {% endfor %}
         </ul>
         {% if page_obj.paginator.num_pages > 1 %}
-          <div class="px-5 py-3 border-t border-[#39404b] flex justify-between items-center text-sm">
-            <div class="text-gray-400">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</div>
+          <div class="px-5 py-3 border-t border-border-default flex justify-between items-center text-sm">
+            <div class="text-fg-muted">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</div>
             <div class="flex gap-2">
               {% if page_obj.has_previous %}
-                <a class="px-3 py-1 bg-[#39404b] rounded hover:bg-[#4a525d]"
+                <a class="px-3 py-1 bg-surface-2 rounded hover:bg-surface-3"
                    href="?source={{ source_filter }}&match={{ match_filter }}&days={{ days }}&page={{ page_obj.previous_page_number }}">Previous</a>
               {% endif %}
               {% if page_obj.has_next %}
-                <a class="px-3 py-1 bg-[#39404b] rounded hover:bg-[#4a525d]"
+                <a class="px-3 py-1 bg-surface-2 rounded hover:bg-surface-3"
                    href="?source={{ source_filter }}&match={{ match_filter }}&days={{ days }}&page={{ page_obj.next_page_number }}">Next</a>
               {% endif %}
             </div>
           </div>
         {% endif %}
       {% else %}
-        <div class="px-5 py-10 text-center text-gray-400">
+        <div class="px-5 py-10 text-center text-fg-muted">
           <p class="mb-2">No plays yet for this filter.</p>
           <p class="text-sm">
             If you've configured multi-scrobbler, hit the validate-token URL once and submit a test listen.
@@ -163,19 +163,19 @@
       {% endif %}
     </div>
 
-    <div class="bg-[#2a2f35] rounded-lg p-5">
+    <div class="bg-surface-1 rounded-lg p-5">
       <h2 class="font-semibold mb-3">Top artists</h2>
       {% if top_artists %}
         <ul class="space-y-2">
           {% for row in top_artists %}
             <li class="flex justify-between items-center text-sm">
               <span class="truncate">{{ row.artist }}</span>
-              <span class="text-gray-400 ml-3">{{ row.play_count }}</span>
+              <span class="text-fg-muted ml-3">{{ row.play_count }}</span>
             </li>
           {% endfor %}
         </ul>
       {% else %}
-        <p class="text-sm text-gray-400">No data in range.</p>
+        <p class="text-sm text-fg-muted">No data in range.</p>
       {% endif %}
     </div>
   </div>

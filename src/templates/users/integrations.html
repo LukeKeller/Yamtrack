@@ -16,29 +16,29 @@
   {% url 'listenbrainz_submit_listens' as lb_submit_path %}
   {% absolute_app_url lb_submit_path as lb_submit_url %}
   {% absolute_app_url '/api/scrobble/listenbrainz' as lb_base_url %}
-  <div class="bg-[#2a2f35] rounded-lg p-6">
+  <div class="bg-surface-1 rounded-lg p-6">
     <div class="flex items-center mb-4">
       {% include "app/icons/database.svg" with classes="w-6 h-6 text-indigo-400 mr-3" %}
       <h2 class="text-xl font-semibold">Integrations</h2>
     </div>
-    <p class="text-gray-400 mb-5 text-sm">Connect your media servers to automatically track your watching progress.</p>
-    <div class="bg-[#39404b] p-5 rounded-lg mb-6">
+    <p class="text-fg-muted mb-5 text-sm">Connect your media servers to automatically track your watching progress.</p>
+    <div class="bg-surface-2 p-5 rounded-lg mb-6">
       <div class="flex items-center mb-3">
         {% include "app/icons/padlock.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
         <h3 class="text-base font-medium">API Token</h3>
       </div>
-      <p class="text-gray-400 mb-4 text-sm">This token is used to authenticate webhook requests from your media servers.</p>
-      <div class="bg-[#262a2f] p-3 rounded-md mb-4">
+      <p class="text-fg-muted mb-4 text-sm">This token is used to authenticate webhook requests from your media servers.</p>
+      <div class="bg-surface-1 p-3 rounded-md mb-4">
         <div class="flex items-center gap-2">
           <input readonly=""
                  id="token"
-                 class="flex-1 py-2 pr-2 pl-3 bg-[#262a2f] rounded-md text-gray-300 text-sm border-0 focus:ring-0 outline-none font-mono"
+                 class="flex-1 py-2 pr-2 pl-3 bg-surface-1 rounded-md text-fg text-sm border-0 focus:ring-0 outline-none font-mono"
                  type="text"
                  value="{{ user.token|default_if_none:"" }}">
           <span class="flex items-center cursor-pointer group pr-3"
                 title="Copy"
                 data-copy-target="#token">
-            {% include "app/icons/copy.svg" with classes="w-5 h-5 text-gray-400 group-hover:text-indigo-400 transition-colors" %}
+            {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-indigo-400 transition-colors" %}
           </span>
         </div>
       </div>
@@ -59,28 +59,28 @@
         </div>
       </div>
     </div>
-    <div class="bg-[#39404b] p-5 rounded-lg mb-6">
+    <div class="bg-surface-2 p-5 rounded-lg mb-6">
       <div class="flex items-center mb-3">
         {% include "app/icons/server.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
         <h3 class="text-base font-medium">Jellyfin Integration (Official Repo)</h3>
       </div>
-      <p class="text-gray-400 mb-4 text-sm">Connect Jellyfin to automatically track your watching progress.</p>
-      <div class="bg-[#262a2f] p-4 rounded-md">
+      <p class="text-fg-muted mb-4 text-sm">Connect Jellyfin to automatically track your watching progress.</p>
+      <div class="bg-surface-1 p-4 rounded-md">
         <h4 class="text-sm font-medium mb-3">Setup Instructions</h4>
-        <ol class="list-decimal list-inside space-y-2 text-sm text-gray-300">
+        <ol class="list-decimal list-inside space-y-2 text-sm text-fg">
           <li>You will need to have TMDB and TVDB as metadata providers in Jellyfin.</li>
           <li>Install the Webhook plugin from the 'Jellyfin Stable' repo via your server's Plugin Catalog.</li>
           <li>
             Restart your server, then configure the plugin:
-            <ul class="list-disc list-inside ml-6 mt-2 space-y-1 text-gray-400">
+            <ul class="list-disc list-inside ml-6 mt-2 space-y-1 text-fg-muted">
               <li>Click on the "Add Generic Destination" button to create a new webhook.</li>
               <li>Name: Yamtrack</li>
               {# djlint:off #}
                 <li>
                   <div class="inline-flex items-center gap-2 w-[calc(100%-30px)]">URL:
-                    <input readonly id="jellyfin-webhook-url-official" class="w-full bg-[#262a2f] rounded-md text-gray-400 text-sm border-0 focus:ring-0 outline-none font-mono" type="text" value="{{ jellyfin_webhook_url }}">
+                    <input readonly id="jellyfin-webhook-url-official" class="w-full bg-surface-1 rounded-md text-fg-muted text-sm border-0 focus:ring-0 outline-none font-mono" type="text" value="{{ jellyfin_webhook_url }}">
                     <span class="flex items-center cursor-pointer group" title="Copy" data-copy-target="#jellyfin-webhook-url-official">
-                      {% include "app/icons/copy.svg" with classes="w-5 h-5 text-gray-400 group-hover:text-indigo-400 transition-colors" %}
+                      {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-indigo-400 transition-colors" %}
                     </span>
                   </div>
                 </li>
@@ -89,7 +89,7 @@
               <li>User Filter: Your Jellyfin User</li>
               <li>Finally, under the "Template" section, paste the following code.</li>
               <div class="relative mt-2">
-                <textarea readonly id="jellyfin-json-template" class="w-full bg-[#39404b] rounded-md text-gray-300 text-sm border-0 focus:ring-0 outline-none font-mono p-3 resize-none overflow-auto max-h-72" rows="14">
+                <textarea readonly id="jellyfin-json-template" class="w-full bg-surface-2 rounded-md text-fg text-sm border-0 focus:ring-0 outline-none font-mono p-3 resize-none overflow-auto max-h-72" rows="14">
 {% verbatim %}{
   "Event": "{{#if_equals NotificationType 'PlaybackStart'}}Play{{/if_equals}}{{#if_equals NotificationType 'PlaybackStop'}}Stop{{/if_equals}}",
   "Item": {
@@ -111,7 +111,7 @@
                 <span class="absolute top-3 right-3 flex items-center cursor-pointer group"
                   title="Copy"
                   data-copy-target="#jellyfin-json-template">
-                  {% include "app/icons/copy.svg" with classes="w-5 h-5 text-gray-400 group-hover:text-indigo-400 transition-colors" %}
+                  {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-indigo-400 transition-colors" %}
                 </span>
               </div>
             </ul>
@@ -119,15 +119,15 @@
         </ol>
       </div>
     </div>
-    <div class="bg-[#39404b] p-5 rounded-lg mb-6">
+    <div class="bg-surface-2 p-5 rounded-lg mb-6">
       <div class="flex items-center mb-3">
         {% include "app/icons/server.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
         <h3 class="text-base font-medium">Jellyfin Integration (Unofficial Repo)</h3>
       </div>
-      <p class="text-gray-400 mb-4 text-sm">Connect Jellyfin to automatically track your watching progress.</p>
-      <div class="bg-[#262a2f] p-4 rounded-md">
+      <p class="text-fg-muted mb-4 text-sm">Connect Jellyfin to automatically track your watching progress.</p>
+      <div class="bg-surface-1 p-4 rounded-md">
         <h4 class="text-sm font-medium mb-3">Setup Instructions</h4>
-        <ol class="list-decimal list-inside space-y-2 text-sm text-gray-300">
+        <ol class="list-decimal list-inside space-y-2 text-sm text-fg">
           <li>You will need to have TMDB and TVDB as metadata providers in Jellyfin.</li>
           <li>
             Add this repository
@@ -146,13 +146,13 @@
             </li>
             <li>
               Restart your server, then configure the plugin:
-              <ul class="list-disc list-inside ml-6 mt-2 space-y-1 text-gray-400">
+              <ul class="list-disc list-inside ml-6 mt-2 space-y-1 text-fg-muted">
                 {# djlint:off #}
                 <li>
                   <div class="inline-flex items-center gap-2 w-[calc(100%-30px)]">URL:
-                    <input readonly id="jellyfin-webhook-url-unofficial" class="w-full bg-[#262a2f] rounded-md text-gray-400 text-sm border-0 focus:ring-0 outline-none font-mono" type="text" value="{{ jellyfin_webhook_url }}">
+                    <input readonly id="jellyfin-webhook-url-unofficial" class="w-full bg-surface-1 rounded-md text-fg-muted text-sm border-0 focus:ring-0 outline-none font-mono" type="text" value="{{ jellyfin_webhook_url }}">
                     <span class="flex items-center cursor-pointer group" title="Copy" data-copy-target="#jellyfin-webhook-url-unofficial">
-                      {% include "app/icons/copy.svg" with classes="w-5 h-5 text-gray-400 group-hover:text-indigo-400 transition-colors" %}
+                      {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-indigo-400 transition-colors" %}
                     </span>
                   </div>
                 </li>
@@ -166,13 +166,13 @@
         </div>
       </div>
 
-      <div class="bg-[#39404b] p-5 rounded-lg mb-6">
+      <div class="bg-surface-2 p-5 rounded-lg mb-6">
         <div class="flex items-center mb-3">
           {% include "app/icons/server.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
           <h3 class="text-base font-medium">Plex Integration</h3>
         </div>
-        <p class="text-gray-400 mb-4 text-sm">Connect Plex to automatically track your watching progress.</p>
-        <div class="bg-[#262a2f] p-3 rounded-md mb-4">
+        <p class="text-fg-muted mb-4 text-sm">Connect Plex to automatically track your watching progress.</p>
+        <div class="bg-surface-1 p-3 rounded-md mb-4">
           <h4 class="text-sm font-medium mb-3">Plex Usernames</h4>
           <form method="post"
                 action="{% url 'update_plex_usernames' %}"
@@ -180,11 +180,11 @@
             {% csrf_token %}
 
             <div>
-              <p class="text-gray-400 mb-4 text-sm">
+              <p class="text-fg-muted mb-4 text-sm">
                 This username (or several, comma separated) will be used to filter which events are sent to your webhook.
               </p>
               <input name="plex_usernames"
-                     class="w-full py-2 px-3 bg-[#39404b] rounded-md text-white text-sm border {% if user.plex_usernames.errors %}border-red-500{% else %}border-gray-600{% endif %} focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                     class="w-full py-2 px-3 bg-surface-2 rounded-md text-white text-sm border {% if user.plex_usernames.errors %}border-red-500{% else %}border-gray-600{% endif %} focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                      type="text"
                      placeholder="username1, username2, username3"
                      value="{{ request.user.plex_usernames }}">
@@ -198,9 +198,9 @@
             </div>
           </form>
         </div>
-        <div class="bg-[#262a2f] p-4 rounded-md">
+        <div class="bg-surface-1 p-4 rounded-md">
           <h4 class="text-sm font-medium mb-3">Setup Instructions</h4>
-          <ol class="list-decimal list-inside space-y-2 text-sm text-gray-300">
+          <ol class="list-decimal list-inside space-y-2 text-sm text-fg">
             <li>You will need to have a PlexPass in order to have webhooks enabled</li>
             <li>Go to Settings > Server > Network and enable Webhooks</li>
             <li>
@@ -211,18 +211,18 @@
             </li>
             <li>
               In the Webhooks section, click on "Add Webhook" and enter the following URL:
-              <ul class="list-disc list-inside ml-6 mt-2 space-y-1 text-gray-400">
+              <ul class="list-disc list-inside ml-6 mt-2 space-y-1 text-fg-muted">
                 <li>
                   <div class="inline-flex items-center gap-2 w-[calc(100%-30px)]">
                     <input readonly
                            id="plex-webhook-url"
-                           class="w-full bg-[#262a2f] rounded-md text-gray-400 text-sm border-0 focus:ring-0 outline-none font-mono"
+                           class="w-full bg-surface-1 rounded-md text-fg-muted text-sm border-0 focus:ring-0 outline-none font-mono"
                            type="text"
                            value="{{ plex_webhook_url }}">
                     <span class="flex items-center cursor-pointer group"
                           title="Copy"
                           data-copy-target="#plex-webhook-url">
-                      {% include "app/icons/copy.svg" with classes="w-5 h-5 text-gray-400 group-hover:text-indigo-400 transition-colors" %}
+                      {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-indigo-400 transition-colors" %}
                     </span>
                   </div>
                 </li>
@@ -232,12 +232,12 @@
         </div>
       </div>
 
-      <div class="bg-[#39404b] p-5 rounded-lg mb-6">
+      <div class="bg-surface-2 p-5 rounded-lg mb-6">
         <div class="flex items-center mb-3">
           {% include "app/icons/book-open.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
           <h3 class="text-base font-medium">Suwayomi Manga Reader</h3>
         </div>
-        <p class="text-gray-400 mb-4 text-sm">
+        <p class="text-fg-muted mb-4 text-sm">
           Link your <a href="https://github.com/Suwayomi/Suwayomi-Server"
     target="_blank"
     rel="noopener noreferrer"
@@ -245,21 +245,21 @@
           so manga detail pages get a "Read on Suwayomi" button that jumps to a global search for the title.
           Suwayomi already syncs progress to AniList/MAL/MangaUpdates, which Yamtrack can import.
         </p>
-        <div class="bg-[#262a2f] p-3 rounded-md">
+        <div class="bg-surface-1 p-3 rounded-md">
           <form method="post"
                 action="{% url 'update_suwayomi_url' %}"
                 class="space-y-2">
             {% csrf_token %}
             <div>
               <label for="suwayomi_url"
-                     class="block text-sm font-medium text-gray-300 mb-2">Suwayomi base URL</label>
+                     class="block text-sm font-medium text-fg mb-2">Suwayomi base URL</label>
               <input id="suwayomi_url"
                      name="suwayomi_url"
-                     class="w-full py-2 px-3 bg-[#39404b] rounded-md text-white text-sm border border-gray-600 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                     class="w-full py-2 px-3 bg-surface-2 rounded-md text-white text-sm border border-gray-600 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                      type="url"
                      placeholder="https://manga.example.com"
                      value="{{ request.user.suwayomi_url }}">
-              <p class="text-xs text-gray-500 mt-1">
+              <p class="text-xs text-fg-faint mt-1">
                 Leave blank to hide the button. The deep link uses <span class="font-mono">/global-search?query=&lt;title&gt;</span>.
               </p>
             </div>
@@ -274,32 +274,32 @@
         </div>
       </div>
 
-      <div class="bg-[#39404b] p-5 rounded-lg mb-6">
+      <div class="bg-surface-2 p-5 rounded-lg mb-6">
         <div class="flex items-center mb-3">
           {% include "app/icons/server.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
           <h3 class="text-base font-medium">Emby Integration</h3>
         </div>
-        <p class="text-gray-400 mb-4 text-sm">Connect Emby to automatically track your watching progress.</p>
-        <div class="bg-[#262a2f] p-4 rounded-md">
+        <p class="text-fg-muted mb-4 text-sm">Connect Emby to automatically track your watching progress.</p>
+        <div class="bg-surface-1 p-4 rounded-md">
           <h4 class="text-sm font-medium mb-3">Setup Instructions</h4>
-          <ol class="list-decimal list-inside space-y-2 text-sm text-gray-300">
+          <ol class="list-decimal list-inside space-y-2 text-sm text-fg">
             <li>In Emby, go to Settings > Notifications</li>
             <li>In the Notifications section, click on "Add Notification"</li>
             <li>
               In the Notification settings:
-              <ul class="list-disc list-inside ml-6 mt-2 space-y-2 text-gray-400">
+              <ul class="list-disc list-inside ml-6 mt-2 space-y-2 text-fg-muted">
                 {# djlint:off #}
               <li>
                 <div class="inline-flex items-center gap-2 w-[calc(100%-30px)]">URL: 
                   <input readonly
                          id="emby-webhook-url"
-                         class="w-full bg-[#262a2f] rounded-md text-gray-400 text-sm border-0 focus:ring-0 outline-none font-mono"
+                         class="w-full bg-surface-1 rounded-md text-fg-muted text-sm border-0 focus:ring-0 outline-none font-mono"
                          type="text"
                          value="{{ emby_webhook_url }}">
                   <span class="flex items-center cursor-pointer group"
                         title="Copy"
                         data-copy-target="#emby-webhook-url">
-                    {% include "app/icons/copy.svg" with classes="w-5 h-5 text-gray-400 group-hover:text-indigo-400 transition-colors" %}
+                    {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-indigo-400 transition-colors" %}
                   </span>
                 </div>
               </li>
@@ -313,12 +313,12 @@
           </ol>
         </div>
       </div>
-      <div class="bg-[#39404b] p-5 rounded-lg mb-6">
+      <div class="bg-surface-2 p-5 rounded-lg mb-6">
         <div class="flex items-center mb-3">
           {% include "app/icons/music-note.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
           <h3 class="text-base font-medium">ListenBrainz / Multi-Scrobbler</h3>
         </div>
-        <p class="text-gray-400 mb-4 text-sm">
+        <p class="text-fg-muted mb-4 text-sm">
           Forward listens from <a href="https://github.com/foxxmd/multi-scrobbler"
     target="_blank"
     rel="noopener noreferrer"
@@ -328,20 +328,20 @@
           <a href="{% url 'music_history' %}"
              class="text-indigo-400 hover:underline">Music</a> page.
         </p>
-        <div class="bg-[#262a2f] p-4 rounded-md mb-4">
+        <div class="bg-surface-1 p-4 rounded-md mb-4">
           <h4 class="text-sm font-medium mb-3">Multi-Scrobbler client config</h4>
-          <ol class="list-decimal list-inside space-y-2 text-sm text-gray-300">
+          <ol class="list-decimal list-inside space-y-2 text-sm text-fg">
             <li>
               In multi-scrobbler, add a <span class="font-mono">listenbrainz</span> client. Set the URL to:
               {# djlint:off #}
             <div class="inline-flex items-center gap-2 w-[calc(100%-30px)] mt-2">
-              <input readonly id="lb-base-url" class="w-full bg-[#262a2f] rounded-md text-gray-400 text-sm border-0 focus:ring-0 outline-none font-mono" type="text" value="{{ lb_base_url }}">
+              <input readonly id="lb-base-url" class="w-full bg-surface-1 rounded-md text-fg-muted text-sm border-0 focus:ring-0 outline-none font-mono" type="text" value="{{ lb_base_url }}">
               <span class="flex items-center cursor-pointer group" title="Copy" data-copy-target="#lb-base-url">
-                {% include "app/icons/copy.svg" with classes="w-5 h-5 text-gray-400 group-hover:text-indigo-400 transition-colors" %}
+                {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-indigo-400 transition-colors" %}
               </span>
             </div>
               {# djlint:on #}
-              <p class="text-xs text-gray-500 mt-1">
+              <p class="text-xs text-fg-faint mt-1">
                 multi-scrobbler appends <span class="font-mono">/1/submit-listens</span> automatically.
               </p>
             </li>
@@ -350,22 +350,22 @@
               Verify by hitting the validate-token endpoint:
               {# djlint:off #}
             <div class="inline-flex items-center gap-2 w-[calc(100%-30px)] mt-2">
-              <input readonly id="lb-validate-url" class="w-full bg-[#262a2f] rounded-md text-gray-400 text-sm border-0 focus:ring-0 outline-none font-mono" type="text" value="{{ lb_base_url }}/1/validate-token">
+              <input readonly id="lb-validate-url" class="w-full bg-surface-1 rounded-md text-fg-muted text-sm border-0 focus:ring-0 outline-none font-mono" type="text" value="{{ lb_base_url }}/1/validate-token">
               <span class="flex items-center cursor-pointer group" title="Copy" data-copy-target="#lb-validate-url">
-                {% include "app/icons/copy.svg" with classes="w-5 h-5 text-gray-400 group-hover:text-indigo-400 transition-colors" %}
+                {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-indigo-400 transition-colors" %}
               </span>
             </div>
               {# djlint:on #}
-              <p class="text-xs text-gray-500 mt-1">
+              <p class="text-xs text-fg-faint mt-1">
                 Send <span class="font-mono">Authorization: Token &lt;your-api-token&gt;</span>; expect a JSON response with <span class="font-mono">"valid": true</span>.
               </p>
             </li>
           </ol>
         </div>
-        <details class="bg-[#262a2f] p-4 rounded-md">
+        <details class="bg-surface-1 p-4 rounded-md">
           <summary class="text-sm font-medium cursor-pointer">Example multi-scrobbler config snippet</summary>
           <div class="relative mt-3">
-            <textarea readonly id="lb-ms-snippet" rows="9" class="w-full bg-[#39404b] rounded-md text-gray-300 text-sm border-0 focus:ring-0 outline-none font-mono p-3 resize-none overflow-auto">{
+            <textarea readonly id="lb-ms-snippet" rows="9" class="w-full bg-surface-2 rounded-md text-fg text-sm border-0 focus:ring-0 outline-none font-mono p-3 resize-none overflow-auto">{
   "type": "listenbrainz",
   "name": "yamtrack",
   "data": {
@@ -376,7 +376,7 @@
             <span class="absolute top-3 right-3 flex items-center cursor-pointer group"
                   title="Copy"
                   data-copy-target="#lb-ms-snippet">
-              {% include "app/icons/copy.svg" with classes="w-5 h-5 text-gray-400 group-hover:text-indigo-400 transition-colors" %}
+              {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-indigo-400 transition-colors" %}
             </span>
           </div>
         </details>
