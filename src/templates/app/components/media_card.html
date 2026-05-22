@@ -14,11 +14,17 @@
       {# Status chip: tinted background, icon-only when there's no date to show #}
       <div class="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-1 rounded-md pill-status-{{ media.status|status_slug }} backdrop-blur-sm shadow-md">
         <div class="w-3.5 h-3.5 shrink-0">
-          {% if media.status == Status.COMPLETED.value %}{% include "app/icons/states/completed.svg" %}
-          {% elif media.status == Status.IN_PROGRESS.value %}{% include "app/icons/states/in-progress.svg" %}
-          {% elif media.status == Status.PAUSED.value %}{% include "app/icons/states/paused.svg" %}
-          {% elif media.status == Status.PLANNING.value %}{% include "app/icons/states/planning.svg" %}
-          {% elif media.status == Status.DROPPED.value %}{% include "app/icons/states/dropped.svg" %}{% endif %}
+          {% if media.status == Status.COMPLETED.value %}
+            {% include "app/icons/states/completed.svg" %}
+          {% elif media.status == Status.IN_PROGRESS.value %}
+            {% include "app/icons/states/in-progress.svg" %}
+          {% elif media.status == Status.PAUSED.value %}
+            {% include "app/icons/states/paused.svg" %}
+          {% elif media.status == Status.PLANNING.value %}
+            {% include "app/icons/states/planning.svg" %}
+          {% elif media.status == Status.DROPPED.value %}
+            {% include "app/icons/states/dropped.svg" %}
+          {% endif %}
         </div>
         {% if media.end_date is not None %}
           <span class="text-xs font-medium">{{ media.end_date|date_format:user }}</span>
@@ -108,9 +114,12 @@
     {# Track Modal #}
     <div x-show="trackOpen"
          @keydown.escape.window="trackOpen = false"
-         class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div class="w-152 max-h-[90vh] px-4 md:px-0 relative z-60"
-           @click.outside="trackOpen = false">
+         x-cloak
+         class="fixed inset-0 z-50">
+      <div class="absolute inset-0 bg-black/40"
+           @click="trackOpen = false"
+           aria-hidden="true"></div>
+      <div class="drawer-shell" @click.outside="trackOpen = false">
         <div id="{% component_id 'track' item media.id %}"></div>
       </div>
     </div>

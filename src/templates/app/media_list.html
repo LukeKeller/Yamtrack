@@ -18,8 +18,9 @@
           <span class="text-sm font-semibold">Collection Stats</span>
           <span class="text-xs text-gray-400">{{ record_stats.total }} record{{ record_stats.total|pluralize }}</span>
         </div>
-        <div class="w-4 h-4 transition-transform"
-             :class="{ 'rotate-180': open }">{% include "app/icons/chevron-down.svg" %}</div>
+        <div class="w-4 h-4 transition-transform" :class="{ 'rotate-180': open }">
+          {% include "app/icons/chevron-down.svg" %}
+        </div>
       </button>
       <div x-cloak x-show="open" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div class="bg-[#2a2f35] rounded-lg p-4">
@@ -69,7 +70,9 @@
               <canvas id="recordTopPlayedChart"></canvas>
             </div>
           {% else %}
-            <p class="text-xs text-gray-500">No plays logged yet — tap "Side A / B / Full" on a record to log a spin, or point multi-scrobbler at this server.</p>
+            <p class="text-xs text-gray-500">
+              No plays logged yet — tap "Side A / B / Full" on a record to log a spin, or point multi-scrobbler at this server.
+            </p>
           {% endif %}
         </div>
       </div>

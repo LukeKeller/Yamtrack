@@ -14,10 +14,19 @@
     <header class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
       <div>
         <p class="text-sm text-fg-faint mb-1">{% now "l, F j" %}</p>
-        <h1 class="text-2xl font-semibold">Welcome back{% if user.is_authenticated %}, {{ user.username }}{% endif %}</h1>
+        <h1 class="text-2xl font-semibold">
+          Welcome back
+          {% if user.is_authenticated %}, {{ user.username }}{% endif %}
+        </h1>
         <p class="text-sm text-fg-muted mt-1">
-          {% for section in home_sections %}{% if section.key == "In progress" %}{{ section.count }} item{{ section.count|pluralize }} in progress{% endif %}{% endfor %}
-          {% for section in home_sections %}{% if section.key == "Planning" %}{% if section.count %} · {{ section.count }} planned{% endif %}{% endif %}{% endfor %}
+          {% for section in home_sections %}
+            {% if section.key == "In progress" %}{{ section.count }} item{{ section.count|pluralize }} in progress{% endif %}
+          {% endfor %}
+          {% for section in home_sections %}
+            {% if section.key == "Planning" %}
+              {% if section.count %}· {{ section.count }} planned{% endif %}
+            {% endif %}
+          {% endfor %}
         </p>
       </div>
 
@@ -33,7 +42,7 @@
              x-cloak
              x-transition.opacity.duration.150ms
              class="absolute right-0 z-10 mt-2 w-52 overflow-hidden rounded-md py-1 shadow-lg bg-surface-2"
-             style="border: 1px solid var(--color-border-default);">
+             style="border: 1px solid var(--color-border-default)">
           {% for value, label in sort_choices %}
             <a href="{% url 'home' %}?sort={{ value }}"
                class="block w-full px-3 py-1.5 text-left text-sm transition-colors {% if current_sort == value %}bg-accent text-white font-medium{% else %}text-fg-muted hover:bg-surface-3 hover:text-fg{% endif %}">

@@ -2,9 +2,11 @@
    Optional: variant ('row' | 'card' | 'image' — default 'row'), extra_classes.
 #}
 {% if variant == "card" %}
-  <div class="skeleton{% if extra_classes %} {{ extra_classes }}{% endif %}" style="aspect-ratio: 2 / 3.5"></div>
+  <div class="skeleton{% if extra_classes %} {{ extra_classes }}{% endif %}"
+       style="aspect-ratio: 2 / 3.5"></div>
 {% elif variant == "image" %}
-  <div class="skeleton{% if extra_classes %} {{ extra_classes }}{% endif %}" style="aspect-ratio: 2 / 3"></div>
+  <div class="skeleton{% if extra_classes %} {{ extra_classes }}{% endif %}"
+       style="aspect-ratio: 2 / 3"></div>
 {% else %}
   <div class="skeleton h-4{% if extra_classes %} {{ extra_classes }}{% endif %}"></div>
 {% endif %}

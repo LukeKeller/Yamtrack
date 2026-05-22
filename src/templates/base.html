@@ -155,9 +155,7 @@
             {# Mobile sidebar toggle #}
             <button @click="isMobileMenuOpen = !isMobileMenuOpen"
                     class="lg:hidden btn btn-icon btn-ghost"
-                    aria-label="Toggle sidebar">
-              {% include "app/icons/hamburger.svg" with classes="w-5 h-5" %}
-            </button>
+                    aria-label="Toggle sidebar">{% include "app/icons/hamburger.svg" with classes="w-5 h-5" %}</button>
 
             {# Search input (also opens cmdk with ⌘K) #}
             {% if media_type == MediaTypes.SEASON.value %}
@@ -224,9 +222,7 @@
               </a>
               <a href="{% url 'notifications' %}"
                  class="btn btn-icon btn-ghost relative"
-                 title="Notifications">
-                {% include "app/icons/bell.svg" with classes="w-4 h-4" %}
-              </a>
+                 title="Notifications">{% include "app/icons/bell.svg" with classes="w-4 h-4" %}</a>
             </div>
           </header>
 

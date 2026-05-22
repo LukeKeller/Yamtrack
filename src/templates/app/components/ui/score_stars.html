@@ -8,6 +8,8 @@
   {% if show_value %}<span class="ml-1.5 text-sm font-medium text-accent">{{ score|score_to_five }}</span>{% endif %}
 {% else %}
   <span class="stars" aria-label="No rating">
-    {% for _ in '12345' %}<span class="star{% if large %} star-lg{% endif %}" style="--star-fill: 0%"></span>{% endfor %}
+    {% for _ in '12345' %}
+      <span class="star{% if large %} star-lg{% endif %}" style="--star-fill: 0%"></span>
+    {% endfor %}
   </span>
 {% endif %}

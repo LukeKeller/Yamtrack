@@ -13,9 +13,7 @@
         — Side {{ record_spin.side }}
       {% endif %}
     </span>
-    <span class="text-gray-400">
-      {{ record_spin_count }} play{{ record_spin_count|pluralize }}
-    </span>
+    <span class="text-gray-400">{{ record_spin_count }} play{{ record_spin_count|pluralize }}</span>
   </div>
 {% else %}
   <div class="text-xs text-gray-500 italic">No spins logged yet.</div>
