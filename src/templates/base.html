@@ -227,7 +227,8 @@
           </header>
 
           {# Page content #}
-          <main class="flex-1 relative bg-canvas pb-16 lg:pb-0">
+          <main class="flex-1 relative bg-canvas"
+                style="padding-bottom: max(5rem, calc(env(safe-area-inset-bottom) + 4.5rem));">
             <div class="container mx-auto px-4 lg:px-8 py-8 lg:py-10">
               {% block content %}
               {% endblock content %}
@@ -236,13 +237,17 @@
         </div>
       </div>
 
-            {% comment %}
+      {% comment %}
         Mobile bottom navigation. Visible below the `lg` breakpoint where the
-         sidebar is collapsed by default. Five primary destinations match the
-         mobile-home.html mock; the avatar tile opens the slide-in sidebar
-         (same trigger as the hamburger).
+        sidebar is collapsed by default. Five primary destinations match the
+        mobile-home.html mock; the avatar tile opens the slide-in sidebar
+        (same trigger as the hamburger). The h-14 base plus
+        env(safe-area-inset-bottom) accounts for the iOS home indicator;
+        <main> above gets matching extra bottom padding so the last bit of
+        content scrolls clear of the nav.
       {% endcomment %}
-      <nav class="lg:hidden fixed bottom-0 inset-x-0 z-40 h-14 bg-surface-0 border-t border-border-default flex items-center justify-around px-1"
+      <nav class="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-surface-0 border-t border-border-default flex items-center justify-around px-1"
+           style="height: calc(3.5rem + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom);"
            aria-label="Primary">
         <a href="{% url 'home' %}"
            class="flex flex-col items-center gap-0.5 px-2 py-1.5 text-[10px] {% if request.path == '/' %}text-accent{% else %}text-fg-muted{% endif %}">

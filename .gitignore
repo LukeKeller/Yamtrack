@@ -16,3 +16,6 @@ CLAUDE.md
 requests.http
 TODO.txt
 .codex
+# Local Tailwind build deps (only needed to regenerate src/static/css/main.css)
+node_modules
+package-lock.json
