@@ -227,7 +227,7 @@
           </header>
 
           {# Page content #}
-          <main class="flex-1 relative bg-canvas">
+          <main class="flex-1 relative bg-canvas pb-16 lg:pb-0">
             <div class="container mx-auto px-4 lg:px-8 py-8 lg:py-10">
               {% block content %}
               {% endblock content %}
@@ -235,6 +235,43 @@
           </main>
         </div>
       </div>
+
+      {# Mobile bottom navigation. Visible below the `lg` breakpoint where the
+         sidebar is collapsed by default. Five primary destinations match the
+         mobile-home.html mock; the avatar tile opens the slide-in sidebar
+         (same trigger as the hamburger). #}
+      <nav class="lg:hidden fixed bottom-0 inset-x-0 z-40 h-14 bg-surface-0 border-t border-border-default flex items-center justify-around px-1"
+           aria-label="Primary">
+        <a href="{% url 'home' %}"
+           class="flex flex-col items-center gap-0.5 px-2 py-1.5 text-[10px] {% if request.path == '/' %}text-accent{% else %}text-fg-muted{% endif %}">
+          {% include "app/icons/house.svg" with classes="w-5 h-5" %}
+          <span>Home</span>
+        </a>
+        <a href="{% url 'browse' %}"
+           class="flex flex-col items-center gap-0.5 px-2 py-1.5 text-[10px] {% if '/browse' in request.path %}text-accent{% else %}text-fg-muted{% endif %}">
+          {% include "app/icons/flame.svg" with classes="w-5 h-5" %}
+          <span>Discover</span>
+        </a>
+        <button type="button"
+                @click="$dispatch('cmdk-open')"
+                class="flex flex-col items-center gap-0.5 px-2 py-1.5 text-[10px] text-fg-muted">
+          {% include "app/icons/magnifying-glass.svg" with classes="w-5 h-5" %}
+          <span>Search</span>
+        </button>
+        <a href="{% url 'lists' %}"
+           class="flex flex-col items-center gap-0.5 px-2 py-1.5 text-[10px] {% if '/lists' in request.path %}text-accent{% else %}text-fg-muted{% endif %}">
+          {% include "app/icons/folder-plus.svg" with classes="w-5 h-5" %}
+          <span>Lists</span>
+        </a>
+        <button type="button"
+                @click="isMobileMenuOpen = true"
+                class="flex flex-col items-center gap-0.5 px-2 py-1.5 text-[10px] text-fg-muted">
+          <span class="w-5 h-5 rounded-full bg-accent text-white text-[11px] font-semibold flex items-center justify-center">
+            {{ user.username.0|upper|default:"?" }}
+          </span>
+          <span>Profile</span>
+        </button>
+      </nav>
 
       {# Command palette overlay #}
       {% include "app/components/cmdk.html" %}

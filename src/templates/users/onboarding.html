@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% load app_tags %}
+
+{% block title %}
+  Welcome to Yamtrack
+{% endblock title %}
+
+{% block content %}
+  <div class="max-w-3xl mx-auto py-4">
+
+    {# Stepper #}
+    <div class="flex items-center justify-center gap-2 mb-8 text-sm">
+      <div class="flex items-center gap-2">
+        <span class="w-6 h-6 rounded-full bg-accent flex items-center justify-center text-white text-xs font-semibold">1</span>
+        <span class="font-medium">Pick what you track</span>
+      </div>
+      <span class="w-8 h-px" style="background: var(--color-border-default)"></span>
+      <div class="flex items-center gap-2 text-fg-muted">
+        <span class="w-6 h-6 rounded-full bg-surface-2 flex items-center justify-center text-xs font-semibold">2</span>
+        <span>Connect (optional)</span>
+      </div>
+      <span class="w-8 h-px" style="background: var(--color-border-default)"></span>
+      <div class="flex items-center gap-2 text-fg-muted">
+        <span class="w-6 h-6 rounded-full bg-surface-2 flex items-center justify-center text-xs font-semibold">3</span>
+        <span>Pick a theme</span>
+      </div>
+    </div>
+
+    <div class="bg-surface-1 rounded-lg p-6 md:p-8" style="border: 1px solid var(--color-border-subtle)">
+
+      <header class="text-center mb-6">
+        <h1 class="text-2xl font-semibold mb-2">What do you track?</h1>
+        <p class="text-fg-muted">Pick the media types you'll use. You can change this any time in Settings → Preferences.</p>
+      </header>
+
+      <form method="post" action="{% url 'preferences' %}" class="space-y-6">
+        {% csrf_token %}
+
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {% for media_type in media_types %}
+            <label class="card flex items-center gap-3 cursor-pointer hover:bg-surface-2 transition-colors has-[:checked]:ring-2 has-[:checked]:ring-accent">
+              <input type="checkbox"
+                     name="media_types_checkboxes"
+                     value="{{ media_type }}"
+                     checked
+                     class="sr-only">
+              <span class="w-10 h-10 rounded-md flex items-center justify-center type-{{ media_type|media_type_slug }} shrink-0"
+                    style="background: var(--color-surface-2);">
+                {% icon media_type is_active=True extra_classes="w-5 h-5" %}
+              </span>
+              <span class="min-w-0">
+                <span class="block font-medium text-sm">{{ media_type|media_type_readable_plural }}</span>
+              </span>
+              <svg class="w-4 h-4 ml-auto text-accent hidden has-[:checked]:block"
+                   viewBox="0 0 24 24"
+                   fill="none"
+                   stroke="currentColor"
+                   stroke-width="2"><path d="M20 6 9 17l-5-5" /></svg>
+            </label>
+          {% endfor %}
+        </div>
+
+        <div class="flex items-center justify-between pt-2 border-t" style="border-color: var(--color-border-subtle)">
+          <a href="{% url 'home' %}" class="text-sm text-fg-muted hover:text-fg">Skip for now</a>
+          <button type="submit" class="btn btn-primary">
+            Save &amp; continue
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+          </button>
+        </div>
+      </form>
+
+      <div class="border-t mt-6 pt-6" style="border-color: var(--color-border-subtle)">
+        <p class="text-xs uppercase tracking-wider text-fg-faint mb-3">Already track elsewhere?</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <a href="{% url 'import_data' %}" class="card flex items-center gap-3 hover:bg-surface-2 transition-colors">
+            <span class="w-9 h-9 rounded-md flex items-center justify-center bg-surface-2 text-accent">
+              {% include "app/icons/database.svg" with classes="w-4 h-4" %}
+            </span>
+            <span class="min-w-0">
+              <span class="block text-sm font-medium">Import from a tracker</span>
+              <span class="block text-xs text-fg-muted">Trakt · MAL · AniList · Simkl · Steam · GoodReads</span>
+            </span>
+          </a>
+          <a href="{% url 'integrations' %}" class="card flex items-center gap-3 hover:bg-surface-2 transition-colors">
+            <span class="w-9 h-9 rounded-md flex items-center justify-center bg-surface-2 text-accent">
+              {% include "app/icons/server.svg" with classes="w-4 h-4" %}
+            </span>
+            <span class="min-w-0">
+              <span class="block text-sm font-medium">Connect a media server</span>
+              <span class="block text-xs text-fg-muted">Jellyfin · Plex · Emby webhooks</span>
+            </span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <p class="text-center text-xs text-fg-faint mt-6">Step 1 of 3 · skipping is fine — everything's editable later.</p>
+  </div>
+{% endblock content %}

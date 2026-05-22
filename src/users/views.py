@@ -318,6 +318,29 @@ def about(request):
     return render(request, "users/about.html", {"version": settings.VERSION})
 
 
+@require_GET
+def onboarding(request):
+    """Render the post-signup onboarding wizard.
+
+    Currently this is a single-page surface that walks the user through three
+    quick steps: pick the media types they track, see the import options
+    available, and pick a theme. The form posts to the existing preferences
+    endpoint and `import_data` for actual changes, so this view is read-only.
+
+    The plan calls for redirecting brand-new users here on first login, gated
+    on a User.onboarded boolean — that gating is deferred until the field
+    lands in a follow-up migration. The route is reachable manually today.
+    """
+    return render(
+        request,
+        "users/onboarding.html",
+        {
+            "media_types": MediaTypes.values,
+            "theme_choices": ThemeChoices.choices,
+        },
+    )
+
+
 @require_POST
 def delete_import_schedule(request):
     """Delete an import schedule."""

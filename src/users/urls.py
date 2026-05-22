@@ -23,6 +23,7 @@ urlpatterns = [
     path("settings/export", views.export_data, name="export_data"),
     path("settings/advanced", views.advanced, name="advanced"),
     path("settings/about", views.about, name="about"),
+    path("onboarding/", views.onboarding, name="onboarding"),
     path(
         "delete_import_schedule",
         views.delete_import_schedule,
