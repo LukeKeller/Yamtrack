@@ -1,10 +1,20 @@
 {% load app_tags %}
 {% comment %}
   Sidebar nav link for a media type.
-   Required: item (with .media_type and .display_name), media_type (current page's type).
+   Required: item (with .media_type, .display_name; optional .count).
+            media_type (current page's type — used to highlight active row).
+
+  The type-accent class wraps just the icon span so currentColor tints the
+  icon without overpowering the row's text color. Item count, if present,
+  renders as a faint badge on the right.
 {% endcomment %}
 <a href="{% url 'medialist' media_type=item.media_type %}"
-   class="nav-item type-{{ item.media_type|media_type_slug }}{% if media_type|str_equals:item.media_type %} active{% endif %}">
-  {% icon item.media_type is_active=media_type|str_equals:item.media_type extra_classes="w-4 h-4 shrink-0" %}
-  <span>{{ item.display_name }}</span>
+   class="nav-item{% if media_type|str_equals:item.media_type %} active{% endif %}">
+  <span class="type-{{ item.media_type|media_type_slug }} shrink-0 flex items-center">
+    {% icon item.media_type is_active=media_type|str_equals:item.media_type extra_classes="w-4 h-4" %}
+  </span>
+  <span class="flex-1 truncate">{{ item.display_name }}</span>
+  {% if item.count is not None %}
+    <span class="text-[11px] text-fg-faint tabular-nums">{{ item.count }}</span>
+  {% endif %}
 </a>

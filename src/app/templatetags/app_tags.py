@@ -2,6 +2,7 @@ from datetime import timedelta
 from pathlib import Path
 
 from django import template
+from django.apps import apps
 from django.conf import settings
 from django.urls import reverse
 from django.utils import formats, timezone
@@ -243,18 +244,30 @@ def get_search_media_types(user):
 
 
 @register.simple_tag
-def get_sidebar_media_types(user):
-    """Return available media types for sidebar navigation based on user preferences."""
-    enabled_types = user.get_enabled_media_types()
+def get_sidebar_media_types(user, *, with_counts=False):
+    """Return available media types for sidebar navigation based on user preferences.
 
-    # Format the types for sidebar
-    return [
-        {
+    When `with_counts=True` each entry also gets a `count` field — the number
+    of tracked items of that type for this user. Counts run as one COUNT()
+    query per enabled type; the helper is opt-in so the global cmdk overlay
+    (which doesn't need counts) doesn't pay for them.
+    """
+    enabled_types = user.get_enabled_media_types()
+    items = []
+    for media_type in enabled_types:
+        entry = {
             "media_type": media_type,
             "display_name": media_type_readable_plural(media_type),
         }
-        for media_type in enabled_types
-    ]
+        if with_counts:
+            try:
+                model = apps.get_model(app_label="app", model_name=media_type)
+            except LookupError:
+                entry["count"] = None
+            else:
+                entry["count"] = model.objects.filter(user=user.id).count()
+        items.append(entry)
+    return items
 
 
 @register.filter

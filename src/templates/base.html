@@ -93,7 +93,7 @@
               {% url 'browse' as browse_url %}
               {% include "app/components/_nav_link.html" with url=browse_url label="Browse" icon_template="app/icons/flame.svg" %}
 
-              {% get_sidebar_media_types user as sidebar_media_types %}
+              {% get_sidebar_media_types user with_counts=True as sidebar_media_types %}
               {% for item in sidebar_media_types %}
                 {% include "app/components/_nav_media_type.html" with item=item %}
               {% endfor %}

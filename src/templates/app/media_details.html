@@ -141,15 +141,20 @@
             </div>
           </div>
         {% else %}
-          <h1 class="text-3xl font-bold mb-4 text-center md:text-start">{{ media.title }}</h1>
+          {# Meta pill row — type, year, runtime, genres. Sits above the title
+             so the eye lands on the title and gets the surrounding context in
+             the same glance (mirrors mocks/media-details-movie.html). #}
+          <div class="flex flex-wrap items-center gap-2 mb-3 justify-center md:justify-start">
+            <span class="pill" style="background: var(--color-type-{{ media.media_type|media_type_slug }}); color: white; opacity: .9;">
+              {{ media.media_type|media_type_readable }}
+            </span>
+            {% if media.details.release_date %}<span class="pill pill-meta">{{ media.details.release_date|slice:":4" }}</span>{% endif %}
+            {% if media.details.first_air_date %}<span class="pill pill-meta">{{ media.details.first_air_date|slice:":4" }}</span>{% endif %}
+            {% if media.details.runtime %}<span class="pill pill-meta">{{ media.details.runtime }}</span>{% endif %}
+            {% for genre in media.genres %}<span class="pill pill-accent">{{ genre }}</span>{% endfor %}
+          </div>
+          <h1 class="text-3xl md:text-4xl font-semibold tracking-tight mb-3 text-center md:text-start">{{ media.title }}</h1>
         {% endif %}
-
-        {# Genres #}
-        <div class="flex flex-wrap gap-2 mb-4">
-          {% for genre in media.genres %}
-            <span class="px-3 py-1 bg-violet-600 text-white rounded-full text-sm">{{ genre }}</span>
-          {% endfor %}
-        </div>
 
         {# Description #}
         <div class="mb-6">
@@ -190,7 +195,7 @@
         {# Ratings row — provider score, OMDb ratings, user score #}
         <div class="flex flex-wrap gap-3 mb-4">
           {% if media.score_count is not None %}
-            <div class="bg-surface-1 p-3 rounded-lg w-[120px]">
+            <div class="bg-surface-1 px-3 py-2 rounded-lg w-[96px]">
               <h3 class="text-xs font-semibold text-fg-muted mb-1 text-center">{{ media.source|upper }} SCORE</h3>
               <div class="flex items-center justify-center">
                 {% include "app/icons/star.svg" with classes="w-5 h-5 mr-1.5 text-yellow-400 fill-yellow-400" %}
@@ -207,7 +212,7 @@
           {% endif %}
 
           {% if media.details.imdb_rating %}
-            <div class="bg-surface-1 p-3 rounded-lg w-[120px]">
+            <div class="bg-surface-1 px-3 py-2 rounded-lg w-[96px]">
               <h3 class="text-xs font-semibold text-fg-muted mb-1 text-center">IMDB</h3>
               <div class="flex items-center justify-center">
                 {% include "app/icons/star.svg" with classes="w-5 h-5 mr-1.5 text-amber-400 fill-amber-400" %}
@@ -217,7 +222,7 @@
           {% endif %}
 
           {% if media.details.rotten_tomatoes %}
-            <div class="bg-surface-1 p-3 rounded-lg w-[120px]">
+            <div class="bg-surface-1 px-3 py-2 rounded-lg w-[96px]">
               <h3 class="text-xs font-semibold text-fg-muted mb-1 text-center">ROTTEN TOMATOES</h3>
               <div class="flex items-center justify-center">
                 <span class="text-lg font-bold text-red-400">{{ media.details.rotten_tomatoes }}</span>
@@ -226,7 +231,7 @@
           {% endif %}
 
           {% if media.details.metacritic %}
-            <div class="bg-surface-1 p-3 rounded-lg w-[120px]">
+            <div class="bg-surface-1 px-3 py-2 rounded-lg w-[96px]">
               <h3 class="text-xs font-semibold text-fg-muted mb-1 text-center">METACRITIC</h3>
               <div class="flex items-center justify-center">
                 <span class="text-lg font-bold text-emerald-400">{{ media.details.metacritic }}</span>
