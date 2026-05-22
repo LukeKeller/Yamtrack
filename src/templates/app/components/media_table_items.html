@@ -41,17 +41,13 @@
     </td>
     {% if media.score is not None %}
       <td class="p-2 text-center">
-        <div class="flex items-center justify-center">
-          {% include "app/icons/star.svg" with classes="w-4 h-4 text-yellow-400 mr-1 fill-current" %}
-          <span class="text-white -mt-[3px]">{{ media.formatted_score }}</span>
+        <div class="inline-flex items-center gap-1">
+          {% include "app/icons/star.svg" with classes="w-3.5 h-3.5 text-amber-400 fill-current" %}
+          <span class="text-fg">{{ media.formatted_score }}</span>
         </div>
       </td>
     {% else %}
-      <td class="p-2 text-center">
-        <div class="flex items-center justify-center">
-          {% include "app/icons/star.svg" with classes="w-4 h-4 text-gray-400 mr-1 fill-current" %}
-        </div>
-      </td>
+      <td class="p-2 text-center text-fg-faint">—</td>
     {% endif %}
 
     {# Progress field #}
@@ -63,7 +59,13 @@
       {% if media_type == MediaTypes.TV.value %}<td class="p-2 text-center">{{ media.last_watched }}</td>{% endif %}
     {% endif %}
 
-    <td class="p-2 text-center">{{ media.status|media_status_readable:media_type }}</td>
+    <td class="p-2 text-center">
+      {% if media.status %}
+        <span class="pill pill-status-{{ media.status|status_slug }}">{{ media.status|media_status_readable:media_type }}</span>
+      {% else %}
+        <span class="text-fg-faint">—</span>
+      {% endif %}
+    </td>
 
     {% if media.start_date %}
       <td class="p-2 text-center">{{ media.start_date|date_format:user }}</td>
