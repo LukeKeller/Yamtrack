@@ -1,0 +1,14 @@
+{# Drawer / bottom-sheet shell. Wrap with x-data="{ open: true }" or pass state in.
+   Required: open_var (string, e.g. "trackOpen") — Alpine state variable that drives visibility.
+   Optional: title (string), close_label (string, default "Close"), title_id (string).
+   Body content: use this as the outer; render your content into the body slot via include.
+   Usage:
+     <div x-data="{ trackOpen: false }">
+       <button @click="trackOpen = true">…</button>
+       {% include "app/components/ui/drawer.html" with open_var="trackOpen" title="Track" %}
+         …body content goes immediately below the include? No — pattern below.
+     </div>
+   Because Django doesn't have slots, callers compose the drawer inline rather than including
+   this shell. See app/components/ui/_drawer_example.html for the canonical pattern.
+#}
+{# This file is a reference doc; concrete drawer instances live in their feature templates. #}

@@ -490,3 +490,60 @@ def show_media_score(rating, user):
         True if we should show the media score
     """
     return rating is not None and (not user.hide_zero_rating or rating > 0)
+
+
+# ----- Phase 1: component helpers (UI primitives in app/components/ui/) -----
+
+
+@register.filter
+def status_slug(status):
+    """Slugify a Status text value for CSS class suffixes.
+
+    "In progress" -> "in-progress"; "Completed" -> "completed".
+    Stable across language because Status uses English text values.
+    """
+    if not status:
+        return ""
+    return str(status).lower().replace(" ", "-")
+
+
+@register.filter
+def media_type_slug(media_type):
+    """Pass-through lowercase slug for media types (kept for template symmetry)."""
+    if not media_type:
+        return ""
+    return str(media_type).lower()
+
+
+@register.filter
+def score_to_five(score):
+    """Convert a 0-10 numeric score to a 0-5 'x.x' string with half precision."""
+    if score is None:
+        return ""
+    try:
+        value = float(score) / 2.0
+    except (TypeError, ValueError):
+        return ""
+    half = round(value * 2) / 2
+    if half == int(half):
+        return f"{int(half)}.0"
+    return f"{half}"
+
+
+@register.inclusion_tag("app/components/ui/_stars.html")
+def star_widget(score, *, large=False):
+    """Render five stars filled to represent score/10 with half-star precision.
+
+    Each star is a CSS-masked div; --star-fill controls a horizontal gradient
+    stop so we get smooth half-fills without two separate elements per star.
+    """
+    if score is None:
+        stars = [0] * 5
+    else:
+        remaining = max(0.0, min(10.0, float(score))) / 2.0  # 0..5
+        stars = []
+        for _ in range(5):
+            fill = max(0.0, min(1.0, remaining))
+            stars.append(round(fill * 100))
+            remaining -= 1
+    return {"stars": stars, "large": large}

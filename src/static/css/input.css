@@ -133,6 +133,130 @@
   @apply grid grid-cols-2 xs:grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4;
 }
 
+/* ============================================================================
+ * Component primitives (Phase 1 of the redesign).
+ * Built on top of the Phase 0 design tokens; consumed by partials under
+ * src/templates/app/components/ui/.
+ * ========================================================================== */
+
+/* Pill / chip */
+.pill {
+  @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium leading-tight whitespace-nowrap;
+}
+.pill-status-completed   { background: var(--color-status-completed-soft);   color: var(--color-status-completed);   }
+.pill-status-in-progress { background: var(--color-status-in-progress-soft); color: var(--color-status-in-progress); }
+.pill-status-planning    { background: var(--color-status-planning-soft);    color: var(--color-status-planning);    }
+.pill-status-paused      { background: var(--color-status-paused-soft);      color: var(--color-status-paused);      }
+.pill-status-dropped     { background: var(--color-status-dropped-soft);     color: var(--color-status-dropped);     }
+.pill-meta               { background: var(--color-surface-2);              color: var(--color-fg-muted);            }
+.pill-accent             { background: var(--color-accent-soft);            color: var(--color-accent);              }
+
+/* Status dot (8px circle, used inside pills and rows) */
+.status-dot { width: 8px; height: 8px; border-radius: 9999px; display: inline-block; flex-shrink: 0; }
+.status-dot-completed   { background: var(--color-status-completed);   }
+.status-dot-in-progress { background: var(--color-status-in-progress); }
+.status-dot-planning    { background: var(--color-status-planning);    }
+.status-dot-paused      { background: var(--color-status-paused);      }
+.status-dot-dropped     { background: var(--color-status-dropped);     }
+
+/* Button */
+.btn {
+  @apply inline-flex items-center justify-center gap-2 h-9 px-3.5 rounded-md text-sm font-medium leading-none cursor-pointer select-none whitespace-nowrap;
+  border: 1px solid transparent;
+  transition: background var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+.btn:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.btn:active        { transform: translateY(0.5px); }
+.btn:disabled      { opacity: 0.5; cursor: not-allowed; }
+.btn-primary       { background: var(--color-accent-strong); color: #fff; }
+.btn-primary:hover { background: var(--color-accent-hover); }
+.btn-secondary     { background: var(--color-surface-2); color: var(--color-fg); border-color: var(--color-border-default); }
+.btn-secondary:hover { background: var(--color-surface-3); }
+.btn-ghost         { background: transparent; color: var(--color-fg-muted); }
+.btn-ghost:hover   { background: var(--color-surface-2); color: var(--color-fg); }
+.btn-destructive   { background: var(--color-status-dropped-soft); color: var(--color-status-dropped); }
+.btn-destructive:hover { background: rgb(251 113 133 / 0.22); }
+.btn-sm  { height: 28px; padding: 0 10px; font-size: 12px; }
+.btn-lg  { height: 44px; padding: 0 18px; font-size: 15px; }
+.btn-icon { width: 36px; padding: 0; }
+.btn-icon.btn-sm { width: 28px; }
+.btn-icon.btn-lg { width: 44px; }
+
+/* Card */
+.card-surface {
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 8px;
+  padding: var(--card-pad);
+}
+
+/* Sidebar nav item */
+.nav-item {
+  @apply flex items-center gap-3 px-3 py-2 rounded-md text-sm cursor-pointer transition-colors duration-150;
+  color: var(--color-fg-muted);
+}
+.nav-item:hover { background: var(--color-surface-2); color: var(--color-fg); }
+.nav-item.active { background: var(--color-surface-2); color: var(--color-fg); }
+.nav-item .icon-active { color: var(--color-accent); }
+
+/* Skeleton with shimmer overlay (uses @keyframes shimmer from Phase 0) */
+.skeleton {
+  background: var(--color-surface-2);
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+.skeleton::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.04), transparent);
+  animation: shimmer 1.5s infinite;
+}
+
+/* Half-star score widget */
+.stars { display: inline-flex; gap: 2px; }
+.star {
+  width: 16px; height: 16px; display: inline-block;
+  background:
+    linear-gradient(90deg,
+      var(--color-accent) var(--star-fill, 0%),
+      var(--color-surface-3) var(--star-fill, 0%));
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'><path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z'/></svg>") center / contain no-repeat;
+          mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='black'><path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z'/></svg>") center / contain no-repeat;
+}
+.star-lg { width: 24px; height: 24px; }
+
+/* Keyboard hint */
+kbd {
+  @apply inline-flex items-center justify-center px-1.5 h-5 font-mono text-[11px] leading-none;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border-default);
+  border-radius: 4px;
+  color: var(--color-fg-muted);
+  min-width: 20px;
+}
+
+/* Drawer (right-side on >= md, bottom sheet on < md) */
+.drawer-shell {
+  @apply fixed inset-y-0 right-0 z-50 w-full md:w-[480px] flex flex-col;
+  background: var(--color-surface-0);
+  border-left: 1px solid var(--color-border-default);
+  box-shadow: var(--shadow-elev-2);
+}
+@media (max-width: 767px) {
+  .drawer-shell {
+    inset: auto 0 0 0;
+    height: 90vh;
+    border-left: 0;
+    border-top: 1px solid var(--color-border-default);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+  }
+}
+
+/* Hide scrollbar but keep functional */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
 /* https://tailwindcss.com/docs/upgrade-guide#hover-styles-on-mobile */
 @custom-variant hover-tap (&:hover);
 @custom-variant parent-hover-tap (.hover-tap:hover &);

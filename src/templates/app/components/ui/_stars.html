@@ -1,0 +1,4 @@
+{# Internal partial used by the {% star_widget %} template tag. #}
+<span class="stars" aria-hidden="true">
+  {% for fill in stars %}<span class="star{% if large %} star-lg{% endif %}" style="--star-fill: {{ fill }}%"></span>{% endfor %}
+</span>

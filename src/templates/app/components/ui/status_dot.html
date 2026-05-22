@@ -1,0 +1,6 @@
+{% load app_tags %}
+{# Status dot (8 px circle).
+   Required: status (Status text value).
+   Optional: extra_classes.
+#}
+<span class="status-dot status-dot-{{ status|status_slug }}{% if extra_classes %} {{ extra_classes }}{% endif %}" aria-hidden="true"></span>
