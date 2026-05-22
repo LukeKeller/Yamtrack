@@ -23,19 +23,22 @@
       </button>
     </div>
 
-    <div class="relative mb-6 flex gap-2"
-         x-data="{ sort: '{{ current_sort }}', query: '{{ request.GET.q|default:''|escapejs }}' }">
+    {# Compact filter row matching mocks/lists.html — smaller search input
+       capped on desktop, sort button at the same .btn-secondary btn-sm
+       height for a unified strip. #}
+    <div class="flex flex-wrap items-center gap-2 mb-5"
+         x-data="{ sort: '{{ current_sort }}', query: '{{ request.GET.q|default:''|escapejs }}', sortLabels: { last_item_added: 'Last item added', name: 'Name', newest_first: 'Newest first', items_count: 'Items count' } }">
 
-      <!-- Form to manage state -->
       <form id="filter-form" class="hidden">
         <input type="hidden" name="sort" x-model="sort">
         <input type="hidden" name="q" x-model="query">
       </form>
 
-      <div class="relative flex-1">
-        <input placeholder="Search lists..."
-               class="w-full py-2 pl-10 pr-4 bg-surface-2 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#4a9eff] appearance-none"
-               type="text"
+      <div class="relative flex-1 max-w-sm">
+        {% include "app/icons/magnifying-glass.svg" with classes="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-faint pointer-events-none" %}
+        <input type="text"
+               class="input h-8 pl-8 pr-8 text-sm"
+               placeholder="Search lists…"
                x-model="query"
                autocomplete="off"
                hx-get="{% url 'lists' %}"
@@ -43,40 +46,33 @@
                {% if custom_lists %} hx-target="#lists-grid" {% else %} hx-target="this" hx-swap="none" {% endif %}
                hx-include="#filter-form"
                hx-indicator="#search-indicator">
-        {% include "app/icons/magnifying-glass.svg" with classes="absolute left-3 top-1/2 transform -translate-y-1/2 text-fg-muted w-5 h-5" %}
         <div id="search-indicator"
-             class="htmx-indicator absolute right-3 top-1/2 transform -translate-y-1/2">
-          <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500"></div>
+             class="htmx-indicator absolute right-2.5 top-1/2 -translate-y-1/2">
+          <div class="animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-accent"></div>
         </div>
       </div>
 
       <div class="relative" x-data="{ open: false }">
-        <button class="h-10 flex items-center gap-2 px-4 bg-surface-2 rounded-md hover:bg-surface-3 transition-colors cursor-pointer"
+        <button type="button"
                 @click="open = !open"
-                type="button">
-          {% include "app/icons/arrows-up-down.svg" with classes="w-4 h-4" %}
-          <span class="text-sm"
-                x-text="sort === 'last_item_added' ? 'Last Item Added' : (sort === 'name' ? 'Name' : (sort === 'newest_first' ? 'Newest First' : 'Items Count'))"></span>
-          {% include "app/icons/chevron-down.svg" with classes="w-4 h-4" %}
+                class="btn btn-secondary btn-sm">
+          {% include "app/icons/arrows-up-down.svg" with classes="w-3.5 h-3.5" %}
+          <span x-text="sortLabels[sort] || sort"></span>
+          {% include "app/icons/chevron-down.svg" with classes="w-3.5 h-3.5 opacity-60" %}
         </button>
-
-        <div class="absolute right-0 mt-2 py-1 w-48 bg-surface-2 rounded-md shadow-lg overflow-hidden z-10 border border-gray-700"
+        <div class="absolute right-0 z-10 mt-2 py-1 w-48 rounded-md shadow-lg overflow-hidden bg-surface-2"
+             style="border: 1px solid var(--color-border-default);"
              x-cloak
              x-show="open"
              @click.outside="open = false"
-             x-transition:enter="transition ease-out duration-100"
-             x-transition:enter-start="transform opacity-0 scale-95"
-             x-transition:enter-end="transform opacity-100 scale-100"
-             x-transition:leave="transition ease-in duration-75"
-             x-transition:leave-start="transform opacity-100 scale-100"
-             x-transition:leave-end="transform opacity-0 scale-95">
+             x-transition.opacity.duration.150ms>
           {% for value, label in sort_choices %}
             <button hx-get="{% url 'lists' %}"
                     {% if custom_lists %} hx-target="#lists-grid" {% else %} hx-target="this" hx-swap="none" {% endif %}
                     hx-include="#filter-form"
                     hx-indicator="#loading-indicator"
-                    class="block w-full px-4 py-2 text-left text-sm transition-colors cursor-pointer"
-                    :class="sort === '{{ value }}' ? 'bg-indigo-600 text-white font-medium' : 'text-fg hover:bg-surface-3 hover:text-white'"
+                    class="block w-full px-3 py-1.5 text-left text-sm transition-colors cursor-pointer"
+                    :class="sort === '{{ value }}' ? 'bg-accent text-white font-medium' : 'text-fg hover:bg-surface-3'"
                     @click="sort = '{{ value }}'; open = false"
                     type="button">{{ label }}</button>
           {% endfor %}
