@@ -1091,6 +1091,9 @@
   .gap-12 {
     gap: calc(var(--spacing) * 12);
   }
+  .gap-px {
+    gap: 1px;
+  }
   .space-y-0\.5 {
     :where(& > :not(:last-child)) {
       --tw-space-y-reverse: 0;

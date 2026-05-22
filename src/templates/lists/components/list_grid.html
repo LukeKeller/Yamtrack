@@ -2,10 +2,31 @@
   <div class="bg-surface-1 rounded-lg overflow-hidden hover:shadow-lg group"
        x-data="{ showModal: false }"
        {% if forloop.last and custom_lists.has_next %} hx-get="{% url 'lists' %}?page={{ custom_lists.next_page_number }}" hx-trigger="revealed threshold:200px" hx-swap="afterend" hx-include="#filter-form" hx-indicator="#loading-indicator" {% endif %}>
-    <div class="relative h-48 flex items-center justify-center">
-      <img alt="{{ custom_list.name }}"
-           class="{% if custom_list.image != IMG_NONE %}w-full h-full object-cover{% else %}w-3/5 h-3/5{% endif %}"
-           src="{{ custom_list.image }}">
+    <div class="relative h-48 flex items-center justify-center bg-surface-2">
+      {% if custom_list.image != IMG_NONE %}
+        <img alt="{{ custom_list.name }}"
+             class="w-full h-full object-cover"
+             src="{{ custom_list.image }}">
+      {% else %}
+        {# No uploaded cover — render a 2x2 mosaic of the first 4 item posters.
+           Falls back to the generic placeholder if the list is empty. #}
+        {% with first_items=custom_list.items.all|slice:":4" %}
+          {% if first_items %}
+            <div class="grid grid-cols-2 gap-px w-full h-full">
+              {% for item in first_items %}
+                <div class="bg-surface-2 overflow-hidden">
+                  <img alt=""
+                       aria-hidden="true"
+                       src="{{ item.image }}"
+                       class="w-full h-full {% if item.image != IMG_NONE %}object-cover{% endif %}">
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <img alt="{{ custom_list.name }}" class="w-3/5 h-3/5" src="{{ custom_list.image }}">
+          {% endif %}
+        {% endwith %}
+      {% endif %}
 
       <div class="absolute inset-0 bg-black/40 transition-opacity group-hover:bg-black/50"></div>
       <a href="{% url 'list_detail' custom_list.id %}"
