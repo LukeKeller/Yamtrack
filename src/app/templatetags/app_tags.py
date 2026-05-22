@@ -211,14 +211,25 @@ def sample_search(media_type):
 
 @register.filter
 def short_unit(media_type):
-    """Return the short unit for the media type."""
-    return config.get_unit(media_type, short=True)
+    """Return the short unit for the media type, or '' when the type has none.
+
+    Movies, games, board games, and records have no per-progress unit (no
+    "Episode 4" / "Page 218" concept). Returning an empty string instead of
+    raising keeps templates that iterate mixed media types simple.
+    """
+    try:
+        return config.get_unit(media_type, short=True)
+    except KeyError:
+        return ""
 
 
 @register.filter
 def long_unit(media_type):
-    """Return the long unit for the media type."""
-    return config.get_unit(media_type, short=False)
+    """Return the long unit for the media type, or '' when the type has none."""
+    try:
+        return config.get_unit(media_type, short=False)
+    except KeyError:
+        return ""
 
 
 @register.filter
