@@ -107,6 +107,19 @@ class TimeFormatChoices(models.TextChoices):
     HOUR_12 = "g:i A", "2:30 PM (12-hour)"
 
 
+class ThemeChoices(models.TextChoices):
+    """Color theme presets for the web UI."""
+
+    DEFAULT = "default", "Default (slate)"
+    DRACULA = "dracula", "Dracula"
+    CATPPUCCIN_MOCHA = "catppuccin-mocha", "Catppuccin Mocha"
+    CATPPUCCIN_MACCHIATO = "catppuccin-macchiato", "Catppuccin Macchiato"
+    CATPPUCCIN_FRAPPE = "catppuccin-frappe", "Catppuccin Frappé"
+    NORD = "nord", "Nord"
+    GRUVBOX_DARK = "gruvbox-dark", "Gruvbox Dark"
+    TOKYO_NIGHT = "tokyo-night", "Tokyo Night"
+
+
 class User(AbstractUser):
     """Custom user model."""
 
@@ -423,6 +436,13 @@ class User(AbstractUser):
             "When set, manga detail pages show a 'Read on Suwayomi' button that opens "
             "a global search for the title."
         ),
+    )
+
+    theme = models.CharField(
+        max_length=32,
+        default=ThemeChoices.DEFAULT,
+        choices=ThemeChoices,
+        help_text="Color theme for the web UI.",
     )
 
     class Meta:

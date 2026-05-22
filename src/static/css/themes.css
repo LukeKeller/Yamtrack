@@ -1,0 +1,206 @@
+/* Theme palette overrides.
+ *
+ * Yamtrack hardcodes its dark slate palette directly in Tailwind utility
+ * classes throughout the templates (e.g. `bg-[#2a2f35]`). Rather than refactor
+ * every template to use CSS variables, this file lifts the most common
+ * hex tokens onto `html[data-theme="..."]` overrides — specificity (0,2,0)
+ * beats Tailwind's generated rule (0,1,0) so no !important is needed.
+ *
+ * Mapping per theme tries to keep the visual hierarchy of the original
+ * palette intact (sidebar darker than body, hover slightly lighter, card
+ * surfaces lighter still, inputs lighter still, selected lighter still).
+ */
+
+/* =========================================================================
+ * Dracula
+ * https://draculatheme.com/
+ * ========================================================================= */
+html[data-theme="dracula"] { background-color: #282a36; }
+html[data-theme="dracula"] body                  { background-color: #282a36; }
+html[data-theme="dracula"] .bg-\[\#1a1d20\]      { background-color: #21222c; }
+html[data-theme="dracula"] .bg-\[\#1e1e1e\]      { background-color: #21222c; }
+html[data-theme="dracula"] .bg-\[\#212529\]      { background-color: #282a36; }
+html[data-theme="dracula"] .bg-\[\#23272b\]      { background-color: #2d2f3d; }
+html[data-theme="dracula"] .bg-\[\#262a2f\]      { background-color: #313342; }
+html[data-theme="dracula"] .bg-\[\#272c31\]      { background-color: #313342; }
+html[data-theme="dracula"] .bg-\[\#2a2e33\]      { background-color: #383a47; }
+html[data-theme="dracula"] .bg-\[\#2a2f35\]      { background-color: #383a47; }
+html[data-theme="dracula"] .bg-\[\#2c3136\]      { background-color: #383a47; }
+html[data-theme="dracula"] .bg-\[\#2f353e\]      { background-color: #3a3d4a; }
+html[data-theme="dracula"] .bg-\[\#313842\]      { background-color: #404352; }
+html[data-theme="dracula"] .bg-\[\#343a40\]      { background-color: #44475a; }
+html[data-theme="dracula"] .bg-\[\#39404b\]      { background-color: #44475a; }
+html[data-theme="dracula"] .bg-\[\#3e454d\]      { background-color: #50536b; }
+html[data-theme="dracula"] .bg-\[\#454d5a\]      { background-color: #6272a4; }
+html[data-theme="dracula"] .bg-\[\#4a525d\]      { background-color: #6272a4; }
+html[data-theme="dracula"] .bg-\[\#4b5563\]      { background-color: #6272a4; }
+html[data-theme="dracula"] .bg-\[\#4f46e5\]      { background-color: #bd93f9; }
+html[data-theme="dracula"] .border-\[\#2a2f35\]  { border-color: #44475a; }
+html[data-theme="dracula"] .border-\[\#2c3136\]  { border-color: #44475a; }
+html[data-theme="dracula"] .border-\[\#39404b\]  { border-color: #44475a; }
+
+/* =========================================================================
+ * Catppuccin Mocha (darkest catppuccin flavor)
+ * https://github.com/catppuccin/catppuccin
+ * ========================================================================= */
+html[data-theme="catppuccin-mocha"] { background-color: #1e1e2e; }
+html[data-theme="catppuccin-mocha"] body                 { background-color: #1e1e2e; }
+html[data-theme="catppuccin-mocha"] .bg-\[\#1a1d20\]     { background-color: #181825; }
+html[data-theme="catppuccin-mocha"] .bg-\[\#1e1e1e\]     { background-color: #181825; }
+html[data-theme="catppuccin-mocha"] .bg-\[\#212529\]     { background-color: #1e1e2e; }
+html[data-theme="catppuccin-mocha"] .bg-\[\#23272b\]     { background-color: #11111b; }
+html[data-theme="catppuccin-mocha"] .bg-\[\#262a2f\]     { background-color: #1e1e2e; }
+html[data-theme="catppuccin-mocha"] .bg-\[\#272c31\]     { background-color: #1e1e2e; }
+html[data-theme="catppuccin-mocha"] .bg-\[\#2a2e33\]     { background-color: #313244; }
+html[data-theme="catppuccin-mocha"] .bg-\[\#2a2f35\]     { background-color: #313244; }
+html[data-theme="catppuccin-mocha"] .bg-\[\#2c3136\]     { background-color: #313244; }
+html[data-theme="catppuccin-mocha"] .bg-\[\#2f353e\]     { background-color: #313244; }
+html[data-theme="catppuccin-mocha"] .bg-\[\#313842\]     { background-color: #45475a; }
+html[data-theme="catppuccin-mocha"] .bg-\[\#343a40\]     { background-color: #45475a; }
+html[data-theme="catppuccin-mocha"] .bg-\[\#39404b\]     { background-color: #45475a; }
+html[data-theme="catppuccin-mocha"] .bg-\[\#3e454d\]     { background-color: #585b70; }
+html[data-theme="catppuccin-mocha"] .bg-\[\#454d5a\]     { background-color: #585b70; }
+html[data-theme="catppuccin-mocha"] .bg-\[\#4a525d\]     { background-color: #585b70; }
+html[data-theme="catppuccin-mocha"] .bg-\[\#4b5563\]     { background-color: #585b70; }
+html[data-theme="catppuccin-mocha"] .bg-\[\#4f46e5\]     { background-color: #cba6f7; }
+html[data-theme="catppuccin-mocha"] .border-\[\#2a2f35\] { border-color: #45475a; }
+html[data-theme="catppuccin-mocha"] .border-\[\#2c3136\] { border-color: #45475a; }
+html[data-theme="catppuccin-mocha"] .border-\[\#39404b\] { border-color: #45475a; }
+
+/* =========================================================================
+ * Catppuccin Macchiato (slightly lighter than Mocha)
+ * ========================================================================= */
+html[data-theme="catppuccin-macchiato"] { background-color: #24273a; }
+html[data-theme="catppuccin-macchiato"] body                 { background-color: #24273a; }
+html[data-theme="catppuccin-macchiato"] .bg-\[\#1a1d20\]     { background-color: #1e2030; }
+html[data-theme="catppuccin-macchiato"] .bg-\[\#1e1e1e\]     { background-color: #1e2030; }
+html[data-theme="catppuccin-macchiato"] .bg-\[\#212529\]     { background-color: #24273a; }
+html[data-theme="catppuccin-macchiato"] .bg-\[\#23272b\]     { background-color: #181926; }
+html[data-theme="catppuccin-macchiato"] .bg-\[\#262a2f\]     { background-color: #24273a; }
+html[data-theme="catppuccin-macchiato"] .bg-\[\#272c31\]     { background-color: #24273a; }
+html[data-theme="catppuccin-macchiato"] .bg-\[\#2a2e33\]     { background-color: #363a4f; }
+html[data-theme="catppuccin-macchiato"] .bg-\[\#2a2f35\]     { background-color: #363a4f; }
+html[data-theme="catppuccin-macchiato"] .bg-\[\#2c3136\]     { background-color: #363a4f; }
+html[data-theme="catppuccin-macchiato"] .bg-\[\#2f353e\]     { background-color: #363a4f; }
+html[data-theme="catppuccin-macchiato"] .bg-\[\#313842\]     { background-color: #494d64; }
+html[data-theme="catppuccin-macchiato"] .bg-\[\#343a40\]     { background-color: #494d64; }
+html[data-theme="catppuccin-macchiato"] .bg-\[\#39404b\]     { background-color: #494d64; }
+html[data-theme="catppuccin-macchiato"] .bg-\[\#3e454d\]     { background-color: #5b6078; }
+html[data-theme="catppuccin-macchiato"] .bg-\[\#454d5a\]     { background-color: #5b6078; }
+html[data-theme="catppuccin-macchiato"] .bg-\[\#4a525d\]     { background-color: #5b6078; }
+html[data-theme="catppuccin-macchiato"] .bg-\[\#4b5563\]     { background-color: #5b6078; }
+html[data-theme="catppuccin-macchiato"] .bg-\[\#4f46e5\]     { background-color: #c6a0f6; }
+html[data-theme="catppuccin-macchiato"] .border-\[\#2a2f35\] { border-color: #494d64; }
+html[data-theme="catppuccin-macchiato"] .border-\[\#2c3136\] { border-color: #494d64; }
+html[data-theme="catppuccin-macchiato"] .border-\[\#39404b\] { border-color: #494d64; }
+
+/* =========================================================================
+ * Catppuccin Frappé (lighter still — closer to default slate)
+ * ========================================================================= */
+html[data-theme="catppuccin-frappe"] { background-color: #303446; }
+html[data-theme="catppuccin-frappe"] body                 { background-color: #303446; }
+html[data-theme="catppuccin-frappe"] .bg-\[\#1a1d20\]     { background-color: #292c3c; }
+html[data-theme="catppuccin-frappe"] .bg-\[\#1e1e1e\]     { background-color: #292c3c; }
+html[data-theme="catppuccin-frappe"] .bg-\[\#212529\]     { background-color: #303446; }
+html[data-theme="catppuccin-frappe"] .bg-\[\#23272b\]     { background-color: #232634; }
+html[data-theme="catppuccin-frappe"] .bg-\[\#262a2f\]     { background-color: #303446; }
+html[data-theme="catppuccin-frappe"] .bg-\[\#272c31\]     { background-color: #303446; }
+html[data-theme="catppuccin-frappe"] .bg-\[\#2a2e33\]     { background-color: #414559; }
+html[data-theme="catppuccin-frappe"] .bg-\[\#2a2f35\]     { background-color: #414559; }
+html[data-theme="catppuccin-frappe"] .bg-\[\#2c3136\]     { background-color: #414559; }
+html[data-theme="catppuccin-frappe"] .bg-\[\#2f353e\]     { background-color: #414559; }
+html[data-theme="catppuccin-frappe"] .bg-\[\#313842\]     { background-color: #51576d; }
+html[data-theme="catppuccin-frappe"] .bg-\[\#343a40\]     { background-color: #51576d; }
+html[data-theme="catppuccin-frappe"] .bg-\[\#39404b\]     { background-color: #51576d; }
+html[data-theme="catppuccin-frappe"] .bg-\[\#3e454d\]     { background-color: #626880; }
+html[data-theme="catppuccin-frappe"] .bg-\[\#454d5a\]     { background-color: #626880; }
+html[data-theme="catppuccin-frappe"] .bg-\[\#4a525d\]     { background-color: #626880; }
+html[data-theme="catppuccin-frappe"] .bg-\[\#4b5563\]     { background-color: #626880; }
+html[data-theme="catppuccin-frappe"] .bg-\[\#4f46e5\]     { background-color: #ca9ee6; }
+html[data-theme="catppuccin-frappe"] .border-\[\#2a2f35\] { border-color: #51576d; }
+html[data-theme="catppuccin-frappe"] .border-\[\#2c3136\] { border-color: #51576d; }
+html[data-theme="catppuccin-frappe"] .border-\[\#39404b\] { border-color: #51576d; }
+
+/* =========================================================================
+ * Nord
+ * https://www.nordtheme.com/
+ * ========================================================================= */
+html[data-theme="nord"] { background-color: #2e3440; }
+html[data-theme="nord"] body                 { background-color: #2e3440; }
+html[data-theme="nord"] .bg-\[\#1a1d20\]     { background-color: #242933; }
+html[data-theme="nord"] .bg-\[\#1e1e1e\]     { background-color: #242933; }
+html[data-theme="nord"] .bg-\[\#212529\]     { background-color: #2e3440; }
+html[data-theme="nord"] .bg-\[\#23272b\]     { background-color: #292f3a; }
+html[data-theme="nord"] .bg-\[\#262a2f\]     { background-color: #2e3440; }
+html[data-theme="nord"] .bg-\[\#272c31\]     { background-color: #2e3440; }
+html[data-theme="nord"] .bg-\[\#2a2e33\]     { background-color: #3b4252; }
+html[data-theme="nord"] .bg-\[\#2a2f35\]     { background-color: #3b4252; }
+html[data-theme="nord"] .bg-\[\#2c3136\]     { background-color: #3b4252; }
+html[data-theme="nord"] .bg-\[\#2f353e\]     { background-color: #3b4252; }
+html[data-theme="nord"] .bg-\[\#313842\]     { background-color: #434c5e; }
+html[data-theme="nord"] .bg-\[\#343a40\]     { background-color: #434c5e; }
+html[data-theme="nord"] .bg-\[\#39404b\]     { background-color: #434c5e; }
+html[data-theme="nord"] .bg-\[\#3e454d\]     { background-color: #4c566a; }
+html[data-theme="nord"] .bg-\[\#454d5a\]     { background-color: #4c566a; }
+html[data-theme="nord"] .bg-\[\#4a525d\]     { background-color: #4c566a; }
+html[data-theme="nord"] .bg-\[\#4b5563\]     { background-color: #4c566a; }
+html[data-theme="nord"] .bg-\[\#4f46e5\]     { background-color: #5e81ac; }
+html[data-theme="nord"] .border-\[\#2a2f35\] { border-color: #434c5e; }
+html[data-theme="nord"] .border-\[\#2c3136\] { border-color: #434c5e; }
+html[data-theme="nord"] .border-\[\#39404b\] { border-color: #434c5e; }
+
+/* =========================================================================
+ * Gruvbox Dark
+ * https://github.com/morhetz/gruvbox
+ * ========================================================================= */
+html[data-theme="gruvbox-dark"] { background-color: #282828; }
+html[data-theme="gruvbox-dark"] body                 { background-color: #282828; }
+html[data-theme="gruvbox-dark"] .bg-\[\#1a1d20\]     { background-color: #1d2021; }
+html[data-theme="gruvbox-dark"] .bg-\[\#1e1e1e\]     { background-color: #1d2021; }
+html[data-theme="gruvbox-dark"] .bg-\[\#212529\]     { background-color: #282828; }
+html[data-theme="gruvbox-dark"] .bg-\[\#23272b\]     { background-color: #32302f; }
+html[data-theme="gruvbox-dark"] .bg-\[\#262a2f\]     { background-color: #282828; }
+html[data-theme="gruvbox-dark"] .bg-\[\#272c31\]     { background-color: #282828; }
+html[data-theme="gruvbox-dark"] .bg-\[\#2a2e33\]     { background-color: #3c3836; }
+html[data-theme="gruvbox-dark"] .bg-\[\#2a2f35\]     { background-color: #3c3836; }
+html[data-theme="gruvbox-dark"] .bg-\[\#2c3136\]     { background-color: #3c3836; }
+html[data-theme="gruvbox-dark"] .bg-\[\#2f353e\]     { background-color: #3c3836; }
+html[data-theme="gruvbox-dark"] .bg-\[\#313842\]     { background-color: #504945; }
+html[data-theme="gruvbox-dark"] .bg-\[\#343a40\]     { background-color: #504945; }
+html[data-theme="gruvbox-dark"] .bg-\[\#39404b\]     { background-color: #504945; }
+html[data-theme="gruvbox-dark"] .bg-\[\#3e454d\]     { background-color: #665c54; }
+html[data-theme="gruvbox-dark"] .bg-\[\#454d5a\]     { background-color: #665c54; }
+html[data-theme="gruvbox-dark"] .bg-\[\#4a525d\]     { background-color: #665c54; }
+html[data-theme="gruvbox-dark"] .bg-\[\#4b5563\]     { background-color: #665c54; }
+html[data-theme="gruvbox-dark"] .bg-\[\#4f46e5\]     { background-color: #d79921; }
+html[data-theme="gruvbox-dark"] .border-\[\#2a2f35\] { border-color: #504945; }
+html[data-theme="gruvbox-dark"] .border-\[\#2c3136\] { border-color: #504945; }
+html[data-theme="gruvbox-dark"] .border-\[\#39404b\] { border-color: #504945; }
+
+/* =========================================================================
+ * Tokyo Night
+ * https://github.com/folke/tokyonight.nvim
+ * ========================================================================= */
+html[data-theme="tokyo-night"] { background-color: #1a1b26; }
+html[data-theme="tokyo-night"] body                 { background-color: #1a1b26; }
+html[data-theme="tokyo-night"] .bg-\[\#1a1d20\]     { background-color: #16161e; }
+html[data-theme="tokyo-night"] .bg-\[\#1e1e1e\]     { background-color: #16161e; }
+html[data-theme="tokyo-night"] .bg-\[\#212529\]     { background-color: #1a1b26; }
+html[data-theme="tokyo-night"] .bg-\[\#23272b\]     { background-color: #1f2335; }
+html[data-theme="tokyo-night"] .bg-\[\#262a2f\]     { background-color: #1a1b26; }
+html[data-theme="tokyo-night"] .bg-\[\#272c31\]     { background-color: #1a1b26; }
+html[data-theme="tokyo-night"] .bg-\[\#2a2e33\]     { background-color: #292e42; }
+html[data-theme="tokyo-night"] .bg-\[\#2a2f35\]     { background-color: #292e42; }
+html[data-theme="tokyo-night"] .bg-\[\#2c3136\]     { background-color: #292e42; }
+html[data-theme="tokyo-night"] .bg-\[\#2f353e\]     { background-color: #292e42; }
+html[data-theme="tokyo-night"] .bg-\[\#313842\]     { background-color: #3b4261; }
+html[data-theme="tokyo-night"] .bg-\[\#343a40\]     { background-color: #3b4261; }
+html[data-theme="tokyo-night"] .bg-\[\#39404b\]     { background-color: #3b4261; }
+html[data-theme="tokyo-night"] .bg-\[\#3e454d\]     { background-color: #414868; }
+html[data-theme="tokyo-night"] .bg-\[\#454d5a\]     { background-color: #414868; }
+html[data-theme="tokyo-night"] .bg-\[\#4a525d\]     { background-color: #414868; }
+html[data-theme="tokyo-night"] .bg-\[\#4b5563\]     { background-color: #414868; }
+html[data-theme="tokyo-night"] .bg-\[\#4f46e5\]     { background-color: #7aa2f7; }
+html[data-theme="tokyo-night"] .border-\[\#2a2f35\] { border-color: #292e42; }
+html[data-theme="tokyo-night"] .border-\[\#2c3136\] { border-color: #292e42; }
+html[data-theme="tokyo-night"] .border-\[\#39404b\] { border-color: #3b4261; }

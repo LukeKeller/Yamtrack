@@ -2,7 +2,9 @@
 {% load app_tags %}
 
 <!DOCTYPE html>
-<html lang="en" class="scheme-dark bg-[#212529]">
+<html lang="en"
+      class="scheme-dark bg-[#212529]"
+      data-theme="{% if request.user.is_authenticated %}{{ request.user.theme|default:'default' }}{% else %}default{% endif %}">
   <head>
     {# Required meta tags #}
     <meta charset="UTF-8">
@@ -26,6 +28,9 @@
     <link rel="stylesheet"
           type="text/css"
           href="{% static 'css/main.css' %}{% get_static_file_mtime 'css/main.css' %}">
+    <link rel="stylesheet"
+          type="text/css"
+          href="{% static 'css/themes.css' %}{% get_static_file_mtime 'css/themes.css' %}">
 
     <script src="{% static 'js/libraries/htmx-2.0.4.min.js' %}"></script>
     <script defer src="{% static 'js/libraries/alpinejs-3.14.9.min.js' %}"></script>
