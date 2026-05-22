@@ -750,6 +750,41 @@ class SeasonGetRemainingEpsQuickWatchDateTests(TestCase):
         self.assertEqual(episodes[0].end_date, datetime(1994, 9, 29, tzinfo=UTC))
         self.assertEqual(episodes[1].end_date, datetime(1994, 9, 22, tzinfo=UTC))
 
+    @patch("app.models.Season.get_episode_item")
+    def test_get_remaining_eps_override_beats_user_pref(self, mock_get_episode_item):
+        """A per-save override on the Season instance wins over user pref."""
+        # Pref says current date, but override forces each episode's air_date.
+        self.user.quick_watch_date = self.QuickWatchDateChoices.CURRENT_DATE
+        self.user.save()
+
+        episode_items = []
+        for i in range(1, 3):
+            item = Item.objects.create(
+                media_id="1668",
+                source=Sources.TMDB.value,
+                media_type=MediaTypes.EPISODE.value,
+                title=f"Episode {i}",
+                image=f"img{i}.jpg",
+                season_number=1,
+                episode_number=i,
+            )
+            episode_items.append(item)
+
+        mock_get_episode_item.side_effect = episode_items
+
+        self.season._completion_date_override = (
+            self.QuickWatchDateChoices.RELEASE_DATE
+        )
+        episodes = self.season.get_remaining_eps(
+            self.mock_metadata,
+            timezone.localdate(),
+        )
+
+        # Should use each episode's air_date despite CURRENT_DATE pref.
+        self.assertEqual(len(episodes), 2)
+        self.assertEqual(episodes[0].end_date, datetime(1994, 9, 29, tzinfo=UTC))
+        self.assertEqual(episodes[1].end_date, datetime(1994, 9, 22, tzinfo=UTC))
+
     @patch("app.models.providers.services.get_media_metadata")
     def test_season_completion_with_no_date(self, mock_get_metadata):
         """Integration test: completing a season with NO_DATE preference."""

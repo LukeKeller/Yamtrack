@@ -630,21 +630,25 @@ class User(AbstractUser):
 
         return new_value
 
-    def resolve_watch_date(self, now, release_date):
+    def resolve_watch_date(self, now, release_date, override=None):
         """
         Resolve the appropriate watch date based on user preference.
 
         Args:
             now: Pre-calculated current datetime
             release_date: The release/air date for the specific media item
+            override: Optional QuickWatchDateChoices value to use instead of the
+                user's stored preference (per-action override from the modal).
 
         Returns:
             datetime or None based on user preference
         """
-        if self.quick_watch_date == QuickWatchDateChoices.NO_DATE:
+        mode = override or self.quick_watch_date
+
+        if mode == QuickWatchDateChoices.NO_DATE:
             return None
 
-        if self.quick_watch_date == QuickWatchDateChoices.RELEASE_DATE:
+        if mode == QuickWatchDateChoices.RELEASE_DATE:
             return release_date  # Will be None if not available in metadata
 
         # CURRENT_DATE is the default

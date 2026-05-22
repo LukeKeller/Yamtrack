@@ -82,6 +82,36 @@
         </div>
       {% endif %}
 
+      {% if media_type == "season" %}
+        {# Bulk completion date override — only meaningful when status flips to
+           Completed and child episodes get auto-stamped. "default" sends an
+           empty value so the server falls back to the user's global Bulk
+           Completion Date pref. #}
+        <div class="mb-4" x-data="{ choice: 'default' }">
+          <label class="block text-xs font-medium mb-1 text-fg-muted">When marking complete, stamp episodes with</label>
+          <input type="hidden"
+                 name="completion_date_mode"
+                 :value="choice === 'default' ? '' : choice">
+          <div class="flex flex-wrap gap-2">
+            <button type="button"
+                    @click="choice = 'default'"
+                    :class="choice === 'default' ? 'btn-primary' : 'btn-secondary'"
+                    class="btn btn-sm"
+                    title="Follow your global Bulk Completion Date preference">Use my preference</button>
+            <button type="button"
+                    @click="choice = 'current_date'"
+                    :class="choice === 'current_date' ? 'btn-primary' : 'btn-secondary'"
+                    class="btn btn-sm"
+                    title="Stamp every episode with today's date">Today</button>
+            <button type="button"
+                    @click="choice = 'release_date'"
+                    :class="choice === 'release_date' ? 'btn-primary' : 'btn-secondary'"
+                    class="btn btn-sm"
+                    title="Stamp each episode with its own air date">Air date</button>
+          </div>
+        </div>
+      {% endif %}
+
     </div>
 
     {# Footer — sticky #}

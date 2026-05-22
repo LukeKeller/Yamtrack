@@ -43,6 +43,7 @@ from users.models import (
     HomeSortChoices,
     MediaSortChoices,
     MediaStatusChoices,
+    QuickWatchDateChoices,
 )
 
 logger = logging.getLogger(__name__)
@@ -887,6 +888,7 @@ def track_modal(
             "title": title,
             "form": form,
             "media": media,
+            "media_type": media_type,
             "return_url": request.GET["return_url"],
         },
     )
@@ -930,6 +932,19 @@ def media_save(request):
     # Validate the form and save the instance if it's valid
     form_class = get_form_class(media_type)
     form = form_class(request.POST, instance=instance)
+
+    # Per-save override for the bulk completion date used when a Season is
+    # marked Completed and child episodes get auto-stamped. Stashed on the
+    # instance so Season.get_remaining_eps can read it without changing the
+    # form/model signatures. Anything outside the known choice values falls
+    # back silently to the user's global pref.
+    completion_mode = request.POST.get("completion_date_mode")
+    if (
+        media_type == MediaTypes.SEASON.value
+        and completion_mode in QuickWatchDateChoices.values
+    ):
+        instance._completion_date_override = completion_mode
+
     if form.is_valid():
         form.save()
         logger.info("%s saved successfully.", form.instance)

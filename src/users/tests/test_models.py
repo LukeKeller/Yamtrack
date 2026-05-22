@@ -429,3 +429,42 @@ class UserResolveWatchDateTests(TestCase):
         result = self.user.resolve_watch_date(self.now, self.release_date)
 
         self.assertEqual(result, self.now)
+
+    def test_resolve_watch_date_override_release_beats_current_pref(self):
+        """Override should win when the user pref says CURRENT_DATE."""
+        self.user.quick_watch_date = self.QuickWatchDateChoices.CURRENT_DATE
+        self.user.save()
+
+        result = self.user.resolve_watch_date(
+            self.now,
+            self.release_date,
+            override=self.QuickWatchDateChoices.RELEASE_DATE,
+        )
+
+        self.assertEqual(result, self.release_date)
+
+    def test_resolve_watch_date_override_current_beats_release_pref(self):
+        """Override should win when the user pref says RELEASE_DATE."""
+        self.user.quick_watch_date = self.QuickWatchDateChoices.RELEASE_DATE
+        self.user.save()
+
+        result = self.user.resolve_watch_date(
+            self.now,
+            self.release_date,
+            override=self.QuickWatchDateChoices.CURRENT_DATE,
+        )
+
+        self.assertEqual(result, self.now)
+
+    def test_resolve_watch_date_override_none_falls_back_to_pref(self):
+        """A None override leaves the user pref in charge."""
+        self.user.quick_watch_date = self.QuickWatchDateChoices.RELEASE_DATE
+        self.user.save()
+
+        result = self.user.resolve_watch_date(
+            self.now,
+            self.release_date,
+            override=None,
+        )
+
+        self.assertEqual(result, self.release_date)

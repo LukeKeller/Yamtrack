@@ -1692,6 +1692,11 @@ class Season(Media):
         # Calculate current time once before the loop
         now = timezone.now().replace(second=0, microsecond=0)
 
+        # Optional per-save override set by the track-modal POST handler so
+        # the user can pick "Today" / "Air date" / etc. for this completion
+        # without changing their global Bulk Completion Date pref.
+        override = getattr(self, "_completion_date_override", None)
+
         # Create Episode objects for the remaining episodes
         for episode in reversed(season_metadata["episodes"]):
             if episode["episode_number"] <= latest_watched_ep_num:
@@ -1705,8 +1710,12 @@ class Season(Media):
 
             item = self.get_episode_item(episode["episode_number"], season_metadata)
 
-            # Resolve end_date based on user preference
-            end_date = self.user.resolve_watch_date(now, episode.get("air_date"))
+            # Resolve end_date based on user preference (or per-save override)
+            end_date = self.user.resolve_watch_date(
+                now,
+                episode.get("air_date"),
+                override=override,
+            )
 
             episode_db = Episode(
                 related_season=self,
