@@ -9,30 +9,39 @@
 {% endblock title %}
 
 {% block content %}
+  {# Hero: ambient gradient that wraps the poster + title row. We don't have a
+     real backdrop image from most providers, so the gradient picks up the
+     accent color for visual presence without requiring new metadata. The
+     negative margins extend it to the page edges; pt-12 lifts content off the
+     top edge of the surface beneath. #}
+  <div class="relative -mx-4 lg:-mx-8 -mt-8 lg:-mt-10 mb-8 px-4 lg:px-8 pt-12 lg:pt-16 pb-2"
+       style="background:
+         linear-gradient(180deg, transparent 0%, transparent 30%, var(--color-canvas) 100%),
+         radial-gradient(80% 70% at 50% 0%, var(--color-accent-soft) 0%, transparent 70%);">
+
   {# Top section #}
   <div class="flex flex-col md:flex-row gap-8 md:gap-10 mb-12 md:mb-8">
     <div class="w-full md:w-1/4 max-w-[250px] mx-auto md:mx-0">
       <img alt="{{ media.title }}"
-           class="w-full rounded-lg shadow-lg bg-[#2a2f35] object-cover"
+           class="w-full rounded-lg shadow-2xl bg-surface-1 object-cover"
            src="{{ media.image }}">
 
       <div x-data="{ trackOpen: false }">
-        <button class="mt-4 p-3 rounded-lg w-full flex items-center text-white transition duration-300 cursor-pointer {% if user_medias %}bg-indigo-600 hover:bg-indigo-700{% else %}bg-gray-600 hover:bg-gray-700{% endif %}"
+        <button class="mt-4 px-4 py-3 rounded-lg w-full flex items-center justify-center gap-2 font-medium transition-colors cursor-pointer btn-primary"
                 hx-get="{% media_view_url 'track_modal' media %}"
                 hx-vals='{"return_url": "{{ request.get_full_path|urlencode }}", "instance_id": "{{ current_instance.id }}"}'
                 hx-target="#{% component_id 'track' media current_instance.id %}"
                 hx-trigger="click"
                 @click="trackOpen = true">
-          <div class="flex-1 text-center font-medium">
-            {% if user_medias %}
-              {{ current_instance.status|media_status_readable:media_type }}
-            {% else %}
-              Add to tracker
-            {% endif %}
-          </div>
-
-          <div class="h-5 mx-2 border-l border-white/30"></div>
-          {% include "app/icons/edit.svg" with classes="w-5 h-5 shrink-0" %}
+          {% if user_medias and current_instance.status %}
+            {% include "app/components/ui/status_dot.html" with status=current_instance.status %}
+            <span>{{ current_instance.status|media_status_readable:media_type }}</span>
+          {% else %}
+            {% include "app/icons/plus.svg" with classes="w-4 h-4" %}
+            <span>Add to library</span>
+          {% endif %}
+          <span class="h-4 ms-2 border-l border-white/30"></span>
+          {% include "app/icons/edit.svg" with classes="w-4 h-4 shrink-0 opacity-80" %}
         </button>
 
         {# Track Modal #}
@@ -223,50 +232,49 @@
           </div>
         {% endif %}
 
-        {# User score #}
+        {# User score — half-star widget (display) + integer 1-10 picker (popup) #}
         {% if user_medias %}
-          <div x-data="{ showRatingPopup: false, rating: {{ current_instance.score|default:'null' }}, hoverRating: null, isHovering: false }"
+          <div x-data="{ showRatingPopup: false, rating: {{ current_instance.score|default:'null' }}, hoverRating: null }"
                class="relative">
-            <!-- Rating display -->
-            <div @click="showRatingPopup = !showRatingPopup"
-                 class="bg-[#2a2f35] p-3 rounded-lg w-[120px] cursor-pointer">
-              <h3 class="text-xs font-semibold text-gray-400 mb-1 text-center">YOUR SCORE</h3>
-              <div class="flex items-center justify-center">
-                {% include "app/icons/star.svg" with classes="w-5 h-5 mr-1.5 text-yellow-400 fill-yellow-400" %}
-                <template x-if="rating">
-                  <div class="flex items-baseline">
-                    <span class="text-lg font-bold text-white" x-text="rating"></span>
-                    <span class="text-gray-400 ml-0.5 text-sm">/10</span>
-                  </div>
-                </template>
-                <template x-if="!rating">
-                  <span class="text-lg font-bold text-gray-400">-</span>
-                </template>
+            <button type="button"
+                    @click="showRatingPopup = !showRatingPopup"
+                    class="bg-surface-1 p-3 rounded-lg w-[160px] cursor-pointer text-left hover:bg-surface-2 transition-colors"
+                    aria-label="Your score">
+              <h3 class="text-[11px] font-semibold text-fg-faint mb-1 uppercase tracking-wider">Your score</h3>
+              <div class="flex items-center gap-2">
+                {% star_widget current_instance.score %}
+                {% if current_instance.score is not None %}
+                  <span class="text-sm font-medium text-accent">{{ current_instance.score|score_to_five }}</span>
+                {% else %}
+                  <span class="text-sm text-fg-faint">—</span>
+                {% endif %}
               </div>
-              <p class="text-xs text-gray-400 mt-0.5 text-center">Click to edit</p>
-            </div>
+              <p class="text-[11px] text-fg-faint mt-0.5">Click to edit</p>
+            </button>
 
-            <!-- Rating popup -->
             <div x-show="showRatingPopup"
-                 @click.outside="showRatingPopup = false; isHovering = false"
-                 class="absolute left-0 top-full mt-2 p-3 bg-[#2a2f35] rounded-lg shadow-lg z-10 w-[250px] border border-gray-700"
-                 @mouseenter="isHovering = true"
-                 @mouseleave="isHovering = false; hoverRating = null">
-              <div class="flex justify-between mb-1">
+                 x-cloak
+                 @click.outside="showRatingPopup = false"
+                 class="absolute left-0 top-full mt-2 p-3 bg-surface-1 rounded-lg shadow-lg z-10 w-[280px] border"
+                 style="border-color: var(--color-border-default); box-shadow: var(--shadow-elev-2);">
+              <div class="text-[11px] uppercase tracking-wider text-fg-faint mb-2">Pick a score</div>
+              <div class="flex justify-between items-center">
                 {% with rating_range=10|get_range %}
                   {% for rating_value in rating_range %}
-                    <button @click="rating = {{ rating_value }}; showRatingPopup = false; isHovering = false"
+                    <button @click="rating = {{ rating_value }}; showRatingPopup = false; hoverRating = null"
                             @mouseenter="hoverRating = {{ rating_value }}"
+                            @mouseleave="hoverRating = null"
                             hx-post="{% url 'update_media_score' media_type current_instance.id %}"
                             hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
                             hx-vals='{"score": {{ rating_value }} }'
                             hx-trigger="click"
                             hx-swap="none"
-                            class="focus:outline-none flex flex-col items-center cursor-pointer">
-                      <div :class="{ 'text-yellow-400': {{ rating_value }} <= (isHovering ? hoverRating : rating), 'text-gray-600': {{ rating_value }} > (isHovering ? hoverRating : rating) }">
-                        {% include "app/icons/star.svg" with classes="w-5 h-5 hover:scale-110 transition-transform" %}
-                      </div>
-                      <span class="text-xs mt-1 text-gray-400">{{ rating_value }}</span>
+                            type="button"
+                            class="flex flex-col items-center gap-1 cursor-pointer w-6"
+                            :title="'{{ rating_value }}/10'">
+                      <div class="w-3 h-3 rounded-full transition-colors"
+                           :class="{{ rating_value }} <= (hoverRating || rating) ? 'bg-accent' : 'bg-surface-3'"></div>
+                      <span class="text-[10px] text-fg-muted">{{ rating_value }}</span>
                     </button>
                   {% endfor %}
                 {% endwith %}
@@ -323,6 +331,7 @@
       {% endif %}
     </div>
   </div>
+  </div>{# end hero gradient #}
 
   {# Record listening stats — Koito-style panels for vinyl records #}
   {% if record_listen_stats %}
