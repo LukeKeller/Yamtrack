@@ -821,125 +821,108 @@
         {% endfor %}
       {% endif %}
 
-      {# Episodes List #}
+      {# Episodes List — compact rows (mocks/media-details-tv.html) #}
       {% if media.episodes %}
         <div class="w-full">
-          <h2 class="text-xl font-bold mb-4">Episodes</h2>
-          <div class="space-y-6">
+          <h2 class="text-xl font-semibold mb-3">Episodes</h2>
+          <ul class="bg-surface-1 rounded-lg overflow-hidden divide-y"
+              style="border: 1px solid var(--color-border-subtle);">
             {% for episode in media.episodes %}
-              <div class="bg-surface-1 rounded-lg overflow-hidden shadow-lg">
-                <div class="flex flex-col md:flex-row" x-data="{ obfuscated:
-                  {% if user.obfuscate_unseen_episodes and not episode.history %}
-                    true
-                  {% else %}
-                    false
-                  {% endif %}
-                  , hasImage:
-                  {% if episode.image != IMG_NONE %}
-                    true
-                  {% else %}
-                    false
-                  {% endif %}
-                  }">
-                  <img src="{{ IMG_NONE }}"
-                       alt="E{{ episode.episode_number }}"
-                       data-src="{{ episode.image }}"
-                       class="lazyload md:w-64 md:h-40 shrink-0 {% if episode.image != IMG_NONE %}object-cover{% endif %} {% if user.obfuscate_unseen_episodes and not episode.history and episode.image != IMG_NONE %}blur cursor-pointer{% else %}cursor-default{% endif %}"
-                       :class="{ 'blur': obfuscated && hasImage, 'cursor-pointer': obfuscated && hasImage, 'cursor-default': !obfuscated || !hasImage }"
-                       @click="obfuscated = false">
-                  <div class="py-3 flex-1 flex flex-col">
-                    <div class="flex-1">
-                      <div class="flex justify-between items-start mb-2 space-x-2 px-4">
-                        <div>
-                          <h2 class="text-xl font-semibold mb-1 line-clamp-1">{{ episode.title }}</h2>
-                          <p class="text-sm text-fg-muted">
-                            Episode {{ episode.episode_number }} • {{ episode.air_date|iso_date_format:request.user|default_if_none:"Unknown air date" }}
-                            {% if episode.runtime %}• {{ episode.runtime }}{% endif %}
-                          </p>
-                        </div>
-                        <div class="flex space-x-2">
-                          {# Track Episode #}
-                          <div x-data="{ trackOpen: false }">
-                            <button @click="trackOpen = true"
-                                    title="Track Episode"
-                                    class="p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition duration-300 cursor-pointer">
-                              {% if episode.history %}
-                                {% include "app/icons/eye.svg" with classes="w-4 h-4" %}
-                              {% else %}
-                                {% include "app/icons/eye-closed.svg" with classes="w-4 h-4" %}
-                              {% endif %}
-                            </button>
-
-                            {% include "app/components/fill_track_episode.html" with request=request media=media episode=episode episode_title=episode.title csrf_token=csrf_token TRACK_TIME=TRACK_TIME only %}
-
-                          </div>
-
-                          {# Lists #}
-                          <div x-data="{ listsOpen: false }">
-                            <button class="p-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition duration-300 cursor-pointer"
-                                    title="Add to custom lists"
-                                    hx-get="{% media_view_url 'lists_modal' episode %}"
-                                    hx-vals='{"return_url": "{{ request.get_full_path|urlencode }}"}'
-                                    hx-target="#{% component_id 'lists' episode %}"
-                                    hx-trigger="click once"
-                                    @click="listsOpen = true">
-                              {% include "app/icons/list-add.svg" with classes="w-4 h-4" %}
-                            </button>
-
-                            <div x-show="listsOpen"
-                                 @keydown.escape.window="listsOpen = false"
-                                 class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                              <div class="w-96 max-h-[90vh] px-4 md:px-0 relative z-60"
-                                   @click.outside="listsOpen = false">
-                                <div id="{% component_id 'lists' episode %}"></div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {# History #}
-                          <div x-data="{ historyOpen: false }">
-                            <button class="p-2 bg-amber-600 hover:bg-amber-700 text-white rounded-full transition duration-300 cursor-pointer"
-                                    title="View your activity history"
-                                    hx-get="{% media_view_url 'history_modal' episode %}"
-                                    hx-vals='{"return_url": "{{ request.get_full_path|urlencode }}"}'
-                                    hx-target="#{% component_id 'history' episode %}"
-                                    hx-trigger="click once"
-                                    @click="historyOpen = true">
-                              {% include "app/icons/history.svg" with classes="w-4 h-4" %}
-                            </button>
-                            <div x-show="historyOpen"
-                                 @keydown.escape.window="historyOpen = false"
-                                 class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                              <div class="w-96 max-h-[90vh] px-4 md:px-0 relative z-60"
-                                   @click.outside="historyOpen = false">
-                                <div id="{% component_id 'history' episode %}"></div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      <div class="{% if episode.history %}md:h-[calc(2*1.5rem)]{% else %}md:h-[calc(3*1.5rem)]{% endif %} md:overflow-y-auto px-4">
-                        <p class="text-sm text-fg leading-relaxed text-pretty {% if user.obfuscate_unseen_episodes and not episode.history %}blur cursor-pointer{% else %}cursor-text{% endif %}"
-                           :class="{ 'blur': obfuscated, 'cursor-pointer': obfuscated, 'cursor-text': !obfuscated }"
-                           @click="obfuscated = false">{{ episode.overview }}</p>
-                      </div>
+              <li class="hover:bg-surface-2 transition-colors{% if episode.history %} {% else %} opacity-90{% endif %}"
+                  x-data="{ obfuscated: {% if user.obfuscate_unseen_episodes and not episode.history %}true{% else %}false{% endif %}, hasImage: {% if episode.image != IMG_NONE %}true{% else %}false{% endif %}, expanded: false }">
+                <div class="flex items-start gap-3 px-3 py-2.5">
+                  <span class="text-fg-faint text-xs w-7 text-right font-mono shrink-0 pt-1.5">{{ episode.episode_number|stringformat:"02d" }}</span>
+                  <div class="w-24 aspect-video bg-surface-2 rounded-sm overflow-hidden shrink-0">
+                    <img src="{{ IMG_NONE }}"
+                         alt=""
+                         data-src="{{ episode.image }}"
+                         class="lazyload w-full h-full {% if episode.image != IMG_NONE %}object-cover{% endif %}"
+                         :class="{ 'blur': obfuscated && hasImage }"
+                         @click="obfuscated = false">
+                  </div>
+                  <div class="flex-1 min-w-0 pt-1">
+                    <div class="flex items-center gap-2">
+                      <div class="font-medium truncate">{{ episode.title }}</div>
+                      {% if episode.history %}
+                        <span class="pill pill-status-completed text-[10px] shrink-0">Watched</span>
+                      {% endif %}
                     </div>
-                    {% if episode.history %}
-                      <p class="text-xs text-fg-muted mt-2 px-4">
-                        Last watched:
-                        {% if episode.history.0.end_date %}
-                          {{ episode.history.0.end_date|datetime_format:user }}
-                        {% else %}
-                          No date provided
-                        {% endif %}
-                        {% if episode.history|length > 1 %}• Watched {{ episode.history|length }} times{% endif %}
-                      </p>
+                    <div class="text-xs text-fg-muted truncate mt-0.5">
+                      {{ episode.air_date|iso_date_format:request.user|default_if_none:"Unknown air date" }}
+                      {% if episode.runtime %}· {{ episode.runtime }}{% endif %}
+                      {% if episode.history %}· Watched
+                        {% if episode.history.0.end_date %}{{ episode.history.0.end_date|datetime_format:user }}{% endif %}
+                        {% if episode.history|length > 1 %}({{ episode.history|length }}×){% endif %}
+                      {% endif %}
+                    </div>
+                    {% if episode.overview %}
+                      <p class="text-xs text-fg-muted mt-1.5 line-clamp-2"
+                         :class="{ 'blur': obfuscated, 'line-clamp-none': expanded && !obfuscated }"
+                         @click="if (obfuscated) { obfuscated = false } else { expanded = !expanded }">{{ episode.overview }}</p>
                     {% endif %}
                   </div>
+                  <div class="flex items-center gap-1 shrink-0 pt-1">
+                    {# Track Episode #}
+                    <div x-data="{ trackOpen: false }">
+                      <button @click="trackOpen = true"
+                              type="button"
+                              title="Track Episode"
+                              class="btn btn-icon btn-sm {% if episode.history %}btn-ghost{% else %}btn-secondary{% endif %}">
+                        {% if episode.history %}
+                          {% include "app/icons/eye.svg" with classes="w-3.5 h-3.5" %}
+                        {% else %}
+                          {% include "app/icons/eye-closed.svg" with classes="w-3.5 h-3.5" %}
+                        {% endif %}
+                      </button>
+                      {% include "app/components/fill_track_episode.html" with request=request media=media episode=episode episode_title=episode.title csrf_token=csrf_token TRACK_TIME=TRACK_TIME only %}
+                    </div>
+                    {# Lists #}
+                    <div x-data="{ listsOpen: false }">
+                      <button class="btn btn-icon btn-sm btn-ghost"
+                              type="button"
+                              title="Add to custom lists"
+                              hx-get="{% media_view_url 'lists_modal' episode %}"
+                              hx-vals='{"return_url": "{{ request.get_full_path|urlencode }}"}'
+                              hx-target="#{% component_id 'lists' episode %}"
+                              hx-trigger="click once"
+                              @click="listsOpen = true">
+                        {% include "app/icons/list-add.svg" with classes="w-3.5 h-3.5" %}
+                      </button>
+                      <div x-show="listsOpen"
+                           @keydown.escape.window="listsOpen = false"
+                           class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                        <div class="w-96 max-h-[90vh] px-4 md:px-0 relative z-60"
+                             @click.outside="listsOpen = false">
+                          <div id="{% component_id 'lists' episode %}"></div>
+                        </div>
+                      </div>
+                    </div>
+                    {# History #}
+                    <div x-data="{ historyOpen: false }">
+                      <button class="btn btn-icon btn-sm btn-ghost"
+                              type="button"
+                              title="View your activity history"
+                              hx-get="{% media_view_url 'history_modal' episode %}"
+                              hx-vals='{"return_url": "{{ request.get_full_path|urlencode }}"}'
+                              hx-target="#{% component_id 'history' episode %}"
+                              hx-trigger="click once"
+                              @click="historyOpen = true">
+                        {% include "app/icons/history.svg" with classes="w-3.5 h-3.5" %}
+                      </button>
+                      <div x-show="historyOpen"
+                           @keydown.escape.window="historyOpen = false"
+                           class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                        <div class="w-96 max-h-[90vh] px-4 md:px-0 relative z-60"
+                             @click.outside="historyOpen = false">
+                          <div id="{% component_id 'history' episode %}"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </li>
             {% endfor %}
-          </div>
+          </ul>
         </div>
       {% endif %}
     </div>
