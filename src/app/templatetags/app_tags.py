@@ -137,6 +137,19 @@ def is_list(arg1):
 
 
 @register.filter
+def exclude_keys(mapping, csv_keys):
+    """Return a new dict without the comma-separated keys.
+
+    Used to hide details fields that have been surfaced higher up the
+    page so they don't appear twice.
+    """
+    if not isinstance(mapping, dict):
+        return mapping
+    excluded = {k.strip() for k in csv_keys.split(",") if k.strip()}
+    return {k: v for k, v in mapping.items() if k not in excluded}
+
+
+@register.filter
 def source_readable(source):
     """Return the readable source name."""
     return Sources(source).label

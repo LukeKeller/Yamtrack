@@ -61,9 +61,7 @@
 
       {% if media.media_type == MediaTypes.RECORD.value %}
         {# Now spinning — manual vinyl play logger. One tap per side. #}
-        <div id="record-spin-status" class="mt-3">
-          {% include "app/components/record_spin.html" %}
-        </div>
+        <div id="record-spin-status" class="mt-3">{% include "app/components/record_spin.html" %}</div>
         <div class="mt-2 flex flex-wrap gap-2">
           {% for side in record_spin_sides %}
             <button class="flex-1 basis-0 min-w-[56px] px-3 py-2 rounded-md text-sm bg-amber-600 hover:bg-amber-700 text-white transition-colors cursor-pointer"
@@ -178,8 +176,8 @@
         {% endif %}
       </div>
 
-      {# Source score #}
-      <div class="flex flex-wrap gap-4">
+      {# Ratings row — provider score, OMDb ratings, user score #}
+      <div class="flex flex-wrap gap-3 mb-4">
         {% if media.score_count is not None %}
           <div class="bg-[#2a2f35] p-3 rounded-lg w-[120px]">
             <h3 class="text-xs font-semibold text-gray-400 mb-1 text-center">{{ media.source|upper }} SCORE</h3>
@@ -194,6 +192,34 @@
             <p class="text-xs text-gray-400 mt-0.5 text-center">
               {{ media.score_count|intcomma }} vote{{ media.score_count|pluralize }}
             </p>
+          </div>
+        {% endif %}
+
+        {% if media.details.imdb_rating %}
+          <div class="bg-[#2a2f35] p-3 rounded-lg w-[120px]">
+            <h3 class="text-xs font-semibold text-gray-400 mb-1 text-center">IMDB</h3>
+            <div class="flex items-center justify-center">
+              {% include "app/icons/star.svg" with classes="w-5 h-5 mr-1.5 text-amber-400 fill-amber-400" %}
+              <span class="text-lg font-bold text-white">{{ media.details.imdb_rating }}</span>
+            </div>
+          </div>
+        {% endif %}
+
+        {% if media.details.rotten_tomatoes %}
+          <div class="bg-[#2a2f35] p-3 rounded-lg w-[120px]">
+            <h3 class="text-xs font-semibold text-gray-400 mb-1 text-center">ROTTEN TOMATOES</h3>
+            <div class="flex items-center justify-center">
+              <span class="text-lg font-bold text-red-400">{{ media.details.rotten_tomatoes }}</span>
+            </div>
+          </div>
+        {% endif %}
+
+        {% if media.details.metacritic %}
+          <div class="bg-[#2a2f35] p-3 rounded-lg w-[120px]">
+            <h3 class="text-xs font-semibold text-gray-400 mb-1 text-center">METACRITIC</h3>
+            <div class="flex items-center justify-center">
+              <span class="text-lg font-bold text-emerald-400">{{ media.details.metacritic }}</span>
+            </div>
           </div>
         {% endif %}
 
@@ -249,6 +275,52 @@
           </div>
         {% endif %}
       </div>
+
+      {# Key facts row — release/runtime/financials/status surfaced up top #}
+      {% if media.details.release_date or media.details.first_air_date or media.details.last_air_date or media.details.runtime or media.details.budget or media.details.revenue or media.details.box_office or media.details.status %}
+        <div class="flex flex-wrap gap-x-6 gap-y-2 bg-[#2a2f35] rounded-lg px-4 py-3 mt-4 text-sm">
+          {% if media.details.release_date %}
+            <div>
+              <span class="text-gray-400">Released:</span> <span class="text-gray-200">{{ media.details.release_date|iso_date_format:request.user }}</span>
+            </div>
+          {% endif %}
+          {% if media.details.first_air_date %}
+            <div>
+              <span class="text-gray-400">First aired:</span> <span class="text-gray-200">{{ media.details.first_air_date|iso_date_format:request.user }}</span>
+            </div>
+          {% endif %}
+          {% if media.details.last_air_date %}
+            <div>
+              <span class="text-gray-400">Last aired:</span> <span class="text-gray-200">{{ media.details.last_air_date|iso_date_format:request.user }}</span>
+            </div>
+          {% endif %}
+          {% if media.details.runtime %}
+            <div>
+              <span class="text-gray-400">Runtime:</span> <span class="text-gray-200">{{ media.details.runtime }}</span>
+            </div>
+          {% endif %}
+          {% if media.details.status %}
+            <div>
+              <span class="text-gray-400">Status:</span> <span class="text-gray-200">{{ media.details.status }}</span>
+            </div>
+          {% endif %}
+          {% if media.details.budget %}
+            <div>
+              <span class="text-gray-400">Budget:</span> <span class="text-gray-200">{{ media.details.budget }}</span>
+            </div>
+          {% endif %}
+          {% if media.details.revenue %}
+            <div>
+              <span class="text-gray-400">Revenue:</span> <span class="text-gray-200">{{ media.details.revenue }}</span>
+            </div>
+          {% endif %}
+          {% if media.details.box_office %}
+            <div>
+              <span class="text-gray-400">Box office:</span> <span class="text-gray-200">{{ media.details.box_office }}</span>
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
     </div>
   </div>
 
@@ -294,14 +366,17 @@
                       <span class="text-gray-400 ml-3 shrink-0">{{ row.plays }}</span>
                     </div>
                     <div class="h-1 bg-[#39404b] rounded-full overflow-hidden">
-                      <div class="h-full bg-indigo-500" style="width: {% widthratio row.plays max_plays 100 %}%"></div>
+                      <div class="h-full bg-indigo-500"
+                           style="width: {% widthratio row.plays max_plays 100 %}%"></div>
                     </div>
                   </li>
                 {% endfor %}
               </ul>
             {% endwith %}
           {% else %}
-            <p class="px-5 py-4 text-sm text-gray-400">No per-track plays yet — click a Side button or scrobble through this record.</p>
+            <p class="px-5 py-4 text-sm text-gray-400">
+              No per-track plays yet — click a Side button or scrobble through this record.
+            </p>
           {% endif %}
         </div>
 
@@ -625,16 +700,18 @@
 
       <div class="bg-[#2a2f35] p-4 rounded-lg text-center md:text-start">
         {% if media.details.items %}
-          {% for key, value in media.details.items %}
-            <div class="mb-4">
-              <h3 class="text-sm font-semibold text-gray-400">{{ key|no_underscore|upper }}</h3>
-              {% if value|is_list %}
-                {% for item in value %}<p class="text-gray-200">{{ item|iso_date_format:request.user }}</p>{% endfor %}
-              {% else %}
-                <p class="text-gray-200">{{ value|default_if_none:"Unknown"|iso_date_format:request.user }}</p>
-              {% endif %}
-            </div>
-          {% endfor %}
+          {% with side_details=media.details|exclude_keys:"release_date,first_air_date,last_air_date,runtime,status,budget,revenue,box_office,imdb_rating,rotten_tomatoes,metacritic" %}
+            {% for key, value in side_details.items %}
+              <div class="mb-4">
+                <h3 class="text-sm font-semibold text-gray-400">{{ key|no_underscore|upper }}</h3>
+                {% if value|is_list %}
+                  {% for item in value %}<p class="text-gray-200">{{ item|iso_date_format:request.user }}</p>{% endfor %}
+                {% else %}
+                  <p class="text-gray-200">{{ value|default_if_none:"Unknown"|iso_date_format:request.user }}</p>
+                {% endif %}
+              </div>
+            {% endfor %}
+          {% endwith %}
           <div>
             <h3 class="text-sm font-semibold text-gray-400">SOURCE</h3>
             <a href="{{ media.source_url }}"
