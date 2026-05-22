@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en" data-theme="default" data-density="comfortable">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search — Yamtrack (redesign mock)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="_assets/tokens.css">
+</head>
+<body class="min-h-screen">
+  <div class="flex min-h-screen">
+    <aside class="hidden lg:flex w-[220px] bg-surface-0 border-r-default flex-col h-screen sticky top-0 shrink-0">
+      <div class="h-14 px-4 flex items-center gap-2 border-b-default">
+        <div class="w-8 h-8 rounded-md bg-accent flex items-center justify-center font-bold text-white">Y</div>
+        <div class="font-semibold">Yamtrack</div>
+      </div>
+      <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+        <div>
+          <div class="px-3 mb-1 text-[11px] uppercase tracking-wider text-fg-faint">Library</div>
+          <a class="nav-item" href="home.html">Home</a>
+          <a class="nav-item active" href="#">Discover</a>
+          <a class="nav-item type-tv" href="media-list-grid.html">TV shows</a>
+          <a class="nav-item type-movie" href="#">Movies</a>
+        </div>
+      </nav>
+    </aside>
+
+    <div class="flex-1 min-w-0 flex flex-col">
+      <header class="sticky top-0 z-30 h-14 bg-surface-0 border-b-default px-4 lg:px-6 flex items-center gap-3">
+        <div class="flex-1 max-w-2xl mx-auto relative">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-faint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input class="input pl-9 pr-16 h-9" placeholder="Search…" value="dune">
+          <span class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1"><kbd>⌘</kbd><kbd>K</kbd></span>
+        </div>
+        <div class="w-7 h-7 rounded-full bg-accent flex items-center justify-center text-white text-xs font-semibold">L</div>
+      </header>
+
+      <main class="flex-1 px-4 lg:px-8 py-8 max-w-7xl w-full mx-auto">
+
+        <div class="flex items-end justify-between mb-6 flex-wrap gap-4">
+          <div>
+            <h1 class="text-2xl font-semibold">Search results</h1>
+            <p class="text-sm text-fg-muted mt-0.5">14 results for <span class="text-fg font-medium">"dune"</span> across all media types</p>
+          </div>
+          <p class="text-xs text-fg-faint">Tip: press <kbd>w</kbd>/<kbd>p</kbd>/<kbd>c</kbd> on a row to mark watched/planning/completed</p>
+        </div>
+
+        <!-- Type tabs -->
+        <div class="flex items-center gap-1 border-b-default mb-4 overflow-x-auto no-scrollbar">
+          <button class="px-3 py-2 text-sm relative" style="color: var(--fg)">All<span class="ml-1.5 pill pill-meta text-[10px]">14</span><span class="absolute bottom-0 inset-x-0 h-0.5 bg-accent"></span></button>
+          <button class="px-3 py-2 text-sm text-fg-muted hover:text-fg">Movies<span class="ml-1.5 pill pill-meta text-[10px]">5</span></button>
+          <button class="px-3 py-2 text-sm text-fg-muted hover:text-fg">TV shows<span class="ml-1.5 pill pill-meta text-[10px]">2</span></button>
+          <button class="px-3 py-2 text-sm text-fg-muted hover:text-fg">Books<span class="ml-1.5 pill pill-meta text-[10px]">6</span></button>
+          <button class="px-3 py-2 text-sm text-fg-muted hover:text-fg">Games<span class="ml-1.5 pill pill-meta text-[10px]">1</span></button>
+        </div>
+
+        <!-- Source pills -->
+        <div class="flex items-center gap-2 mb-6 flex-wrap">
+          <span class="text-xs text-fg-faint mr-1">Source:</span>
+          <button class="pill pill-accent">TMDB</button>
+          <button class="pill pill-meta">OpenLibrary</button>
+          <button class="pill pill-meta">Hardcover</button>
+          <button class="pill pill-meta">IGDB</button>
+        </div>
+
+        <!-- Results: row layout for quick-add -->
+        <ul class="card divide-y" style="padding: 0; border-color: var(--border-subtle)">
+          <li class="flex items-center gap-4 px-4 py-3 hover:bg-surface-2 transition group">
+            <div class="poster w-12 shrink-0" style="aspect-ratio: 2/3; background: linear-gradient(160deg, #fb923c, #7c2d12)"></div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <a class="font-semibold hover:text-accent transition" href="media-details-movie.html">Dune: Part Two</a>
+                <span class="pill" style="background: var(--type-movie); opacity: .9; color: white">Movie</span>
+                <span class="pill pill-status-completed">In your library</span>
+              </div>
+              <p class="text-sm text-fg-muted truncate mt-0.5">2024 · 166 min · Directed by Denis Villeneuve</p>
+              <p class="text-xs text-fg-faint truncate">Paul Atreides unites with the Fremen while seeking revenge against the conspirators who destroyed his family.</p>
+            </div>
+            <div class="flex items-center gap-1">
+              <button class="btn btn-sm btn-secondary"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--status-completed)"><path d="M20 6 9 17l-5-5"/></svg>Completed</button>
+              <button class="btn btn-icon btn-sm btn-ghost"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+            </div>
+          </li>
+          <li class="flex items-center gap-4 px-4 py-3 hover:bg-surface-2 transition group">
+            <div class="poster w-12 shrink-0" style="aspect-ratio: 2/3; background: linear-gradient(160deg, #fbbf24, #78350f)"></div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <a class="font-semibold hover:text-accent transition" href="#">Dune</a>
+                <span class="pill" style="background: var(--type-movie); opacity: .9; color: white">Movie</span>
+              </div>
+              <p class="text-sm text-fg-muted truncate mt-0.5">2021 · 155 min · Directed by Denis Villeneuve</p>
+              <p class="text-xs text-fg-faint truncate">A noble family becomes embroiled in a war for control over the galaxy's most valuable asset.</p>
+            </div>
+            <div class="hidden group-hover:flex items-center gap-1 quick-actions">
+              <button class="btn btn-sm btn-ghost" title="Mark watched"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>Watched</button>
+              <button class="btn btn-sm btn-ghost" title="Planning"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Plan</button>
+              <button class="btn btn-icon btn-sm btn-ghost"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+            </div>
+            <button class="btn btn-primary btn-sm group-hover:hidden">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              Add
+            </button>
+          </li>
+          <li class="flex items-center gap-4 px-4 py-3 hover:bg-surface-2 transition group">
+            <div class="poster w-12 shrink-0" style="aspect-ratio: 2/3; background: linear-gradient(160deg, #facc15, #422006)"></div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <a class="font-semibold hover:text-accent transition" href="#">Dune</a>
+                <span class="pill" style="background: var(--type-book); opacity: .9; color: #422006">Book</span>
+                <span class="pill pill-status-in-progress">Reading</span>
+              </div>
+              <p class="text-sm text-fg-muted truncate mt-0.5">1965 · Frank Herbert · 688 pages · OpenLibrary</p>
+              <div class="flex items-center gap-2 mt-1">
+                <div class="flex-1 h-1 rounded-full bg-surface-3 max-w-xs"><div class="h-full rounded-full" style="width: 42%; background: var(--status-in-progress)"></div></div>
+                <span class="text-xs text-fg-faint num">288 / 688</span>
+              </div>
+            </div>
+            <button class="btn btn-sm btn-secondary">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--status-in-progress)"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Reading
+            </button>
+          </li>
+          <li class="flex items-center gap-4 px-4 py-3 hover:bg-surface-2 transition group">
+            <div class="poster w-12 shrink-0" style="aspect-ratio: 2/3; background: linear-gradient(160deg, #f97316, #431407)"></div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <a class="font-semibold hover:text-accent transition" href="#">Dune Messiah</a>
+                <span class="pill" style="background: var(--type-book); opacity: .9; color: #422006">Book</span>
+              </div>
+              <p class="text-sm text-fg-muted truncate mt-0.5">1969 · Frank Herbert · 256 pages · Hardcover</p>
+            </div>
+            <button class="btn btn-primary btn-sm">Add</button>
+          </li>
+          <li class="flex items-center gap-4 px-4 py-3 hover:bg-surface-2 transition group">
+            <div class="poster w-12 shrink-0" style="aspect-ratio: 2/3; background: linear-gradient(160deg, #84cc16, #1a2e05)"></div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <a class="font-semibold hover:text-accent transition" href="#">Dune: Spice Wars</a>
+                <span class="pill" style="background: var(--type-game); opacity: .9; color: white">Game</span>
+              </div>
+              <p class="text-sm text-fg-muted truncate mt-0.5">2022 · Shiro Games · Strategy · IGDB</p>
+            </div>
+            <button class="btn btn-primary btn-sm">Add</button>
+          </li>
+          <li class="flex items-center gap-4 px-4 py-3 hover:bg-surface-2 transition group">
+            <div class="poster w-12 shrink-0" style="aspect-ratio: 2/3; background: linear-gradient(160deg, #fb923c, #7c2d12)"></div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <a class="font-semibold hover:text-accent transition" href="#">Dune: Prophecy</a>
+                <span class="pill" style="background: var(--type-tv); opacity: .9; color: white">TV</span>
+              </div>
+              <p class="text-sm text-fg-muted truncate mt-0.5">2024 – present · HBO · 6 episodes</p>
+            </div>
+            <button class="btn btn-primary btn-sm">Add</button>
+          </li>
+          <li class="flex items-center gap-4 px-4 py-3 hover:bg-surface-2 transition group opacity-70">
+            <div class="poster w-12 shrink-0" style="aspect-ratio: 2/3; background: linear-gradient(160deg, #facc15, #422006)"></div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <a class="font-semibold hover:text-accent transition" href="#">Children of Dune</a>
+                <span class="pill" style="background: var(--type-book); opacity: .9; color: #422006">Book</span>
+              </div>
+              <p class="text-sm text-fg-muted truncate mt-0.5">1976 · Frank Herbert · OpenLibrary</p>
+            </div>
+            <button class="btn btn-primary btn-sm">Add</button>
+          </li>
+        </ul>
+
+        <!-- Pagination -->
+        <div class="flex items-center justify-between mt-6">
+          <p class="text-xs text-fg-faint">Page 1 of 2 — showing 1-7 of 14</p>
+          <div class="flex gap-1">
+            <button class="btn btn-icon btn-secondary btn-sm" disabled><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button>
+            <button class="btn btn-icon btn-secondary btn-sm">1</button>
+            <button class="btn btn-icon btn-ghost btn-sm">2</button>
+            <button class="btn btn-icon btn-secondary btn-sm"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

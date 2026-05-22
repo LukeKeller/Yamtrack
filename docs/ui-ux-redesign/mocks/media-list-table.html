@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en" data-theme="default" data-density="comfortable">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TV shows (table) — Yamtrack (redesign mock)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="_assets/tokens.css">
+  <style>
+    table.media-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+    table.media-table th { text-align: left; padding: 8px 12px; font-weight: 500; color: var(--fg-faint); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--border); background: var(--surface-0); position: sticky; top: 56px; }
+    table.media-table td { padding: 6px 12px; border-bottom: 1px solid var(--border-subtle); vertical-align: middle; }
+    table.media-table tbody tr:hover { background: var(--surface-2); }
+    table.media-table tbody tr.selected { background: var(--accent-soft); }
+    .num { font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="flex min-h-screen">
+    <aside class="hidden lg:flex w-[220px] bg-surface-0 border-r-default flex-col h-screen sticky top-0 shrink-0">
+      <div class="h-14 px-4 flex items-center gap-2 border-b-default">
+        <div class="w-8 h-8 rounded-md bg-accent flex items-center justify-center font-bold text-white">Y</div>
+        <div class="font-semibold">Yamtrack</div>
+      </div>
+      <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+        <div>
+          <div class="px-3 mb-1 text-[11px] uppercase tracking-wider text-fg-faint">Library</div>
+          <a class="nav-item" href="home.html">Home</a>
+          <a class="nav-item active type-tv" href="#">TV shows</a>
+          <a class="nav-item type-movie" href="#">Movies</a>
+          <a class="nav-item type-anime" href="#">Anime</a>
+        </div>
+      </nav>
+    </aside>
+
+    <div class="flex-1 min-w-0 flex flex-col">
+      <header class="sticky top-0 z-30 h-14 bg-surface-0 border-b-default px-4 lg:px-6 flex items-center gap-3">
+        <div class="flex-1 max-w-xl mx-auto relative">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-faint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input class="input pl-9 pr-16 h-9" placeholder="Search…">
+          <span class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1"><kbd>⌘</kbd><kbd>K</kbd></span>
+        </div>
+        <div class="w-7 h-7 rounded-full bg-accent flex items-center justify-center text-white text-xs font-semibold">L</div>
+      </header>
+
+      <main class="flex-1 px-4 lg:px-8 py-8 max-w-7xl w-full mx-auto">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="text-2xl font-semibold">TV shows</h1>
+            <p class="text-sm text-fg-muted mt-0.5">42 tracked · table view</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="flex border border-default rounded-sm overflow-hidden">
+              <a class="btn btn-ghost btn-sm btn-icon rounded-none border-0" href="media-list-grid.html"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></a>
+              <button class="btn btn-secondary btn-sm btn-icon rounded-none border-0 bg-surface-3"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 9h18M3 15h18M3 3h18v18H3z"/></svg></button>
+            </div>
+            <button class="btn btn-secondary btn-sm">Columns</button>
+            <button class="btn btn-secondary btn-sm">Export CSV</button>
+          </div>
+        </div>
+
+        <!-- Filter row -->
+        <div class="flex flex-wrap items-center gap-2 mb-3">
+          <button class="btn btn-secondary btn-sm">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><polygon points="22 3 2 3 10 12 10 19 14 21 14 12 22 3"/></svg>
+            Filter
+          </button>
+          <div class="relative">
+            <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-fg-faint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="11" cy="11" r="7"/></svg>
+            <input class="input h-8 text-sm pl-8 pr-3 w-56" placeholder="Search this list…">
+          </div>
+          <span class="text-xs text-fg-faint ml-2">Press <kbd>j</kbd> <kbd>k</kbd> to move · <kbd>w</kbd> to mark watched</span>
+        </div>
+
+        <div class="card" style="padding:0; overflow:hidden">
+          <table class="media-table">
+            <thead>
+              <tr>
+                <th class="w-10"><input type="checkbox" class="rounded-sm bg-surface-2"></th>
+                <th class="w-12"></th>
+                <th>Title</th>
+                <th class="text-center w-24">Status</th>
+                <th class="text-right w-24">Score</th>
+                <th class="text-center w-32">Progress</th>
+                <th class="text-right w-32">Last watched</th>
+                <th class="w-10"></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="selected">
+                <td><input type="checkbox" class="rounded-sm bg-surface-2" checked></td>
+                <td><div class="w-8 h-8 rounded-sm" style="background: linear-gradient(160deg, #93c5fd 0%, #172554 100%);"></div></td>
+                <td><div class="font-medium">Severance</div><div class="text-xs text-fg-faint">Apple TV+ · S02E05</div></td>
+                <td class="text-center"><span class="pill pill-status-in-progress">In progress</span></td>
+                <td class="text-right num"><div class="flex items-center justify-end gap-1"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9 12 2"/></svg><span>5.0</span></div></td>
+                <td>
+                  <div class="flex items-center gap-2">
+                    <div class="flex-1 h-1.5 rounded-full bg-surface-3"><div class="h-full rounded-full" style="width: 40%; background: var(--status-in-progress)"></div></div>
+                    <span class="text-xs text-fg-muted num">4/10</span>
+                  </div>
+                </td>
+                <td class="text-right text-fg-muted num">Feb 12</td>
+                <td><button class="btn btn-icon btn-sm btn-ghost"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" class="rounded-sm bg-surface-2"></td>
+                <td><div class="w-8 h-8 rounded-sm" style="background: linear-gradient(160deg, #475569, #0f172a)"></div></td>
+                <td><div class="font-medium">The Bear</div><div class="text-xs text-fg-faint">FX · S03E05</div></td>
+                <td class="text-center"><span class="pill pill-status-in-progress">In progress</span></td>
+                <td class="text-right num"><div class="flex items-center justify-end gap-1"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9 12 2"/></svg><span>4.5</span></div></td>
+                <td><div class="flex items-center gap-2"><div class="flex-1 h-1.5 rounded-full bg-surface-3"><div class="h-full rounded-full" style="width: 50%; background: var(--status-in-progress)"></div></div><span class="text-xs text-fg-muted num">5/10</span></div></td>
+                <td class="text-right text-fg-muted num">May 19</td>
+                <td><button class="btn btn-icon btn-sm btn-ghost"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" class="rounded-sm bg-surface-2"></td>
+                <td><div class="w-8 h-8 rounded-sm" style="background: linear-gradient(160deg, #1e3a8a, #020617)"></div></td>
+                <td><div class="font-medium">Slow Horses</div><div class="text-xs text-fg-faint">Apple TV+ · S04E01</div></td>
+                <td class="text-center"><span class="pill pill-status-in-progress">In progress</span></td>
+                <td class="text-right num"><div class="flex items-center justify-end gap-1"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9 12 2"/></svg><span>4.5</span></div></td>
+                <td><div class="flex items-center gap-2"><div class="flex-1 h-1.5 rounded-full bg-surface-3"><div class="h-full rounded-full" style="width: 12%; background: var(--status-in-progress)"></div></div><span class="text-xs text-fg-muted num">1/6</span></div></td>
+                <td class="text-right text-fg-muted num">May 14</td>
+                <td><button class="btn btn-icon btn-sm btn-ghost"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" class="rounded-sm bg-surface-2"></td>
+                <td><div class="w-8 h-8 rounded-sm" style="background: linear-gradient(160deg, #65a30d, #1a2e05)"></div></td>
+                <td><div class="font-medium">Andor</div><div class="text-xs text-fg-faint">Disney+ · S01E04</div></td>
+                <td class="text-center"><span class="pill pill-status-paused">Paused</span></td>
+                <td class="text-right num text-fg-faint">—</td>
+                <td><div class="flex items-center gap-2"><div class="flex-1 h-1.5 rounded-full bg-surface-3"><div class="h-full rounded-full" style="width: 35%; background: var(--status-paused)"></div></div><span class="text-xs text-fg-muted num">4/12</span></div></td>
+                <td class="text-right text-fg-muted num">Mar 02</td>
+                <td><button class="btn btn-icon btn-sm btn-ghost"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" class="rounded-sm bg-surface-2"></td>
+                <td><div class="w-8 h-8 rounded-sm" style="background: linear-gradient(160deg, #a855f7, #2e1065)"></div></td>
+                <td><div class="font-medium">What We Do in the Shadows</div><div class="text-xs text-fg-faint">FX · S05E07</div></td>
+                <td class="text-center"><span class="pill pill-status-in-progress">In progress</span></td>
+                <td class="text-right num"><div class="flex items-center justify-end gap-1"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9 12 2"/></svg><span>4.0</span></div></td>
+                <td><div class="flex items-center gap-2"><div class="flex-1 h-1.5 rounded-full bg-surface-3"><div class="h-full rounded-full" style="width: 70%; background: var(--status-in-progress)"></div></div><span class="text-xs text-fg-muted num">7/10</span></div></td>
+                <td class="text-right text-fg-muted num">Apr 28</td>
+                <td><button class="btn btn-icon btn-sm btn-ghost"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" class="rounded-sm bg-surface-2" checked></td>
+                <td><div class="w-8 h-8 rounded-sm" style="background: linear-gradient(160deg, #f59e0b, #451a03)"></div></td>
+                <td><div class="font-medium">Shogun</div><div class="text-xs text-fg-faint">FX · S01E09</div></td>
+                <td class="text-center"><span class="pill pill-status-in-progress">In progress</span></td>
+                <td class="text-right num"><div class="flex items-center justify-end gap-1"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9 12 2"/></svg><span>4.5</span></div></td>
+                <td><div class="flex items-center gap-2"><div class="flex-1 h-1.5 rounded-full bg-surface-3"><div class="h-full rounded-full" style="width: 90%; background: var(--status-in-progress)"></div></div><span class="text-xs text-fg-muted num">9/10</span></div></td>
+                <td class="text-right text-fg-muted num">Apr 19</td>
+                <td><button class="btn btn-icon btn-sm btn-ghost"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" class="rounded-sm bg-surface-2"></td>
+                <td><div class="w-8 h-8 rounded-sm" style="background: linear-gradient(160deg, #94a3b8, #1e293b)"></div></td>
+                <td><div class="font-medium">Better Call Saul</div><div class="text-xs text-fg-faint">AMC · S02E04</div></td>
+                <td class="text-center"><span class="pill pill-status-paused">Paused</span></td>
+                <td class="text-right num text-fg-faint">—</td>
+                <td><div class="flex items-center gap-2"><div class="flex-1 h-1.5 rounded-full bg-surface-3"><div class="h-full rounded-full" style="width: 18%; background: var(--status-paused)"></div></div><span class="text-xs text-fg-muted num">14/76</span></div></td>
+                <td class="text-right text-fg-muted num">Jan 22</td>
+                <td><button class="btn btn-icon btn-sm btn-ghost"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td>
+              </tr>
+              <tr>
+                <td><input type="checkbox" class="rounded-sm bg-surface-2" checked></td>
+                <td><div class="w-8 h-8 rounded-sm" style="background: linear-gradient(160deg, #f43f5e, #4c0519)"></div></td>
+                <td><div class="font-medium">Succession</div><div class="text-xs text-fg-faint">HBO · S04E02</div></td>
+                <td class="text-center"><span class="pill pill-status-in-progress">In progress</span></td>
+                <td class="text-right num"><div class="flex items-center justify-end gap-1"><svg class="w-3 h-3" viewBox="0 0 24 24" fill="var(--accent)"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 22 12 18 5.5 22 7 14.5 2 9.5 9 9 12 2"/></svg><span>4.0</span></div></td>
+                <td><div class="flex items-center gap-2"><div class="flex-1 h-1.5 rounded-full bg-surface-3"><div class="h-full rounded-full" style="width: 18%; background: var(--status-in-progress)"></div></div><span class="text-xs text-fg-muted num">2/10</span></div></td>
+                <td class="text-right text-fg-muted num">Apr 02</td>
+                <td><button class="btn btn-icon btn-sm btn-ghost"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="text-center text-xs text-fg-faint mt-4">Showing 8 of 42 — scroll for more</div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

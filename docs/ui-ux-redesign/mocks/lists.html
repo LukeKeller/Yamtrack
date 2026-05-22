@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en" data-theme="default">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lists — Yamtrack (redesign mock)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="_assets/tokens.css">
+  <style>
+    .mosaic { display: grid; grid-template-columns: 1fr 1fr; aspect-ratio: 1; gap: 1px; }
+    .mosaic > div { background-position: center; background-size: cover; }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="flex min-h-screen">
+    <aside class="hidden lg:flex w-[220px] bg-surface-0 border-r-default flex-col h-screen sticky top-0 shrink-0">
+      <div class="h-14 px-4 flex items-center gap-2 border-b-default">
+        <div class="w-8 h-8 rounded-md bg-accent flex items-center justify-center font-bold text-white">Y</div>
+        <div class="font-semibold">Yamtrack</div>
+      </div>
+      <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+        <div>
+          <div class="px-3 mb-1 text-[11px] uppercase tracking-wider text-fg-faint">Library</div>
+          <a class="nav-item" href="home.html">Home</a>
+          <a class="nav-item type-tv" href="media-list-grid.html">TV shows</a>
+        </div>
+        <div>
+          <div class="px-3 mb-1 text-[11px] uppercase tracking-wider text-fg-faint">Tools</div>
+          <a class="nav-item" href="calendar.html">Calendar</a>
+          <a class="nav-item active" href="#">Lists</a>
+          <a class="nav-item" href="statistics.html">Statistics</a>
+        </div>
+      </nav>
+    </aside>
+
+    <div class="flex-1 min-w-0 flex flex-col">
+      <header class="sticky top-0 z-30 h-14 bg-surface-0 border-b-default px-4 lg:px-6 flex items-center gap-3">
+        <div class="flex-1 max-w-xl mx-auto relative">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-faint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="11" cy="11" r="7"/></svg>
+          <input class="input pl-9 pr-16 h-9" placeholder="Search…">
+        </div>
+        <div class="w-7 h-7 rounded-full bg-accent flex items-center justify-center text-white text-xs font-semibold">L</div>
+      </header>
+
+      <main class="flex-1 px-4 lg:px-8 py-8 max-w-7xl w-full mx-auto">
+
+        <div class="flex items-end justify-between mb-6 flex-wrap gap-4">
+          <div>
+            <h1 class="text-2xl font-semibold">Lists</h1>
+            <p class="text-sm text-fg-muted mt-0.5">Curate, share, and collaborate on collections</p>
+          </div>
+          <button class="btn btn-primary btn-sm">
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            New list
+          </button>
+        </div>
+
+        <!-- Templates -->
+        <section class="mb-8">
+          <h2 class="text-sm font-medium text-fg-muted mb-3">Start from a template</h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <button class="card flex items-center gap-3 hover:bg-surface-2 transition text-left">
+              <div class="w-9 h-9 rounded-md flex items-center justify-center" style="background: var(--accent-soft); color: var(--accent)">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 2 15.09 8.26 22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>
+              </div>
+              <div class="min-w-0">
+                <div class="text-sm font-medium">Best of 2025</div>
+                <div class="text-xs text-fg-muted">Top rated across types</div>
+              </div>
+            </button>
+            <button class="card flex items-center gap-3 hover:bg-surface-2 transition text-left">
+              <div class="w-9 h-9 rounded-md flex items-center justify-center" style="background: rgba(244,114,182,0.16); color: var(--type-anime)">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5"/></svg>
+              </div>
+              <div class="min-w-0">
+                <div class="text-sm font-medium">Watch with my partner</div>
+                <div class="text-xs text-fg-muted">2-collaborator template</div>
+              </div>
+            </button>
+            <button class="card flex items-center gap-3 hover:bg-surface-2 transition text-left">
+              <div class="w-9 h-9 rounded-md flex items-center justify-center" style="background: rgba(52,211,153,0.16); color: var(--status-completed)">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M20 6 9 17l-5-5"/></svg>
+              </div>
+              <div class="min-w-0">
+                <div class="text-sm font-medium">Comfort rewatches</div>
+                <div class="text-xs text-fg-muted">Re-watch shelf</div>
+              </div>
+            </button>
+            <button class="card flex items-center gap-3 hover:bg-surface-2 transition text-left">
+              <div class="w-9 h-9 rounded-md flex items-center justify-center text-fg-muted">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 5v14M5 12h14"/></svg>
+              </div>
+              <div class="min-w-0">
+                <div class="text-sm font-medium">Blank list</div>
+                <div class="text-xs text-fg-muted">Start from scratch</div>
+              </div>
+            </button>
+          </div>
+        </section>
+
+        <!-- Filter bar -->
+        <div class="flex items-center gap-2 mb-4">
+          <div class="relative flex-1 max-w-xs">
+            <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-fg-faint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="11" cy="11" r="7"/></svg>
+            <input class="input h-8 pl-8 pr-3" placeholder="Search lists…">
+          </div>
+          <button class="btn btn-secondary btn-sm">Sort: last item added</button>
+        </div>
+
+        <!-- Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+
+          <article class="card hover:bg-surface-2 transition cursor-pointer">
+            <div class="mosaic rounded-sm overflow-hidden mb-3">
+              <div style="background: linear-gradient(160deg, #f9a8d4, #500724)"></div>
+              <div style="background: linear-gradient(160deg, #93c5fd, #172554)"></div>
+              <div style="background: linear-gradient(160deg, #fbbf24, #78350f)"></div>
+              <div style="background: linear-gradient(160deg, #a7f3d0, #064e3b)"></div>
+            </div>
+            <div class="flex items-center gap-2 mb-1">
+              <h3 class="font-semibold truncate">Cinematic perfection</h3>
+              <span class="pill pill-meta">Public</span>
+            </div>
+            <p class="text-xs text-fg-muted mb-3 line-clamp-2">Films where every shot earns its place — slow, deliberate, immersive.</p>
+            <div class="flex items-center justify-between text-xs text-fg-faint">
+              <div class="flex items-center gap-2">
+                <div class="w-5 h-5 rounded-full bg-accent flex items-center justify-center text-[10px] text-white font-medium">L</div>
+                <span>12 items</span>
+              </div>
+              <span>Updated 2h ago</span>
+            </div>
+          </article>
+
+          <article class="card hover:bg-surface-2 transition cursor-pointer">
+            <div class="mosaic rounded-sm overflow-hidden mb-3">
+              <div style="background: linear-gradient(160deg, #fb923c, #7c2d12)"></div>
+              <div style="background: linear-gradient(160deg, #facc15, #422006)"></div>
+              <div style="background: linear-gradient(160deg, #84cc16, #1a2e05)"></div>
+              <div style="background: linear-gradient(160deg, #f43f5e, #4c0519)"></div>
+            </div>
+            <div class="flex items-center gap-2 mb-1">
+              <h3 class="font-semibold truncate">Best of 2024 (collab)</h3>
+              <span class="pill pill-accent">2 editors</span>
+            </div>
+            <p class="text-xs text-fg-muted mb-3 line-clamp-2">My top picks across every medium I tracked this year.</p>
+            <div class="flex items-center justify-between text-xs text-fg-faint">
+              <div class="flex items-center gap-2">
+                <div class="flex -space-x-1">
+                  <div class="w-5 h-5 rounded-full bg-accent flex items-center justify-center text-[10px] text-white border-2 border-surface-1 font-medium">L</div>
+                  <div class="w-5 h-5 rounded-full bg-pink-500 flex items-center justify-center text-[10px] text-white border-2 border-surface-1 font-medium">E</div>
+                </div>
+                <span>24 items</span>
+              </div>
+              <span>Updated yesterday</span>
+            </div>
+          </article>
+
+          <article class="card hover:bg-surface-2 transition cursor-pointer">
+            <div class="mosaic rounded-sm overflow-hidden mb-3">
+              <div style="background: linear-gradient(160deg, #c4b5fd, #3730a3)"></div>
+              <div style="background: linear-gradient(160deg, #fde68a, #a16207)"></div>
+              <div style="background: linear-gradient(160deg, #e0e7ff, #312e81)"></div>
+              <div style="background: linear-gradient(160deg, #fda4af, #881337)"></div>
+            </div>
+            <div class="flex items-center gap-2 mb-1">
+              <h3 class="font-semibold truncate">For a rainy Sunday</h3>
+              <span class="pill pill-meta">Private</span>
+            </div>
+            <p class="text-xs text-fg-muted mb-3 line-clamp-2">Slow movies. Audiobooks. Long manga arcs. Things you can sink in.</p>
+            <div class="flex items-center justify-between text-xs text-fg-faint">
+              <div class="flex items-center gap-2">
+                <div class="w-5 h-5 rounded-full bg-accent flex items-center justify-center text-[10px] text-white font-medium">L</div>
+                <span>18 items</span>
+              </div>
+              <span>Updated 3d ago</span>
+            </div>
+          </article>
+
+          <article class="card hover:bg-surface-2 transition cursor-pointer">
+            <div class="mosaic rounded-sm overflow-hidden mb-3">
+              <div style="background: linear-gradient(160deg, #a3e635, #365314)"></div>
+              <div style="background: linear-gradient(160deg, #34d399, #064e3b)"></div>
+              <div style="background: linear-gradient(160deg, #fbbf24, #78350f)"></div>
+              <div style="background: linear-gradient(160deg, #fb7185, #4c0519)"></div>
+            </div>
+            <div class="flex items-center gap-2 mb-1">
+              <h3 class="font-semibold truncate">Tabletop night</h3>
+              <span class="pill pill-meta">Public</span>
+            </div>
+            <p class="text-xs text-fg-muted mb-3 line-clamp-2">Board games I keep on the shelf for friends. Mostly 2-4 players, 60-90 min.</p>
+            <div class="flex items-center justify-between text-xs text-fg-faint">
+              <div class="flex items-center gap-2">
+                <div class="w-5 h-5 rounded-full bg-accent flex items-center justify-center text-[10px] text-white font-medium">L</div>
+                <span>9 items</span>
+              </div>
+              <span>Updated last week</span>
+            </div>
+          </article>
+
+          <article class="card hover:bg-surface-2 transition cursor-pointer">
+            <div class="mosaic rounded-sm overflow-hidden mb-3">
+              <div style="background: linear-gradient(160deg, #475569, #0f172a)"></div>
+              <div style="background: linear-gradient(160deg, #1e3a8a, #020617)"></div>
+              <div class="bg-surface-3 flex items-center justify-center text-fg-faint text-xs">+1</div>
+              <div class="bg-surface-3"></div>
+            </div>
+            <div class="flex items-center gap-2 mb-1">
+              <h3 class="font-semibold truncate">Buddy cops</h3>
+              <span class="pill pill-meta">Private</span>
+            </div>
+            <p class="text-xs text-fg-muted mb-3 line-clamp-2">A genre I'm working through — TV and movies, started Nov 2025.</p>
+            <div class="flex items-center justify-between text-xs text-fg-faint">
+              <div class="flex items-center gap-2">
+                <div class="w-5 h-5 rounded-full bg-accent flex items-center justify-center text-[10px] text-white font-medium">L</div>
+                <span>3 items</span>
+              </div>
+              <span>Updated 12d ago</span>
+            </div>
+          </article>
+
+          <button class="card border-dashed flex flex-col items-center justify-center text-center py-12 text-fg-muted hover:bg-surface-2 transition cursor-pointer">
+            <svg class="w-8 h-8 mb-2 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14"/></svg>
+            <span class="text-sm">Create a new list</span>
+          </button>
+
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en" data-theme="default">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendar — Yamtrack (redesign mock)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="_assets/tokens.css">
+  <style>
+    .day-cell { min-height: 96px; padding: 4px 6px; border-right: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 2px; }
+    .day-cell:nth-child(7n) { border-right: 0; }
+    .day-number { font-size: 12px; color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+    .day-cell.today .day-number { color: var(--accent); font-weight: 600; }
+    .day-cell.other-month { opacity: 0.4; }
+    .event-pill {
+      display: block; font-size: 11px; padding: 2px 6px; border-radius: 4px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      border-left: 2px solid currentColor;
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="flex min-h-screen">
+    <aside class="hidden lg:flex w-[220px] bg-surface-0 border-r-default flex-col h-screen sticky top-0 shrink-0">
+      <div class="h-14 px-4 flex items-center gap-2 border-b-default">
+        <div class="w-8 h-8 rounded-md bg-accent flex items-center justify-center font-bold text-white">Y</div>
+        <div class="font-semibold">Yamtrack</div>
+      </div>
+      <nav class="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+        <div>
+          <div class="px-3 mb-1 text-[11px] uppercase tracking-wider text-fg-faint">Library</div>
+          <a class="nav-item" href="home.html">Home</a>
+          <a class="nav-item type-tv" href="media-list-grid.html">TV shows</a>
+          <a class="nav-item type-movie" href="#">Movies</a>
+        </div>
+        <div>
+          <div class="px-3 mb-1 text-[11px] uppercase tracking-wider text-fg-faint">Tools</div>
+          <a class="nav-item active" href="#">Calendar<span class="ml-auto pill pill-accent text-[10px] px-1.5">3</span></a>
+          <a class="nav-item" href="lists.html">Lists</a>
+          <a class="nav-item" href="statistics.html">Stats</a>
+        </div>
+      </nav>
+    </aside>
+
+    <div class="flex-1 min-w-0 flex flex-col">
+      <header class="sticky top-0 z-30 h-14 bg-surface-0 border-b-default px-4 lg:px-6 flex items-center gap-3">
+        <div class="flex-1 max-w-xl mx-auto relative">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-faint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="11" cy="11" r="7"/></svg>
+          <input class="input pl-9 pr-16 h-9" placeholder="Search…">
+          <span class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1"><kbd>⌘</kbd><kbd>K</kbd></span>
+        </div>
+        <div class="w-7 h-7 rounded-full bg-accent flex items-center justify-center text-white text-xs font-semibold">L</div>
+      </header>
+
+      <main class="flex-1 px-4 lg:px-8 py-8 max-w-7xl w-full mx-auto">
+
+        <div class="flex items-end justify-between mb-6 flex-wrap gap-4">
+          <div>
+            <h1 class="text-2xl font-semibold">Calendar</h1>
+            <p class="text-sm text-fg-muted mt-0.5">Upcoming releases from your library · 12 events this month</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="btn btn-secondary btn-sm">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-9-9 9 9 0 0 1 9-9c4 0 7.5 2.5 8.5 6"/><path d="M21 4v6h-6"/></svg>
+              Fetch new
+            </button>
+            <button class="btn btn-secondary btn-sm">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              Subscribe (ICS)
+            </button>
+          </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="card flex items-center justify-between mb-4 py-2 px-3 flex-wrap gap-3">
+          <div class="flex items-center gap-2">
+            <div class="flex items-center bg-surface-2 rounded-sm p-0.5">
+              <button class="btn btn-icon btn-sm btn-ghost"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button>
+              <button class="px-3 h-7 text-sm font-medium">May 2026</button>
+              <button class="btn btn-icon btn-sm btn-ghost"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></button>
+            </div>
+            <button class="btn btn-ghost btn-sm">Today</button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <!-- type chips -->
+            <button class="pill pill-meta">All types</button>
+            <span class="pill" style="background: rgba(56,189,248,0.16); color: var(--type-tv)">TV</span>
+            <span class="pill" style="background: rgba(129,140,248,0.16); color: var(--type-movie)">Movies</span>
+            <span class="pill" style="background: rgba(244,114,182,0.16); color: var(--type-anime)">Anime</span>
+            <span class="pill" style="background: rgba(52,211,153,0.16); color: var(--type-game)">Games</span>
+          </div>
+
+          <div class="flex border border-default rounded-sm overflow-hidden">
+            <button class="btn btn-secondary btn-sm btn-icon rounded-none border-0 bg-surface-3" title="Month"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
+            <button class="btn btn-ghost btn-sm btn-icon rounded-none border-0" title="Agenda"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button>
+          </div>
+        </div>
+
+        <!-- Calendar grid -->
+        <div class="card" style="padding: 0">
+          <div class="grid grid-cols-7 border-b-default text-xs text-fg-faint">
+            <div class="px-3 py-2">Sun</div>
+            <div class="px-3 py-2">Mon</div>
+            <div class="px-3 py-2">Tue</div>
+            <div class="px-3 py-2">Wed</div>
+            <div class="px-3 py-2">Thu</div>
+            <div class="px-3 py-2">Fri</div>
+            <div class="px-3 py-2">Sat</div>
+          </div>
+          <div class="grid grid-cols-7">
+            <!-- week 1 -->
+            <div class="day-cell other-month"><div class="day-number">27</div></div>
+            <div class="day-cell other-month"><div class="day-number">28</div></div>
+            <div class="day-cell other-month"><div class="day-number">29</div></div>
+            <div class="day-cell other-month"><div class="day-number">30</div></div>
+            <div class="day-cell"><div class="day-number">1</div></div>
+            <div class="day-cell"><div class="day-number">2</div></div>
+            <div class="day-cell"><div class="day-number">3</div><div class="event-pill" style="color: var(--type-tv); background: rgba(56,189,248,0.10)">Slow Horses S04</div></div>
+            <!-- week 2 -->
+            <div class="day-cell"><div class="day-number">4</div></div>
+            <div class="day-cell"><div class="day-number">5</div></div>
+            <div class="day-cell"><div class="day-number">6</div><div class="event-pill" style="color: var(--type-anime); background: rgba(244,114,182,0.10)">Frieren E24</div></div>
+            <div class="day-cell"><div class="day-number">7</div><div class="event-pill" style="color: var(--type-tv); background: rgba(56,189,248,0.10)">The Bear S03</div></div>
+            <div class="day-cell"><div class="day-number">8</div></div>
+            <div class="day-cell"><div class="day-number">9</div></div>
+            <div class="day-cell"><div class="day-number">10</div><div class="event-pill" style="color: var(--type-tv); background: rgba(56,189,248,0.10)">Slow Horses S04E02</div><div class="event-pill" style="color: var(--type-anime); background: rgba(244,114,182,0.10)">Frieren E25</div></div>
+            <!-- week 3 -->
+            <div class="day-cell"><div class="day-number">11</div></div>
+            <div class="day-cell"><div class="day-number">12</div></div>
+            <div class="day-cell"><div class="day-number">13</div><div class="event-pill" style="color: var(--type-anime); background: rgba(244,114,182,0.10)">Frieren E26</div></div>
+            <div class="day-cell"><div class="day-number">14</div></div>
+            <div class="day-cell"><div class="day-number">15</div><div class="event-pill" style="color: var(--type-tv); background: rgba(56,189,248,0.10)">The Bear S03E05</div></div>
+            <div class="day-cell"><div class="day-number">16</div></div>
+            <div class="day-cell"><div class="day-number">17</div><div class="event-pill" style="color: var(--type-tv); background: rgba(56,189,248,0.10)">Slow Horses S04E03</div></div>
+            <!-- week 4 -->
+            <div class="day-cell"><div class="day-number">18</div></div>
+            <div class="day-cell"><div class="day-number">19</div></div>
+            <div class="day-cell"><div class="day-number">20</div><div class="event-pill" style="color: var(--type-anime); background: rgba(244,114,182,0.10)">Frieren E27</div></div>
+            <div class="day-cell"><div class="day-number">21</div></div>
+            <div class="day-cell today" style="background: var(--accent-soft)"><div class="day-number">22</div><div class="event-pill" style="color: var(--type-tv); background: rgba(56,189,248,0.18)">The Bear · finale</div><div class="event-pill" style="color: var(--type-anime); background: rgba(244,114,182,0.18)">Frieren · finale</div><div class="event-pill" style="color: var(--type-movie); background: rgba(129,140,248,0.18)">Furiosa · theaters</div></div>
+            <div class="day-cell"><div class="day-number">23</div></div>
+            <div class="day-cell"><div class="day-number">24</div><div class="event-pill" style="color: var(--type-tv); background: rgba(56,189,248,0.10)">Slow Horses S04E04</div></div>
+            <!-- week 5 -->
+            <div class="day-cell"><div class="day-number">25</div></div>
+            <div class="day-cell"><div class="day-number">26</div></div>
+            <div class="day-cell"><div class="day-number">27</div><div class="event-pill" style="color: var(--type-game); background: rgba(52,211,153,0.10)">Hades II · EA</div></div>
+            <div class="day-cell"><div class="day-number">28</div></div>
+            <div class="day-cell"><div class="day-number">29</div></div>
+            <div class="day-cell"><div class="day-number">30</div></div>
+            <div class="day-cell"><div class="day-number">31</div></div>
+          </div>
+        </div>
+
+        <!-- ICS panel -->
+        <div class="card mt-6">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-9 h-9 rounded-md flex items-center justify-center" style="background: var(--accent-soft); color: var(--accent)">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-2 2"/><path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l2-2"/></svg>
+            </div>
+            <div class="flex-1">
+              <h3 class="font-semibold">Subscribe to this calendar</h3>
+              <p class="text-xs text-fg-muted">Add this URL to Apple Calendar, Google Calendar, Outlook, or Fastmail to keep your releases synced.</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 bg-surface-2 rounded-sm p-2 font-mono text-xs text-fg-muted">
+            <span class="truncate flex-1">https://yamtrack.example.com/events/ical/u_2d8f1c…</span>
+            <button class="btn btn-sm btn-secondary">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copy
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
