@@ -3273,6 +3273,10 @@
   --grid-min: 220px;
   --card-pad: 16px;
 }
+html, body {
+  overflow-x: hidden;
+  overflow-x: clip;
+}
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

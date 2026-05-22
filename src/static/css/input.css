@@ -92,6 +92,18 @@
 [data-density="comfortable"] { --grid-min: 180px; --card-pad: 12px; }
 [data-density="cozy"]        { --grid-min: 220px; --card-pad: 16px; }
 
+/* Prevent horizontal overflow at the document level. The Up-next rail, the
+ * detail-page hero, and the section-tabs nav all use -mx-4 / -mx-8 to bleed
+ * to the page edges; without a body-level guard those bleed past the viewport
+ * on mobile and iOS Safari starts horizontal-panning. fixed-position elements
+ * (bottom nav, mobile sticky CTA) then appear to "scroll off" the visible
+ * area on iOS because they anchor to the layout viewport, not the visual one.
+ *
+ * `overflow-x: clip` is the right primitive (it doesn't create a scroll
+ * container so sticky descendants keep working); we declare `hidden` first
+ * as a fallback for older iOS Safari / Chrome that don't grok `clip`. */
+html, body { overflow-x: hidden; overflow-x: clip; }
+
 /* Reduced-motion respect (overrides every animation/transition declared
  * with the var(--dur-*) tokens above). */
 @media (prefers-reduced-motion: reduce) {
