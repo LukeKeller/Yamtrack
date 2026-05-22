@@ -112,12 +112,68 @@ def home(request):
     context = {
         "home_sections": home_sections,
         "up_next": up_next,
+        "recent_activity": _recent_activity(request.user, limit=8),
         "current_sort": sort_by,
         "sort_choices": HomeSortChoices.choices,
         "items_limit": items_limit,
         **build_calendar_context(request.user),
     }
     return render(request, "app/home.html", context)
+
+
+def _recent_activity(user, *, limit=8):
+    """Recent simple_history rows across every tracked media type.
+
+    Scans each HistoricalRecord table for the user's last `limit` rows,
+    over-fetches to allow for deleted media, then hydrates the surviving rows
+    with their live Item (poster + title). Skips deletes — they're rare and
+    showing them without the item info is noisy.
+
+    Cheap enough to run on every home render for a single-user homelab; if it
+    shows up in a profile we can cache it per-user with a short TTL.
+    """
+    rows = []
+    common_fields = ("id", "history_type", "history_date")
+    for name in BasicMedia.objects.get_historical_models():
+        model = apps.get_model("app", name)
+        # `status` is on most but not all subclasses (Episode has no status of
+        # its own), so probe per-model and skip the field when absent.
+        field_names = {f.name for f in model._meta.fields}
+        fields = common_fields + (("status",) if "status" in field_names else ())
+        recent = (
+            model.objects.filter(history_user_id=user.id)
+            .order_by("-history_date")
+            .values(*fields)[:limit]
+        )
+        live_model_name = name.replace("historical", "")
+        for r in recent:
+            r.setdefault("status", None)
+            r["live_model_name"] = live_model_name
+            rows.append(r)
+
+    rows.sort(key=lambda r: r["history_date"], reverse=True)
+    rows = rows[: limit * 3]  # over-fetch; some media may be gone
+
+    result = []
+    for r in rows:
+        if r["history_type"] == "-":
+            continue
+        try:
+            live_model = apps.get_model("app", r["live_model_name"])
+            media = (
+                live_model.objects.select_related("item")
+                .filter(id=r["id"], user_id=user.id)
+                .first()
+            )
+        except LookupError:
+            continue
+        if not media:
+            continue
+        r["item"] = media.item
+        result.append(r)
+        if len(result) >= limit:
+            break
+    return result
 
 
 @require_POST
