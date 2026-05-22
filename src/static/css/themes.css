@@ -1,20 +1,49 @@
 /* Theme palette overrides.
  *
- * Yamtrack hardcodes its dark slate palette directly in Tailwind utility
- * classes throughout the templates (e.g. `bg-[#2a2f35]`). Rather than refactor
- * every template to use CSS variables, this file lifts the most common
- * hex tokens onto `html[data-theme="..."]` overrides — specificity (0,2,0)
- * beats Tailwind's generated rule (0,1,0) so no !important is needed.
+ * Yamtrack uses two parallel theming systems during the Phase 0-7 redesign:
  *
- * Mapping per theme tries to keep the visual hierarchy of the original
- * palette intact (sidebar darker than body, hover slightly lighter, card
- * surfaces lighter still, inputs lighter still, selected lighter still).
+ * 1. LEGACY (hex-class overrides). Existing templates hardcode the slate
+ *    palette as Tailwind utility classes (e.g. `bg-[#2a2f35]`). Per-theme
+ *    blocks below override each escaped-class with the theme's equivalent
+ *    color. Specificity (0,2,0) beats Tailwind's (0,1,0) so no !important.
+ *    These overrides will disappear once Phases 1-7 migrate templates to
+ *    semantic utilities.
+ *
+ * 2. NEW (CSS-variable overrides). Each theme block also redefines the
+ *    `--color-*` tokens declared in input.css. Templates and components
+ *    that use the new utilities (`bg-surface-1`, `text-fg-muted`, etc.)
+ *    pick up the theme's values automatically. This is the path forward.
+ *
+ * Both blocks per theme keep the visual hierarchy of the original palette
+ * intact: sidebar darker than canvas, hover one step lighter, cards lighter
+ * still, inputs lighter still, focused/active row lightest.
  */
 
 /* =========================================================================
  * Dracula
  * https://draculatheme.com/
  * ========================================================================= */
+
+html[data-theme="dracula"] {
+  /* New semantic tokens (Phase 0+) */
+  --color-canvas:    #282a36;
+  --color-surface-0: #21222c;
+  --color-surface-1: #2d2f3d;
+  --color-surface-2: #383a47;
+  --color-surface-3: #44475a;
+  --color-surface-4: #6272a4;
+  --color-fg:        #f8f8f2;
+  --color-fg-muted:  #c7c8d1;
+  --color-fg-faint:  #6272a4;
+  --color-accent:        #bd93f9;
+  --color-accent-strong: #a679f0;
+  --color-accent-hover:  #9061e8;
+  --color-accent-soft:   rgb(189 147 249 / 0.16);
+  --color-border-subtle:  rgb(255 255 255 / 0.05);
+  --color-border-default: rgb(255 255 255 / 0.09);
+  --color-border-strong:  rgb(255 255 255 / 0.15);
+}
+
 html[data-theme="dracula"] { background-color: #282a36; }
 html[data-theme="dracula"] body                  { background-color: #282a36; }
 html[data-theme="dracula"] .bg-\[\#1a1d20\]      { background-color: #21222c; }
@@ -43,6 +72,24 @@ html[data-theme="dracula"] .border-\[\#39404b\]  { border-color: #44475a; }
  * Catppuccin Mocha (darkest catppuccin flavor)
  * https://github.com/catppuccin/catppuccin
  * ========================================================================= */
+
+html[data-theme="catppuccin-mocha"] {
+  --color-canvas:    #1e1e2e;
+  --color-surface-0: #181825;
+  --color-surface-1: #11111b;
+  --color-surface-2: #313244;
+  --color-surface-3: #45475a;
+  --color-surface-4: #585b70;
+  --color-fg:        #cdd6f4;
+  --color-fg-muted:  #a6adc8;
+  --color-fg-faint:  #7f849c;
+  --color-accent:        #cba6f7;
+  --color-accent-strong: #b489e5;
+  --color-accent-hover:  #9b71d6;
+  --color-accent-soft:   rgb(203 166 247 / 0.16);
+  --color-border-default: rgb(255 255 255 / 0.08);
+}
+
 html[data-theme="catppuccin-mocha"] { background-color: #1e1e2e; }
 html[data-theme="catppuccin-mocha"] body                 { background-color: #1e1e2e; }
 html[data-theme="catppuccin-mocha"] .bg-\[\#1a1d20\]     { background-color: #181825; }
@@ -70,6 +117,23 @@ html[data-theme="catppuccin-mocha"] .border-\[\#39404b\] { border-color: #45475a
 /* =========================================================================
  * Catppuccin Macchiato (slightly lighter than Mocha)
  * ========================================================================= */
+
+html[data-theme="catppuccin-macchiato"] {
+  --color-canvas:    #24273a;
+  --color-surface-0: #1e2030;
+  --color-surface-1: #181926;
+  --color-surface-2: #363a4f;
+  --color-surface-3: #494d64;
+  --color-surface-4: #5b6078;
+  --color-fg:        #cad3f5;
+  --color-fg-muted:  #b8c0e0;
+  --color-fg-faint:  #8087a2;
+  --color-accent:        #c6a0f6;
+  --color-accent-strong: #b083e5;
+  --color-accent-hover:  #966fd6;
+  --color-accent-soft:   rgb(198 160 246 / 0.16);
+}
+
 html[data-theme="catppuccin-macchiato"] { background-color: #24273a; }
 html[data-theme="catppuccin-macchiato"] body                 { background-color: #24273a; }
 html[data-theme="catppuccin-macchiato"] .bg-\[\#1a1d20\]     { background-color: #1e2030; }
@@ -97,6 +161,23 @@ html[data-theme="catppuccin-macchiato"] .border-\[\#39404b\] { border-color: #49
 /* =========================================================================
  * Catppuccin Frappé (lighter still — closer to default slate)
  * ========================================================================= */
+
+html[data-theme="catppuccin-frappe"] {
+  --color-canvas:    #303446;
+  --color-surface-0: #292c3c;
+  --color-surface-1: #232634;
+  --color-surface-2: #414559;
+  --color-surface-3: #51576d;
+  --color-surface-4: #626880;
+  --color-fg:        #c6d0f5;
+  --color-fg-muted:  #b5bfe2;
+  --color-fg-faint:  #838ba7;
+  --color-accent:        #ca9ee6;
+  --color-accent-strong: #b486d4;
+  --color-accent-hover:  #9c6dc4;
+  --color-accent-soft:   rgb(202 158 230 / 0.16);
+}
+
 html[data-theme="catppuccin-frappe"] { background-color: #303446; }
 html[data-theme="catppuccin-frappe"] body                 { background-color: #303446; }
 html[data-theme="catppuccin-frappe"] .bg-\[\#1a1d20\]     { background-color: #292c3c; }
@@ -125,6 +206,23 @@ html[data-theme="catppuccin-frappe"] .border-\[\#39404b\] { border-color: #51576
  * Nord
  * https://www.nordtheme.com/
  * ========================================================================= */
+
+html[data-theme="nord"] {
+  --color-canvas:    #2e3440;
+  --color-surface-0: #242933;
+  --color-surface-1: #292f3a;
+  --color-surface-2: #3b4252;
+  --color-surface-3: #434c5e;
+  --color-surface-4: #4c566a;
+  --color-fg:        #eceff4;
+  --color-fg-muted:  #d8dee9;
+  --color-fg-faint:  #81a1c1;
+  --color-accent:        #88c0d0;
+  --color-accent-strong: #5e81ac;
+  --color-accent-hover:  #4f6f96;
+  --color-accent-soft:   rgb(94 129 172 / 0.20);
+}
+
 html[data-theme="nord"] { background-color: #2e3440; }
 html[data-theme="nord"] body                 { background-color: #2e3440; }
 html[data-theme="nord"] .bg-\[\#1a1d20\]     { background-color: #242933; }
@@ -153,6 +251,23 @@ html[data-theme="nord"] .border-\[\#39404b\] { border-color: #434c5e; }
  * Gruvbox Dark
  * https://github.com/morhetz/gruvbox
  * ========================================================================= */
+
+html[data-theme="gruvbox-dark"] {
+  --color-canvas:    #282828;
+  --color-surface-0: #1d2021;
+  --color-surface-1: #32302f;
+  --color-surface-2: #3c3836;
+  --color-surface-3: #504945;
+  --color-surface-4: #665c54;
+  --color-fg:        #ebdbb2;
+  --color-fg-muted:  #d5c4a1;
+  --color-fg-faint:  #928374;
+  --color-accent:        #d79921;
+  --color-accent-strong: #bf7c0c;
+  --color-accent-hover:  #a86a09;
+  --color-accent-soft:   rgb(215 153 33 / 0.18);
+}
+
 html[data-theme="gruvbox-dark"] { background-color: #282828; }
 html[data-theme="gruvbox-dark"] body                 { background-color: #282828; }
 html[data-theme="gruvbox-dark"] .bg-\[\#1a1d20\]     { background-color: #1d2021; }
@@ -181,6 +296,23 @@ html[data-theme="gruvbox-dark"] .border-\[\#39404b\] { border-color: #504945; }
  * Tokyo Night
  * https://github.com/folke/tokyonight.nvim
  * ========================================================================= */
+
+html[data-theme="tokyo-night"] {
+  --color-canvas:    #1a1b26;
+  --color-surface-0: #16161e;
+  --color-surface-1: #1f2335;
+  --color-surface-2: #292e42;
+  --color-surface-3: #3b4261;
+  --color-surface-4: #414868;
+  --color-fg:        #c0caf5;
+  --color-fg-muted:  #a9b1d6;
+  --color-fg-faint:  #565f89;
+  --color-accent:        #7aa2f7;
+  --color-accent-strong: #5e89e0;
+  --color-accent-hover:  #4775c8;
+  --color-accent-soft:   rgb(122 162 247 / 0.16);
+}
+
 html[data-theme="tokyo-night"] { background-color: #1a1b26; }
 html[data-theme="tokyo-night"] body                 { background-color: #1a1b26; }
 html[data-theme="tokyo-night"] .bg-\[\#1a1d20\]     { background-color: #16161e; }

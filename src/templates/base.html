@@ -4,7 +4,8 @@
 <!DOCTYPE html>
 <html lang="en"
       class="scheme-dark bg-[#212529]"
-      data-theme="{% if request.user.is_authenticated %}{{ request.user.theme|default:'default' }}{% else %}default{% endif %}">
+      data-theme="{% if request.user.is_authenticated %}{{ request.user.theme|default:'default' }}{% else %}default{% endif %}"
+      data-density="comfortable">
   <head>
     {# Required meta tags #}
     <meta charset="UTF-8">

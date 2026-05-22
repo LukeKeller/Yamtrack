@@ -2,6 +2,109 @@
 
 @theme {
   --breakpoint-xs: 30rem;
+
+  /* ==========================================================================
+   * Yamtrack design tokens (Phase 0 of the redesign — see
+   * docs/ui-ux-redesign/03-design-system.md).
+   *
+   * Tokens declared here become Tailwind utilities (e.g. bg-surface-1,
+   * text-fg-muted, border-default). Per-theme overrides live in
+   * themes.css and re-declare the same variables.
+   *
+   * Adding/removing a token here affects every page; renaming requires a
+   * template sweep. Values are intentionally hex / rgb() so the Tailwind
+   * compiler treats them as plain colors.
+   * ========================================================================== */
+
+  /* Surfaces — slate palette steps, near-black to mid-elevation */
+  --color-canvas:    #0d0f12;
+  --color-surface-0: #14171c;
+  --color-surface-1: #1c2027;
+  --color-surface-2: #252a33;
+  --color-surface-3: #2f3540;
+  --color-surface-4: #3a414e;
+
+  /* Foreground (text) */
+  --color-fg:          #ecedf0;
+  --color-fg-muted:    #a4abb6;
+  --color-fg-faint:    #6b7383;
+  --color-fg-disabled: #4a5163;
+
+  /* Brand accent (indigo) */
+  --color-accent:        #818cf8;
+  --color-accent-strong: #6366f1;
+  --color-accent-hover:  #4f46e5;
+  --color-accent-soft:   rgb(99 102 241 / 0.16);
+
+  /* Status — one hue per state, used as pill fg/bg via -soft variants */
+  --color-status-completed:      #34d399;
+  --color-status-completed-soft: rgb(52 211 153 / 0.14);
+  --color-status-in-progress:    #60a5fa;
+  --color-status-in-progress-soft: rgb(96 165 250 / 0.14);
+  --color-status-planning:       #a5b4fc;
+  --color-status-planning-soft:  rgb(165 180 252 / 0.14);
+  --color-status-paused:         #fbbf24;
+  --color-status-paused-soft:    rgb(251 191 36 / 0.14);
+  --color-status-dropped:        #fb7185;
+  --color-status-dropped-soft:   rgb(251 113 133 / 0.14);
+
+  /* Media-type accents — decorative, never a fill */
+  --color-type-tv:        #38bdf8;
+  --color-type-movie:     #818cf8;
+  --color-type-anime:     #f472b6;
+  --color-type-manga:     #c084fc;
+  --color-type-game:      #34d399;
+  --color-type-book:      #fbbf24;
+  --color-type-comic:     #fb923c;
+  --color-type-boardgame: #a3e635;
+  --color-type-record:    #fb7185;
+
+  /* Borders & dividers — semi-transparent so they ride any surface */
+  --color-border-subtle:  rgb(255 255 255 / 0.04);
+  --color-border-default: rgb(255 255 255 / 0.08);
+  --color-border-strong:  rgb(255 255 255 / 0.14);
+}
+
+/* ============================================================================
+ * Non-color tokens (CSS variables only — not Tailwind utilities).
+ * Use via var(...) or arbitrary values in templates: shadow-[var(--shadow-card)]
+ * ========================================================================== */
+
+:root {
+  /* Elevation */
+  --shadow-card:   0 1px 2px rgb(0 0 0 / 0.25);
+  --shadow-elev-1: 0 2px 6px rgb(0 0 0 / 0.30);
+  --shadow-elev-2: 0 8px 24px rgb(0 0 0 / 0.45);
+
+  /* Motion */
+  --ease:        cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast:    120ms;
+  --dur-base:    180ms;
+  --dur-slow:    280ms;
+
+  /* Density (driven by [data-density] on <html>) */
+  --grid-min: 180px;
+  --card-pad: 12px;
+}
+
+[data-density="compact"]     { --grid-min: 140px; --card-pad: 8px;  }
+[data-density="comfortable"] { --grid-min: 180px; --card-pad: 12px; }
+[data-density="cozy"]        { --grid-min: 220px; --card-pad: 16px; }
+
+/* Reduced-motion respect (overrides every animation/transition declared
+ * with the var(--dur-*) tokens above). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Shimmer keyframes used by .skeleton in component templates (Phase 1+). */
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(100%);  }
 }
 
 [x-cloak] {
