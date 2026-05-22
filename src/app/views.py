@@ -90,8 +90,28 @@ def home(request):
             },
         )
 
+    # "Up next" rail — flatten the in-progress media types into a single list
+    # sorted by the most-recently-progressed-on item, limited so the rail stays
+    # one horizontal scroll on desktop.
+    up_next = []
+    in_progress = next(
+        (s for s in home_sections if s["key"] == Status.IN_PROGRESS.value),
+        None,
+    )
+    if in_progress:
+        for info in in_progress["media_types"].values():
+            up_next.extend(info["items"])
+        up_next.sort(
+            key=lambda m: (
+                getattr(m, "progressed_at", None) or getattr(m, "created_at", None)
+            ),
+            reverse=True,
+        )
+        up_next = up_next[:12]
+
     context = {
         "home_sections": home_sections,
+        "up_next": up_next,
         "current_sort": sort_by,
         "sort_choices": HomeSortChoices.choices,
         "items_limit": items_limit,

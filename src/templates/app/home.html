@@ -55,6 +55,42 @@
       </div>
     </header>
 
+    {% if up_next %}
+      <section>
+        <div class="flex items-end justify-between mb-3">
+          <div>
+            <h2 class="text-lg font-semibold">Up next</h2>
+            <p class="text-sm text-fg-muted">Pick up where you left off</p>
+          </div>
+        </div>
+        <div class="flex gap-3 overflow-x-auto no-scrollbar -mx-4 lg:-mx-8 px-4 lg:px-8 pb-2 snap-x snap-mandatory">
+          {% for m in up_next %}
+            <a href="{{ m.item|media_url }}"
+               class="card snap-start shrink-0 w-72 flex gap-3 items-center hover:bg-surface-2 transition-colors">
+              <div class="w-12 h-16 rounded-sm overflow-hidden bg-surface-2 shrink-0">
+                <img alt="{{ m.item }}"
+                     class="lazyload w-full h-full {% if m.item.image != IMG_NONE %}object-cover{% endif %}"
+                     data-src="{{ m.item.image }}"
+                     src="{{ IMG_NONE }}">
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-1.5 text-[10px] text-fg-faint uppercase tracking-wider mb-0.5">
+                  <span class="status-dot status-dot-in-progress"></span>
+                  <span class="truncate">{{ m.item.media_type|media_type_readable }}</span>
+                </div>
+                <div class="text-sm font-semibold truncate">{{ m.item }}</div>
+                <div class="text-xs text-fg-muted truncate">
+                  {{ m.formatted_progress }}
+                  {% if m.max_progress %}/ {{ m.max_progress }}{% endif %}
+                  {% if m.item.media_type != MediaTypes.MOVIE.value %}{{ m.item.media_type|long_unit|lower }}{{ m.progress|pluralize }}{% endif %}
+                </div>
+              </div>
+            </a>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+
     {% include "events/components/calendar_card.html" %}
 
     <div class="space-y-15">
