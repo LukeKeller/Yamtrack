@@ -765,6 +765,9 @@
   .max-h-\[70svh\] {
     max-height: 70svh;
   }
+  .max-h-\[80svh\] {
+    max-height: 80svh;
+  }
   .max-h-\[90svh\] {
     max-height: 90svh;
   }
@@ -923,6 +926,9 @@
   }
   .max-w-\[calc\(100svw-4rem\)\] {
     max-width: calc(100svw - 4rem);
+  }
+  .max-w-\[calc\(100vw-2rem\)\] {
+    max-width: calc(100vw - 2rem);
   }
   .max-w-md {
     max-width: var(--container-md);
@@ -1399,6 +1405,9 @@
   .border-dashed {
     --tw-border-style: dashed;
     border-style: dashed;
+  }
+  .border-\[color\:var\(--color-border-subtle\)\] {
+    border-color: var(--color-border-subtle);
   }
   .border-accent {
     border-color: var(--color-accent);

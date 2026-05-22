@@ -2,11 +2,12 @@
 
 {# Track Episode Modal #}
 <div x-show="trackOpen"
+     x-cloak
      @keydown.escape.window="trackOpen = false"
-     class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-  <div class="w-[400px] max-h-[90vh] px-4 md:px-0 relative z-60"
+     class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+  <div class="w-[400px] max-w-[calc(100vw-2rem)] max-h-[90vh] px-4 md:px-0 relative z-60"
        @click.outside="trackOpen = false">
-    <div class="bg-surface-1 p-6 rounded-lg max-h-[70svh] overflow-y-auto">
+    <div class="bg-surface-1 p-6 rounded-lg max-h-[80svh] overflow-y-auto shadow-2xl border border-[color:var(--color-border-subtle)]">
 
       {# Modal Header #}
       <div class="flex items-center justify-between mb-4">
@@ -78,7 +79,6 @@
             x-data="{
               inputDateTime: '{% if TRACK_TIME %}{% now "Y-m-d\TH:i" %}{% else %}{% now "Y-m-d" %}{% endif %}',
               inputType: '{% if TRACK_TIME %}datetime-local{% else %}date{% endif %}',
-              dropdownOpen: false,
               pointerOnPickerIcon: false
             }">
         {% csrf_token %}
@@ -102,62 +102,33 @@
                  x-model="inputDateTime">
         </div>
 
-        {# Submit Area #}
-        <div class="mt-6 flex items-center justify-end gap-3">
-          <div class="relative inline-flex shadow-sm rounded-md"
-               @click.outside="dropdownOpen = false">
-
-            {# Main Button #}
-            <button type="submit"
-                    class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-l-md transition duration-300 cursor-pointer font-medium"
-                    title="Add watched entry with current settings">Add watch</button>
-
-            {# Dropdown Toggle #}
+        {# Quick-fill chips — always visible so each option (incl. air date) is one click. #}
+        <div class="flex flex-wrap gap-2 mt-3">
+          <button type="button"
+                  @click="inputDateTime = '{% if TRACK_TIME %}{% now "Y-m-d\TH:i" %}{% else %}{% now "Y-m-d" %}{% endif %}'"
+                  class="btn btn-sm btn-secondary"
+                  title="Fills in the current date and time">Now</button>
+          {% if episode.runtime_minutes %}
             <button type="button"
-                    @click="dropdownOpen = !dropdownOpen"
-                    :style="dropdownOpen ? 'background-color: #4338ca;' : 'background-color: #4f46e5;'"
-                    class="px-2 py-2 text-white rounded-r-md border-l border-indigo-500 transition duration-300 cursor-pointer flex items-center justify-center">
-              <svg class="w-4 h-4 transition-transform duration-200"
-                   :class="{'rotate-180': dropdownOpen}"
-                   fill="none"
-                   stroke="currentColor"
-                   viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
-              </svg>
+                    @click="inputDateTime = '{{ finish_datetime|escapejs }}'"
+                    class="btn btn-sm btn-secondary"
+                    title="Fills in the date and time the episode will be finished if started now">
+              End time
             </button>
+          {% endif %}
+          {% if episode.air_date %}
+            <button type="button"
+                    @click="inputDateTime = '{% if TRACK_TIME %}{{ episode.air_date|escapejs }}T{% now "H:i" %}{% else %}{{ episode.air_date|escapejs }}{% endif %}'"
+                    class="btn btn-sm btn-secondary"
+                    title="Fills in the episode's original air date">Air date</button>
+          {% endif %}
+        </div>
 
-            {# Dropdown Menu #}
-            <div x-show="dropdownOpen"
-                 style="display: none"
-                 x-transition
-                 class="absolute right-0 bottom-full mb-2 w-48 bg-surface-1 border border-gray-600 rounded-md shadow-2xl overflow-hidden">
-
-              {# Option A - Current Time #}
-              <button type="button"
-                      @click="inputDateTime = '{% if TRACK_TIME %}{% now "Y-m-d\TH:i" %}{% else %}{% now "Y-m-d" %}{% endif %}'; dropdownOpen = false"
-                      class="w-full text-left px-4 py-3 text-sm text-fg hover:bg-indigo-600 hover:text-white transition-colors cursor-pointer"
-                      title="Fills in the current date and time">Fill in current time</button>
-
-              {% if episode.runtime_minutes %}
-                {# Option B - Finish Time #}
-                <button type="button"
-                        @click="inputDateTime = '{{ finish_datetime|escapejs }}'; dropdownOpen = false"
-                        class="w-full text-left px-4 py-3 text-sm text-fg hover:bg-indigo-600 hover:text-white transition-colors cursor-pointer"
-                        title="Fills in the date and time the episode will be finished if started now">
-                  Fill in end time
-                </button>
-              {% endif %}
-
-              {# Option C - Air Date #}
-              {% if episode.air_date %}
-                <button type="button"
-                        @click="inputDateTime = '{% if TRACK_TIME %}{{ episode.air_date|escapejs }}T{% now "H:i" %}{% else %}{{ episode.air_date|escapejs }}{% endif %}'; dropdownOpen = false"
-                        class="w-full text-left px-4 py-3 text-sm text-fg hover:bg-indigo-600 hover:text-white transition-colors cursor-pointer"
-                        title="Fills in the air date of the episode, if available">Fill in air date</button>
-              {% endif %}
-            </div>
-
-          </div>
+        {# Submit Area #}
+        <div class="mt-6 flex items-center justify-end">
+          <button type="submit"
+                  class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition duration-300 cursor-pointer font-medium"
+                  title="Add watched entry with current settings">Add watch</button>
         </div>
       </form>
       {# djlint:on #}
