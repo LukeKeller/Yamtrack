@@ -17,7 +17,7 @@ License is **AGPL-3.0** — relevant if you redistribute a modified Docker image
 - **django-allauth** (account + 100+ social providers, OIDC)
 - **django-simple-history** (audit trail on every `Media` subclass — see `bulk_create_with_history` rule below)
 - **django-model-utils** (`FieldTracker`, `MonitorField` for `progressed_at`)
-- **Tailwind CSS v4** (`static/css/input.css` → `tailwind.css`, watched by the local CLI)
+- **Tailwind CSS v4** (`static/css/input.css` → `static/css/main.css`, compiled output is committed and served by collectstatic; rebuilt by `./build-css.sh` and by the `tailwind-build` pre-commit hook whenever `input.css`, `themes.css`, any template, or class-emitting Python changes. **Neither the Dockerfile nor the YunoHost installer re-runs Tailwind** — if `main.css` falls out of sync with `input.css` the deployed instance loads CSS that doesn't define your new utility classes, which is harder to diagnose than it sounds. Let the hook run, or run `./build-css.sh` manually before pushing.)
 - **HTMX + django-widget-tweaks + django-select2** for interactive UI without a JS framework
 - **pytest-django** + **pytest-playwright** (Playwright is installed in CI)
 - **ruff** (lint + format) and **djlint** (HTML lint) wired into pre-commit
@@ -153,7 +153,10 @@ python manage.py migrate
 # Run all three in parallel
 python manage.py runserver &
 celery -A config worker --beat --scheduler django --loglevel DEBUG &
-tailwindcss -i ./static/css/input.css -o ./static/css/tailwind.css --watch
+# Tailwind watch — keeps src/static/css/main.css fresh while you edit
+# templates / input.css. The pre-commit hook rebuilds on commit too;
+# this is just for live-reload during dev.
+cd .. && npx tailwindcss -i src/static/css/input.css -o src/static/css/main.css --watch
 ```
 
 App at http://localhost:8000.

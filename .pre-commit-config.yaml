@@ -36,3 +36,14 @@ repos:
         language: system
         types: [html]
         require_serial: true
+      - id: tailwind-build
+        name: tailwind-build
+        # Rebuilds src/static/css/main.css from input.css + the template tree.
+        # main.css is a checked-in build artifact (the Dockerfile and the
+        # YunoHost installer both serve it as-is via collectstatic); this hook
+        # makes sure it stays in lockstep with input.css and the class names
+        # used in templates. See build-css.sh for details.
+        entry: ./build-css.sh
+        language: system
+        pass_filenames: false
+        files: ^src/(static/css/.*\.css|templates/.*\.html|app/config\.py|app/templatetags/.*\.py)$
