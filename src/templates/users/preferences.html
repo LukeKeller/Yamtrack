@@ -190,23 +190,74 @@
         </div>
       </div>
 
-      {# Theme #}
+      {# Theme — swatch grid (mocks/settings.html) #}
       <div class="mb-5">
-        <div class="flex items-center justify-between p-3 bg-surface-2 rounded-md">
-          <div class="flex-1">
-            <div class="flex items-center text-fg mb-1">
-              {% include "app/icons/star.svg" with classes="w-5 h-5 mr-2" %}
-              <span class="text-sm font-medium">Theme</span>
-            </div>
-            <p class="text-xs text-fg-muted ml-7">Color theme for the web UI. Takes effect on next page load.</p>
+        <div class="p-3 bg-surface-2 rounded-md">
+          <div class="flex items-center text-fg mb-1">
+            {% include "app/icons/star.svg" with classes="w-5 h-5 mr-2" %}
+            <span class="text-sm font-medium">Theme</span>
           </div>
-          <select name="theme"
-                  class="ml-4 p-2 bg-surface-2 rounded-md text-white text-sm border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+          <p class="text-xs text-fg-muted ml-7 mb-3">Color theme for the web UI. Takes effect on next page load.</p>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
             {% for choice in theme_choices %}
-              <option value="{{ choice.0 }}"
-                      {% if user.theme == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+              <label class="block cursor-pointer rounded-md p-2 transition-colors hover:bg-surface-3 {% if user.theme == choice.0 %}ring-2 ring-accent bg-surface-3{% endif %}">
+                <input type="radio"
+                       name="theme"
+                       value="{{ choice.0 }}"
+                       {% if user.theme == choice.0 %}checked{% endif %}
+                       class="sr-only">
+                <span class="flex gap-1 mb-1.5">
+                  {% if choice.0 == "default" %}
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #0d0f12"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #1c2027"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #6366f1"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #34d399"></span>
+                  {% elif choice.0 == "dracula" %}
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #181a24"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #282a36"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #bd93f9"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #50fa7b"></span>
+                  {% elif choice.0 == "catppuccin-mocha" %}
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #11111b"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #1e1e2e"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #cba6f7"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #a6e3a1"></span>
+                  {% elif choice.0 == "catppuccin-macchiato" %}
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #181926"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #24273a"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #c6a0f6"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #a6da95"></span>
+                  {% elif choice.0 == "catppuccin-frappe" %}
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #232634"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #303446"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #ca9ee6"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #a6d189"></span>
+                  {% elif choice.0 == "nord" %}
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #242933"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #3b4252"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #88c0d0"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #a3be8c"></span>
+                  {% elif choice.0 == "gruvbox-dark" %}
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #1d2021"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #282828"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #d79921"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #b8bb26"></span>
+                  {% elif choice.0 == "tokyo-night" %}
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #16161e"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #1f2335"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #7aa2f7"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #9ece6a"></span>
+                  {% else %}
+                    <span class="w-3.5 h-5 rounded-sm bg-surface-1"></span>
+                    <span class="w-3.5 h-5 rounded-sm bg-surface-2"></span>
+                    <span class="w-3.5 h-5 rounded-sm bg-accent"></span>
+                    <span class="w-3.5 h-5 rounded-sm bg-surface-3"></span>
+                  {% endif %}
+                </span>
+                <span class="text-sm font-medium block">{{ choice.1 }}</span>
+              </label>
             {% endfor %}
-          </select>
+          </div>
         </div>
       </div>
 
