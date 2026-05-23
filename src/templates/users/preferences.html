@@ -188,6 +188,26 @@
             {% endfor %}
           </select>
         </div>
+
+        <div class="flex items-center justify-between p-3 bg-surface-2 rounded-md mt-3">
+          <div class="flex-1">
+            <div class="flex items-center text-fg mb-1">
+              {% include "app/icons/clock.svg" with classes="w-5 h-5 mr-2" %}
+              <span class="text-sm font-medium">Timezone</span>
+            </div>
+            <p class="text-xs text-fg-muted ml-7">
+              Used for calendar event times and "today" boundaries. Leave on
+              "Server default" to follow the host's TZ.
+            </p>
+          </div>
+          <select name="timezone"
+                  class="ml-4 p-2 bg-surface-2 rounded-md text-white text-sm border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-400 max-w-[16rem]">
+            <option value="" {% if not user.timezone %}selected{% endif %}>Server default</option>
+            {% for tz in timezone_choices %}
+              <option value="{{ tz }}" {% if user.timezone == tz %}selected{% endif %}>{{ tz }}</option>
+            {% endfor %}
+          </select>
+        </div>
       </div>
 
       {# Theme — swatch grid (mocks/settings.html) #}

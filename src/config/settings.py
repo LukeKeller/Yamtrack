@@ -145,6 +145,7 @@ MIDDLEWARE = [
     "simple_history.middleware.HistoryRequestMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "app.middleware.ProviderAPIErrorMiddleware",
+    "users.middleware.UserTimezoneMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"

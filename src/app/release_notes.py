@@ -10,10 +10,22 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh71"
+CURRENT_FORK_VERSION = "0.25.2~ynh72"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh72",
+        "date": "2026-05-23",
+        "title": "Per-user timezone, Recent activity timeline, Steam ID validation",
+        "highlights": [
+            "Per-user timezone setting in Preferences. Pick your IANA zone (e.g. America/New_York) and calendar event times, 'today' boundaries, and Recent activity timestamps all render in your local time instead of UTC.",
+            "Recent activity gets a timeline treatment: a subtle vertical line behind the icon column with each event ring-cut into it. Replaces the previous divider-line list.",
+        ],
+        "fixes": [
+            "Steam import now validates the SteamID field up front and tells you when you've pasted your API key instead of your numeric ID, instead of throwing a confusing HTTP 400 mid-task.",
+        ],
+    },
     {
         "version": "0.25.2~ynh71",
         "date": "2026-05-23",

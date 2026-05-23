@@ -467,6 +467,16 @@ class User(AbstractUser):
         help_text="Latest fork version whose What's New modal this user has dismissed.",
     )
 
+    timezone = models.CharField(
+        max_length=64,
+        default="",
+        blank=True,
+        help_text=(
+            "IANA timezone name (e.g. America/New_York). Empty falls back to "
+            "the server's TIME_ZONE setting."
+        ),
+    )
+
     class Meta:
         """Meta options for the model."""
 

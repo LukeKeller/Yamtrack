@@ -231,33 +231,44 @@
             Recent activity
           </h2>
         </div>
-        <ul class="card divide-y"
-            style="padding: 0;
-                   border-color: var(--color-border-subtle)">
+        {% comment %}
+          Timeline treatment: a single vertical line runs behind the column of
+          icons, the icons themselves act as the markers. Reads as a stream
+          of events instead of a generic divided list.
+        {% endcomment %}
+        <ul class="relative pl-3" style="--timeline-x: 14px">
+          <div class="absolute top-3 bottom-3 w-px"
+               style="left: var(--timeline-x);
+                      background: var(--color-border-subtle)"
+               aria-hidden="true"></div>
           {% for row in recent_activity %}
-            <li class="flex items-center gap-3 px-3 py-2.5 hover:bg-surface-2 transition-colors">
-              <span class="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-                    {% if row.history_type == "+" %}style="background: var(--color-accent-soft); color: var(--color-accent);" {% elif row.status == "Completed" %}style="background: var(--color-status-completed-soft); color: var(--color-status-completed);" {% elif row.status == "In progress" %}style="background: var(--color-status-in-progress-soft); color: var(--color-status-in-progress);" {% elif row.status == "Paused" %}style="background: var(--color-status-paused-soft); color: var(--color-status-paused);" {% elif row.status == "Dropped" %}style="background: var(--color-status-dropped-soft); color: var(--color-status-dropped);" {% else %}style="background: var(--color-surface-2); color: var(--color-fg-muted);"{% endif %}>
-                {% if row.history_type == "+" %}
-                  {% include "app/icons/plus.svg" with classes="w-3.5 h-3.5" %}
-                {% else %}
-                  {% include "app/icons/edit-flat.svg" with classes="w-3.5 h-3.5" %}
-                {% endif %}
-              </span>
-              <a href="{{ row.item|media_url }}" class="flex-1 min-w-0">
-                <div class="text-sm">
-                  <span class="text-fg-muted">
-                    {% if row.history_type == "+" %}
-                      Started tracking
-                    {% elif row.status %}
-                      Set status to <span class="text-fg">{{ row.status|media_status_readable:row.live_model_name }}</span> on
-                    {% else %}
-                      Updated
-                    {% endif %}
-                  </span>
-                  <span class="font-medium text-fg">{{ row.item }}</span>
+            <li class="relative">
+              <a href="{{ row.item|media_url }}"
+                 class="flex items-start gap-3 pl-3 py-2 pr-3 rounded-md hover:bg-surface-2 transition-colors"
+                 data-row-nav>
+                <span class="relative z-10 w-7 h-7 rounded-full flex items-center justify-center shrink-0 ring-4 ring-canvas"
+                      {% if row.history_type == "+" %}style="background: var(--color-accent-soft); color: var(--color-accent);" {% elif row.status == "Completed" %}style="background: var(--color-status-completed-soft); color: var(--color-status-completed);" {% elif row.status == "In progress" %}style="background: var(--color-status-in-progress-soft); color: var(--color-status-in-progress);" {% elif row.status == "Paused" %}style="background: var(--color-status-paused-soft); color: var(--color-status-paused);" {% elif row.status == "Dropped" %}style="background: var(--color-status-dropped-soft); color: var(--color-status-dropped);" {% else %}style="background: var(--color-surface-2); color: var(--color-fg-muted);"{% endif %}>
+                  {% if row.history_type == "+" %}
+                    {% include "app/icons/plus.svg" with classes="w-3.5 h-3.5" %}
+                  {% else %}
+                    {% include "app/icons/edit-flat.svg" with classes="w-3.5 h-3.5" %}
+                  {% endif %}
+                </span>
+                <div class="flex-1 min-w-0 pt-0.5">
+                  <div class="text-sm">
+                    <span class="text-fg-muted">
+                      {% if row.history_type == "+" %}
+                        Started tracking
+                      {% elif row.status %}
+                        Set status to <span class="text-fg">{{ row.status|media_status_readable:row.live_model_name }}</span> on
+                      {% else %}
+                        Updated
+                      {% endif %}
+                    </span>
+                    <span class="font-medium text-fg">{{ row.item }}</span>
+                  </div>
+                  <div class="text-xs text-fg-faint mt-0.5">{{ row.history_date|naturaltime }}</div>
                 </div>
-                <div class="text-xs text-fg-faint">{{ row.history_date|naturaltime }}</div>
               </a>
             </li>
           {% endfor %}

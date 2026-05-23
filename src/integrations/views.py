@@ -438,9 +438,22 @@ def import_hltb(request):
 @require_POST
 def import_steam(request):
     """View for importing game data from Steam."""
-    steam_id = request.POST.get("user")
+    steam_id = (request.POST.get("user") or "").strip()
     if not steam_id:
         messages.error(request, "Steam ID is required.")
+        return redirect("import_data")
+
+    # A valid SteamID64 is a 17-digit numeric string (starts with 7656). A
+    # common mistake is pasting the Steam API key (32-char hex) into this
+    # field; catch that with a clear message instead of letting the importer
+    # explode mid-task with a confusing 400 from the Steam API.
+    if not (steam_id.isdigit() and len(steam_id) == 17):  # noqa: PLR2004 — SteamID64 length
+        messages.error(
+            request,
+            "That doesn't look like a SteamID64. Expected a 17-digit number "
+            "(e.g. 76561198xxxxxxxxx). If you pasted your Steam API key, "
+            "use the numeric ID from your profile page instead.",
+        )
         return redirect("import_data")
 
     mode = request.POST["mode"]
@@ -644,8 +657,9 @@ def jellyfin_webhook(request, token):
             "Could not process Jellyfin webhook: Invalid token: %s",
             token,
         )
-        _record_webhook(user=None, source=source, ok=False, status_code=401,
-                        error="Invalid token")
+        _record_webhook(
+            user=None, source=source, ok=False, status_code=401, error="Invalid token"
+        )
         return HttpResponse(status=401)
 
     # Attach User instance so history_user_id is populated
@@ -653,8 +667,9 @@ def jellyfin_webhook(request, token):
     data = request.body
     if not data:
         logger.warning("Missing payload in Jellyfin webhook request")
-        _record_webhook(user=user, source=source, ok=False, status_code=400,
-                        error="Missing payload")
+        _record_webhook(
+            user=user, source=source, ok=False, status_code=400, error="Missing payload"
+        )
         return HttpResponse("Missing payload", status=400)
 
     try:
@@ -663,12 +678,12 @@ def jellyfin_webhook(request, token):
         processor.process_payload(payload, user)
     except Exception as exc:
         logger.exception("Jellyfin webhook processing failed")
-        _record_webhook(user=user, source=source, ok=False, status_code=500,
-                        payload=data, error=exc)
+        _record_webhook(
+            user=user, source=source, ok=False, status_code=500, payload=data, error=exc
+        )
         return HttpResponse(status=500)
 
-    _record_webhook(user=user, source=source, ok=True, status_code=200,
-                    payload=payload)
+    _record_webhook(user=user, source=source, ok=True, status_code=200, payload=payload)
     return HttpResponse(status=200)
 
 
@@ -685,8 +700,9 @@ def plex_webhook(request, token):
             "Could not process Plex webhook: Invalid token: %s",
             token,
         )
-        _record_webhook(user=None, source=source, ok=False, status_code=401,
-                        error="Invalid token")
+        _record_webhook(
+            user=None, source=source, ok=False, status_code=401, error="Invalid token"
+        )
         return HttpResponse(status=401)
 
     # Attach User instance so history_user_id is populated
@@ -700,8 +716,9 @@ def plex_webhook(request, token):
     data = request.POST.get("payload")
     if not data:
         logger.warning("Missing payload in Plex webhook request")
-        _record_webhook(user=user, source=source, ok=False, status_code=400,
-                        error="Missing payload")
+        _record_webhook(
+            user=user, source=source, ok=False, status_code=400, error="Missing payload"
+        )
         return HttpResponse("Missing payload", status=400)
 
     try:
@@ -710,12 +727,12 @@ def plex_webhook(request, token):
         processor.process_payload(payload, user)
     except Exception as exc:
         logger.exception("Plex webhook processing failed")
-        _record_webhook(user=user, source=source, ok=False, status_code=500,
-                        payload=data, error=exc)
+        _record_webhook(
+            user=user, source=source, ok=False, status_code=500, payload=data, error=exc
+        )
         return HttpResponse(status=500)
 
-    _record_webhook(user=user, source=source, ok=True, status_code=200,
-                    payload=payload)
+    _record_webhook(user=user, source=source, ok=True, status_code=200, payload=payload)
     return HttpResponse(status=200)
 
 
@@ -883,8 +900,9 @@ def emby_webhook(request, token):
             "Could not process Emby webhook: Invalid token: %s",
             token,
         )
-        _record_webhook(user=None, source=source, ok=False, status_code=401,
-                        error="Invalid token")
+        _record_webhook(
+            user=None, source=source, ok=False, status_code=401, error="Invalid token"
+        )
         return HttpResponse(status=401)
 
     # Attach User instance so history_user_id is populated
@@ -896,8 +914,9 @@ def emby_webhook(request, token):
     data = request.POST.get("data")
     if not data:
         logger.warning("Missing payload in Emby webhook request")
-        _record_webhook(user=user, source=source, ok=False, status_code=400,
-                        error="Missing payload")
+        _record_webhook(
+            user=user, source=source, ok=False, status_code=400, error="Missing payload"
+        )
         return HttpResponse("Missing payload", status=400)
 
     try:
@@ -906,19 +925,19 @@ def emby_webhook(request, token):
         processor.process_payload(payload, user)
     except Exception as exc:
         logger.exception("Emby webhook processing failed")
-        _record_webhook(user=user, source=source, ok=False, status_code=500,
-                        payload=data, error=exc)
+        _record_webhook(
+            user=user, source=source, ok=False, status_code=500, payload=data, error=exc
+        )
         return HttpResponse(status=500)
 
-    _record_webhook(user=user, source=source, ok=True, status_code=200,
-                    payload=payload)
+    _record_webhook(user=user, source=source, ok=True, status_code=200, payload=payload)
     return HttpResponse(status=200)
 
 
 @login_not_required
 @csrf_exempt
 @require_POST
-def quick_log(request, token):
+def quick_log(request, token):  # noqa: C901, PLR0912 — multi-path response handler
     """Token-authenticated quick-log endpoint for Shortcuts / Tasker / bots.
 
     POST body (JSON or form-encoded):
@@ -969,12 +988,10 @@ def quick_log(request, token):
             model = apps.get_model("app", media_type)
         except LookupError:
             continue
-        qs = (
-            model.objects.filter(user=user, item__title__icontains=title)
-            .select_related("item")[:5]
-        )
-        for media in qs:
-            matches.append((media_type, media))
+        qs = model.objects.filter(
+            user=user, item__title__icontains=title
+        ).select_related("item")[:5]
+        matches.extend((media_type, media) for media in qs)
 
     if not matches:
         return JsonResponse({"error": "no_match", "query": title}, status=404)

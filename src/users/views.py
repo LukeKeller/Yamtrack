@@ -1,5 +1,6 @@
 import json
 import logging
+import zoneinfo
 
 import apprise
 from celery import current_app as celery_app
@@ -243,6 +244,7 @@ def preferences(request):
                 "theme_choices": ThemeChoices.choices,
                 "density_choices": DensityChoices.choices,
                 "watch_provider_choices": watch_provider_regions,
+                "timezone_choices": sorted(zoneinfo.available_timezones()),
             },
         )
 
@@ -277,6 +279,9 @@ def preferences(request):
     density_value = request.POST.get("density", DensityChoices.COMFORTABLE)
     if density_value in DensityChoices.values:
         request.user.density = density_value
+    tz_value = (request.POST.get("timezone") or "").strip()
+    if tz_value == "" or tz_value in zoneinfo.available_timezones():
+        request.user.timezone = tz_value
     media_types_checked = request.POST.getlist("media_types_checkboxes")
 
     provider_region = request.POST.get("watch_provider_region", "")
