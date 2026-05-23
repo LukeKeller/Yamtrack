@@ -34,29 +34,15 @@ def account(request):
     password_form = PasswordChangeForm(user=request.user)
 
     if request.method == "POST":
-        # Handle username update
-        if "username" in request.POST:
-            user_form = UserUpdateForm(request.POST, instance=request.user)
-
-            if user_form.is_valid():
-                user_form.save()
-                messages.success(request, "Your username has been updated!")
-                logger.info(
-                    "Successful username change for user: %s",
-                    request.user.username,
-                )
-                return redirect("account")
-            logger.warning(
-                "Failed username change for user: %s - %s",
-                request.user.username,
-                list(user_form.errors.keys()),
-            )
-
-        # Handle password update
-        elif any(
+        # Order matters: the password change form includes a hidden username
+        # field (password-manager hint), so password keys must be checked
+        # FIRST or the dispatch routes password submits to UserUpdateForm.
+        is_password_post = any(
             key in request.POST
             for key in ["old_password", "new_password1", "new_password2"]
-        ):
+        )
+
+        if is_password_post:
             password_form = PasswordChangeForm(user=request.user, data=request.POST)
 
             if password_form.is_valid():
@@ -75,6 +61,23 @@ def account(request):
                 "Failed password change for user: %s - %s",
                 request.user.username,
                 list(password_form.errors.keys()),
+            )
+
+        elif "username" in request.POST:
+            user_form = UserUpdateForm(request.POST, instance=request.user)
+
+            if user_form.is_valid():
+                user_form.save()
+                messages.success(request, "Your username has been updated!")
+                logger.info(
+                    "Successful username change for user: %s",
+                    request.user.username,
+                )
+                return redirect("account")
+            logger.warning(
+                "Failed username change for user: %s - %s",
+                request.user.username,
+                list(user_form.errors.keys()),
             )
 
     context = {
@@ -199,9 +202,9 @@ def test_notification(request):
 
         # Send test notification
         result = apobj.notify(
-            title="YamTrack Test Notification",
+            title="Yamtrack Test Notification",
             body=(
-                "This is a test notification from YamTrack. "
+                "This is a test notification from Yamtrack. "
                 "If you're seeing this, your notifications are working correctly!"
             ),
         )

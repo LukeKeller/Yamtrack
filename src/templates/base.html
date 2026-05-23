@@ -179,10 +179,12 @@
                 <div class="flex">
                   <div class="relative grow">
                     {% include "app/icons/magnifying-glass.svg" with classes="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-fg-faint pointer-events-none" %}
+                    <label for="global-search" class="sr-only">Search</label>
                     <input type="search"
                            id="global-search"
                            name="q"
                            value="{{ request.GET.q }}"
+                           autocomplete="off"
                            :placeholder="getPlaceholder()"
                            class="input h-9 pl-9 pr-16 rounded-r-none">
                     <span class="absolute right-2 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1 pointer-events-none"

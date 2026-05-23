@@ -18,7 +18,10 @@
       <aside class="md:sticky md:top-20 self-start">
         <div class="relative mb-3">
           {% include "app/icons/magnifying-glass.svg" with classes="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-fg-faint pointer-events-none" %}
-          <input type="text"
+          <label for="settings-filter" class="sr-only">Find a settings page</label>
+          <input id="settings-filter"
+                 type="search"
+                 autocomplete="off"
                  class="input h-8 pl-8 pr-3 text-sm"
                  placeholder="Find setting…"
                  x-model="filter">

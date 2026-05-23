@@ -28,18 +28,31 @@
         <h3 class="text-base font-medium">API Token</h3>
       </div>
       <p class="text-fg-muted mb-4 text-sm">This token is used to authenticate webhook requests from your media servers.</p>
-      <div class="bg-surface-1 p-3 rounded-md mb-4">
+      <div class="bg-surface-1 p-3 rounded-md mb-4"
+           x-data="{ revealed: false }">
         <div class="flex items-center gap-2">
+          <label for="token" class="sr-only">API token</label>
           <input readonly=""
                  id="token"
                  class="flex-1 py-2 pr-2 pl-3 bg-surface-1 rounded-md text-fg text-sm border-0 focus:ring-0 outline-none font-mono"
-                 type="text"
+                 :type="revealed ? 'text' : 'password'"
+                 autocomplete="off"
                  value="{{ user.token|default_if_none:"" }}">
-          <span class="flex items-center cursor-pointer group pr-3"
-                title="Copy"
-                data-copy-target="#token">
+          <button type="button"
+                  @click="revealed = !revealed"
+                  class="flex items-center cursor-pointer group pr-1 text-fg-muted hover:text-indigo-400 transition-colors"
+                  :aria-label="revealed ? 'Hide token' : 'Reveal token'"
+                  :title="revealed ? 'Hide token' : 'Reveal token'">
+            <span x-show="!revealed">{% include "app/icons/eye.svg" with classes="w-5 h-5" %}</span>
+            <span x-show="revealed">{% include "app/icons/eye-closed.svg" with classes="w-5 h-5" %}</span>
+          </button>
+          <button type="button"
+                  class="flex items-center cursor-pointer group pr-3"
+                  aria-label="Copy token"
+                  title="Copy"
+                  data-copy-target="#token">
             {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-indigo-400 transition-colors" %}
-          </span>
+          </button>
         </div>
       </div>
       <div class="flex justify-between items-center">

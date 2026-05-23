@@ -32,7 +32,7 @@
     { "name": "Games", "short_name": "Games", "description": "View your Games", "url": "{% url 'medialist' media_type='game' %}", "icons": [{ "src": "{% static 'img/shortcuts/games.svg' %}", "sizes": "192x192" }] },
     { "name": "Books", "short_name": "Books", "description": "View your Books", "url": "{% url 'medialist' media_type='book' %}", "icons": [{ "src": "{% static 'img/shortcuts/books.svg' %}", "sizes": "192x192" }] },
     { "name": "Comics", "short_name": "Comics", "description": "View your Comics", "url": "{% url 'medialist' media_type='comic' %}", "icons": [{ "src": "{% static 'img/shortcuts/comics.svg' %}", "sizes": "192x192" }] },
-    { "name": "Boardgames", "short_name": "Boardgames", "description": "View your Boardgames", "url": "{% url 'medialist' media_type='boardgame' %}", "icons": [{ "src": "{% static 'img/shortcuts/boardgames.svg' %}", "sizes": "192x192" }] },
+    {# Boardgames dropped — the PWA manifest spec caps shortcuts at 10. #}
     { "name": "Statistics", "short_name": "Stats", "description": "View your Statistics", "url": "{% url 'statistics' %}", "icons": [{ "src": "{% static 'img/shortcuts/stats.svg' %}", "sizes": "192x192" }] },
     { "name": "Your Lists", "short_name": "Lists", "description": "View your Lists", "url": "{% url 'lists' %}", "icons": [{ "src": "{% static 'img/shortcuts/lists.svg' %}", "sizes": "192x192" }] }
   ]
