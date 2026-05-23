@@ -92,6 +92,41 @@
 [data-density="comfortable"] { --grid-min: 180px; --card-pad: 12px; }
 [data-density="cozy"]        { --grid-min: 220px; --card-pad: 16px; }
 
+/* Sidebar width — toggled by base.html's Alpine `sidebarCollapsed` state,
+ * which mirrors itself to <html data-sidebar-collapsed> + localStorage so
+ * the layout doesn't flash on every page load. The CSS variable is the
+ * single source of truth for the aside width AND the messages overlay's
+ * left offset at lg+. */
+html { --sidebar-width: 220px; }
+/* Collapse only takes effect at lg+ — at smaller widths the sidebar is a
+ * slide-in drawer that needs full label width to be useful. */
+@media (min-width: 64rem) {
+  html[data-sidebar-collapsed="true"] { --sidebar-width: 64px; }
+}
+
+/* Hide nav labels / group headings / counts when the sidebar is collapsed
+ * (lg+ only — at <lg the sidebar is a slide-in drawer at full width). */
+@media (min-width: 64rem) {
+  html[data-sidebar-collapsed="true"] .sidebar-label { display: none; }
+  /* Collapsed mode: nav items become icon-only; tighten the padding so the
+   * icon centers cleanly in the narrow rail. */
+  html[data-sidebar-collapsed="true"] .nav-item {
+    justify-content: center;
+    padding-inline: 0.5rem;
+  }
+  /* Chevron flips to indicate "expand". */
+  html[data-sidebar-collapsed="true"] .sidebar-collapse-chevron {
+    transform: rotate(180deg);
+  }
+}
+
+/* Messages-toast overlay tracks the sidebar width at lg+ so it stays
+ * centered within the visible content area regardless of collapse state. */
+.messages-overlay { left: 0; }
+@media (min-width: 64rem) {
+  .messages-overlay { left: var(--sidebar-width); }
+}
+
 /* Prevent horizontal overflow at the document level. The Up-next rail, the
  * detail-page hero, and the section-tabs nav all use -mx-4 / -mx-8 to bleed
  * to the page edges; without a body-level guard those bleed past the viewport

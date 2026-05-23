@@ -62,9 +62,27 @@
   </head>
 
   <body>
+    {# Restore sidebar-collapsed preference from localStorage before paint so
+       the layout doesn't jump on every navigation. Sets a data-attr on
+       <html> that CSS in input.css keys off via --sidebar-width. #}
+    <script>
+      try {
+        if (localStorage.getItem('yt_sidebar_collapsed') === '1') {
+          document.documentElement.dataset.sidebarCollapsed = 'true';
+        }
+      } catch (e) { /* localStorage blocked — ignore */ }
+    </script>
     {% block body %}
       <div class="flex min-h-screen bg-canvas text-fg"
-           x-data="{ isMobileMenuOpen: false }">
+           x-data="{
+             isMobileMenuOpen: false,
+             sidebarCollapsed: document.documentElement.dataset.sidebarCollapsed === 'true',
+             toggleSidebar() {
+               this.sidebarCollapsed = !this.sidebarCollapsed;
+               document.documentElement.dataset.sidebarCollapsed = this.sidebarCollapsed ? 'true' : '';
+               try { localStorage.setItem('yt_sidebar_collapsed', this.sidebarCollapsed ? '1' : '0'); } catch (e) {}
+             }
+           }">
 
         {# Mobile sidebar scrim #}
         <div x-show="isMobileMenuOpen"
@@ -73,14 +91,20 @@
              @click="isMobileMenuOpen = false"></div>
 
         {# ============ Sidebar ============ #}
-        <aside class="fixed top-0 left-0 z-40 h-screen w-[220px] bg-surface-0 border-r border-border-default transform transition-transform duration-200 ease-out -translate-x-full lg:translate-x-0 lg:sticky flex flex-col"
+        {# Width is driven by --sidebar-width (set in input.css; toggled on
+           <html data-sidebar-collapsed>). The CSS var lets the messages
+           overlay (which lives outside this Alpine scope) follow the same
+           width without prop-drilling. #}
+        <aside class="sidebar fixed top-0 left-0 z-40 h-screen bg-surface-0 border-r border-border-default transform transition-[width,transform] duration-200 ease-out -translate-x-full lg:translate-x-0 lg:sticky flex flex-col"
+               style="width: var(--sidebar-width)"
                :class="isMobileMenuOpen ? 'translate-x-0' : ''">
 
           {# Brand #}
           <div class="h-14 border-b border-border-default flex items-center gap-2 px-4">
-            <a href="{% url 'home' %}" class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-md bg-accent flex items-center justify-center text-white font-bold">Y</div>
-              <span class="font-semibold text-fg">Yamtrack</span>
+            <a href="{% url 'home' %}" class="flex items-center gap-2"
+               :aria-label="sidebarCollapsed ? 'Yamtrack — home' : ''">
+              <div class="w-8 h-8 rounded-md bg-accent flex items-center justify-center text-white font-bold shrink-0">Y</div>
+              <span class="font-semibold text-fg sidebar-label">Yamtrack</span>
             </a>
           </div>
 
@@ -89,7 +113,7 @@
 
             {# Library group #}
             <div class="space-y-0.5">
-              <div class="px-3 mb-1 text-[11px] uppercase tracking-wider text-fg-faint">Library</div>
+              <div class="px-3 mb-1 text-[11px] uppercase tracking-wider text-fg-faint sidebar-label">Library</div>
               {% url 'home' as home_url %}
               {% include "app/components/_nav_link.html" with url=home_url label="Home" icon_template="app/icons/house.svg" %}
               {% url 'browse' as browse_url %}
@@ -103,7 +127,7 @@
 
             {# Tools group #}
             <div class="space-y-0.5 pt-3 border-t border-border-subtle">
-              <div class="px-3 mb-1 text-[11px] uppercase tracking-wider text-fg-faint">Tools</div>
+              <div class="px-3 mb-1 text-[11px] uppercase tracking-wider text-fg-faint sidebar-label">Tools</div>
               {% url 'create_entry' as create_entry_url %}
               {% include "app/components/_nav_link.html" with url=create_entry_url label="Create Custom" icon_template="app/icons/circle-plus.svg" %}
               {% url 'calendar' as calendar_url %}
@@ -131,19 +155,29 @@
           {% url 'advanced' as advanced_url %}
           {% url 'about' as about_url %}
           <div class="p-3 border-t border-border-default space-y-1">
+            {# Collapse toggle — desktop only. Chevron rotates in CSS based on
+               <html data-sidebar-collapsed>. #}
+            <button type="button"
+                    @click="toggleSidebar()"
+                    :aria-label="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+                    :title="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+                    class="hidden lg:flex sidebar-collapse-btn nav-item w-full text-left text-fg-muted">
+              {% include "app/icons/chevron-left.svg" with classes="w-4 h-4 shrink-0 sidebar-collapse-chevron transition-transform" %}
+              <span class="sidebar-label">Collapse sidebar</span>
+            </button>
             <a href="{{ account_url }}"
                class="nav-item{% if request.path == account_url or request.path == notifications_url or request.path == sidebar_url or request.path == integrations_url or request.path == import_url or request.path == export_url or request.path == preferences_url or request.path == advanced_url or request.path == about_url %} active{% endif %}">
               <div class="w-6 h-6 rounded-full bg-accent text-white text-[11px] font-semibold flex items-center justify-center shrink-0">
                 {{ user.username.0|upper|default:"?" }}
               </div>
-              <span class="truncate">{{ user.username|default:"Settings" }}</span>
-              {% include "app/icons/settings.svg" with classes="w-4 h-4 ml-auto opacity-60" %}
+              <span class="truncate sidebar-label">{{ user.username|default:"Settings" }}</span>
+              {% include "app/icons/settings.svg" with classes="w-4 h-4 ml-auto opacity-60 sidebar-label" %}
             </a>
             <form method="post" action="{% url 'account_logout' %}" class="w-full">
               {% csrf_token %}
-              <button type="submit" class="nav-item w-full text-left">
+              <button type="submit" class="nav-item w-full text-left" aria-label="Log out">
                 {% include "app/icons/logout.svg" with classes="w-4 h-4 shrink-0" %}
-                <span>Log out</span>
+                <span class="sidebar-label">Log out</span>
               </button>
             </form>
           </div>
@@ -301,7 +335,7 @@
       {% include "app/components/cmdk.html" %}
     {% endblock body %}
 
-    <div class="fixed top-20 right-0 left-0 {% block messages_sidebar_offset %}lg:left-[220px]{% endblock messages_sidebar_offset %} z-50 flex justify-center pointer-events-none">
+    <div class="fixed top-20 right-0 left-0 z-50 flex justify-center pointer-events-none {% block messages_sidebar_offset %}messages-overlay{% endblock messages_sidebar_offset %}">
       <div id="messages-list"
            class="w-full max-w-xl px-4 space-y-2 pointer-events-auto">
         {% include "app/components/messages/messages_stack.html" %}

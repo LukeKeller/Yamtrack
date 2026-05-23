@@ -26,23 +26,31 @@
          aria-modal="true"
          aria-label="Command palette">
 
-      {# Input — submits to /search on enter #}
+      {# Input — Enter submits to the full /search page; live keystrokes
+         hit /cmdk/search and swap library matches into #cmdk-results. #}
       <form method="get"
             action="{% url 'search' %}"
             class="flex items-center gap-3 px-4 py-3 border-b"
             style="border-color: var(--color-border-default)">
         {% include "app/icons/magnifying-glass.svg" with classes="w-5 h-5 text-fg-faint" %}
+        <label for="cmdk-input" class="sr-only">Search your library or jump</label>
         <input type="search"
+               id="cmdk-input"
                name="q"
                x-ref="cmdkInput"
                x-init="$watch('open', v => { if (v) $nextTick(() => $refs.cmdkInput.focus()) })"
                autocomplete="off"
+               hx-get="{% url 'cmdk_search' %}"
+               hx-trigger="keyup changed delay:150ms"
+               hx-target="#cmdk-results"
+               hx-swap="innerHTML"
                class="flex-1 bg-transparent border-0 outline-none text-base placeholder-fg-faint text-fg"
-               placeholder="Search or jump…">
+               placeholder="Search your library or jump…">
         <span class="text-xs text-fg-faint flex items-center gap-1"><kbd>Esc</kbd></span>
       </form>
 
       <div class="max-h-[60vh] overflow-y-auto py-2">
+        <div id="cmdk-results"></div>
 
         <div class="px-3 pt-1 pb-1.5 text-[10px] uppercase tracking-wider text-fg-faint">Jump to</div>
         <ul class="px-1.5 pb-2 space-y-0.5">

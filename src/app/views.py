@@ -1526,6 +1526,49 @@ def music_stats(request):
     return render(request, "app/music_stats.html", context)
 
 
+@require_GET
+def cmdk_search(request):
+    """Search the user's tracked library for the command palette.
+
+    Returns a small HTML partial of up to ~12 results grouped by media type.
+    Intentionally library-scoped (not a TMDB/MAL search) — the full /search
+    page covers discovery; this is the "find that show I'm watching" path.
+    """
+    query = request.GET.get("q", "").strip()
+    if len(query) < 2:
+        return render(request, "app/components/cmdk_results.html", {"results": []})
+
+    per_type_limit = 3
+    results = []
+    # Walk concrete media types (skip Episode — those are sub-items of seasons
+    # and shouldn't surface in the global jump list).
+    for media_type in MediaTypes.values:
+        if media_type == MediaTypes.EPISODE.value:
+            continue
+        model = apps.get_model("app", media_type)
+        rows = (
+            model.objects.filter(user=request.user, item__title__icontains=query)
+            .select_related("item")
+            .order_by("-created_at")[:per_type_limit]
+        )
+        for media in rows:
+            results.append(
+                {
+                    "item": media.item,
+                    "media_type": media_type,
+                    "status": getattr(media, "status", None),
+                },
+            )
+        if len(results) >= 12:
+            break
+
+    return render(
+        request,
+        "app/components/cmdk_results.html",
+        {"results": results[:12], "query": query},
+    )
+
+
 @login_not_required
 @require_GET
 def service_worker(request):

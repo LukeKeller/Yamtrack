@@ -64,29 +64,52 @@
         </div>
         <div class="flex gap-3 overflow-x-auto no-scrollbar -mx-4 lg:-mx-8 px-4 lg:px-8 pb-2 snap-x snap-mandatory">
           {% for m in up_next %}
-            <a href="{{ m.item|media_url }}"
-               class="card snap-start shrink-0 w-72 flex gap-3 items-center hover:bg-surface-2 transition-colors">
-              <div class="w-12 h-16 rounded-sm overflow-hidden bg-surface-2 shrink-0">
-                <img alt="{{ m.item }}"
-                     class="lazyload w-full h-full {% if m.item.image != IMG_NONE %}object-cover{% endif %}"
-                     data-src="{{ m.item.image }}"
-                     src="{{ IMG_NONE }}">
-              </div>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-1.5 text-[10px] text-fg-faint uppercase tracking-wider mb-0.5">
-                  <span class="status-dot status-dot-in-progress"></span>
-                  <span class="truncate">{{ m.item.media_type|media_type_readable }}</span>
+            {# Up-next card with optional inline +1. Optimistic Alpine update
+               increments the visible counter on click; if the htmx POST fails
+               the messages-oob toast surfaces the error, and the next page
+               load re-syncs the truth. #}
+            <div class="card snap-start shrink-0 w-72 flex gap-3 items-center hover:bg-surface-2 transition-colors relative group"
+                 x-data="{ p: {{ m.progress|default:0 }}, justBumped: false }">
+              <a href="{{ m.item|media_url }}"
+                 class="flex gap-3 items-center flex-1 min-w-0"
+                 aria-label="{{ m.item }}">
+                <div class="w-12 h-16 rounded-sm overflow-hidden bg-surface-2 shrink-0">
+                  <img alt=""
+                       class="lazyload w-full h-full {% if m.item.image != IMG_NONE %}object-cover{% endif %}"
+                       data-src="{{ m.item.image }}"
+                       src="{{ IMG_NONE }}">
                 </div>
-                <div class="text-sm font-semibold truncate">{{ m.item }}</div>
-                <div class="text-xs text-fg-muted truncate">
-                  {{ m.formatted_progress }}
-                  {% if m.max_progress %}/ {{ m.max_progress }}{% endif %}
-                  {% if m.item.media_type != MediaTypes.MOVIE.value %}
-                    {{ m.item.media_type|long_unit|lower }}{{ m.progress|pluralize }}
-                  {% endif %}
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-1.5 text-[10px] text-fg-faint uppercase tracking-wider mb-0.5">
+                    <span class="status-dot status-dot-in-progress"></span>
+                    <span class="truncate">{{ m.item.media_type|media_type_readable }}</span>
+                  </div>
+                  <div class="text-sm font-semibold truncate">{{ m.item }}</div>
+                  <div class="text-xs text-fg-muted truncate">
+                    <span x-text="p"></span>
+                    {% if m.max_progress %}/ {{ m.max_progress }}{% endif %}
+                    {% if m.item.media_type != MediaTypes.MOVIE.value %}
+                      {{ m.item.media_type|long_unit|lower }}{{ m.progress|pluralize }}
+                    {% endif %}
+                  </div>
                 </div>
-              </div>
-            </a>
+              </a>
+              {% if m.item.media_type != MediaTypes.MOVIE.value and m.progress != m.max_progress %}
+                <button type="button"
+                        aria-label="Mark next {{ m.item.media_type|short_unit }} watched on {{ m.item }}"
+                        title="Mark next watched"
+                        hx-post="{% url 'progress_edit' m.item.media_type m.id %}"
+                        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                        hx-vals='{"operation": "increase"}'
+                        hx-swap="none"
+                        @click="p = p + 1; justBumped = true; setTimeout(() => justBumped = false, 700)"
+                        :class="justBumped ? 'bg-status-completed text-white' : 'bg-accent-soft text-accent hover:bg-accent hover:text-white'"
+                        class="shrink-0 mr-1 w-8 h-8 rounded-full transition-colors flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 focus-visible:opacity-100">
+                  <span x-show="!justBumped">{% include "app/icons/plus.svg" with classes="w-4 h-4" %}</span>
+                  <span x-show="justBumped">{% include "app/icons/checkmark.svg" with classes="w-4 h-4" %}</span>
+                </button>
+              {% endif %}
+            </div>
           {% endfor %}
         </div>
       </section>

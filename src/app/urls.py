@@ -106,4 +106,5 @@ urlpatterns = [
     path("music/stats", views.music_stats, name="music_stats"),
     path("serviceworker.js", views.service_worker, name="service_worker"),
     path("site.webmanifest", views.webmanifest, name="webmanifest"),
+    path("cmdk/search", views.cmdk_search, name="cmdk_search"),
 ]

@@ -3,11 +3,23 @@
 <div class="{% if secondary_color %}bg-surface-2{% else %}bg-surface-1{% endif %} rounded-lg overflow-hidden shadow-lg relative {% if active %}ring-[1.5px] ring-slate-400{% endif %}"
      x-data="{ trackOpen: false, listsOpen: false, historyOpen: false }">
   <div class="relative">
-    <a href="{{ item|media_url }}">
-      <img alt="{{ title }}"
-           class="lazyload w-full {% if from_grid %}aspect-2/3{% else %}h-48{% endif %} bg-surface-2 {% if item.image != IMG_NONE %}object-cover{% endif %}"
-           data-src="{{ item.image }}"
-           src="{{ IMG_NONE }}">
+    <a href="{{ item|media_url }}" aria-label="{{ title }}">
+      {% if item.image == IMG_NONE %}
+        {# Typed-tile fallback when the provider returns no poster — kills the
+           "broken image" feel on recommendation rows where TMDB often has
+           null poster_path. Background uses the media-type accent token. #}
+        <div class="w-full {% if from_grid %}aspect-2/3{% else %}h-48{% endif %} flex items-center justify-center"
+             style="background: color-mix(in srgb, var(--color-type-{{ item.media_type|media_type_slug }}) 18%, var(--color-surface-2))"
+             title="{{ title }}">
+          <span class="text-4xl font-bold uppercase select-none"
+                style="color: var(--color-type-{{ item.media_type|media_type_slug }})">{{ title|slice:":1" }}</span>
+        </div>
+      {% else %}
+        <img alt="{{ title }}"
+             class="lazyload w-full {% if from_grid %}aspect-2/3{% else %}h-48{% endif %} bg-surface-2 object-cover"
+             data-src="{{ item.image }}"
+             src="{{ IMG_NONE }}">
+      {% endif %}
     </a>
 
     {% if media.status %}
