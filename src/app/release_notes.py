@@ -10,10 +10,19 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh77"
+CURRENT_FORK_VERSION = "0.25.2~ynh78"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh78",
+        "date": "2026-05-23",
+        "title": "Preferences page no longer crashes when TMDB is unreachable",
+        "highlights": [],
+        "fixes": [
+            "Settings → Preferences: the watch-provider region dropdown fetches its list from TMDB; if the TMDB key was invalid or the API was unreachable, the whole preferences page would 500 and you couldn't change your theme, timezone, or any other setting. It now degrades gracefully — the dropdown shows 'Disabled' and the rest of the page renders normally.",
+        ],
+    },
     {
         "version": "0.25.2~ynh77",
         "date": "2026-05-23",

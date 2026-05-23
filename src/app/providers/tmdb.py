@@ -158,7 +158,13 @@ def movie(media_id):
 
     if data is None:
         url = f"{base_url}/movie/{media_id}"
-        appends = ["recommendations", "external_ids", "credits", "watch/providers", "videos"]
+        appends = [
+            "recommendations",
+            "external_ids",
+            "credits",
+            "watch/providers",
+            "videos",
+        ]
         params = {
             **base_params,
             "append_to_response": ",".join(appends),
@@ -597,7 +603,8 @@ def get_trailer(videos_payload):
     if not videos_payload:
         return None
     candidates = [
-        v for v in videos_payload.get("results", [])
+        v
+        for v in videos_payload.get("results", [])
         if v.get("site") == "YouTube" and v.get("key")
     ]
     if not candidates:
@@ -612,7 +619,11 @@ def get_trailer(videos_payload):
         return matches[0]
 
     for filter_fn in (
-        lambda v: v.get("type") == "Trailer" and v.get("official") and v.get("iso_639_1") == "en",
+        lambda v: (
+            v.get("type") == "Trailer"
+            and v.get("official")
+            and v.get("iso_639_1") == "en"
+        ),
         lambda v: v.get("type") == "Trailer" and v.get("official"),
         lambda v: v.get("type") == "Trailer",
         lambda v: v.get("type") == "Teaser",
@@ -906,8 +917,15 @@ def watch_provider_regions():
                 url,
                 params=params,
             )
-        except requests.exceptions.HTTPError as error:
-            handle_error(error)
+        except (requests.exceptions.HTTPError, services.ProviderAPIError):
+            # This is metadata for an optional dropdown — if TMDB is
+            # unreachable or the key is invalid, fail soft so the rest of
+            # the preferences page still renders. Don't cache the error.
+            logger.warning(
+                "TMDB watch_provider_regions unavailable; "
+                "preferences page will show Disabled-only.",
+            )
+            return [("", "Disabled")]
 
         data = [("", "Disabled")]
         regions = response.get("results", [])
