@@ -10,10 +10,19 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh76"
+CURRENT_FORK_VERSION = "0.25.2~ynh77"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh77",
+        "date": "2026-05-23",
+        "title": "Compact home calendar when nothing is scheduled",
+        "highlights": [
+            "Home page: when the current month has no scheduled releases, the calendar widget collapses from a ~600px empty grid to a compact one-line card with a 'Fetch releases' button and a link to the full calendar. The full /calendar page is unchanged.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh76",
         "date": "2026-05-23",

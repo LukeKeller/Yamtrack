@@ -271,7 +271,46 @@
       {% endwith %}
     {% endif %}
 
-    {% include "events/components/calendar_card.html" %}
+    {% comment %}
+      Empty-state shortcut: when the visible month has zero events the full
+      calendar widget is ~600px of empty cells, which is the loudest thing
+      on a new user's home. Swap it for a compact stub that still surfaces
+      the "Fetch new releases" action and links into the full calendar.
+      The /calendar page itself always renders the full grid.
+    {% endcomment %}
+    {% if release_dict %}
+      {% include "events/components/calendar_card.html" %}
+    {% else %}
+      <section>
+        <div class="flex items-baseline justify-between mb-3 gap-3">
+          <h2 class="text-lg font-semibold flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+            Calendar
+          </h2>
+          <a href="{% url 'calendar' %}"
+             class="text-xs text-fg-muted hover:text-fg transition-colors">Open calendar →</a>
+        </div>
+        <div class="bg-surface-1 rounded-lg p-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <span class="w-9 h-9 rounded-md bg-surface-2 text-fg-muted flex items-center justify-center shrink-0">
+            {% include "app/icons/calendar.svg" with classes="w-5 h-5" %}
+          </span>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-medium text-fg">Nothing scheduled in {{ month_name }}</div>
+            <div class="text-xs text-fg-faint">Releases for your tracked TV, movies, anime, and games appear here.</div>
+          </div>
+          <form method="post" action="{% url 'reload_calendar' %}" class="shrink-0">
+            {% csrf_token %}
+            <button type="submit"
+                    class="btn btn-secondary btn-sm"
+                    title="Fetch new releases"
+                    aria-label="Fetch new releases">
+              {% include "app/icons/circle-spinning-clockwise.svg" with classes="w-3.5 h-3.5" %}
+              <span>Fetch releases</span>
+            </button>
+          </form>
+        </div>
+      </section>
+    {% endif %}
 
     {% if recent_activity %}
       <section>
