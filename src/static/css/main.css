@@ -764,8 +764,8 @@
   .h-screen {
     height: 100vh;
   }
-  .max-h-20 {
-    max-height: calc(var(--spacing) * 20);
+  .max-h-24 {
+    max-height: calc(var(--spacing) * 24);
   }
   .max-h-48 {
     max-height: calc(var(--spacing) * 48);
@@ -2070,6 +2070,10 @@
   }
   .text-\[11px\] {
     font-size: 11px;
+  }
+  .leading-tight {
+    --tw-leading: var(--leading-tight);
+    line-height: var(--leading-tight);
   }
   .font-bold {
     --tw-font-weight: var(--font-weight-bold);
@@ -4217,6 +4221,10 @@ kbd {
   inherits: false;
   initial-value: 100%;
 }
+@property --tw-leading {
+  syntax: "*";
+  inherits: false;
+}
 @property --tw-font-weight {
   syntax: "*";
   inherits: false;
@@ -4412,10 +4420,6 @@ kbd {
   initial-value: "";
   inherits: false;
 }
-@property --tw-leading {
-  syntax: "*";
-  inherits: false;
-}
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -4449,6 +4453,7 @@ kbd {
       --tw-gradient-from-position: 0%;
       --tw-gradient-via-position: 50%;
       --tw-gradient-to-position: 100%;
+      --tw-leading: initial;
       --tw-font-weight: initial;
       --tw-tracking: initial;
       --tw-ordinal: initial;
@@ -4495,7 +4500,6 @@ kbd {
       --tw-duration: initial;
       --tw-ease: initial;
       --tw-content: "";
-      --tw-leading: initial;
     }
   }
 }

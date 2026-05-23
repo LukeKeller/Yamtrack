@@ -21,15 +21,22 @@
           <div class="text-right text-sm p-1 font-medium {% if day == today.day and month == today.month and year == today.year %}bg-indigo-500 text-white rounded-full w-7 h-7 flex items-center justify-center ml-auto{% endif %}">
             {{ day }}
           </div>
-          <div class="mt-1 space-y-1 max-h-20 overflow-y-auto">
+          <div class="mt-1 space-y-1 max-h-24 overflow-y-auto">
             {% for release in release_dict|get_item:day %}
-              <a href="{{ release.item|media_url }}" class="block">
-                <div class="flex items-center gap-1 px-1 py-0.5 text-xs rounded hover:bg-surface-3 transition-colors">
+              <a href="{{ release.item|media_url }}"
+                 class="block group"
+                 title="{{ release }} · {{ release.datetime|time_format:user }}">
+                <div class="flex items-start gap-1.5 px-1.5 py-1 text-xs rounded hover:bg-surface-3 transition-colors border-l-2"
+                     style="border-color: var(--color-type-{{ release.item.media_type|media_type_slug }})">
                   {% with color=release.item.media_type|media_color %}
-                    {% icon release.item.media_type is_active=False extra_classes=color|add:" w-4 h-4 shrink-0" %}
+                    {% icon release.item.media_type is_active=False extra_classes=color|add:" w-3.5 h-3.5 shrink-0 mt-0.5" %}
                   {% endwith %}
-                  <span class="truncate"
-                        title="{{ release }} {{ release.datetime|time_format:user }}">{{ release }} {{ release.datetime|time_format:user }}</span>
+                  <div class="flex-1 min-w-0 leading-tight">
+                    <div class="truncate font-medium text-fg group-hover:text-white">{{ release }}</div>
+                    {% if release.datetime|time_format:user %}
+                      <div class="text-[10px] text-fg-faint truncate">{{ release.datetime|time_format:user }}</div>
+                    {% endif %}
+                  </div>
                 </div>
               </a>
             {% endfor %}

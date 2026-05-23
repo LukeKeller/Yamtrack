@@ -10,10 +10,19 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh73"
+CURRENT_FORK_VERSION = "0.25.2~ynh74"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh74",
+        "date": "2026-05-23",
+        "title": "Readable calendar event chips",
+        "highlights": [
+            "Calendar event chips inside each day cell now use a two-line layout: title on top, time on a faint second line — plus a left-edge color bar tinted by media-type so movies/shows/anime are easy to scan at a glance.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh73",
         "date": "2026-05-23",
