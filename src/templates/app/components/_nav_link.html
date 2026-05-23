@@ -14,7 +14,7 @@
   <a href="{{ url }}"
      class="nav-item{% if request.path|str_equals:active_target %} active{% endif %}{% if accent_type %} type-{{ accent_type }}{% endif %}">
     {% include icon_template with classes="w-4 h-4 shrink-0" %}
-    <span class="{{ label_class }}">{{ label }}</span>
-    {% if badge %}<span class="ml-auto pill pill-meta text-[10px] px-1.5">{{ badge }}</span>{% endif %}
+    <span class="sidebar-label {{ label_class }}">{{ label }}</span>
+    {% if badge %}<span class="ml-auto pill pill-meta text-[10px] px-1.5 sidebar-label">{{ badge }}</span>{% endif %}
   </a>
 {% endwith %}

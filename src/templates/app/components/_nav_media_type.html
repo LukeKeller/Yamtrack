@@ -13,6 +13,6 @@
   <span class="type-{{ item.media_type|media_type_slug }} shrink-0 flex items-center">
     {% icon item.media_type is_active=media_type|str_equals:item.media_type extra_classes="w-4 h-4" %}
   </span>
-  <span class="flex-1 truncate">{{ item.display_name }}</span>
-  {% if item.count is not None %}<span class="text-[11px] text-fg-faint tabular-nums">{{ item.count }}</span>{% endif %}
+  <span class="flex-1 truncate sidebar-label">{{ item.display_name }}</span>
+  {% if item.count is not None %}<span class="text-[11px] text-fg-faint tabular-nums sidebar-label">{{ item.count }}</span>{% endif %}
 </a>
