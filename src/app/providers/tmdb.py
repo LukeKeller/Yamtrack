@@ -158,7 +158,7 @@ def movie(media_id):
 
     if data is None:
         url = f"{base_url}/movie/{media_id}"
-        appends = ["recommendations", "external_ids", "credits", "watch/providers"]
+        appends = ["recommendations", "external_ids", "credits", "watch/providers", "videos"]
         params = {
             **base_params,
             "append_to_response": ",".join(appends),
@@ -254,6 +254,7 @@ def movie(media_id):
                 response.get("external_ids", {}), media_id
             ),
             "providers": response.get("watch/providers", {}).get("results", {}),
+            "trailer": get_trailer(response.get("videos")),
         }
 
         imdb_id = response.get("external_ids", {}).get("imdb_id")
@@ -419,7 +420,7 @@ def tv(media_id):
 
     if data is None:
         url = f"{base_url}/tv/{media_id}"
-        appends = "recommendations,external_ids,watch/providers,credits"
+        appends = "recommendations,external_ids,watch/providers,credits,videos"
         params = {
             **base_params,
             "append_to_response": appends,
@@ -501,6 +502,7 @@ def process_tv(response):
         "last_episode_season": last_episode["season_number"] if last_episode else None,
         "next_episode_season": next_episode["season_number"] if next_episode else None,
         "providers": response.get("watch/providers", {}).get("results", {}),
+        "trailer": get_trailer(response.get("videos")),
         "cast": filtered_cast,
         "total_cast_count": len(cast),
     }
@@ -583,6 +585,42 @@ def get_title(response):
         return response["title"]
     except KeyError:
         return response["name"]
+
+
+def get_trailer(videos_payload):
+    """Pick the best YouTube trailer key from a TMDB videos payload.
+
+    Preference order: official English-language trailer > any official
+    trailer > any trailer > teaser. Returns {"source": "youtube", "key":
+    "..."} or None when nothing usable is found.
+    """
+    if not videos_payload:
+        return None
+    candidates = [
+        v for v in videos_payload.get("results", [])
+        if v.get("site") == "YouTube" and v.get("key")
+    ]
+    if not candidates:
+        return None
+
+    def newest(filter_fn):
+        matches = [v for v in candidates if filter_fn(v)]
+        if not matches:
+            return None
+        # Newest published_at first; missing dates sort to the end.
+        matches.sort(key=lambda v: v.get("published_at") or "", reverse=True)
+        return matches[0]
+
+    for filter_fn in (
+        lambda v: v.get("type") == "Trailer" and v.get("official") and v.get("iso_639_1") == "en",
+        lambda v: v.get("type") == "Trailer" and v.get("official"),
+        lambda v: v.get("type") == "Trailer",
+        lambda v: v.get("type") == "Teaser",
+    ):
+        match = newest(filter_fn)
+        if match:
+            return {"source": "youtube", "key": match["key"]}
+    return None
 
 
 def get_start_date(date):

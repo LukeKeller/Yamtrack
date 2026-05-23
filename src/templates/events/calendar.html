@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
+{% load app_tags %}
 
 {% block title %}
   Calendar - Yamtrack
@@ -13,19 +14,67 @@
 
   {% include "events/components/calendar_card.html" %}
 
-  <div class="bg-surface-1 p-5 rounded-lg mb-6">
+  {# Export-link builder. Toggling a media-type chip rebuilds the query
+     string client-side so the user gets an immediately-copyable URL that
+     respects their selection. Empty `types[]` means "all enabled" (server
+     default). #}
+  <div class="bg-surface-1 p-5 rounded-lg mb-6"
+       x-data="{
+         types: new Set(),
+         baseUrl: '{{ request.scheme }}://{{ request.get_host }}{% url 'download_calendar' token=user.token %}',
+         get url() {
+           if (this.types.size === 0) return this.baseUrl;
+           const t = Array.from(this.types).join(',');
+           return this.baseUrl + '?types=' + encodeURIComponent(t);
+         },
+         toggle(t) {
+           if (this.types.has(t)) { this.types.delete(t); } else { this.types.add(t); }
+         },
+       }">
     <div class="flex items-center mb-3">
       {% include "app/icons/link.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
       <h3 class="text-base font-medium">Export link</h3>
     </div>
     <p class="text-fg-muted mb-4 text-sm">
-      This link can be used to integrate your calendar into any of your calendar applications.
+      Subscribe in any calendar app. Filter by media type below to narrow the feed.
     </p>
-    <div class="bg-surface-1 p-3 rounded-md mb-4">
-      <input readonly=""
-             class="w-full py-2 px-3 bg-surface-1 rounded-md text-fg text-sm border-0 focus:ring-0 outline-none font-mono"
+
+    <div class="mb-4">
+      <label class="block text-xs font-medium text-fg-muted mb-2">Include media types <span class="text-fg-faint">(none selected = all enabled)</span></label>
+      <div class="flex flex-wrap gap-2">
+        {% for media_type in user.get_enabled_media_types %}
+          {% if media_type != 'season' and media_type != 'episode' %}
+            <button type="button"
+                    @click="toggle('{{ media_type }}')"
+                    :class="types.has('{{ media_type }}') ? 'bg-accent text-white border-accent' : 'bg-surface-2 text-fg-muted border-border-default hover:bg-surface-3'"
+                    class="px-3 py-1 rounded-full text-xs border transition-colors cursor-pointer">
+              {{ media_type|title }}
+            </button>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="bg-surface-2 p-2 rounded-md flex items-center gap-2">
+      <label for="calendar-export-url" class="sr-only">Calendar export URL</label>
+      <input id="calendar-export-url"
+             readonly=""
+             class="flex-1 py-2 px-3 bg-transparent rounded-md text-fg text-sm border-0 focus:ring-0 outline-none font-mono"
              type="text"
-             value="{{ request.scheme }}://{{ request.get_host }}{% url 'download_calendar' token=user.token %}">
+             autocomplete="off"
+             :value="url"
+             data-copy-target="#calendar-export-url">
+      <button type="button"
+              class="flex items-center cursor-pointer group pr-2 text-fg-muted hover:text-indigo-400 transition-colors"
+              aria-label="Copy calendar URL"
+              title="Copy"
+              data-copy-target="#calendar-export-url">
+        {% include "app/icons/copy.svg" with classes="w-5 h-5" %}
+      </button>
     </div>
   </div>
 {% endblock content %}
+
+{% block js %}
+  <script src="{% static 'js/copy-item.js' %}{% get_static_file_mtime 'js/copy-item.js' %}"></script>
+{% endblock js %}

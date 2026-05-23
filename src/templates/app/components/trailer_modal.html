@@ -1,0 +1,68 @@
+{# Lite YouTube embed: poster + play button by default; iframe injected
+   only when the user clicks. Uses youtube-nocookie.com so YouTube can't
+   set tracking cookies until play. Expects:
+   - trailer = {"source": "youtube", "key": "<video_id>"}
+   - title   = media title (for aria + iframe title) #}
+{% if trailer and trailer.source == "youtube" and trailer.key %}
+  <div x-data="{ open: false, playing: false }" class="mt-3">
+    <button type="button"
+            @click="open = true; playing = false"
+            class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg btn-secondary cursor-pointer font-medium"
+            aria-label="Watch trailer for {{ title }}">
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M8 5v14l11-7z"/>
+      </svg>
+      <span>Watch trailer</span>
+    </button>
+
+    <div x-show="open"
+         x-cloak
+         @keydown.escape.window="open = false; playing = false"
+         class="fixed inset-0 z-50 flex items-center justify-center px-4"
+         role="dialog"
+         aria-modal="true"
+         aria-label="Trailer for {{ title }}">
+      <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"
+           @click="open = false; playing = false"
+           aria-hidden="true"></div>
+      <div class="relative w-full max-w-4xl"
+           @click.stop>
+        <button type="button"
+                @click="open = false; playing = false"
+                aria-label="Close trailer"
+                class="absolute -top-10 right-0 text-white/80 hover:text-white cursor-pointer transition-colors"
+                title="Close">
+          {% include "app/icons/x.svg" with classes="w-6 h-6" %}
+        </button>
+        <div class="relative aspect-video rounded-lg overflow-hidden bg-black shadow-2xl">
+          <template x-if="!playing">
+            <button type="button"
+                    @click="playing = true"
+                    class="absolute inset-0 w-full h-full cursor-pointer group"
+                    aria-label="Play trailer">
+              <img src="https://i.ytimg.com/vi/{{ trailer.key }}/hqdefault.jpg"
+                   alt=""
+                   loading="lazy"
+                   class="w-full h-full object-cover">
+              <span class="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
+                <span class="w-16 h-16 rounded-full bg-white/95 group-hover:bg-white text-black flex items-center justify-center shadow-lg transition-colors">
+                  <svg class="w-7 h-7 translate-x-0.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </span>
+              </span>
+            </button>
+          </template>
+          <template x-if="playing">
+            <iframe src="https://www.youtube-nocookie.com/embed/{{ trailer.key }}?autoplay=1&rel=0"
+                    title="{{ title }} trailer"
+                    allowfullscreen
+                    allow="autoplay; encrypted-media; picture-in-picture"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    class="absolute inset-0 w-full h-full border-0"></iframe>
+          </template>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}

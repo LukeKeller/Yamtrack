@@ -19,6 +19,17 @@ from users.models import User
 logger = logging.getLogger(__name__)
 
 
+def _clamped_int(raw, *, default, lo, hi):
+    """Parse a query-string integer with a default and inclusive bounds."""
+    if raw is None:
+        return default
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        return default
+    return max(lo, min(hi, value))
+
+
 def build_calendar_context(user, month=None, year=None, view_type=None):
     """Build the context dict needed to render the calendar card."""
     if view_type is None:
@@ -106,8 +117,15 @@ def reload_calendar(request):
 @login_not_required
 @csrf_exempt
 @require_http_methods(["GET", "HEAD", "PROPFIND"])
-def download_calendar(_, token: str):
-    """Download the calendar as a iCalendar file."""
+def download_calendar(request, token: str):
+    """Download the calendar as a iCalendar file.
+
+    Optional query params:
+        types  Comma-separated media types to include (default: all enabled).
+               Example: ?types=tv,movie keeps only TV + movie events.
+        days_before  Days of past events to include (default 30, max 365).
+        days_after   Days of future events to include (default 90, max 365).
+    """
     try:
         user = User.objects.get(token=token)
     except ObjectDoesNotExist:
@@ -119,12 +137,22 @@ def download_calendar(_, token: str):
 
     now = timezone.now()
 
-    # Define default start and end date (from past 30 days to incoming 90 days)
-    start_date = now.date() - timedelta(days=30)
-    end_date = now.date() + timedelta(days=90)
+    days_before = _clamped_int(request.GET.get("days_before"), default=30, lo=0, hi=365)
+    days_after = _clamped_int(request.GET.get("days_after"), default=90, lo=0, hi=365)
+
+    start_date = now.date() - timedelta(days=days_before)
+    end_date = now.date() + timedelta(days=days_after)
 
     # Retrieve release events
     releases = Event.objects.get_user_events(user, start_date, end_date)
+
+    # Optional media-type filter — keeps the underlying query unchanged but
+    # drops events for types the subscriber doesn't want. Cheap because the
+    # default window is small (~120 days).
+    types_param = request.GET.get("types", "").strip()
+    if types_param:
+        wanted = {t for t in types_param.split(",") if t}
+        releases = [r for r in releases if r.item.media_type in wanted]
 
     # Create iCalendar object
     cal = icalendar.Calendar()

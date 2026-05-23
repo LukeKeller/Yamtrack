@@ -283,7 +283,8 @@ def game(media_id):
             "standalone_expansions.name,standalone_expansions.cover.image_id,"
             "expanded_games.name,expanded_games.cover.image_id,"
             "similar_games.name,similar_games.cover.image_id,"
-            "dlcs.name,dlcs.cover.image_id;"
+            "dlcs.name,dlcs.cover.image_id,"
+            "videos.video_id,videos.name;"
             f"where id = {media_id};"
         )
         headers = {
@@ -352,6 +353,7 @@ def game(media_id):
                 "expanded_games": get_related(response.get("expanded_games")),
                 "recommendations": get_related(response.get("similar_games")),
             },
+            "trailer": get_trailer(response.get("videos")),
         }
         cache.set(cache_key, data)
     return data
@@ -463,3 +465,24 @@ def get_related(related_medias):
             for game in related_medias
         ]
     return []
+
+
+def get_trailer(videos):
+    """Pick the first usable video from IGDB's videos[] array.
+
+    IGDB returns a list of {video_id, name} where video_id is a YouTube key.
+    Prefer entries whose name contains "trailer" (case-insensitive); fall
+    back to the first video. Returns {"source": "youtube", "key": "..."}
+    or None.
+    """
+    if not videos:
+        return None
+
+    def _is_trailer(v):
+        name = (v.get("name") or "").lower()
+        return "trailer" in name
+
+    pick = next((v for v in videos if _is_trailer(v)), videos[0])
+    if not pick.get("video_id"):
+        return None
+    return {"source": "youtube", "key": pick["video_id"]}

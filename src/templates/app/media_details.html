@@ -186,6 +186,13 @@
           </div>
         </div>
 
+        {# Trailer button — only when the provider gave us a YouTube key.
+           Loads the iframe lazily via Alpine so YouTube doesn't get
+           contacted unless the user actually presses play. #}
+        {% if media.trailer %}
+          {% include "app/components/trailer_modal.html" with trailer=media.trailer title=media.title %}
+        {% endif %}
+
         {% if media.media_type == MediaTypes.MANGA.value and request.user.suwayomi_url %}
           <a href="{{ request.user.suwayomi_url }}/global-search?query={{ media.title|urlencode }}"
              target="_blank"
@@ -1031,7 +1038,11 @@
           <ul class="bg-surface-1 rounded-lg overflow-hidden divide-y"
               style="border: 1px solid var(--color-border-subtle)">
             {% for episode in media.episodes %}
-              <li class="hover:bg-surface-2 transition-colors{% if episode.history %} {% else %} opacity-90{% endif %}" x-data="{ obfuscated:
+              <li class="hover:bg-surface-2 transition-colors{% if episode.history %} {% else %} opacity-90{% endif %}"
+                  data-episode-number="{{ episode.episode_number }}"
+                  data-watched="{% if episode.history %}true{% else %}false{% endif %}"
+                  style="scroll-margin-top: 7rem"
+                  x-data="{ obfuscated:
                 {% if user.obfuscate_unseen_episodes and not episode.history %}
                   true
                 {% else %}
@@ -1186,3 +1197,20 @@
     </button>
   </div>
 {% endblock content %}
+
+{% block js %}
+  {{ block.super }}
+  <script>
+    // Continue-watching jump: when an "Up next" card links here with
+    // ?continue=1, scroll the first unwatched episode into view after the
+    // episode list paints. Runs once on initial load only.
+    (function () {
+      const params = new URLSearchParams(location.search);
+      if (params.get('continue') !== '1') return;
+      window.addEventListener('load', () => {
+        const next = document.querySelector('li[data-watched="false"]');
+        if (next) next.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    })();
+  </script>
+{% endblock js %}
