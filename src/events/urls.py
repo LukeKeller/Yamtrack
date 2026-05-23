@@ -10,4 +10,9 @@ urlpatterns = [
         views.download_calendar,
         name="download_calendar",
     ),
+    path(
+        "calendar/download/<str:token>/list/<int:list_id>",
+        views.download_list_calendar,
+        name="download_list_calendar",
+    ),
 ]

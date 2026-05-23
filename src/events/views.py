@@ -173,3 +173,61 @@ def download_calendar(request, token: str):
     response = HttpResponse(cal.to_ical(), content_type="text/calendar")
     response["Content-Disposition"] = 'attachment; filename="calendar.ics"'
     return response
+
+
+@login_not_required
+@csrf_exempt
+@require_http_methods(["GET", "HEAD", "PROPFIND"])
+def download_list_calendar(request, token: str, list_id: int):
+    """Per-list iCal feed.
+
+    Returns release events restricted to items in the given CustomList.
+    Authorisation: the token's owning user must be able to view the list
+    (owner or collaborator). Supports the same ``days_before`` and
+    ``days_after`` clamps as the global calendar feed so subscribers can
+    tighten the window without losing the per-list scoping.
+    """
+    try:
+        user = User.objects.get(token=token)
+    except ObjectDoesNotExist:
+        return HttpResponse(status=401)
+
+    try:
+        from lists.models import CustomList
+        custom_list = CustomList.objects.get(pk=list_id)
+    except (ObjectDoesNotExist, ImportError):
+        return HttpResponse(status=404)
+
+    if not custom_list.user_can_view(user):
+        return HttpResponse(status=403)
+
+    now = timezone.now()
+    days_before = _clamped_int(request.GET.get("days_before"), default=30, lo=0, hi=365)
+    days_after = _clamped_int(request.GET.get("days_after"), default=90, lo=0, hi=365)
+    start_date = now.date() - timedelta(days=days_before)
+    end_date = now.date() + timedelta(days=days_after)
+
+    releases = Event.objects.get_user_events(user, start_date, end_date)
+    allowed_item_ids = set(custom_list.items.values_list("pk", flat=True))
+    releases = [r for r in releases if r.item_id in allowed_item_ids]
+
+    cal = icalendar.Calendar()
+    cal.add("prodid", "-//Yamtrack//EN")
+    cal.add("version", "2.0")
+    cal.add("x-wr-calname", f"Yamtrack — {custom_list.name}")
+
+    for release in releases:
+        cal_event = icalendar.Event()
+        cal_event.add("uid", release.id)
+        cal_event.add("summary", str(release))
+        dt_tz_aware = release.datetime.replace(tzinfo=UTC)
+        cal_event.add("dtstart", dt_tz_aware)
+        cal_event.add("dtend", dt_tz_aware)
+        cal_event.add("dtstamp", now)
+        cal.add_component(cal_event)
+
+    response = HttpResponse(cal.to_ical(), content_type="text/calendar")
+    response["Content-Disposition"] = (
+        f'attachment; filename="yamtrack-list-{list_id}.ics"'
+    )
+    return response
