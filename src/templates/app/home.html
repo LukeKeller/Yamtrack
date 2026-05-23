@@ -26,12 +26,13 @@
       <div class="flex flex-wrap items-center gap-2">
         {% for section in home_sections %}
           {% if section.count %}
-            <span class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs bg-surface-1 border"
-                  style="border-color: var(--color-border-subtle)">
+            <a href="#section-{{ section.id }}"
+               class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs bg-surface-1 border hover:bg-surface-2 transition-colors"
+               style="border-color: var(--color-border-subtle)">
               <span class="status-dot status-dot-{{ section.key|status_slug }}"></span>
               <span class="font-medium text-fg">{{ section.count }}</span>
               <span class="text-fg-muted">{{ section.key|lower }}</span>
-            </span>
+            </a>
           {% endif %}
         {% endfor %}
       </div>
@@ -246,8 +247,8 @@
               <a href="{{ row.item|media_url }}"
                  class="flex items-start gap-3 pl-3 py-2 pr-3 rounded-md hover:bg-surface-2 transition-colors"
                  data-row-nav>
-                <span class="relative z-10 w-7 h-7 rounded-full flex items-center justify-center shrink-0 ring-4 ring-canvas"
-                      {% if row.history_type == "+" %}style="background: var(--color-accent-soft); color: var(--color-accent);" {% elif row.status == "Completed" %}style="background: var(--color-status-completed-soft); color: var(--color-status-completed);" {% elif row.status == "In progress" %}style="background: var(--color-status-in-progress-soft); color: var(--color-status-in-progress);" {% elif row.status == "Paused" %}style="background: var(--color-status-paused-soft); color: var(--color-status-paused);" {% elif row.status == "Dropped" %}style="background: var(--color-status-dropped-soft); color: var(--color-status-dropped);" {% else %}style="background: var(--color-surface-2); color: var(--color-fg-muted);"{% endif %}>
+                <span class="relative z-10 w-8 h-8 rounded-full flex items-center justify-center shrink-0 ring-4 ring-canvas border"
+                      {% if row.history_type == "+" %}style="background: var(--color-accent); color: white; border-color: var(--color-accent);" {% elif row.status == "Completed" %}style="background: var(--color-status-completed); color: white; border-color: var(--color-status-completed);" {% elif row.status == "In progress" %}style="background: var(--color-status-in-progress); color: white; border-color: var(--color-status-in-progress);" {% elif row.status == "Paused" %}style="background: var(--color-status-paused); color: white; border-color: var(--color-status-paused);" {% elif row.status == "Dropped" %}style="background: var(--color-status-dropped); color: white; border-color: var(--color-status-dropped);" {% else %}style="background: var(--color-surface-3); color: var(--color-fg); border-color: var(--color-border-default);"{% endif %}>
                   {% if row.history_type == "+" %}
                     {% include "app/icons/plus.svg" with classes="w-3.5 h-3.5" %}
                   {% else %}

@@ -10,10 +10,21 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh72"
+CURRENT_FORK_VERSION = "0.25.2~ynh73"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh73",
+        "date": "2026-05-23",
+        "title": "More home polish",
+        "highlights": [
+            "Hero status chips are now clickable — jump straight to the In Progress / Planning section further down the page.",
+            "Recent activity icons get a much stronger badge (saturated background + ring-cut into the timeline line) so events read at a glance.",
+            "Per-media-type subsection headers ('TV Seasons', 'Movies', etc.) get a thin accent bar matching the parent status and a faint count.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh72",
         "date": "2026-05-23",
