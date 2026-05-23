@@ -230,6 +230,52 @@ class Item(CalendarTriggerMixin, models.Model):
             events.tasks.reload_calendar(items_to_process=items_to_process)
 
 
+def _mood_highly_rated(qs, fields, now, _):
+    if "score" not in fields:
+        return qs
+    return qs.filter(score__gte=8)
+
+
+def _mood_recently_completed(qs, fields, now, td):
+    if "end_date" not in fields:
+        return qs
+    return qs.filter(status=Status.COMPLETED.value, end_date__gte=now - td(days=60))
+
+
+def _mood_stuck(qs, fields, now, td):
+    if "progressed_at" not in fields:
+        return qs
+    return qs.filter(
+        status=Status.IN_PROGRESS.value,
+        progressed_at__lt=now - td(days=60),
+    )
+
+
+def _mood_unrewatched(qs, fields, now, td):
+    if "end_date" not in fields:
+        return qs
+    return qs.filter(
+        status=Status.COMPLETED.value,
+        end_date__lt=now - td(days=365 * 3),
+    )
+
+
+MOOD_FILTERS = {
+    "highly_rated": _mood_highly_rated,
+    "recently_completed": _mood_recently_completed,
+    "stuck": _mood_stuck,
+    "unrewatched": _mood_unrewatched,
+}
+
+
+MOOD_LABELS = [
+    ("highly_rated", "Highly rated"),
+    ("recently_completed", "Recently completed"),
+    ("stuck", "Stuck"),
+    ("unrewatched", "Unrewatched 3y+"),
+]
+
+
 class MediaManager(models.Manager):
     """Custom manager for media models."""
 
@@ -237,13 +283,36 @@ class MediaManager(models.Manager):
         """Return list of historical model names."""
         return [f"historical{media_type}" for media_type in MediaTypes.values]
 
-    def get_media_list(self, user, media_type, status_filter, sort_filter, search=None):
-        """Get media list based on filters, sorting and search."""
+    def get_media_list(
+        self,
+        user,
+        media_type,
+        status_filter,
+        sort_filter,
+        search=None,
+        mood=None,
+    ):
+        """Get media list based on filters, sorting and search.
+
+        ``mood`` (optional) layers an additional Q filter on top of the
+        normal status filter. Supported values are listed in
+        ``MOOD_FILTERS``; unknown values are ignored so external links
+        with stale moods don't 404.
+        """
+        from datetime import timedelta
+
+        from django.utils import timezone
+
         model = apps.get_model(app_label="app", model_name=media_type)
         queryset = model.objects.filter(user=user.id)
 
         if status_filter != users.models.MediaStatusChoices.ALL:
             queryset = queryset.filter(status=status_filter)
+
+        if mood and mood in MOOD_FILTERS:
+            now = timezone.now()
+            field_names = {f.name for f in model._meta.fields}
+            queryset = MOOD_FILTERS[mood](queryset, field_names, now, timedelta)
 
         if search:
             queryset = queryset.filter(item__title__icontains=search)

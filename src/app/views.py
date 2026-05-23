@@ -23,6 +23,7 @@ from app import config, helpers, history_processor
 from app import statistics as stats
 from app.forms import EpisodeForm, ManualItemForm, get_form_class
 from app.models import (
+    MOOD_LABELS,
     TV,
     BasicMedia,
     Item,
@@ -332,6 +333,7 @@ def media_list(request, media_type):
         request.GET.get("status"),
     )
     search_query = request.GET.get("search", "")
+    mood_filter = request.GET.get("mood", "").strip() or None
     page = request.GET.get("page", 1)
 
     # Prepare status filter for database query
@@ -345,6 +347,7 @@ def media_list(request, media_type):
         status_filter=status_filter,
         sort_filter=sort_filter,
         search=search_query,
+        mood=mood_filter,
     )
 
     # Paginate results
@@ -379,6 +382,8 @@ def media_list(request, media_type):
         "current_status": status_filter,
         "sort_choices": MediaSortChoices.choices,
         "status_choices": status_choices,
+        "current_mood": mood_filter or "",
+        "mood_choices": MOOD_LABELS,
     }
 
     # Per-media-type stats panel. Only records have one today; the contract is
