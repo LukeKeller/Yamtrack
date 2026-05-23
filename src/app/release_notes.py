@@ -10,10 +10,22 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh74"
+CURRENT_FORK_VERSION = "0.25.2~ynh75"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh75",
+        "date": "2026-05-23",
+        "title": "Today section, mobile-friendly calendar, search results polish",
+        "highlights": [
+            "Home page: new Today section above the calendar listing what's airing today (only shows when there's actually something).",
+            "Mobile: calendar widget forces the list view below the `sm` breakpoint — the 7-column grid cells are too narrow on a phone, titles get truncated to a single letter. List view shows each day with full titles and times.",
+            "Mobile: calendar header collapses the 'Fetch New Releases' label to an icon-only button to save horizontal space, and hides the desktop-only grid/list view toggle.",
+            "Search results page: header now echoes the query you searched (e.g. 'Results for \"severance\"') with the media type as a tracker chip and result count below; source filters use rounded pill chips on theme tokens; pagination active page uses the accent colour.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh74",
         "date": "2026-05-23",

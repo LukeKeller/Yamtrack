@@ -24,13 +24,15 @@
 
       <form method="post" action="{% url 'reload_calendar' %}">
         {% csrf_token %}
-        <button class="px-4 py-2 text-sm bg-surface-2 hover:bg-surface-3 rounded-md transition-colors flex items-center gap-2 cursor-pointer">
+        <button class="px-3 py-2 text-sm bg-surface-2 hover:bg-surface-3 rounded-md transition-colors flex items-center gap-2 cursor-pointer"
+                title="Fetch new releases"
+                aria-label="Fetch new releases">
           {% include "app/icons/circle-spinning-clockwise.svg" with classes="w-4 h-4" %}
-          <span>Fetch New Releases</span>
+          <span class="hidden lg:inline">Fetch New Releases</span>
         </button>
       </form>
 
-      <div class="bg-surface-2 rounded-md p-1 space-x-0.5 flex">
+      <div class="bg-surface-2 rounded-md p-1 space-x-0.5 hidden sm:flex">
         <a class="p-2 rounded-md transition-colors cursor-pointer {% if view_type == 'grid' %}bg-indigo-600 text-white{% else %}hover:bg-surface-3{% endif %}"
            aria-label="Grid view"
            href="{% url 'calendar' %}?month={{ month }}&year={{ year }}&view=grid">
@@ -51,9 +53,17 @@
     </div>
   </div>
 
-  {% if view_type == 'grid' %}
-    {% include "events/components/calendar_grid.html" %}
-  {% else %}
-    {% include "events/components/calendar_list.html" %}
-  {% endif %}
+  {% comment %}
+    Below `sm` (640px) the 7-column grid cells get too narrow to fit
+    titles or times — force the list view there regardless of the user's
+    desktop preference. Above `sm`, honor view_type.
+  {% endcomment %}
+  <div class="sm:hidden">{% include "events/components/calendar_list.html" %}</div>
+  <div class="hidden sm:block">
+    {% if view_type == 'grid' %}
+      {% include "events/components/calendar_grid.html" %}
+    {% else %}
+      {% include "events/components/calendar_list.html" %}
+    {% endif %}
+  </div>
 </div>

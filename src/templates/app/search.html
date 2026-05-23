@@ -6,26 +6,39 @@
 {% endblock title %}
 
 {% block content %}
-  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-y-4">
-    <h2 class="text-2xl font-bold">Search Results</h2>
-    <div class="flex items-center flex-wrap gap-x-4 gap-y-2">
-      <span class="text-sm text-fg-muted">Source:</span>
-      <div class="flex gap-x-2">
+  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-y-4">
+    <div class="min-w-0">
+      <p class="text-xs uppercase tracking-wider text-fg-faint mb-1">{{ media_type|media_type_readable_plural }}</p>
+      <h1 class="text-2xl font-semibold tracking-tight truncate">
+        {% if request.GET.q %}
+          Results for "{{ request.GET.q }}"
+        {% else %}
+          Search
+        {% endif %}
+      </h1>
+      {% if data.total_results %}
+        <p class="text-sm text-fg-muted mt-0.5">{{ data.total_results }} result{{ data.total_results|pluralize }}</p>
+      {% endif %}
+    </div>
+    <div class="flex items-center flex-wrap gap-x-3 gap-y-2">
+      <span class="text-xs uppercase tracking-wider text-fg-faint">Source</span>
+      <div class="flex gap-x-1.5">
         {% with source_options=media_type|sources %}
           {% for source_option in source_options %}
             <a href="{% url 'search' %}?q={{ request.GET.q|urlencode }}&media_type={{ media_type }}&source={{ source_option.value }}&layout={{ layout }}"
-               class="px-3 py-1.5 text-sm rounded-md transition-colors duration-200 cursor-pointer flex items-center {% if source == source_option.value %}bg-indigo-600 text-white{% else %}bg-gray-700 text-fg hover:bg-gray-600{% endif %}">
+               class="px-2.5 py-1 text-xs rounded-full border transition-colors {% if source == source_option.value %}bg-accent text-white border-accent{% else %}bg-surface-1 text-fg-muted hover:bg-surface-2 border-border-default{% endif %}">
               {{ source_option.label }}
             </a>
           {% endfor %}
         {% endwith %}
-        <div class="flex rounded-md overflow-hidden border border-gray-700">
+        <div class="flex rounded-md overflow-hidden border ml-1"
+             style="border-color: var(--color-border-default)">
           <a href="?q={{ request.GET.q|urlencode }}&media_type={{ media_type }}{% if source %}&source={{ source }}{% endif %}&layout=grid"
-             {% if layout == 'grid' %} class="p-2 cursor-pointer bg-indigo-600 text-white flex items-center" {% else %} class="p-2 cursor-pointer bg-surface-2 hover:bg-surface-3 flex items-center" {% endif %}
-             title="Grid View">{% include "app/icons/four-square.svg" with classes="w-5 h-5" %}</a>
+             {% if layout == 'grid' %} class="p-1.5 cursor-pointer bg-accent text-white flex items-center" {% else %} class="p-1.5 cursor-pointer bg-surface-1 hover:bg-surface-2 flex items-center text-fg-muted" {% endif %}
+             title="Grid View">{% include "app/icons/four-square.svg" with classes="w-4 h-4" %}</a>
           <a href="?q={{ request.GET.q|urlencode }}&media_type={{ media_type }}{% if source %}&source={{ source }}{% endif %}&layout=list"
-             {% if layout == 'list' %} class="p-2 cursor-pointer bg-indigo-600 text-white flex items-center" {% else %} class="p-2 cursor-pointer bg-surface-2 hover:bg-surface-3 flex items-center" {% endif %}
-             title="List View">{% include "app/icons/list.svg" with classes="w-5 h-5" %}</a>
+             {% if layout == 'list' %} class="p-1.5 cursor-pointer bg-accent text-white flex items-center" {% else %} class="p-1.5 cursor-pointer bg-surface-1 hover:bg-surface-2 flex items-center text-fg-muted" {% endif %}
+             title="List View">{% include "app/icons/list.svg" with classes="w-4 h-4" %}</a>
         </div>
       </div>
     </div>
@@ -54,7 +67,7 @@
           {% include "app/icons/chevron-left.svg" with classes="w-5 h-5" %}
         </a>
       {% else %}
-        <button class="p-2 rounded-md bg-gray-700 text-fg-faint cursor-not-allowed"
+        <button class="p-2 rounded-md bg-surface-1 text-fg-faint cursor-not-allowed"
                 disabled>{% include "app/icons/chevron-left.svg" with classes="w-5 h-5" %}</button>
       {% endif %}
 
@@ -63,7 +76,7 @@
       {% for page_num in pages %}
         {% if page_num %}
           <a href="?q={{ request.GET.q|urlencode }}&media_type={{ media_type }}{% if source %}&source={{ source }}{% endif %}&page={{ page_num }}&layout={{ layout }}"
-             class="w-10 h-10 rounded-md {% if data.page == page_num %}bg-indigo-600{% else %}bg-surface-1 hover:bg-surface-2{% endif %} text-white flex items-center justify-center">
+             class="w-10 h-10 rounded-md {% if data.page == page_num %}bg-accent{% else %}bg-surface-1 hover:bg-surface-2{% endif %} text-white flex items-center justify-center">
             {{ page_num }}
           </a>
         {% else %}
@@ -81,7 +94,7 @@
           {% include "app/icons/chevron-right.svg" with classes="w-5 h-5" %}
         </a>
       {% else %}
-        <button class="p-2 rounded-md bg-gray-700 text-fg-faint cursor-not-allowed"
+        <button class="p-2 rounded-md bg-surface-1 text-fg-faint cursor-not-allowed"
                 disabled>{% include "app/icons/chevron-right.svg" with classes="w-5 h-5" %}</button>
       {% endif %}
     </div>

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load app_tags %}
+{% load events_tags %}
 {% load humanize %}
 
 {% block title %}
@@ -220,6 +221,51 @@
           {% endfor %}
         </ul>
       </section>
+    {% endif %}
+
+    {% comment %}
+      Today mini-section: surfaces today's calendar events ahead of the
+      full month grid so the user sees what's airing today without
+      hunting for the day cell. Uses the same release_dict the grid
+      below renders from (no extra query). Skipped when today has
+      nothing.
+    {% endcomment %}
+    {% if today and release_dict %}
+      {% with today_events=release_dict|get_item:today.day %}
+        {% if today_events %}
+          <section>
+            <div class="flex items-baseline justify-between mb-3 gap-3">
+              <h2 class="text-lg font-semibold flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+                Today
+              </h2>
+              <span class="text-xs text-fg-faint">{{ today|date:'F j' }}</span>
+            </div>
+            <ul class="card divide-y"
+                style="padding: 0;
+                       border-color: var(--color-border-subtle)">
+              {% for release in today_events %}
+                <li>
+                  <a href="{{ release.item|media_url }}"
+                     class="flex items-center gap-3 px-3 py-2.5 hover:bg-surface-2 transition-colors"
+                     data-row-nav>
+                    {% with color=release.item.media_type|media_color %}
+                      <span class="w-8 h-8 rounded-md flex items-center justify-center shrink-0"
+                            style="background: color-mix(in srgb, var(--color-type-{{ release.item.media_type|media_type_slug }}) 18%, var(--color-surface-2))">
+                        {% icon release.item.media_type is_active=False extra_classes=color|add:" w-4 h-4" %}
+                      </span>
+                    {% endwith %}
+                    <div class="flex-1 min-w-0">
+                      <div class="text-sm font-medium text-fg truncate">{{ release }}</div>
+                      <div class="text-xs text-fg-faint">{{ release.datetime|time_format:user|default:'All day' }}</div>
+                    </div>
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+          </section>
+        {% endif %}
+      {% endwith %}
     {% endif %}
 
     {% include "events/components/calendar_card.html" %}
