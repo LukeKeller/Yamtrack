@@ -113,6 +113,7 @@
     --color-surface-1: #1c2027;
     --color-surface-2: #252a33;
     --color-surface-3: #2f3540;
+    --color-surface-4: #3a414e;
     --color-fg: #ecedf0;
     --color-fg-muted: #a4abb6;
     --color-fg-faint: #6b7383;
@@ -524,9 +525,6 @@
   }
   .mt-8 {
     margin-top: calc(var(--spacing) * 8);
-  }
-  .mt-12 {
-    margin-top: calc(var(--spacing) * 12);
   }
   .mr-1 {
     margin-right: calc(var(--spacing) * 1);
@@ -2559,6 +2557,13 @@
       }
     }
   }
+  .hover\:bg-surface-4 {
+    &:hover {
+      @media (hover: hover) {
+        background-color: var(--color-surface-4);
+      }
+    }
+  }
   .hover\:text-fg {
     &:hover {
       @media (hover: hover) {
@@ -2778,11 +2783,11 @@
       opacity: 75%;
     }
   }
-  .disabled\:hover\:bg-gray-700 {
+  .disabled\:hover\:bg-surface-3 {
     &:disabled {
       &:hover {
         @media (hover: hover) {
-          background-color: var(--color-gray-700);
+          background-color: var(--color-surface-3);
         }
       }
     }

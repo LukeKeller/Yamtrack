@@ -69,6 +69,7 @@
                    name="{{ password_form.old_password.html_name }}"
                    class="w-full py-2 px-3 pr-10 bg-surface-2 rounded-md text-white text-sm border {% if password_form.old_password.errors %}border-red-500{% else %}border-gray-600{% endif %} focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                    :type="showCurrentPassword ? 'text' : 'password'"
+                   autocomplete="current-password"
                    value="">
             <button type="button"
                     tabindex="-1"
@@ -93,6 +94,7 @@
                    name="{{ password_form.new_password1.html_name }}"
                    class="w-full py-2 px-3 pr-10 bg-surface-2 rounded-md text-white text-sm border {% if password_form.new_password1.errors %}border-red-500{% else %}border-gray-600{% endif %} focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                    :type="showNewPassword ? 'text' : 'password'"
+                   autocomplete="new-password"
                    value="">
             <button type="button"
                     tabindex="-1"
@@ -117,6 +119,7 @@
                    name="{{ password_form.new_password2.html_name }}"
                    class="w-full py-2 px-3 pr-10 bg-surface-2 rounded-md text-white text-sm border {% if password_form.new_password2.errors %}border-red-500{% else %}border-gray-600{% endif %} focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                    :type="showConfirmPassword ? 'text' : 'password'"
+                   autocomplete="new-password"
                    value="">
             <button type="button"
                     tabindex="-1"

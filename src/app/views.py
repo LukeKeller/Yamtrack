@@ -1,8 +1,8 @@
 import logging
 from datetime import timedelta
-from pathlib import Path
 
 from django.apps import apps
+from django.contrib.auth.decorators import login_not_required
 from django.conf import settings
 from django.contrib import messages
 from django.core.cache import cache
@@ -1526,11 +1526,36 @@ def music_stats(request):
     return render(request, "app/music_stats.html", context)
 
 
+@login_not_required
 @require_GET
-def service_worker():
-    """Serve the service worker file."""
-    sw_path = Path(settings.STATICFILES_DIRS[0]) / "js" / "serviceworker.js"
-    with sw_path.open() as f:
-        response = HttpResponse(f.read(), content_type="application/javascript")
-        response["Service-Worker-Allowed"] = "/"
-        return response
+def service_worker(request):
+    """Serve the service worker JS from the app root.
+
+    Served at the app root (not from STATIC_URL) so the SW's effective scope
+    is the whole app — important for BASE_URL subpath deploys where
+    /static/... lives at /<base>/static/... and would limit scope to the
+    static-js directory.
+
+    Service-Worker-Allowed lets the SW claim a wider scope than its own URL.
+    """
+    response = render(
+        request,
+        "app/serviceworker.js",
+        content_type="application/javascript",
+    )
+    response["Service-Worker-Allowed"] = "/"
+    response["Cache-Control"] = "no-cache"
+    return response
+
+
+@login_not_required
+@require_GET
+def webmanifest(request):
+    """Serve the PWA manifest as a template so URLs honor BASE_URL."""
+    response = render(
+        request,
+        "app/site.webmanifest",
+        content_type="application/manifest+json",
+    )
+    response["Cache-Control"] = "public, max-age=3600"
+    return response

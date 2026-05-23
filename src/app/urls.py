@@ -105,4 +105,5 @@ urlpatterns = [
     path("music/history", views.music_history, name="music_history"),
     path("music/stats", views.music_stats, name="music_stats"),
     path("serviceworker.js", views.service_worker, name="service_worker"),
+    path("site.webmanifest", views.webmanifest, name="webmanifest"),
 ]

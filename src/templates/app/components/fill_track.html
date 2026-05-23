@@ -83,10 +83,12 @@
       {% endif %}
 
       {% if media_type == "season" %}
-        {# Bulk completion date override — only meaningful when status flips to
-           Completed and child episodes get auto-stamped. "default" sends an
-           empty value so the server falls back to the user's global Bulk
-           Completion Date pref. #}
+        {% comment %}
+          Bulk completion date override — only meaningful when status flips to
+          Completed and child episodes get auto-stamped. "default" sends an
+          empty value so the server falls back to the user's global Bulk
+          Completion Date pref.
+        {% endcomment %}
         <div class="mb-4" x-data="{ choice: 'default' }">
           <label class="block text-xs font-medium mb-1 text-fg-muted">When marking complete, stamp episodes with</label>
           <input type="hidden"

@@ -16,11 +16,13 @@
     tinted by --color-accent-soft. The negative margins extend the hero to
     the page edges; pt-12 lifts content off the top of the surface beneath.
   {% endcomment %}
-  {# No overflow-hidden here: the hero wraps the whole header (poster + CTA +
-     metadata) and absolutely-positioned descendants like the "Add to library"
-     status sheet popover need to escape its bounds. The backdrop img and
-     gradient overlays inside are all absolute inset-0, so they can't overflow
-     without it. #}
+  {% comment %}
+    No overflow-hidden here: the hero wraps the whole header (poster + CTA +
+    metadata) and absolutely-positioned descendants like the "Add to library"
+    status sheet popover need to escape its bounds. The backdrop img and
+    gradient overlays inside are all absolute inset-0, so they can't overflow
+    without it.
+  {% endcomment %}
   <div class="relative -mx-4 lg:-mx-8 -mt-8 lg:-mt-10 mb-8 px-4 lg:px-8 pt-12 lg:pt-16 pb-2">
     {% if media.backdrop %}
       <img alt=""

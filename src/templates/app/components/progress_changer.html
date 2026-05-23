@@ -3,7 +3,8 @@
 {% include "app/components/messages/messages_oob.html" %}
 
 <div class="flex items-center justify-center space-x-4 pb-3">
-  <button class="p-1 bg-gray-700 hover:bg-gray-600 rounded-md transition-colors cursor-pointer disabled:opacity-50 disabled:hover:bg-gray-700 disabled:cursor-not-allowed"
+  <button aria-label="Decrease progress for {{ media.item.title }}"
+          class="p-1 bg-surface-3 hover:bg-surface-4 rounded-md transition-colors cursor-pointer disabled:opacity-50 disabled:hover:bg-surface-3 disabled:cursor-not-allowed"
           {% if media.progress == 0 %}disabled{% endif %}
           hx-post="{% url 'progress_edit' media.item.media_type media.id %}"
           hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
@@ -25,7 +26,8 @@
     {% endif %}
   </div>
 
-  <button class="p-1 bg-gray-700 hover:bg-gray-600 rounded-md transition-colors cursor-pointer disabled:opacity-50 disabled:hover:bg-gray-700 disabled:cursor-not-allowed"
+  <button aria-label="Increase progress for {{ media.item.title }}"
+          class="p-1 bg-surface-3 hover:bg-surface-4 rounded-md transition-colors cursor-pointer disabled:opacity-50 disabled:hover:bg-surface-3 disabled:cursor-not-allowed"
           {% if media.progress == media.max_progress %}disabled{% endif %}
           hx-post="{% url 'progress_edit' media.item.media_type media.id %}"
           hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'

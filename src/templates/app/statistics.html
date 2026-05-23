@@ -58,15 +58,19 @@
         <div class="space-y-4">
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium mb-2 text-fg">Start Date</label>
-              <input x-model="startDate"
+              <label for="stats-start-date" class="block text-sm font-medium mb-2 text-fg">Start Date</label>
+              <input id="stats-start-date"
+                     name="start_date"
+                     x-model="startDate"
                      @change="updateDateRange()"
                      class="w-full p-2.5 bg-surface-2 rounded-md text-white border border-gray-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm scheme-dark"
                      type="date">
             </div>
             <div>
-              <label class="block text-sm font-medium mb-2 text-fg">End Date</label>
-              <input x-model="endDate"
+              <label for="stats-end-date" class="block text-sm font-medium mb-2 text-fg">End Date</label>
+              <input id="stats-end-date"
+                     name="end_date"
+                     x-model="endDate"
                      @change="updateDateRange()"
                      class="w-full p-2.5 bg-surface-2 rounded-md text-white border border-gray-600 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm scheme-dark"
                      type="date">

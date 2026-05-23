@@ -27,10 +27,13 @@
     }
   };
 
+  // URLs are injected by base.html via data-* attrs on a <script> tag so we
+  // honor Django's BASE_URL prefix (e.g. /yamtrack on subpath deploys).
+  const cfg = document.currentScript || document.querySelector('script[data-shortcut-home]');
   const jumpTargets = {
-    h: '/',
-    d: '/calendar/',
-    l: '/lists/',
+    h: cfg?.dataset?.shortcutHome || '/',
+    d: cfg?.dataset?.shortcutCalendar || '/calendar/',
+    l: cfg?.dataset?.shortcutLists || '/lists/',
   };
 
   let awaitingG = false;

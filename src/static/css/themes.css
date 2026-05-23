@@ -53,7 +53,9 @@ html[data-theme="catppuccin-mocha"] {
   --color-surface-4: #585b70;
   --color-fg:        #cdd6f4;
   --color-fg-muted:  #a6adc8;
-  --color-fg-faint:  #7f849c;
+  /* fg-faint bumped from Overlay 1 (#7f849c) to Overlay 2 (#9399b2) so
+     text-fg-faint sitting on --color-canvas meets WCAG AA 4.5:1. */
+  --color-fg-faint:  #9399b2;
   --color-accent:        #cba6f7;
   --color-accent-strong: #b489e5;
   --color-accent-hover:  #9b71d6;

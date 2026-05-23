@@ -33,7 +33,7 @@
           type="text/css"
           href="{% static 'css/themes.css' %}{% get_static_file_mtime 'css/themes.css' %}">
 
-    <script src="{% static 'js/libraries/htmx-2.0.4.min.js' %}"></script>
+    <script defer src="{% static 'js/libraries/htmx-2.0.4.min.js' %}"></script>
     <script defer src="{% static 'js/libraries/alpinejs-3.14.9.min.js' %}"></script>
     <script src="{% static 'js/libraries/lazysizes-5.3.2.min.js' %}" async></script>
 
@@ -48,7 +48,9 @@
           type="image/png"
           sizes="16x16"
           href="{% static "favicon/favicon-16x16.png" %}">
-    <link rel="manifest" href="{% static "favicon/site.webmanifest" %}">
+    <link rel="manifest"
+          href="{% url 'webmanifest' %}"
+          crossorigin="use-credentials">
     <link rel="mask-icon"
           href="{% static "favicon/safari-pinned-tab.svg" color="#181a1b" %}">
     <link rel="shortcut icon" href="{% static "favicon/favicon.ico" %}">
@@ -153,9 +155,14 @@
           {# Top bar #}
           <header class="sticky top-0 z-10 h-14 bg-surface-0 border-b border-border-default px-4 lg:px-6 flex items-center gap-3 shadow-sm">
 
-            {# Mobile sidebar toggle #}
+            {% comment %}
+              Mobile sidebar toggle. Note: cannot use `.btn` here — `.btn` is
+              defined via @apply and emits a `display: inline-flex` rule that
+              loses to `.lg:hidden` only by source order, so wrapping it in a
+              `.btn` defeats the lg-only hidden behavior.
+            {% endcomment %}
             <button @click="isMobileMenuOpen = !isMobileMenuOpen"
-                    class="lg:hidden btn btn-icon btn-ghost"
+                    class="lg:hidden inline-flex items-center justify-center w-9 h-9 rounded-md text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors cursor-pointer"
                     aria-label="Toggle sidebar">{% include "app/icons/hamburger.svg" with classes="w-5 h-5" %}</button>
 
             {# Search input (also opens cmdk with ⌘K) #}
@@ -178,32 +185,35 @@
                            value="{{ request.GET.q }}"
                            :placeholder="getPlaceholder()"
                            class="input h-9 pl-9 pr-16 rounded-r-none">
-                    <span class="absolute right-2 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1 pointer-events-none">
-                      <kbd>⌘</kbd><kbd>K</kbd>
+                    <span class="absolute right-2 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1 pointer-events-none"
+                          x-data="{ mac: navigator.platform.includes('Mac') || /iP(hone|ad)/.test(navigator.platform) }">
+                      <kbd x-text="mac ? '⌘' : 'Ctrl'"></kbd><kbd>K</kbd>
                     </span>
                   </div>
                   <input type="hidden" name="media_type" :value="selectedType.value">
-                  <button type="button"
-                          @click="isOpen = !isOpen"
-                          @click.away="isOpen = false"
-                          class="flex items-center justify-between gap-1.5 max-w-[110px] sm:max-w-none sm:w-28 px-3 h-9 text-sm bg-surface-2 hover:bg-surface-3 text-fg rounded-r-md border border-l-0 border-border-default cursor-pointer transition-colors">
-                    <span class="truncate" x-text="selectedType.display"></span>
-                    {% include "app/icons/chevron-down.svg" with classes="w-3.5 h-3.5 opacity-60" %}
-                  </button>
-                  <ul x-cloak
-                      x-show="isOpen"
-                      @keydown.escape.window="isOpen = false"
-                      x-transition:enter="transition ease-out duration-100"
-                      x-transition:enter-start="opacity-0 scale-95"
-                      x-transition:enter-end="opacity-100 scale-100"
-                      x-transition:leave="transition ease-in duration-75"
-                      class="absolute z-20 mt-12 py-1 text-sm bg-surface-2 rounded-md shadow-lg right-0 w-28 border border-border-default">
-                    <template x-for="type in mediaTypes" :key="type.value">
-                      <li @click="selectedType = type; isOpen = false"
-                          class="px-3 py-1.5 cursor-pointer hover:bg-surface-3 transition"
-                          x-text="type.display"></li>
-                    </template>
-                  </ul>
+                  <div class="relative">
+                    <button type="button"
+                            @click="isOpen = !isOpen"
+                            @click.outside="isOpen = false"
+                            class="flex items-center justify-between gap-1.5 max-w-[110px] sm:max-w-none sm:w-28 px-3 h-9 text-sm bg-surface-2 hover:bg-surface-3 text-fg rounded-r-md border border-l-0 border-border-default cursor-pointer transition-colors">
+                      <span class="truncate" x-text="selectedType.display"></span>
+                      {% include "app/icons/chevron-down.svg" with classes="w-3.5 h-3.5 opacity-60" %}
+                    </button>
+                    <ul x-cloak
+                        x-show="isOpen"
+                        @keydown.escape.window="isOpen = false"
+                        x-transition:enter="transition ease-out duration-100"
+                        x-transition:enter-start="opacity-0 scale-95"
+                        x-transition:enter-end="opacity-100 scale-100"
+                        x-transition:leave="transition ease-in duration-75"
+                        class="absolute z-20 mt-1 py-1 text-sm bg-surface-2 rounded-md shadow-lg right-0 w-28 border border-border-default">
+                      <template x-for="type in mediaTypes" :key="type.value">
+                        <li @click="selectedType = type; isOpen = false"
+                            class="px-3 py-1.5 cursor-pointer hover:bg-surface-3 transition"
+                            x-text="type.display"></li>
+                      </template>
+                    </ul>
+                  </div>
                 </div>
               </form>
             </div>
@@ -260,7 +270,7 @@
           <span>Home</span>
         </a>
         <a href="{{ browse_url }}"
-           class="flex flex-col items-center gap-0.5 px-2 py-1.5 text-[10px] {% if browse_url in request.path %}text-accent{% else %}text-fg-muted{% endif %}">
+           class="flex flex-col items-center gap-0.5 px-2 py-1.5 text-[10px] {% if request.path|str_equals:browse_url %}text-accent{% else %}text-fg-muted{% endif %}">
           {% include "app/icons/flame.svg" with classes="w-5 h-5" %}
           <span>Discover</span>
         </a>
@@ -271,7 +281,7 @@
           <span>Search</span>
         </button>
         <a href="{{ lists_url }}"
-           class="flex flex-col items-center gap-0.5 px-2 py-1.5 text-[10px] {% if lists_url in request.path %}text-accent{% else %}text-fg-muted{% endif %}">
+           class="flex flex-col items-center gap-0.5 px-2 py-1.5 text-[10px] {% if request.path|str_equals:lists_url %}text-accent{% else %}text-fg-muted{% endif %}">
           {% include "app/icons/folder-plus.svg" with classes="w-5 h-5" %}
           <span>Lists</span>
         </a>
@@ -304,18 +314,16 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/static/js/serviceworker.js')
-            .then((registration) => {
-              console.log('SW registered: ', registration);
-            })
-            .catch((registrationError) => {
-              console.log('SW registration failed: ', registrationError);
-            });
+          navigator.serviceWorker.register('{% url "service_worker" %}', { scope: '{{ request.META.SCRIPT_NAME|default:"/" }}/' })
+            .catch(() => { /* SW is best-effort; ignore registration errors */ });
         });
       }
     </script>
 
     <script src="{% static 'js/mediaStatusDateHandler.js' %}{% get_static_file_mtime 'js/mediaStatusDateHandler.js' %}"></script>
-    <script src="{% static 'js/searchShortcut.js' %}{% get_static_file_mtime 'js/searchShortcut.js' %}"></script>
+    <script src="{% static 'js/searchShortcut.js' %}{% get_static_file_mtime 'js/searchShortcut.js' %}"
+            data-shortcut-home="{% url 'home' %}"
+            data-shortcut-calendar="{% url 'calendar' %}"
+            data-shortcut-lists="{% url 'lists' %}"></script>
   </body>
 </html>

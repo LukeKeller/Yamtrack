@@ -111,7 +111,9 @@
     <div class="flex flex-wrap items-center gap-2 mb-5">
       <div class="relative flex-1 max-w-sm">
         {% include "app/icons/magnifying-glass.svg" with classes="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-faint pointer-events-none" %}
-        <input type="text"
+        <label for="medialist-search" class="sr-only">Search {{ media_type_plural }}</label>
+        <input type="search"
+               id="medialist-search"
                class="input h-8 pl-8 pr-8 text-sm"
                placeholder="Search {{ media_type_plural }}…"
                x-model="search"

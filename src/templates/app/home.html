@@ -17,8 +17,7 @@
       <div>
         <p class="text-sm text-fg-faint mb-1">{% now "l, F j" %}</p>
         <h1 class="text-2xl font-semibold">
-          Welcome back
-          {% if user.is_authenticated %}, {{ user.username }}{% endif %}
+          Welcome back{% if user.is_authenticated %}, {{ user.username }}{% endif %}
         </h1>
         <p class="text-sm text-fg-muted mt-1">
           {% for section in home_sections %}
