@@ -116,12 +116,118 @@ def home(request):
         "home_sections": home_sections,
         "up_next": up_next,
         "recent_activity": _recent_activity(request.user, limit=8),
+        "on_this_day": _on_this_day(request.user, limit=8),
+        "stale_planning": _stale_planning(request.user, limit=5),
         "current_sort": sort_by,
         "sort_choices": HomeSortChoices.choices,
         "items_limit": items_limit,
         **build_calendar_context(request.user),
     }
     return render(request, "app/home.html", context)
+
+
+def _on_this_day(user, *, limit=8):
+    """Items the user started or completed on this calendar date in past years.
+
+    Reads each tracked subclass's start_date / end_date directly (cheap; the
+    list is short and there's no full-table scan thanks to status filters
+    elsewhere). Skips Episode — it has no per-episode tracking dates here —
+    and re-targets Feb 29 to Feb 28 so leap-day items still surface annually.
+    """
+    today = timezone.localdate()
+    compare_month, compare_day = today.month, today.day
+    if compare_month == 2 and compare_day == 29:
+        compare_day = 28
+
+    candidates = []
+    for media_type in MediaTypes.values:
+        if media_type == MediaTypes.EPISODE.value:
+            continue
+        try:
+            model = apps.get_model("app", media_type)
+        except LookupError:
+            continue
+        field_names = {f.name for f in model._meta.fields}
+        for date_field, kind in (("end_date", "completed"), ("start_date", "started")):
+            if date_field not in field_names:
+                continue
+            qs = (
+                model.objects.filter(
+                    user=user,
+                    **{
+                        f"{date_field}__month": compare_month,
+                        f"{date_field}__day": compare_day,
+                    },
+                )
+                .exclude(**{f"{date_field}__year": today.year})
+                .select_related("item")
+                .order_by(f"-{date_field}")[: limit * 2]
+            )
+            for media in qs:
+                date_value = getattr(media, date_field)
+                if not date_value:
+                    continue
+                candidates.append(
+                    {
+                        "item": media.item,
+                        "kind": kind,
+                        "year": date_value.year,
+                        "date": date_value,
+                    },
+                )
+
+    candidates.sort(key=lambda c: (c["date"], c["kind"]), reverse=True)
+    # Deduplicate same item appearing as both started and completed today —
+    # prefer "completed" since it's the bigger event.
+    seen = set()
+    deduped = []
+    for c in candidates:
+        key = (c["item"].pk, c["year"])
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(c)
+    return deduped[:limit]
+
+
+def _stale_planning(user, *, limit=5, days=180):
+    """Planning-status items that have been sitting around for more than `days`.
+
+    Sorted oldest-first so the nudge surfaces what the user has neglected
+    the longest. Limited; this is a re-engagement hint, not a backlog view.
+    """
+    threshold = timezone.now() - timedelta(days=days)
+    candidates = []
+    for media_type in MediaTypes.values:
+        if media_type == MediaTypes.EPISODE.value:
+            continue
+        try:
+            model = apps.get_model("app", media_type)
+        except LookupError:
+            continue
+        field_names = {f.name for f in model._meta.fields}
+        if "status" not in field_names or "created_at" not in field_names:
+            continue
+        qs = (
+            model.objects.filter(
+                user=user,
+                status=Status.PLANNING.value,
+                created_at__lt=threshold,
+            )
+            .select_related("item")
+            .order_by("created_at")[: limit * 2]
+        )
+        for media in qs:
+            candidates.append(
+                {
+                    "item": media.item,
+                    "since": media.created_at,
+                    "media_type": media_type,
+                },
+            )
+
+    candidates.sort(key=lambda c: c["since"])
+    return candidates[:limit]
 
 
 def _recent_activity(user, *, limit=8):

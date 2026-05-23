@@ -134,6 +134,63 @@
       </section>
     {% endif %}
 
+    {% if on_this_day %}
+      <section data-row-nav-group>
+        <div class="flex items-end justify-between mb-3">
+          <h2 class="text-lg font-semibold">On this day</h2>
+          <span class="text-xs text-fg-faint">{% now "F j" %}</span>
+        </div>
+        <ul class="card divide-y"
+            style="padding: 0;
+                   border-color: var(--color-border-subtle)">
+          {% for row in on_this_day %}
+            <li class="flex items-center gap-3 px-3 py-2.5 hover:bg-surface-2 transition-colors" data-row-nav>
+              <span class="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                    style="background: var(--color-accent-soft); color: var(--color-accent);">
+                {% include "app/icons/calendar.svg" with classes="w-3.5 h-3.5" %}
+              </span>
+              <a href="{{ row.item|media_url }}" class="flex-1 min-w-0">
+                <div class="text-sm">
+                  <span class="text-fg-muted">
+                    {% if row.kind == "completed" %}Completed{% else %}Started{% endif %} in {{ row.year }} ·
+                  </span>
+                  <span class="font-medium text-fg">{{ row.item }}</span>
+                </div>
+                <div class="text-xs text-fg-faint">{{ row.date|date:user.date_format }}</div>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+
+    {% if stale_planning %}
+      <section data-row-nav-group>
+        <div class="flex items-end justify-between mb-3">
+          <h2 class="text-lg font-semibold">Still in planning</h2>
+          <span class="text-xs text-fg-faint">Sitting more than six months</span>
+        </div>
+        <ul class="card divide-y"
+            style="padding: 0;
+                   border-color: var(--color-border-subtle)">
+          {% for row in stale_planning %}
+            <li class="flex items-center gap-3 px-3 py-2.5 hover:bg-surface-2 transition-colors" data-row-nav>
+              <span class="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                    style="background: var(--color-status-planning-soft); color: var(--color-status-planning);">
+                {% include "app/icons/clock.svg" with classes="w-3.5 h-3.5" %}
+              </span>
+              <a href="{{ row.item|media_url }}" class="flex-1 min-w-0">
+                <div class="text-sm">
+                  <span class="font-medium text-fg">{{ row.item }}</span>
+                </div>
+                <div class="text-xs text-fg-faint">Added {{ row.since|naturaltime }}</div>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+
     {% if recent_activity %}
       <section>
         <div class="flex items-end justify-between mb-3">
