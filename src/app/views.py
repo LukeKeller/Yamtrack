@@ -805,6 +805,21 @@ def person_details(request, person_id, name):  # noqa: ARG001 name for URL
         for credit in entries
     ]
 
+    # Aggregate "your stats with this person": tracked count, avg score,
+    # high-rating count, unwatched-in-library count. Skips silently when
+    # the user has no overlap with this person's filmography.
+    tracked = [r for r in results if r["media"] is not None]
+    rated = [r["media"]["score"] for r in tracked
+             if r["media"] and r["media"].get("score") is not None]
+    person_stats = None
+    if tracked:
+        person_stats = {
+            "tracked_count": len(tracked),
+            "rated_count": len(rated),
+            "avg_score": round(sum(rated) / len(rated), 1) if rated else None,
+            "high_rating_count": sum(1 for s in rated if s >= 8),
+        }
+
     context = {
         "person": person_metadata,
         "results": results,
@@ -815,6 +830,7 @@ def person_details(request, person_id, name):  # noqa: ARG001 name for URL
         "type_choices": PERSON_TYPE_CHOICES,
         "role_filter": role_filter,
         "role_choices": PERSON_ROLE_CHOICES,
+        "person_stats": person_stats,
     }
     return render(request, "app/person.html", context)
 
