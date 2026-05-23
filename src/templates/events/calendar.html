@@ -14,10 +14,12 @@
 
   {% include "events/components/calendar_card.html" %}
 
-  {# Export-link builder. Toggling a media-type chip rebuilds the query
-     string client-side so the user gets an immediately-copyable URL that
-     respects their selection. Empty `types[]` means "all enabled" (server
-     default). #}
+  {% comment %}
+    Export-link builder. Toggling a media-type chip rebuilds the query
+    string client-side so the user gets an immediately-copyable URL that
+    respects their selection. Empty `types[]` means "all enabled" (server
+    default).
+  {% endcomment %}
   <div class="bg-surface-1 p-5 rounded-lg mb-6"
        x-data="{
          types: new Set(),

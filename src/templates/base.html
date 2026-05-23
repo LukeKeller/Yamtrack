@@ -62,9 +62,11 @@
   </head>
 
   <body>
-    {# Restore sidebar-collapsed preference from localStorage before paint so
-       the layout doesn't jump on every navigation. Sets a data-attr on
-       <html> that CSS in input.css keys off via --sidebar-width. #}
+    {% comment %}
+      Restore sidebar-collapsed preference from localStorage before paint so
+      the layout doesn't jump on every navigation. Sets a data-attr on
+      <html> that CSS in input.css keys off via --sidebar-width.
+    {% endcomment %}
     <script>
       try {
         if (localStorage.getItem('yt_sidebar_collapsed') === '1') {
@@ -91,10 +93,12 @@
              @click="isMobileMenuOpen = false"></div>
 
         {# ============ Sidebar ============ #}
-        {# Width is driven by --sidebar-width (set in input.css; toggled on
-           <html data-sidebar-collapsed>). The CSS var lets the messages
-           overlay (which lives outside this Alpine scope) follow the same
-           width without prop-drilling. #}
+        {% comment %}
+          Width is driven by --sidebar-width (set in input.css; toggled on
+          <html data-sidebar-collapsed>). The CSS var lets the messages
+          overlay (which lives outside this Alpine scope) follow the same
+          width without prop-drilling.
+        {% endcomment %}
         <aside class="sidebar fixed top-0 left-0 z-40 h-screen bg-surface-0 border-r border-border-default transform transition-[width,transform] duration-200 ease-out -translate-x-full lg:translate-x-0 lg:sticky flex flex-col"
                style="width: var(--sidebar-width)"
                :class="isMobileMenuOpen ? 'translate-x-0' : ''">
@@ -155,8 +159,10 @@
           {% url 'advanced' as advanced_url %}
           {% url 'about' as about_url %}
           <div class="p-3 border-t border-border-default space-y-1">
-            {# Collapse toggle — desktop only. Chevron rotates in CSS based on
-               <html data-sidebar-collapsed>. #}
+            {% comment %}
+              Collapse toggle — desktop only. Chevron rotates in CSS based on
+              <html data-sidebar-collapsed>.
+            {% endcomment %}
             <button type="button"
                     @click="toggleSidebar()"
                     :aria-label="sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"

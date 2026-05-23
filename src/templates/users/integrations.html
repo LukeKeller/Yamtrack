@@ -73,9 +73,11 @@
       </div>
     </div>
 
-    {# Webhook activity — rolling log of the last 20 inbound hits across
-       Jellyfin / Plex / Emby. Capped server-side at 100 per user so the
-       table doesn't grow unbounded. #}
+    {% comment %}
+      Webhook activity — rolling log of the last 20 inbound hits across
+      Jellyfin / Plex / Emby. Capped server-side at 100 per user so the
+      table doesn't grow unbounded.
+    {% endcomment %}
     <div class="bg-surface-2 p-5 rounded-lg mb-6" x-data="{ expanded: null }">
       <div class="flex items-center mb-3">
         {% include "app/icons/pulse.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}

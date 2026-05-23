@@ -1,8 +1,10 @@
-{# Lite YouTube embed: poster + play button by default; iframe injected
-   only when the user clicks. Uses youtube-nocookie.com so YouTube can't
-   set tracking cookies until play. Expects:
-   - trailer = {"source": "youtube", "key": "<video_id>"}
-   - title   = media title (for aria + iframe title) #}
+{% comment %}
+  Lite YouTube embed: poster + play button by default; iframe injected
+  only when the user clicks. Uses youtube-nocookie.com so YouTube can't
+  set tracking cookies until play. Expects:
+  - trailer = {"source": "youtube", "key": "<video_id>"}
+  - title   = media title (for aria + iframe title)
+{% endcomment %}
 {% if trailer and trailer.source == "youtube" and trailer.key %}
   <div x-data="{ open: false, playing: false }" class="mt-3">
     <button type="button"

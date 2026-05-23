@@ -186,9 +186,11 @@
           </div>
         </div>
 
-        {# Trailer button — only when the provider gave us a YouTube key.
-           Loads the iframe lazily via Alpine so YouTube doesn't get
-           contacted unless the user actually presses play. #}
+        {% comment %}
+          Trailer button — only when the provider gave us a YouTube key.
+          Loads the iframe lazily via Alpine so YouTube doesn't get
+          contacted unless the user actually presses play.
+        {% endcomment %}
         {% if media.trailer %}
           {% include "app/components/trailer_modal.html" with trailer=media.trailer title=media.title %}
         {% endif %}

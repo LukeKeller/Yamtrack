@@ -1,6 +1,8 @@
 {% load app_tags %}
-{# Cmdk live-search result list. Rendered by app.views.cmdk_search and
-   htmx-swapped into #cmdk-results in cmdk.html. #}
+{% comment %}
+  Cmdk live-search result list. Rendered by app.views.cmdk_search and
+  htmx-swapped into #cmdk-results in cmdk.html.
+{% endcomment %}
 {% if query and not results %}
   <div class="px-3 py-2 text-xs text-fg-faint">
     No tracked media matches “{{ query }}”.

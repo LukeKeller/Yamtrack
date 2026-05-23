@@ -62,8 +62,10 @@
             class="space-y-4"
             x-data="{ showCurrentPassword: false, showNewPassword: false, showConfirmPassword: false }">
         {% csrf_token %}
-        {# Hidden username field for password-manager / autofill heuristics —
-           tells the browser which account this password change is for. #}
+        {% comment %}
+          Hidden username field for password-manager / autofill heuristics —
+          tells the browser which account this password change is for.
+        {% endcomment %}
         <input type="text"
                name="username"
                autocomplete="username"
