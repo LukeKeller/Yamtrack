@@ -10,10 +10,25 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh70"
+CURRENT_FORK_VERSION = "0.25.2~ynh71"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh71",
+        "date": "2026-05-23",
+        "title": "More home polish + import-now + Sunday calendar",
+        "highlights": [
+            "Up Next: bigger poster (14x20 with a subtle ring), cleaner metadata stack, slim accent-coloured progress bar at the bottom of each card, and the +1 button repositioned to a floating shadow on hover.",
+            "Section headers: every block on the home page (Up next, On this day, Still in planning, Recent activity, Your library) gets a small accent dot to the left of the title for consistent visual rhythm.",
+            "Calendar widget now sits above Recent activity on the home page.",
+            "Calendar weeks start on Sunday (US convention) instead of Monday.",
+            "Scheduled imports get an Import now button next to the delete icon — kicks off the same Celery task immediately instead of waiting for the crontab.",
+        ],
+        "fixes": [
+            "Greeting no longer renders 'Welcome back , luke' with a stray space before the comma (djlint reformat artifact).",
+        ],
+    },
     {
         "version": "0.25.2~ynh70",
         "date": "2026-05-23",

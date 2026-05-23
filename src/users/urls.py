@@ -29,6 +29,11 @@ urlpatterns = [
         views.delete_import_schedule,
         name="delete_import_schedule",
     ),
+    path(
+        "run_import_schedule_now",
+        views.run_import_schedule_now,
+        name="run_import_schedule_now",
+    ),
     path("regenerate_token", views.regenerate_token, name="regenerate_token"),
     path("clear_search_cache", views.clear_search_cache, name="clear_search_cache"),
     path("dismiss_whats_new", views.dismiss_whats_new, name="dismiss_whats_new"),

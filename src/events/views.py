@@ -61,7 +61,9 @@ def build_calendar_context(user, month=None, year=None, view_type=None):
         1,
     ) - timedelta(days=1)
 
-    calendar_format = cal.monthcalendar(year, month)
+    # Sunday-first week to match US convention. Calendar.Calendar default is
+    # Monday-first; setting firstweekday=6 shifts Sunday to the leading column.
+    calendar_format = cal.Calendar(firstweekday=6).monthdayscalendar(year, month)
     month_name = cal.month_name[month]
 
     releases = Event.objects.get_user_events(user, first_day, last_day)
@@ -193,7 +195,8 @@ def download_list_calendar(request, token: str, list_id: int):
         return HttpResponse(status=401)
 
     try:
-        from lists.models import CustomList
+        from lists.models import CustomList  # noqa: PLC0415 — avoid circular import
+
         custom_list = CustomList.objects.get(pk=list_id)
     except (ObjectDoesNotExist, ImportError):
         return HttpResponse(status=404)

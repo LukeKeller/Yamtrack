@@ -517,15 +517,30 @@
                 {% source_display periodic_import.source %}
                 <span class="text-sm text-fg-muted">{{ periodic_import.schedule }}</span>
               </div>
-              <form action="{% url 'delete_import_schedule' %}" method="post">
-                {% csrf_token %}
-                <input type="hidden"
-                       name="task_name"
-                       value="{{ periodic_import.task.name }}">
-                <button class="text-red-400 hover:text-white p-2 rounded-md transition-all duration-200 hover:bg-red-500 cursor-pointer">
-                  {% include "app/icons/trashcan.svg" with classes="w-4 h-4" %}
-                </button>
-              </form>
+              <div class="flex items-center gap-1">
+                <form action="{% url 'run_import_schedule_now' %}" method="post">
+                  {% csrf_token %}
+                  <input type="hidden"
+                         name="task_name"
+                         value="{{ periodic_import.task.name }}">
+                  <button class="text-fg-muted hover:text-white p-2 rounded-md transition-all duration-200 hover:bg-indigo-500 cursor-pointer"
+                          title="Run this import now"
+                          aria-label="Run this import now">
+                    {% include "app/icons/circle-spinning-clockwise.svg" with classes="w-4 h-4" %}
+                  </button>
+                </form>
+                <form action="{% url 'delete_import_schedule' %}" method="post">
+                  {% csrf_token %}
+                  <input type="hidden"
+                         name="task_name"
+                         value="{{ periodic_import.task.name }}">
+                  <button class="text-red-400 hover:text-white p-2 rounded-md transition-all duration-200 hover:bg-red-500 cursor-pointer"
+                          title="Delete this schedule"
+                          aria-label="Delete this schedule">
+                    {% include "app/icons/trashcan.svg" with classes="w-4 h-4" %}
+                  </button>
+                </form>
+              </div>
             </div>
             <div class="text-sm text-fg-muted space-y-1">
               <div>Username: {{ periodic_import.username }}</div>

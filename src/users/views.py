@@ -1,6 +1,8 @@
+import json
 import logging
 
 import apprise
+from celery import current_app as celery_app
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
@@ -8,16 +10,16 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.db.models import Q
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.defaultfilters import pluralize
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 from django_celery_beat.models import PeriodicTask
 
-from django.http import HttpResponse
-
 from app.models import Item, MediaTypes
 from app.providers import tmdb
 from app.release_notes import CURRENT_FORK_VERSION
+from integrations.models import WebhookEvent
 from users.forms import NotificationSettingsForm, PasswordChangeForm, UserUpdateForm
 from users.models import (
     DateFormatChoices,
@@ -301,8 +303,6 @@ def preferences(request):
 @require_GET
 def integrations(request):
     """Render the integrations settings page."""
-    from integrations.models import WebhookEvent
-
     recent_webhook_events = list(
         WebhookEvent.objects.filter(user=request.user).order_by("-created_at")[:20],
     )
@@ -329,12 +329,12 @@ def export_data(request):
 @require_GET
 def advanced(request):
     """Render the advanced settings page."""
-    from datetime import timedelta
+    from datetime import timedelta  # noqa: PLC0415 — view-local to scope deps
 
-    from django.apps import apps
-    from django.utils import timezone
+    from django.apps import apps  # noqa: PLC0415
+    from django.utils import timezone  # noqa: PLC0415
 
-    from app.models import MediaTypes, Status
+    from app.models import MediaTypes, Status  # noqa: PLC0415
 
     # Stale "In Progress" sweep — list items the user started but hasn't
     # touched in ~60 days, so they can quickly Pause or Drop them.
@@ -348,13 +348,10 @@ def advanced(request):
         if media_type in (MediaTypes.EPISODE.value, MediaTypes.SEASON.value):
             continue
         model = apps.get_model("app", media_type)
-        rows = (
-            model.objects.filter(
-                user=request.user,
-                status=Status.IN_PROGRESS.value,
-            )
-            .select_related("item")
-        )
+        rows = model.objects.filter(
+            user=request.user,
+            status=Status.IN_PROGRESS.value,
+        ).select_related("item")
         for media in rows:
             last_activity = media.progressed_at or media.created_at
             if last_activity and last_activity < stale_cutoff:
@@ -417,6 +414,41 @@ def delete_import_schedule(request):
         messages.success(request, "Import schedule deleted.")
     except PeriodicTask.DoesNotExist:
         messages.error(request, "Import schedule not found.")
+    return redirect("import_data")
+
+
+@require_POST
+def run_import_schedule_now(request):
+    """Trigger a scheduled import immediately without waiting for the crontab.
+
+    Looks up the user's PeriodicTask by name, then dispatches the underlying
+    Celery task with the stored kwargs. Authorisation is scoped to the
+    request user via the kwargs lookup (each task's kwargs dict embeds
+    user_id), so users can't kick off other people's imports.
+    """
+    task_name = request.POST.get("task_name")
+    try:
+        periodic_task = PeriodicTask.objects.get(
+            name=task_name,
+            kwargs__contains=f'"user_id": {request.user.id}',
+        )
+    except PeriodicTask.DoesNotExist:
+        messages.error(request, "Import schedule not found.")
+        return redirect("import_data")
+
+    celery_task = celery_app.tasks.get(periodic_task.task)
+    if celery_task is None:
+        messages.error(request, f"Unknown task: {periodic_task.task}")
+        return redirect("import_data")
+
+    try:
+        kwargs = json.loads(periodic_task.kwargs or "{}")
+    except json.JSONDecodeError:
+        messages.error(request, "Stored task kwargs are corrupted.")
+        return redirect("import_data")
+
+    celery_task.apply_async(kwargs=kwargs)
+    messages.success(request, f"{periodic_task.task} queued.")
     return redirect("import_data")
 
 

@@ -17,8 +17,11 @@
     <header>
       <p class="text-xs uppercase tracking-wider text-fg-faint mb-2">{% now "l, F j" %}</p>
       <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight mb-4">
-        Welcome back
-        {% if user.is_authenticated %}, {{ user.username }}{% endif %}
+        {% if user.is_authenticated %}
+          Welcome back, {{ user.username }}
+        {% else %}
+          Welcome back
+        {% endif %}
       </h1>
       <div class="flex flex-wrap items-center gap-2">
         {% for section in home_sections %}
@@ -36,11 +39,12 @@
 
     {% if up_next %}
       <section>
-        <div class="flex items-end justify-between mb-3">
-          <div>
-            <h2 class="text-lg font-semibold">Up next</h2>
-            <p class="text-sm text-fg-muted">Pick up where you left off</p>
-          </div>
+        <div class="flex items-baseline justify-between mb-3 gap-3">
+          <h2 class="text-lg font-semibold flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+            Up next
+          </h2>
+          <span class="text-xs text-fg-faint">Pick up where you left off</span>
         </div>
         <div class="flex gap-3 overflow-x-auto no-scrollbar -mx-4 lg:-mx-8 px-4 lg:px-8 pb-2 snap-x snap-mandatory">
           {% for m in up_next %}
@@ -50,7 +54,9 @@
               the messages-oob toast surfaces the error, and the next page
               load re-syncs the truth.
             {% endcomment %}
-            <div class="card snap-start shrink-0 w-72 flex gap-3 items-center hover:bg-surface-2 transition-colors relative group"
+            <div class="snap-start shrink-0 w-80 rounded-lg bg-surface-1 hover:bg-surface-2 transition-colors relative group overflow-hidden border"
+                 style="border-color: var(--color-border-subtle)"
+                 data-row-nav
                  x-data="{ p: {{ m.progress|default:0 }}, justBumped: false }">
               {% comment %}
                 `?continue=1` triggers the auto-scroll-to-first-unwatched
@@ -58,21 +64,21 @@
                 media types).
               {% endcomment %}
               <a href="{{ m.item|media_url }}?continue=1"
-                 class="flex gap-3 items-center flex-1 min-w-0"
+                 class="flex gap-3 items-stretch min-w-0 p-3"
                  aria-label="{{ m.item }}">
-                <div class="w-12 h-16 rounded-sm overflow-hidden bg-surface-2 shrink-0">
+                <div class="w-14 h-20 rounded-md overflow-hidden bg-surface-2 shrink-0 ring-1"
+                     style="--tw-ring-color: var(--color-border-subtle)">
                   <img alt=""
                        class="lazyload w-full h-full {% if m.item.image != IMG_NONE %}object-cover{% endif %}"
                        data-src="{{ m.item.image }}"
                        src="{{ IMG_NONE }}">
                 </div>
-                <div class="flex-1 min-w-0">
-                  <div class="flex items-center gap-1.5 text-[10px] text-fg-faint uppercase tracking-wider mb-0.5">
-                    <span class="status-dot status-dot-in-progress"></span>
-                    <span class="truncate">{{ m.item.media_type|media_type_readable }}</span>
+                <div class="flex-1 min-w-0 flex flex-col">
+                  <div class="text-[10px] text-fg-faint uppercase tracking-wider mb-0.5">
+                    {{ m.item.media_type|media_type_readable }}
                   </div>
-                  <div class="text-sm font-semibold truncate">{{ m.item }}</div>
-                  <div class="text-xs text-fg-muted truncate">
+                  <div class="text-sm font-semibold truncate text-fg">{{ m.item }}</div>
+                  <div class="text-xs text-fg-muted truncate mt-0.5">
                     <span x-text="p"></span>
                     {% if m.max_progress %}/ {{ m.max_progress }}{% endif %}
                     {% if m.item.media_type != MediaTypes.MOVIE.value %}
@@ -82,7 +88,7 @@
                   {% if m.next_event and not m.next_event.is_max_datetime %}
                     {% with countdown=m.next_event.datetime|short_countdown %}
                       {% if countdown %}
-                        <div class="text-[11px] text-accent truncate mt-0.5 flex items-center gap-1">
+                        <div class="text-[11px] text-accent truncate mt-auto pt-1 flex items-center gap-1">
                           {% include "app/icons/clock.svg" with classes="w-3 h-3 shrink-0" %}
                           <span class="truncate">
                             {% if m.next_event.content_number %}{{ m.item.media_type|short_unit }}{{ m.next_event.content_number }} ·{% endif %}
@@ -94,6 +100,13 @@
                   {% endif %}
                 </div>
               </a>
+              {% if m.max_progress %}
+                {# Slim progress bar at the bottom of the card #}
+                <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-surface-3">
+                  <div class="h-full bg-accent transition-all"
+                       :style="`width: ${Math.min(100, (p / {{ m.max_progress }}) * 100)}%`"></div>
+                </div>
+              {% endif %}
               {% if m.item.media_type != MediaTypes.MOVIE.value and m.progress != m.max_progress %}
                 <button type="button"
                         aria-label="Mark next {{ m.item.media_type|short_unit }} watched on {{ m.item }}"
@@ -104,7 +117,7 @@
                         hx-swap="none"
                         @click="p = p + 1; justBumped = true; setTimeout(() => justBumped = false, 700)"
                         :class="justBumped ? 'bg-status-completed text-white' : 'bg-accent-soft text-accent hover:bg-accent hover:text-white'"
-                        class="shrink-0 mr-1 w-8 h-8 rounded-full transition-colors flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 focus-visible:opacity-100">
+                        class="absolute top-2 right-2 w-8 h-8 rounded-full transition-all flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 focus-visible:opacity-100 shadow-md">
                   <span x-show="!justBumped">{% include "app/icons/plus.svg" with classes="w-4 h-4" %}</span>
                   <span x-show="justBumped">{% include "app/icons/checkmark.svg" with classes="w-4 h-4" %}</span>
                 </button>
@@ -138,8 +151,11 @@
 
     {% if on_this_day %}
       <section data-row-nav-group>
-        <div class="flex items-end justify-between mb-3">
-          <h2 class="text-lg font-semibold">On this day</h2>
+        <div class="flex items-baseline justify-between mb-3 gap-3">
+          <h2 class="text-lg font-semibold flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+            On this day
+          </h2>
           <span class="text-xs text-fg-faint">{% now "F j" %}</span>
         </div>
         <ul class="card divide-y"
@@ -175,8 +191,11 @@
 
     {% if stale_planning %}
       <section data-row-nav-group>
-        <div class="flex items-end justify-between mb-3">
-          <h2 class="text-lg font-semibold">Still in planning</h2>
+        <div class="flex items-baseline justify-between mb-3 gap-3">
+          <h2 class="text-lg font-semibold flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+            Still in planning
+          </h2>
           <span class="text-xs text-fg-faint">Sitting more than six months</span>
         </div>
         <ul class="card divide-y"
@@ -202,10 +221,15 @@
       </section>
     {% endif %}
 
+    {% include "events/components/calendar_card.html" %}
+
     {% if recent_activity %}
       <section>
-        <div class="flex items-end justify-between mb-3">
-          <h2 class="text-lg font-semibold">Recent activity</h2>
+        <div class="flex items-baseline justify-between mb-3 gap-3">
+          <h2 class="text-lg font-semibold flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+            Recent activity
+          </h2>
         </div>
         <ul class="card divide-y"
             style="padding: 0;
@@ -241,15 +265,16 @@
       </section>
     {% endif %}
 
-    {% include "events/components/calendar_card.html" %}
-
     {% comment %}
       Per-status, per-media-type grids. The sort selector lives here because
       it controls how items inside each grid are ordered — keeping it next
       to the data it sorts makes the relationship obvious.
     {% endcomment %}
-    <div class="flex items-center justify-between">
-      <h2 class="text-lg font-semibold">Your library</h2>
+    <div class="flex items-baseline justify-between gap-3">
+      <h2 class="text-lg font-semibold flex items-center gap-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+        Your library
+      </h2>
       <div class="relative" x-data="{ open: false }">
         <button @click="open = !open"
                 @click.outside="open = false"
