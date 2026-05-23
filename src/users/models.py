@@ -460,6 +460,13 @@ class User(AbstractUser):
         help_text="Grid / card density for media lists.",
     )
 
+    last_seen_version = models.CharField(
+        max_length=64,
+        default="",
+        blank=True,
+        help_text="Latest fork version whose What's New modal this user has dismissed.",
+    )
+
     class Meta:
         """Meta options for the model."""
 

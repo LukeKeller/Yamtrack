@@ -13,8 +13,11 @@ from django.template.defaultfilters import pluralize
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 from django_celery_beat.models import PeriodicTask
 
+from django.http import HttpResponse
+
 from app.models import Item, MediaTypes
 from app.providers import tmdb
+from app.release_notes import CURRENT_FORK_VERSION
 from users.forms import NotificationSettingsForm, PasswordChangeForm, UserUpdateForm
 from users.models import (
     DateFormatChoices,
@@ -476,6 +479,15 @@ def update_suwayomi_url(request):
     else:
         messages.success(request, "Suwayomi URL cleared")
     return redirect("integrations")
+
+
+@require_POST
+def dismiss_whats_new(request):
+    """Record that the user has seen the current release-notes batch."""
+    if request.user.last_seen_version != CURRENT_FORK_VERSION:
+        request.user.last_seen_version = CURRENT_FORK_VERSION
+        request.user.save(update_fields=["last_seen_version"])
+    return HttpResponse(status=204)
 
 
 @require_POST

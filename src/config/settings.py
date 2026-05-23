@@ -164,6 +164,7 @@ TEMPLATES = [
                 "app.context_processors.export_vars",
                 "app.context_processors.media_enums",
                 "app.context_processors.persistent_messages",
+                "app.context_processors.whats_new",
                 "django.template.context_processors.request",
             ],
         },

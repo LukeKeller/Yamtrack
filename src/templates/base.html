@@ -339,6 +339,9 @@
 
       {# Command palette overlay #}
       {% include "app/components/cmdk.html" %}
+
+      {# What's New modal — only renders when the context processor surfaces unseen entries #}
+      {% include "app/components/whats_new_modal.html" %}
     {% endblock body %}
 
     <div class="fixed top-20 right-0 left-0 z-50 flex justify-center pointer-events-none {% block messages_sidebar_offset %}messages-overlay{% endblock messages_sidebar_offset %}">

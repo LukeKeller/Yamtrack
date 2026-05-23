@@ -1,0 +1,85 @@
+{% comment %}
+  What's New modal. Rendered from base.html whenever the whats_new context
+  processor surfaces unseen release-note entries for the current user.
+  Dismissing posts to /users/dismiss_whats_new which updates
+  user.last_seen_version and returns 204; the modal closes locally.
+{% endcomment %}
+{% if whats_new_entries %}
+  <div x-data="{ open: true }"
+       x-cloak
+       x-show="open"
+       x-on:keydown.escape.window="open = false"
+       class="fixed inset-0 z-50 flex items-start justify-center pt-12 px-4 sm:pt-20"
+       x-transition.opacity.duration.150ms>
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm"
+         aria-hidden="true"></div>
+
+    <div role="dialog"
+         aria-modal="true"
+         aria-label="What's new"
+         class="relative w-full max-w-2xl rounded-lg overflow-hidden border bg-surface-0 max-h-[85vh] flex flex-col"
+         style="border-color: var(--color-border-default);
+                box-shadow: var(--shadow-elev-2)">
+
+      <div class="px-5 py-4 border-b flex items-center gap-3"
+           style="border-color: var(--color-border-default)">
+        <div class="w-9 h-9 rounded-md bg-accent flex items-center justify-center text-white shrink-0">
+          {% include "app/icons/flame.svg" with classes="w-5 h-5" %}
+        </div>
+        <div class="flex-1 min-w-0">
+          <h2 class="text-base font-semibold text-fg">What's new in Yamtrack</h2>
+          <p class="text-xs text-fg-faint">Version {{ whats_new_current_version }}</p>
+        </div>
+        <button type="button"
+                @click="open = false"
+                class="btn btn-icon btn-ghost"
+                aria-label="Close">
+          {% include "app/icons/x.svg" with classes="w-4 h-4" %}
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto px-5 py-4 space-y-6">
+        {% for entry in whats_new_entries %}
+          <section>
+            <header class="flex items-baseline gap-2 mb-2">
+              <h3 class="text-sm font-semibold text-fg">{{ entry.title }}</h3>
+              <span class="text-xs text-fg-faint">{{ entry.version }} · {{ entry.date }}</span>
+            </header>
+            {% if entry.highlights %}
+              <ul class="space-y-1.5 text-sm text-fg-muted">
+                {% for line in entry.highlights %}
+                  <li class="flex gap-2">
+                    <span class="text-accent shrink-0 mt-1.5 w-1 h-1 rounded-full bg-accent"></span>
+                    <span class="flex-1">{{ line }}</span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% endif %}
+            {% if entry.fixes %}
+              <div class="mt-3">
+                <div class="text-[10px] uppercase tracking-wider text-fg-faint mb-1">Fixes</div>
+                <ul class="space-y-1 text-sm text-fg-muted">
+                  {% for line in entry.fixes %}
+                    <li class="flex gap-2">
+                      <span class="shrink-0 mt-1.5 w-1 h-1 rounded-full bg-fg-faint"></span>
+                      <span class="flex-1">{{ line }}</span>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+          </section>
+        {% endfor %}
+      </div>
+
+      <div class="px-5 py-3 border-t flex items-center justify-end gap-2"
+           style="border-color: var(--color-border-default)">
+        <form hx-post="{% url 'dismiss_whats_new' %}"
+              hx-swap="none">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-primary" @click="open = false">Got it</button>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endif %}

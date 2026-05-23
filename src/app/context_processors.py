@@ -3,6 +3,7 @@
 from django.conf import settings
 
 from app.models import MediaTypes, Sources, Status, UserMessage
+from app.release_notes import CURRENT_FORK_VERSION, entries_since
 
 
 def export_vars(request):  # noqa: ARG001
@@ -36,4 +37,31 @@ def persistent_messages(request):
                 shown_at__isnull=True,
             ),
         ),
+    }
+
+
+def whats_new(request):
+    """Surface unread release-note entries for the What's New modal.
+
+    Skips htmx-targeted requests (the modal should only appear on full page
+    loads), unauthenticated users, and users already current on the latest
+    release.
+    """
+    if not request.user.is_authenticated:
+        return {}
+
+    if request.headers.get("HX-Request") == "true":
+        return {}
+
+    user_version = request.user.last_seen_version
+    if user_version == CURRENT_FORK_VERSION:
+        return {}
+
+    entries = entries_since(user_version)
+    if not entries:
+        return {}
+
+    return {
+        "whats_new_entries": entries,
+        "whats_new_current_version": CURRENT_FORK_VERSION,
     }
