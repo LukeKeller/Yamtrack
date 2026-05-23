@@ -1,3 +1,4 @@
+import re
 from datetime import timedelta
 from pathlib import Path
 
@@ -7,13 +8,47 @@ from django.conf import settings
 from django.urls import reverse
 from django.utils import formats, timezone
 from django.utils.dateparse import parse_date
-from django.utils.html import format_html
+from django.utils.html import escape, format_html
+from django.utils.safestring import mark_safe
 from unidecode import unidecode
 
 from app import config, helpers
 from app.models import MediaTypes, Sources, Status
 
 register = template.Library()
+
+
+SPOILER_PATTERN = re.compile(r"\|\|(.+?)\|\|", re.DOTALL)
+
+
+@register.filter(is_safe=True)
+def notes_with_spoilers(value):
+    """Render notes as HTML: escape, wrap ||spoiler|| in a blur-reveal span,
+    then convert newlines to <br>. Replaces the |linebreaksbr filter at
+    points where users may want to hide spoiler text.
+
+    The blur + background are inline-styled so a Tailwind rebuild isn't
+    required to ship this filter. Clicking or hitting Enter/Space on the
+    span strips the inline style attribute and reveals the text.
+    """
+    if value is None:
+        return ""
+    escaped = escape(value)
+
+    def reveal_span(match):
+        inner = match.group(1)
+        return (
+            '<span tabindex="0" role="button" '
+            'aria-label="Spoiler — activate to reveal" '
+            'class="cursor-pointer rounded px-1 transition-all" '
+            'style="filter: blur(0.35em); background-color: var(--color-surface-3)" '
+            "onclick=\"this.removeAttribute('style')\" "
+            'onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.removeAttribute(\'style\')}"'
+            f">{inner}</span>"
+        )
+
+    transformed = SPOILER_PATTERN.sub(reveal_span, escaped)
+    return mark_safe(transformed.replace("\n", "<br>"))
 
 
 @register.simple_tag

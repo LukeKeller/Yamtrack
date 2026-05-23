@@ -17,6 +17,13 @@
     <meta name="mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-title" content="Yamtrack">
 
+    {% comment %}
+      Opt every HTMX swap into the View Transitions API. Browsers without
+      support degrade silently to instant swaps. prefers-reduced-motion is
+      honored by the API itself.
+    {% endcomment %}
+    <meta name="htmx-config" content='{"globalViewTransitions": true}'>
+
     <title>
       {% block title %}
         Yamtrack
@@ -342,7 +349,17 @@
 
       {# What's New modal — only renders when the context processor surfaces unseen entries #}
       {% include "app/components/whats_new_modal.html" %}
+
+      {# Keyboard shortcut overlay — toggled with `?` #}
+      {% include "app/components/shortcuts_overlay.html" %}
     {% endblock body %}
+
+    {# ARIA live region for status announcements after HTMX state changes #}
+    <div id="yt-aria-live"
+         role="status"
+         aria-live="polite"
+         aria-atomic="true"
+         class="sr-only"></div>
 
     <div class="fixed top-20 right-0 left-0 z-50 flex justify-center pointer-events-none {% block messages_sidebar_offset %}messages-overlay{% endblock messages_sidebar_offset %}">
       <div id="messages-list"

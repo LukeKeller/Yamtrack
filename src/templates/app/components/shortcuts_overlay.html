@@ -1,0 +1,82 @@
+{% comment %}
+  Keyboard shortcut cheat sheet. Triggered by `?` (Shift+/) — searchShortcut.js
+  dispatches the `shortcuts-toggle` window event when it sees the key.
+{% endcomment %}
+<div x-data="{ open: false }"
+     x-on:shortcuts-toggle.window="open = !open"
+     x-on:keydown.escape.window="open = false"
+     x-cloak>
+  <div x-show="open"
+       class="fixed inset-0 z-50 flex items-center justify-center px-4"
+       x-transition.opacity.duration.150ms>
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-sm"
+         @click="open = false"
+         aria-hidden="true"></div>
+
+    <div role="dialog"
+         aria-modal="true"
+         aria-label="Keyboard shortcuts"
+         class="relative w-full max-w-lg rounded-lg overflow-hidden border bg-surface-0"
+         style="border-color: var(--color-border-default);
+                box-shadow: var(--shadow-elev-2)">
+
+      <div class="px-5 py-4 border-b flex items-center justify-between"
+           style="border-color: var(--color-border-default)">
+        <h2 class="text-base font-semibold text-fg">Keyboard shortcuts</h2>
+        <button type="button"
+                @click="open = false"
+                class="btn btn-icon btn-ghost"
+                aria-label="Close">
+          {% include "app/icons/x.svg" with classes="w-4 h-4" %}
+        </button>
+      </div>
+
+      <div class="px-5 py-4 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-fg-muted">Open command palette</span>
+          <span class="flex items-center gap-1"
+                x-data="{ mac: navigator.platform.includes('Mac') || /iP(hone|ad)/.test(navigator.platform) }">
+            <kbd x-text="mac ? '⌘' : 'Ctrl'"></kbd><kbd>K</kbd>
+          </span>
+        </div>
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-fg-muted">Focus search</span>
+          <kbd>/</kbd>
+        </div>
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-fg-muted">Toggle this overlay</span>
+          <kbd>?</kbd>
+        </div>
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-fg-muted">Move down a row</span>
+          <kbd>J</kbd>
+        </div>
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-fg-muted">Move up a row</span>
+          <kbd>K</kbd>
+        </div>
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-fg-muted">Go home</span>
+          <span class="flex items-center gap-1"><kbd>G</kbd><span class="text-fg-faint text-xs">then</span><kbd>H</kbd></span>
+        </div>
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-fg-muted">Go to calendar</span>
+          <span class="flex items-center gap-1"><kbd>G</kbd><span class="text-fg-faint text-xs">then</span><kbd>D</kbd></span>
+        </div>
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-fg-muted">Go to lists</span>
+          <span class="flex items-center gap-1"><kbd>G</kbd><span class="text-fg-faint text-xs">then</span><kbd>L</kbd></span>
+        </div>
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-fg-muted">Close overlays</span>
+          <kbd>Esc</kbd>
+        </div>
+      </div>
+
+      <div class="px-5 py-3 border-t text-xs text-fg-faint"
+           style="border-color: var(--color-border-default)">
+        J / K only navigate items marked for row navigation. Most media-list and dashboard cards opt in.
+      </div>
+    </div>
+  </div>
+</div>
