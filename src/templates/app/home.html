@@ -134,6 +134,27 @@
       </section>
     {% endif %}
 
+    {% if palate_cleanser %}
+      <section>
+        <div class="card flex items-center gap-3 px-4 py-3"
+             style="border-color: var(--color-border-subtle);
+                    background: var(--color-accent-soft)">
+          <span class="w-9 h-9 rounded-md bg-accent text-white flex items-center justify-center shrink-0">
+            {% include "app/icons/flame.svg" with classes="w-5 h-5" %}
+          </span>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm text-fg">
+              {{ palate_cleanser.dominant_pct }}% of the last 30 days has been
+              <span class="font-medium">{{ palate_cleanser.dominant_type|media_type_readable_plural|lower }}</span>.
+              Try something different?
+            </div>
+            <a href="{{ palate_cleanser.item|media_url }}"
+               class="text-sm font-medium text-accent hover:underline">{{ palate_cleanser.item }} →</a>
+          </div>
+        </div>
+      </section>
+    {% endif %}
+
     {% if on_this_day %}
       <section data-row-nav-group>
         <div class="flex items-end justify-between mb-3">

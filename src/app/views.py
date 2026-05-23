@@ -120,6 +120,7 @@ def home(request):
         "recent_activity": _recent_activity(request.user, limit=8),
         "on_this_day": _on_this_day(request.user, limit=8),
         "stale_planning": _stale_planning(request.user, limit=5),
+        "palate_cleanser": _palate_cleanser(request.user),
         "current_sort": sort_by,
         "sort_choices": HomeSortChoices.choices,
         "items_limit": items_limit,
@@ -190,6 +191,60 @@ def _on_this_day(user, *, limit=8):
         seen.add(key)
         deduped.append(c)
     return deduped[:limit]
+
+
+def _palate_cleanser(user, *, window_days=30, dominance=0.7):
+    """If a single media_type accounts for >dominance of recent history,
+    surface one Planning item from a different type as a suggestion.
+
+    Returns ``None`` when there's no dominant type, when the user has no
+    history in the window, or when the dominant type already covers their
+    entire Planning queue.
+    """
+    threshold = timezone.now() - timedelta(days=window_days)
+    counts = {}
+    total = 0
+    for name in BasicMedia.objects.get_historical_models():
+        model = apps.get_model("app", name)
+        live_type = name.replace("historical", "")
+        n = model.objects.filter(
+            history_user_id=user.id,
+            history_date__gte=threshold,
+        ).count()
+        if n:
+            counts[live_type] = n
+            total += n
+
+    if total < 5:
+        return None
+    dominant_type, dominant_count = max(counts.items(), key=lambda kv: kv[1])
+    if dominant_count / total < dominance:
+        return None
+
+    # Pick one Planning item from a different media_type.
+    for media_type in MediaTypes.values:
+        if media_type in (MediaTypes.EPISODE.value, dominant_type):
+            continue
+        try:
+            model = apps.get_model("app", media_type)
+        except LookupError:
+            continue
+        field_names = {f.name for f in model._meta.fields}
+        if "status" not in field_names:
+            continue
+        candidate = (
+            model.objects.filter(user=user, status=Status.PLANNING.value)
+            .select_related("item")
+            .order_by("?")
+            .first()
+        )
+        if candidate:
+            return {
+                "item": candidate.item,
+                "dominant_type": dominant_type,
+                "dominant_pct": round(dominant_count / total * 100),
+            }
+    return None
 
 
 def _stale_planning(user, *, limit=5, days=180):
