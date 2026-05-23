@@ -1,3 +1,4 @@
+# ruff: noqa: E501 — release-note strings are content, not code; don't wrap them
 """Fork-version release notes surfaced through the What's New modal.
 
 This file is the source of truth for the fork's version identifier and for the
@@ -9,10 +10,19 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh68"
+CURRENT_FORK_VERSION = "0.25.2~ynh69"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh69",
+        "date": "2026-05-23",
+        "title": "Hotfix: person pages",
+        "highlights": [],
+        "fixes": [
+            "Person detail pages were 500ing — person_stats was treating the Media model as a dict. Switched to attribute access.",
+        ],
+    },
     {
         "version": "0.25.2~ynh68",
         "date": "2026-05-23",

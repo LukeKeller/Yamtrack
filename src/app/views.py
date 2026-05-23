@@ -1,11 +1,12 @@
 import json
 import logging
+import re
 from datetime import timedelta
 
 from django.apps import apps
-from django.contrib.auth.decorators import login_not_required
 from django.conf import settings
 from django.contrib import messages
+from django.contrib.auth.decorators import login_not_required
 from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db import IntegrityError
@@ -51,6 +52,9 @@ from users.models import (
 )
 
 logger = logging.getLogger(__name__)
+
+_PALATE_MIN_SAMPLE = 5  # minimum history rows needed for the palate-cleanser nudge
+_HIGH_SCORE_THRESHOLD = 8  # "8+ rated" cutoff on the person-stats panel
 
 
 @require_GET
@@ -129,6 +133,31 @@ def home(request):
     return render(request, "app/home.html", context)
 
 
+def _match_date_field(model, date_field, user, month, day, today_year, limit):
+    """Pull rows on (date_field.month, date_field.day) excluding today's year."""
+    qs = (
+        model.objects.filter(
+            user=user,
+            **{
+                f"{date_field}__month": month,
+                f"{date_field}__day": day,
+            },
+        )
+        .exclude(**{f"{date_field}__year": today_year})
+        .select_related("item")
+        .order_by(f"-{date_field}")[: limit * 2]
+    )
+    return [
+        {
+            "item": media.item,
+            "year": getattr(media, date_field).year,
+            "date": getattr(media, date_field),
+        }
+        for media in qs
+        if getattr(media, date_field) is not None
+    ]
+
+
 def _on_this_day(user, *, limit=8):
     """Items the user started or completed on this calendar date in past years.
 
@@ -139,7 +168,7 @@ def _on_this_day(user, *, limit=8):
     """
     today = timezone.localdate()
     compare_month, compare_day = today.month, today.day
-    if compare_month == 2 and compare_day == 29:
+    if (compare_month, compare_day) == (2, 29):  # leap-day → Feb 28 fallback
         compare_day = 28
 
     candidates = []
@@ -154,30 +183,17 @@ def _on_this_day(user, *, limit=8):
         for date_field, kind in (("end_date", "completed"), ("start_date", "started")):
             if date_field not in field_names:
                 continue
-            qs = (
-                model.objects.filter(
-                    user=user,
-                    **{
-                        f"{date_field}__month": compare_month,
-                        f"{date_field}__day": compare_day,
-                    },
-                )
-                .exclude(**{f"{date_field}__year": today.year})
-                .select_related("item")
-                .order_by(f"-{date_field}")[: limit * 2]
-            )
-            for media in qs:
-                date_value = getattr(media, date_field)
-                if not date_value:
-                    continue
-                candidates.append(
-                    {
-                        "item": media.item,
-                        "kind": kind,
-                        "year": date_value.year,
-                        "date": date_value,
-                    },
-                )
+            for row in _match_date_field(
+                model,
+                date_field,
+                user,
+                compare_month,
+                compare_day,
+                today.year,
+                limit,
+            ):
+                row["kind"] = kind
+                candidates.append(row)
 
     candidates.sort(key=lambda c: (c["date"], c["kind"]), reverse=True)
     # Deduplicate same item appearing as both started and completed today —
@@ -194,12 +210,12 @@ def _on_this_day(user, *, limit=8):
 
 
 def _palate_cleanser(user, *, window_days=30, dominance=0.7):
-    """If a single media_type accounts for >dominance of recent history,
-    surface one Planning item from a different type as a suggestion.
+    """Suggest a Planning item from a different media type when one dominates.
 
-    Returns ``None`` when there's no dominant type, when the user has no
-    history in the window, or when the dominant type already covers their
-    entire Planning queue.
+    If a single media_type accounts for more than ``dominance`` of the user's
+    recent history (last ``window_days``) and there's at least a minimal
+    sample, returns one Planning item from a different type. Returns
+    ``None`` otherwise.
     """
     threshold = timezone.now() - timedelta(days=window_days)
     counts = {}
@@ -215,7 +231,7 @@ def _palate_cleanser(user, *, window_days=30, dominance=0.7):
             counts[live_type] = n
             total += n
 
-    if total < 5:
+    if total < _PALATE_MIN_SAMPLE:
         return None
     dominant_type, dominant_count = max(counts.items(), key=lambda kv: kv[1])
     if dominant_count / total < dominance:
@@ -274,14 +290,14 @@ def _stale_planning(user, *, limit=5, days=180):
             .select_related("item")
             .order_by("created_at")[: limit * 2]
         )
-        for media in qs:
-            candidates.append(
-                {
-                    "item": media.item,
-                    "since": media.created_at,
-                    "media_type": media_type,
-                },
-            )
+        candidates.extend(
+            {
+                "item": media.item,
+                "since": media.created_at,
+                "media_type": media_type,
+            }
+            for media in qs
+        )
 
     candidates.sort(key=lambda c: c["since"])
     return candidates[:limit]
@@ -806,18 +822,23 @@ def person_details(request, person_id, name):  # noqa: ARG001 name for URL
     ]
 
     # Aggregate "your stats with this person": tracked count, avg score,
-    # high-rating count, unwatched-in-library count. Skips silently when
-    # the user has no overlap with this person's filmography.
+    # high-rating count. Skips silently when the user has no overlap with
+    # this person's filmography. ``r["media"]`` is a Django Model instance
+    # (see enrich_items_with_user_data), so score is an attribute, not a
+    # mapping key — using getattr keeps Episode (no score field) safe.
     tracked = [r for r in results if r["media"] is not None]
-    rated = [r["media"]["score"] for r in tracked
-             if r["media"] and r["media"].get("score") is not None]
+    rated = [
+        score
+        for score in (getattr(r["media"], "score", None) for r in tracked)
+        if score is not None
+    ]
     person_stats = None
     if tracked:
         person_stats = {
             "tracked_count": len(tracked),
             "rated_count": len(rated),
             "avg_score": round(sum(rated) / len(rated), 1) if rated else None,
-            "high_rating_count": sum(1 for s in rated if s >= 8),
+            "high_rating_count": sum(1 for s in rated if s >= _HIGH_SCORE_THRESHOLD),
         }
 
     context = {
@@ -1682,7 +1703,7 @@ def log_record_spin(request, source, media_id):
 
 @require_GET
 def music_history(request):
-    """Listening history: filterable, paginated list of Play rows.
+    """Render the listening history: filterable, paginated list of Play rows.
 
     Surfaces both manual vinyl spins and ListenBrainz scrobbles so unmatched
     listens (no Item resolved by artist+title) are visible somewhere in the UI
@@ -1744,10 +1765,7 @@ def music_unmatched(request):
     (singles, podcast scrobbles, anything Discogs doesn't have on a
     canonical release).
     """
-    base = (
-        Play.objects.filter(user=request.user, item__isnull=True)
-        .exclude(artist="")
-    )
+    base = Play.objects.filter(user=request.user, item__isnull=True).exclude(artist="")
 
     # Album-keyed groups first — these are the high-value matches because
     # one click links N spins to a single Record. Excludes blank album so
@@ -1799,7 +1817,7 @@ def match_record_search(request):
         "album": request.GET.get("album", ""),
         "title": request.GET.get("title", ""),
     }
-    if len(query) < 2:
+    if len(query) < 2:  # noqa: PLR2004 — need at least two chars before searching
         ctx["results"] = []
     else:
         ctx["results"] = list(
@@ -1851,10 +1869,7 @@ def match_unmatched_apply(request):
         item__isnull=True,
         artist=artist,
     )
-    if album:
-        qs = qs.filter(album=album)
-    else:
-        qs = qs.filter(album="", title=title)
+    qs = qs.filter(album=album) if album else qs.filter(album="", title=title)
 
     updated = qs.update(item=item)
     logger.info(
@@ -1910,10 +1925,11 @@ def cmdk_search(request):
     page covers discovery; this is the "find that show I'm watching" path.
     """
     query = request.GET.get("q", "").strip()
-    if len(query) < 2:
+    if len(query) < 2:  # noqa: PLR2004 — need at least two chars before searching
         return render(request, "app/components/cmdk_results.html", {"results": []})
 
     per_type_limit = 3
+    cmdk_max_results = 12
     results = []
     # Walk concrete media types (skip Episode — those are sub-items of seasons
     # and shouldn't surface in the global jump list).
@@ -1926,15 +1942,15 @@ def cmdk_search(request):
             .select_related("item")
             .order_by("-created_at")[:per_type_limit]
         )
-        for media in rows:
-            results.append(
-                {
-                    "item": media.item,
-                    "media_type": media_type,
-                    "status": getattr(media, "status", None),
-                },
-            )
-        if len(results) >= 12:
+        results.extend(
+            {
+                "item": media.item,
+                "media_type": media_type,
+                "status": getattr(media, "status", None),
+            }
+            for media in rows
+        )
+        if len(results) >= cmdk_max_results:
             break
 
     return render(
@@ -1992,15 +2008,15 @@ _SHARE_TARGET_PROVIDERS = {
 }
 
 
+_URL_PATTERN = re.compile(r"https?://\S+")
+
+
 def _extract_first_url(*candidates):
     """Return the first http(s) URL found in the supplied strings."""
-    import re
-
-    pattern = re.compile(r"https?://\S+")
     for c in candidates:
         if not c:
             continue
-        match = pattern.search(c)
+        match = _URL_PATTERN.search(c)
         if match:
             return match.group(0).rstrip(".,;)")
     return None

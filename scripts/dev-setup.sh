@@ -69,7 +69,18 @@ say "Installing pre-commit hooks"
 pre-commit install
 
 # --- Redis -------------------------------------------------------------
-if command -v docker >/dev/null 2>&1; then
+# Non-fatal: if the Docker daemon isn't running, warn and continue. Tests
+# work via fakeredis; only `runserver` needs a real redis. The user can
+# start Docker Desktop and re-run this script later.
+start_redis() {
+    if ! command -v docker >/dev/null 2>&1; then
+        warn "Docker not installed — runserver will fail. Tests still work via fakeredis."
+        return 0
+    fi
+    if ! docker info >/dev/null 2>&1; then
+        warn "Docker daemon not running. Start Docker Desktop then re-run this script."
+        return 0
+    fi
     if docker ps --filter name=^yamtrack-redis$ --format '{{.Names}}' | grep -q yamtrack-redis; then
         say "Redis already running (yamtrack-redis)"
     elif docker ps -a --filter name=^yamtrack-redis$ --format '{{.Names}}' | grep -q yamtrack-redis; then
@@ -79,9 +90,8 @@ if command -v docker >/dev/null 2>&1; then
         say "Launching yamtrack-redis (redis:8-alpine on 6379)"
         docker run -d --name yamtrack-redis -p 6379:6379 redis:8-alpine >/dev/null
     fi
-else
-    warn "Docker not installed — runserver will fail. Tests still work via fakeredis."
-fi
+}
+start_redis || true
 
 # --- .env --------------------------------------------------------------
 if [[ ! -f .env ]]; then
