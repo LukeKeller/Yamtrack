@@ -42,6 +42,8 @@
               {{ media_type|media_type_readable_plural }}
               <span class="text-xs text-fg-faint font-normal ml-1">{{ media_list.total }}</span>
             </h3>
+            <a href="{% url 'medialist' media_type=media_type %}?status={{ section.key|urlencode }}"
+               class="text-xs text-fg-muted hover:text-fg transition-colors">View all →</a>
           </div>
 
           <div id="media-grid-{{ section.id }}-{{ media_type }}" class="media-grid">

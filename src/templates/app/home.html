@@ -239,7 +239,10 @@
                 <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
                 Today
               </h2>
-              <span class="text-xs text-fg-faint">{{ today|date:'F j' }}</span>
+              <a href="{% url 'calendar' %}"
+                 class="text-xs text-fg-muted hover:text-fg transition-colors">
+                {{ today|date:'F j' }} · Full calendar →
+              </a>
             </div>
             <ul class="card divide-y"
                 style="padding: 0;
