@@ -2,6 +2,8 @@
 
 {% load socialaccount %}
 {% load static %}
+{% load app_tags %}
+{% load humanize %}
 
 {% block title %}
   Advanced - Yamtrack
@@ -14,6 +16,71 @@
       <div class="flex items-center mb-5">
         {% include "app/icons/vertical-sliders.svg" with classes="w-6 h-6 text-indigo-400 mr-3" %}
         <h2 class="text-xl font-semibold">Advanced</h2>
+      </div>
+
+      {% comment %}
+        Stale "In Progress" sweeper — items started but untouched in 60+ days.
+        Each row offers one-click Pause / Drop (htmx → update_media_status),
+        and the row deletes itself from the DOM on success via hx-swap=delete.
+      {% endcomment %}
+      <div class="bg-surface-2 p-5 rounded-lg mb-6" id="stale-panel">
+        <div class="flex items-center mb-3">
+          {% include "app/icons/alarm-clock.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
+          <h3 class="text-base font-medium">Stale In-Progress Items</h3>
+          {% if stale_items %}
+            <span class="ml-auto pill pill-meta text-[10px]">{{ stale_items|length }}</span>
+          {% endif %}
+        </div>
+        <p class="text-fg-muted mb-4 text-sm">
+          Things you started but haven't touched in over 60 days. Pause to keep them off your active list, or Drop to close them out.
+        </p>
+        {% if stale_items %}
+          <ul class="bg-surface-1 rounded-md divide-y" style="border-color: var(--color-border-subtle)" id="stale-list">
+            {% for row in stale_items %}
+              <li class="flex items-center gap-3 px-3 py-2.5"
+                  id="stale-row-{{ row.media_type }}-{{ row.media.id }}">
+                <a href="{{ row.media.item|media_url }}"
+                   class="w-9 h-12 rounded-sm overflow-hidden bg-surface-2 shrink-0"
+                   aria-label="{{ row.media.item }}">
+                  {% if row.media.item.image and row.media.item.image != IMG_NONE %}
+                    <img src="{{ row.media.item.image }}"
+                         alt=""
+                         loading="lazy"
+                         class="w-full h-full object-cover">
+                  {% endif %}
+                </a>
+                <div class="flex-1 min-w-0">
+                  <a href="{{ row.media.item|media_url }}" class="block text-sm text-fg truncate hover:text-accent">{{ row.media.item }}</a>
+                  <div class="text-[11px] text-fg-faint uppercase tracking-wider">
+                    {{ row.media_type|media_type_readable }} · last touched {{ row.last_activity|naturaltime }}
+                  </div>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <button type="button"
+                          class="px-3 py-1.5 text-xs rounded-md bg-surface-2 hover:bg-surface-3 text-fg-muted hover:text-fg transition-colors cursor-pointer"
+                          hx-post="{% url 'update_media_status' row.media_type row.media.id %}"
+                          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                          hx-vals='{"status": "Paused"}'
+                          hx-swap="delete"
+                          hx-target="#stale-row-{{ row.media_type }}-{{ row.media.id }}"
+                          title="Mark as Paused">Pause</button>
+                  <button type="button"
+                          class="px-3 py-1.5 text-xs rounded-md bg-surface-2 hover:bg-status-dropped-soft text-fg-muted hover:text-status-dropped transition-colors cursor-pointer"
+                          hx-post="{% url 'update_media_status' row.media_type row.media.id %}"
+                          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                          hx-vals='{"status": "Dropped"}'
+                          hx-swap="delete"
+                          hx-target="#stale-row-{{ row.media_type }}-{{ row.media.id }}"
+                          title="Mark as Dropped">Drop</button>
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="bg-surface-1 rounded-md px-3 py-6 text-center text-sm text-fg-muted">
+            Nothing's stale right now — every in-progress item has activity in the last 60 days.
+          </div>
+        {% endif %}
       </div>
 
       <div class="bg-surface-2 p-5 rounded-lg mb-6">

@@ -1,0 +1,40 @@
+{% load app_tags %}
+{% comment %}
+  Result list for the unmatched-scrobble resolver search.
+  Context: results (list of Record), group_key, kind, artist, album, title.
+{% endcomment %}
+{% if results %}
+  <ul class="bg-surface-1 rounded-md divide-y" style="border-color: var(--color-border-subtle)">
+    {% for record in results %}
+      <li class="flex items-center gap-3 px-3 py-2">
+        <div class="w-8 h-8 rounded-sm overflow-hidden bg-surface-2 shrink-0">
+          {% if record.item.image and record.item.image != IMG_NONE %}
+            <img src="{{ record.item.image }}" alt="" loading="lazy" class="w-full h-full object-cover">
+          {% endif %}
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="text-sm text-fg truncate">{{ record.item.title }}</div>
+        </div>
+        <form class="contents">
+          <input type="hidden" name="artist" value="{{ artist }}">
+          {% if kind == "album" %}
+            <input type="hidden" name="album" value="{{ album }}">
+          {% else %}
+            <input type="hidden" name="title" value="{{ title }}">
+          {% endif %}
+          <input type="hidden" name="item_id" value="{{ record.item.id }}">
+          <button type="button"
+                  class="px-3 py-1.5 text-xs rounded-md bg-accent text-white hover:bg-accent-hover transition-colors cursor-pointer shrink-0"
+                  hx-post="{% url 'match_unmatched_apply' %}"
+                  hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                  hx-include="closest form"
+                  hx-target="#match-row-{{ group_key }}"
+                  hx-swap="delete">Link</button>
+        </form>
+      </li>
+    {% endfor %}
+  </ul>
+{% else %}
+  {# query under 2 chars or no matches — neutral hint in either case. #}
+  <div class="text-xs text-fg-faint px-2 py-2">No matches in your library yet — keep typing, or skip this one.</div>
+{% endif %}

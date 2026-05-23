@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import timedelta
 
@@ -8,7 +9,7 @@ from django.contrib import messages
 from django.core.cache import cache
 from django.core.paginator import Paginator
 from django.db import IntegrityError
-from django.db.models import Count, prefetch_related_objects
+from django.db.models import Count, Max, prefetch_related_objects
 from django.http import HttpResponse, HttpResponseBadRequest, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -29,6 +30,7 @@ from app.models import (
     Play,
     PlaySide,
     PlaySource,
+    Record,
     Season,
     Sources,
     Status,
@@ -1500,6 +1502,149 @@ def music_history(request):
         "play_sources": PlaySource.choices,
     }
     return render(request, "app/music_history.html", context)
+
+
+@require_GET
+def music_unmatched(request):
+    """Triage page for ListenBrainz scrobbles with no resolved Item.
+
+    Groups unmatched Plays by (artist, album) so a user with hundreds of
+    unmatched listens can fix the *album* once and back-link every spin
+    of it in one move. Falls back to (artist, title) when album is blank
+    (singles, podcast scrobbles, anything Discogs doesn't have on a
+    canonical release).
+    """
+    base = (
+        Play.objects.filter(user=request.user, item__isnull=True)
+        .exclude(artist="")
+    )
+
+    # Album-keyed groups first — these are the high-value matches because
+    # one click links N spins to a single Record. Excludes blank album so
+    # singles don't collapse into one giant "<no album>" bucket.
+    album_groups = (
+        base.exclude(album="")
+        .values("artist", "album")
+        .annotate(
+            plays=Count("id"),
+            last_played=Max("played_at"),
+        )
+        .order_by("-plays")[:30]
+    )
+
+    # Singles fallback: scrobbles with no album text. Group by track title.
+    single_groups = (
+        base.filter(album="")
+        .values("artist", "title")
+        .annotate(
+            plays=Count("id"),
+            last_played=Max("played_at"),
+        )
+        .order_by("-plays")[:15]
+    )
+
+    total_unmatched = base.count()
+
+    return render(
+        request,
+        "app/music_unmatched.html",
+        {
+            "album_groups": list(album_groups),
+            "single_groups": list(single_groups),
+            "total_unmatched": total_unmatched,
+        },
+    )
+
+
+@require_GET
+def match_record_search(request):
+    """htmx-driven search of the user's tracked Records for the resolver."""
+    query = request.GET.get("q", "").strip()
+    # Group context — flows back into each Match button so apply() has
+    # everything it needs in one POST.
+    ctx = {
+        "group_key": request.GET.get("k", ""),
+        "kind": request.GET.get("kind", "album"),
+        "artist": request.GET.get("artist", ""),
+        "album": request.GET.get("album", ""),
+        "title": request.GET.get("title", ""),
+    }
+    if len(query) < 2:
+        ctx["results"] = []
+    else:
+        ctx["results"] = list(
+            Record.objects.filter(
+                user=request.user,
+                item__title__icontains=query,
+            )
+            .select_related("item")
+            .order_by("-progressed_at", "-created_at")[:5],
+        )
+    return render(request, "app/components/match_record_results.html", ctx)
+
+
+@require_POST
+def match_unmatched_apply(request):
+    """Backfill `item` on every unmatched Play for an (artist, album|title) group.
+
+    POST fields:
+        artist  Required — the artist string to match on.
+        album   The album string; ignored when blank.
+        title   The track title; used only when ``album`` is blank (singles).
+        item_id Required — Item.id of the tracked Record to link to.
+
+    Returns 200 with a swap fragment that removes the resolved row from
+    the UI on success.
+    """
+    artist = (request.POST.get("artist") or "").strip()
+    album = (request.POST.get("album") or "").strip()
+    title = (request.POST.get("title") or "").strip()
+    item_id = request.POST.get("item_id")
+
+    if not artist or not item_id:
+        return HttpResponseBadRequest("artist and item_id are required")
+
+    # Make sure the target item is actually a Record the user tracks —
+    # without this any logged-in user could backfill plays against
+    # arbitrary record IDs they discovered out-of-band.
+    try:
+        item = Item.objects.get(
+            id=int(item_id),
+            media_type=MediaTypes.RECORD.value,
+            record__user=request.user,
+        )
+    except (Item.DoesNotExist, ValueError):
+        return HttpResponseBadRequest("invalid item_id")
+
+    qs = Play.objects.filter(
+        user=request.user,
+        item__isnull=True,
+        artist=artist,
+    )
+    if album:
+        qs = qs.filter(album=album)
+    else:
+        qs = qs.filter(album="", title=title)
+
+    updated = qs.update(item=item)
+    logger.info(
+        "Matched %d unmatched plays to record %s for user %s",
+        updated,
+        item,
+        request.user,
+    )
+
+    # Empty 200 with HX-Trigger so the page can show a small toast. The
+    # `hx-swap=delete` on the calling button is what actually removes the
+    # row from the DOM, so we don't need a body.
+    return HttpResponse(
+        status=200,
+        headers={
+            "HX-Trigger": json.dumps(
+                {"matched": {"count": updated, "title": item.title}},
+            ),
+        },
+    )
 
 
 @require_GET

@@ -322,6 +322,32 @@ def natural_day(datetime, user):
 
 
 @register.filter
+def short_countdown(dt):
+    """Compact "(in 2d)" / "(in 3h)" / "(in 12m)" countdown for upcoming events.
+
+    Returns an empty string when the event is in the past or more than
+    a week out, so it only surfaces when a release is actually imminent.
+    """
+    if not dt:
+        return ""
+    now = timezone.now()
+    delta = dt - now
+    total_seconds = delta.total_seconds()
+    if total_seconds <= 0:
+        return ""
+    days = delta.days
+    if days >= 7:
+        return ""
+    if days >= 1:
+        return f"in {days}d"
+    hours = int(total_seconds // 3600)
+    if hours >= 1:
+        return f"in {hours}h"
+    minutes = max(1, int(total_seconds // 60))
+    return f"in {minutes}m"
+
+
+@register.filter
 def media_url(media):
     """Return the media URL for both metadata and model object cases."""
     is_dict = isinstance(media, dict)

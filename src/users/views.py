@@ -326,7 +326,50 @@ def export_data(request):
 @require_GET
 def advanced(request):
     """Render the advanced settings page."""
-    return render(request, "users/advanced.html")
+    from datetime import timedelta
+
+    from django.apps import apps
+    from django.utils import timezone
+
+    from app.models import MediaTypes, Status
+
+    # Stale "In Progress" sweep — list items the user started but hasn't
+    # touched in ~60 days, so they can quickly Pause or Drop them.
+    # Walks every concrete media type (Episode excluded — it tracks via its
+    # parent Season). Uses progressed_at (the MonitorField on progress) as
+    # the "last activity" proxy and falls back to created_at when an item
+    # was created but never moved.
+    stale_cutoff = timezone.now() - timedelta(days=60)
+    stale_items = []
+    for media_type in MediaTypes.values:
+        if media_type in (MediaTypes.EPISODE.value, MediaTypes.SEASON.value):
+            continue
+        model = apps.get_model("app", media_type)
+        rows = (
+            model.objects.filter(
+                user=request.user,
+                status=Status.IN_PROGRESS.value,
+            )
+            .select_related("item")
+        )
+        for media in rows:
+            last_activity = media.progressed_at or media.created_at
+            if last_activity and last_activity < stale_cutoff:
+                stale_items.append(
+                    {
+                        "media": media,
+                        "media_type": media_type,
+                        "last_activity": last_activity,
+                    },
+                )
+    # Oldest at the top — these are the most-likely-abandoned.
+    stale_items.sort(key=lambda r: r["last_activity"])
+
+    return render(
+        request,
+        "users/advanced.html",
+        {"stale_items": stale_items},
+    )
 
 
 @require_GET

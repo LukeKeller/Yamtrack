@@ -104,6 +104,17 @@ urlpatterns = [
     ),
     path("music/history", views.music_history, name="music_history"),
     path("music/stats", views.music_stats, name="music_stats"),
+    path("music/unmatched", views.music_unmatched, name="music_unmatched"),
+    path(
+        "music/unmatched/search",
+        views.match_record_search,
+        name="match_record_search",
+    ),
+    path(
+        "music/unmatched/apply",
+        views.match_unmatched_apply,
+        name="match_unmatched_apply",
+    ),
     path("serviceworker.js", views.service_worker, name="service_worker"),
     path("site.webmanifest", views.webmanifest, name="webmanifest"),
     path("cmdk/search", views.cmdk_search, name="cmdk_search"),

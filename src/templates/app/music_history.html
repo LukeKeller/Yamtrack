@@ -23,9 +23,15 @@
       <p class="text-fg-muted text-sm">Matched to a tracked record</p>
       <p class="text-3xl font-bold mt-1 text-emerald-400">{{ matched_count }}</p>
     </div>
-    <div class="bg-surface-1 rounded-lg p-5">
+    <div class="bg-surface-1 rounded-lg p-5 flex flex-col">
       <p class="text-fg-muted text-sm">Unmatched</p>
       <p class="text-3xl font-bold mt-1 text-amber-400">{{ unmatched_count }}</p>
+      {% if unmatched_count %}
+        <a href="{% url 'music_unmatched' %}"
+           class="mt-3 inline-flex items-center justify-center px-3 py-1.5 text-xs rounded-md bg-amber-500/15 text-amber-300 hover:bg-amber-500/25 transition-colors w-fit">
+          Resolve →
+        </a>
+      {% endif %}
     </div>
   </div>
 

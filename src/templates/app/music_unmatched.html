@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load static %}
+{% load app_tags %}
+{% load humanize %}
+
+{% block title %}
+  Resolve scrobbles - Yamtrack
+{% endblock title %}
+
+{% block content %}
+  <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <h1 class="text-3xl font-bold mb-1">Resolve scrobbles</h1>
+      <p class="text-fg-muted text-sm">
+        {{ total_unmatched|intcomma }} plays haven't been linked to a tracked record yet. Match an album once and every spin of it back-links automatically.
+      </p>
+    </div>
+    <a href="{% url 'music_history' %}"
+       class="px-3 py-2 rounded-md text-sm bg-surface-2 hover:bg-surface-3 text-fg-muted hover:text-fg transition-colors">
+      Back to Music
+    </a>
+  </div>
+
+  {# Small toast triggered by the HX-Trigger header on a successful match. #}
+  <div id="match-toast"
+       x-data="{ msg: '', show: false }"
+       @matched.window="msg = `Linked ${$event.detail.count} play${$event.detail.count === 1 ? '' : 's'} to ${$event.detail.title}`; show = true; setTimeout(() => show = false, 3500)"
+       x-show="show"
+       x-cloak
+       x-transition.opacity.duration.200ms
+       class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-md bg-status-completed-soft text-status-completed text-sm shadow-lg pointer-events-none">
+    <span x-text="msg"></span>
+  </div>
+
+  {% if album_groups or single_groups %}
+    {% if album_groups %}
+      <section class="mb-8">
+        <h2 class="text-lg font-semibold mb-3">Top unmatched albums</h2>
+        <ul class="card divide-y" style="padding: 0; border-color: var(--color-border-subtle)">
+          {% for group in album_groups %}
+            {% with key=group.artist|cut:" "|add:group.album|cut:" "|slugify|truncatechars:40 %}
+              {% include "app/components/match_record_row.html" with group=group key=key kind="album" %}
+            {% endwith %}
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+
+    {% if single_groups %}
+      <section class="mb-8">
+        <h2 class="text-lg font-semibold mb-3">Top unmatched singles</h2>
+        <p class="text-xs text-fg-faint mb-2">Scrobbles with no album text — matched by track title.</p>
+        <ul class="card divide-y" style="padding: 0; border-color: var(--color-border-subtle)">
+          {% for group in single_groups %}
+            {% with key=group.artist|cut:" "|add:group.title|cut:" "|slugify|truncatechars:40 %}
+              {% include "app/components/match_record_row.html" with group=group key=key kind="single" %}
+            {% endwith %}
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+  {% else %}
+    <div class="card text-center py-10">
+      <div class="text-fg text-base font-medium mb-1">Nothing left to resolve</div>
+      <div class="text-fg-muted text-sm">Every scrobble in your history is already linked to a tracked record.</div>
+    </div>
+  {% endif %}
+{% endblock content %}

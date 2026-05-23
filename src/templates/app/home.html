@@ -99,6 +99,18 @@
                       {{ m.item.media_type|long_unit|lower }}{{ m.progress|pluralize }}
                     {% endif %}
                   </div>
+                  {% if m.next_event and not m.next_event.is_max_datetime %}
+                    {% with countdown=m.next_event.datetime|short_countdown %}
+                      {% if countdown %}
+                        <div class="text-[11px] text-accent truncate mt-0.5 flex items-center gap-1">
+                          {% include "app/icons/clock.svg" with classes="w-3 h-3 shrink-0" %}
+                          <span class="truncate">
+                            {% if m.next_event.content_number %}{{ m.item.media_type|short_unit }}{{ m.next_event.content_number }} · {% endif %}{{ countdown }}
+                          </span>
+                        </div>
+                      {% endif %}
+                    {% endwith %}
+                  {% endif %}
                 </div>
               </a>
               {% if m.item.media_type != MediaTypes.MOVIE.value and m.progress != m.max_progress %}
