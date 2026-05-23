@@ -68,4 +68,5 @@ urlpatterns = [
         views.listenbrainz_submit_listens,
         name="listenbrainz_submit_listens",
     ),
+    path("api/quick-log/<str:token>", views.quick_log, name="quick_log"),
 ]

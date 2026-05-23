@@ -5,11 +5,12 @@ import logging
 import secrets
 from urllib.parse import urlencode
 
+from django.apps import apps
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_not_required
 from django.core.exceptions import ObjectDoesNotExist
-from django.http import HttpResponse, StreamingHttpResponse
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
@@ -18,6 +19,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 import users
 from app import helpers as app_helpers
+from app.models import MediaTypes, Status
 from integrations import exports, scrobble, tasks
 from integrations.imports import anilist, discogs, hardcover, helpers, simkl, trakt
 from integrations.imports.helpers import MediaImportError
@@ -911,3 +913,110 @@ def emby_webhook(request, token):
     _record_webhook(user=user, source=source, ok=True, status_code=200,
                     payload=payload)
     return HttpResponse(status=200)
+
+
+@login_not_required
+@csrf_exempt
+@require_POST
+def quick_log(request, token):
+    """Token-authenticated quick-log endpoint for Shortcuts / Tasker / bots.
+
+    POST body (JSON or form-encoded):
+        ``title``        — required, fuzzy-matched against the user's library
+        ``media_type``   — optional, narrows the search to one MediaTypes value
+
+    Responses:
+        200 + ``{"action": "advanced", "title": ..., "media_type": ...}``
+            Exactly one match — progress incremented (or status flipped to
+            Completed for movies/games that have no progress field).
+        300 + ``{"candidates": [{"id", "title", "media_type"}, ...]}``
+            Multiple matches — caller picks one and resubmits with a
+            ``media_type`` filter.
+        404 + ``{"error": "no_match"}``
+            No library item matched; the caller should fall back to /search.
+    """
+    try:
+        user = users.models.User.objects.get(token=token)
+    except ObjectDoesNotExist:
+        return JsonResponse({"error": "invalid_token"}, status=401)
+
+    if request.content_type == "application/json":
+        try:
+            payload = json.loads(request.body or b"{}")
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "invalid_json"}, status=400)
+    else:
+        payload = request.POST
+
+    title = (payload.get("title") or "").strip()
+    requested_type = (payload.get("media_type") or "").strip()
+    if not title:
+        return JsonResponse({"error": "missing_title"}, status=400)
+
+    types_to_search = (
+        [requested_type]
+        if requested_type
+        else [
+            media_type
+            for media_type in MediaTypes.values
+            if media_type not in (MediaTypes.EPISODE.value, MediaTypes.SEASON.value)
+        ]
+    )
+
+    matches = []
+    for media_type in types_to_search:
+        try:
+            model = apps.get_model("app", media_type)
+        except LookupError:
+            continue
+        qs = (
+            model.objects.filter(user=user, item__title__icontains=title)
+            .select_related("item")[:5]
+        )
+        for media in qs:
+            matches.append((media_type, media))
+
+    if not matches:
+        return JsonResponse({"error": "no_match", "query": title}, status=404)
+
+    if len(matches) > 1:
+        return JsonResponse(
+            {
+                "candidates": [
+                    {"id": m.pk, "title": m.item.title, "media_type": mt}
+                    for mt, m in matches
+                ],
+            },
+            status=300,
+        )
+
+    media_type, media = matches[0]
+    request.user = user  # for simple_history attribution
+    field_names = {f.name for f in media._meta.fields}
+    update_fields = []
+    action = "noop"
+
+    if "progress" in field_names and getattr(media, "progress", None) is not None:
+        media.progress = (media.progress or 0) + 1
+        update_fields.append("progress")
+        action = "advanced"
+    if "status" in field_names and media.status != Status.COMPLETED.value:
+        if "progress" in field_names:
+            media.status = Status.IN_PROGRESS.value
+            action = "advanced"
+        else:
+            media.status = Status.COMPLETED.value
+            action = "completed"
+        update_fields.append("status")
+
+    if update_fields:
+        media.save(update_fields=update_fields)
+
+    return JsonResponse(
+        {
+            "action": action,
+            "title": media.item.title,
+            "media_type": media_type,
+            "id": media.pk,
+        },
+    )
