@@ -937,6 +937,24 @@
         </button>
       </div>
 
+      {% if comparable_items %}
+        <h2 class="text-xl font-bold mb-4">Comparable in your library</h2>
+        <div class="bg-surface-1 p-4 rounded-lg mb-6">
+          <ul class="divide-y" style="border-color: var(--color-border-subtle)">
+            {% for row in comparable_items %}
+              <li class="flex items-center gap-3 py-2.5">
+                <span class="w-9 h-9 rounded-md bg-surface-2 text-fg font-semibold flex items-center justify-center shrink-0 text-sm">
+                  {{ row.score|floatformat:'-1' }}
+                </span>
+                <a href="{{ row.item|media_url }}" class="flex-1 min-w-0 truncate text-sm text-fg hover:text-indigo-500 transition-colors">
+                  {{ row.item }}
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
       {# Media Details #}
       <h2 class="text-xl font-bold mb-4">Details</h2>
       {% if watch_provider_region == "UNSET" or watch_providers is not None %}

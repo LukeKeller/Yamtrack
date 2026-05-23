@@ -553,6 +553,11 @@ def media_details(request, source, media_type, media_id, title):  # noqa: ARG001
         "current_instance": current_instance,
         "watch_providers": watch_providers,
         "watch_provider_region": request.user.watch_provider_region,
+        "comparable_items": _comparable_items(
+            request.user,
+            media_type,
+            current_instance,
+        ),
     }
     # Last-spin indicator on the Record detail page (only meaningful for records).
     if media_type == MediaTypes.RECORD.value:
@@ -583,6 +588,48 @@ def media_details(request, source, media_type, media_id, title):  # noqa: ARG001
         # to A/B so 7"s and untracked records still show useful buttons.
         context["record_spin_sides"] = _record_side_choices(record_item)
     return render(request, "app/media_details.html", context)
+
+
+def _comparable_items(user, media_type, current_instance, *, limit=5):
+    """Items the user rated within ±1 of the current item, same media_type.
+
+    Surfaces a "you might compare it to…" rail on the detail page. Returns
+    an empty list if the user hasn't rated the current item yet (no anchor
+    for the comparison) or if the media model has no ``score`` field.
+    """
+    if current_instance is None:
+        return []
+    score = getattr(current_instance, "score", None)
+    if score is None:
+        return []
+    try:
+        model = apps.get_model("app", media_type)
+    except LookupError:
+        return []
+    field_names = {f.name for f in model._meta.fields}
+    if "score" not in field_names:
+        return []
+    qs = (
+        model.objects.filter(
+            user=user,
+            score__gte=max(0, float(score) - 1),
+            score__lte=min(10, float(score) + 1),
+        )
+        .exclude(pk=current_instance.pk)
+        .select_related("item")
+        .order_by("-score", "-created_at")[: limit * 2]
+    )
+    # Dedup by item — multiple Media rows can exist for repeat plays.
+    seen = set()
+    out = []
+    for media in qs:
+        if media.item_id in seen:
+            continue
+        seen.add(media.item_id)
+        out.append({"item": media.item, "score": media.score})
+        if len(out) >= limit:
+            break
+    return out
 
 
 def _record_side_choices(record_item):
