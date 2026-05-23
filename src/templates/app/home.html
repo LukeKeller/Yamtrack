@@ -10,47 +10,27 @@
   <div class="space-y-8">
 
     {% comment %}
-      Greeting block. The in-progress / planning counts come from home_sections;
-       falls back gracefully if a section returned no media.
+      Greeting block. Status chips below the title give an at-a-glance view of
+      what's queued without forcing the user into a list. Sort moved out of
+      here — see the home-sections header further down where it applies.
     {% endcomment %}
-    <header class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-      <div>
-        <p class="text-sm text-fg-faint mb-1">{% now "l, F j" %}</p>
-        <h1 class="text-2xl font-semibold">
-          Welcome back{% if user.is_authenticated %}, {{ user.username }}{% endif %}
-        </h1>
-        <p class="text-sm text-fg-muted mt-1">
-          {% for section in home_sections %}
-            {% if section.key == "In progress" %}{{ section.count }} item{{ section.count|pluralize }} in progress{% endif %}
-          {% endfor %}
-          {% for section in home_sections %}
-            {% if section.key == "Planning" %}
-              {% if section.count %}· {{ section.count }} planned{% endif %}
-            {% endif %}
-          {% endfor %}
-        </p>
-      </div>
-
-      <div class="relative" x-data="{ open: false }">
-        <button @click="open = !open"
-                @click.outside="open = false"
-                class="btn btn-secondary btn-sm">
-          {% include "app/icons/arrows-up-down.svg" with classes="w-3.5 h-3.5" %}
-          <span>{{ current_sort|no_underscore|title }}</span>
-          {% include "app/icons/chevron-down.svg" with classes="w-3.5 h-3.5 opacity-60" %}
-        </button>
-        <div x-show="open"
-             x-cloak
-             x-transition.opacity.duration.150ms
-             class="absolute right-0 z-10 mt-2 w-52 overflow-hidden rounded-md py-1 shadow-lg bg-surface-2"
-             style="border: 1px solid var(--color-border-default)">
-          {% for value, label in sort_choices %}
-            <a href="{% url 'home' %}?sort={{ value }}"
-               class="block w-full px-3 py-1.5 text-left text-sm transition-colors {% if current_sort == value %}bg-accent text-white font-medium{% else %}text-fg-muted hover:bg-surface-3 hover:text-fg{% endif %}">
-              {{ label }}
-            </a>
-          {% endfor %}
-        </div>
+    <header>
+      <p class="text-xs uppercase tracking-wider text-fg-faint mb-2">{% now "l, F j" %}</p>
+      <h1 class="text-2xl sm:text-3xl font-semibold tracking-tight mb-4">
+        Welcome back
+        {% if user.is_authenticated %}, {{ user.username }}{% endif %}
+      </h1>
+      <div class="flex flex-wrap items-center gap-2">
+        {% for section in home_sections %}
+          {% if section.count %}
+            <span class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs bg-surface-1 border"
+                  style="border-color: var(--color-border-subtle)">
+              <span class="status-dot status-dot-{{ section.key|status_slug }}"></span>
+              <span class="font-medium text-fg">{{ section.count }}</span>
+              <span class="text-fg-muted">{{ section.key|lower }}</span>
+            </span>
+          {% endif %}
+        {% endfor %}
       </div>
     </header>
 
@@ -105,7 +85,8 @@
                         <div class="text-[11px] text-accent truncate mt-0.5 flex items-center gap-1">
                           {% include "app/icons/clock.svg" with classes="w-3 h-3 shrink-0" %}
                           <span class="truncate">
-                            {% if m.next_event.content_number %}{{ m.item.media_type|short_unit }}{{ m.next_event.content_number }} · {% endif %}{{ countdown }}
+                            {% if m.next_event.content_number %}{{ m.item.media_type|short_unit }}{{ m.next_event.content_number }} ·{% endif %}
+                            {{ countdown }}
                           </span>
                         </div>
                       {% endif %}
@@ -165,15 +146,22 @@
             style="padding: 0;
                    border-color: var(--color-border-subtle)">
           {% for row in on_this_day %}
-            <li class="flex items-center gap-3 px-3 py-2.5 hover:bg-surface-2 transition-colors" data-row-nav>
+            <li class="flex items-center gap-3 px-3 py-2.5 hover:bg-surface-2 transition-colors"
+                data-row-nav>
               <span class="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-                    style="background: var(--color-accent-soft); color: var(--color-accent);">
+                    style="background: var(--color-accent-soft);
+                           color: var(--color-accent)">
                 {% include "app/icons/calendar.svg" with classes="w-3.5 h-3.5" %}
               </span>
               <a href="{{ row.item|media_url }}" class="flex-1 min-w-0">
                 <div class="text-sm">
                   <span class="text-fg-muted">
-                    {% if row.kind == "completed" %}Completed{% else %}Started{% endif %} in {{ row.year }} ·
+                    {% if row.kind == "completed" %}
+                      Completed
+                    {% else %}
+                      Started
+                    {% endif %}
+                    in {{ row.year }} ·
                   </span>
                   <span class="font-medium text-fg">{{ row.item }}</span>
                 </div>
@@ -195,9 +183,11 @@
             style="padding: 0;
                    border-color: var(--color-border-subtle)">
           {% for row in stale_planning %}
-            <li class="flex items-center gap-3 px-3 py-2.5 hover:bg-surface-2 transition-colors" data-row-nav>
+            <li class="flex items-center gap-3 px-3 py-2.5 hover:bg-surface-2 transition-colors"
+                data-row-nav>
               <span class="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-                    style="background: var(--color-status-planning-soft); color: var(--color-status-planning);">
+                    style="background: var(--color-status-planning-soft);
+                           color: var(--color-status-planning)">
                 {% include "app/icons/clock.svg" with classes="w-3.5 h-3.5" %}
               </span>
               <a href="{{ row.item|media_url }}" class="flex-1 min-w-0">
@@ -253,6 +243,36 @@
 
     {% include "events/components/calendar_card.html" %}
 
+    {% comment %}
+      Per-status, per-media-type grids. The sort selector lives here because
+      it controls how items inside each grid are ordered — keeping it next
+      to the data it sorts makes the relationship obvious.
+    {% endcomment %}
+    <div class="flex items-center justify-between">
+      <h2 class="text-lg font-semibold">Your library</h2>
+      <div class="relative" x-data="{ open: false }">
+        <button @click="open = !open"
+                @click.outside="open = false"
+                class="btn btn-secondary btn-sm"
+                aria-label="Sort library sections">
+          {% include "app/icons/arrows-up-down.svg" with classes="w-3.5 h-3.5" %}
+          <span>{{ current_sort|no_underscore|title }}</span>
+          {% include "app/icons/chevron-down.svg" with classes="w-3.5 h-3.5 opacity-60" %}
+        </button>
+        <div x-show="open"
+             x-cloak
+             x-transition.opacity.duration.150ms
+             class="absolute right-0 z-10 mt-2 w-52 overflow-hidden rounded-md py-1 shadow-lg bg-surface-2"
+             style="border: 1px solid var(--color-border-default)">
+          {% for value, label in sort_choices %}
+            <a href="{% url 'home' %}?sort={{ value }}"
+               class="block w-full px-3 py-1.5 text-left text-sm transition-colors {% if current_sort == value %}bg-accent text-white font-medium{% else %}text-fg-muted hover:bg-surface-3 hover:text-fg{% endif %}">
+              {{ label }}
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
     <div class="space-y-15">
       {% for section in home_sections %}
         {% include "app/components/home_section.html" with section=section %}

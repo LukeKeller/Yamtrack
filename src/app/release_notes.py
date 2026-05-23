@@ -10,10 +10,22 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh69"
+CURRENT_FORK_VERSION = "0.25.2~ynh70"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh70",
+        "date": "2026-05-23",
+        "title": "Home page polish",
+        "highlights": [
+            "Home hero: tighter date/greeting cluster, status chips below the title showing counts at a glance.",
+            "Moved the sort selector down to its actual section ('Your library') instead of floating up top.",
+        ],
+        "fixes": [
+            "Tailwind catch-up: rebuilt main.css so utilities like -mt-1, w-1, max-w-lg, items-baseline (introduced in ynh67/68 templates) now actually apply.",
+        ],
+    },
     {
         "version": "0.25.2~ynh69",
         "date": "2026-05-23",
