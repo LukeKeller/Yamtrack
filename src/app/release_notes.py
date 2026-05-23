@@ -10,10 +10,20 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh75"
+CURRENT_FORK_VERSION = "0.25.2~ynh76"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh76",
+        "date": "2026-05-23",
+        "title": "Home page deep links",
+        "highlights": [
+            "Each per-media-type subsection on the home page (TV Seasons / Movies / Books / etc.) now has a 'View all →' link that drills into the corresponding filtered media list.",
+            "The Today section's date is now a link to the full calendar page.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh75",
         "date": "2026-05-23",
