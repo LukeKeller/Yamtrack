@@ -2761,6 +2761,13 @@
       }
     }
   }
+  .hover\:text-sky-300 {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-sky-300);
+      }
+    }
+  }
   .hover\:text-sky-400 {
     &:hover {
       @media (hover: hover) {
