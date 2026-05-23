@@ -944,6 +944,9 @@
   .max-w-\[110px\] {
     max-width: 110px;
   }
+  .max-w-\[180px\] {
+    max-width: 180px;
+  }
   .max-w-\[250px\] {
     max-width: 250px;
   }
@@ -3242,6 +3245,11 @@
   .md\:w-\[calc\(50\%-2rem\)\] {
     @media (width >= 48rem) {
       width: calc(50% - 2rem);
+    }
+  }
+  .md\:max-w-\[250px\] {
+    @media (width >= 48rem) {
+      max-width: 250px;
     }
   }
   .md\:flex-1 {

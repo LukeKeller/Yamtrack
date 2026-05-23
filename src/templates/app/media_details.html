@@ -23,7 +23,7 @@
     gradient overlays inside are all absolute inset-0, so they can't overflow
     without it.
   {% endcomment %}
-  <div class="relative -mx-4 lg:-mx-8 -mt-8 lg:-mt-10 mb-8 px-4 lg:px-8 pt-12 lg:pt-16 pb-2">
+  <div class="relative -mx-4 lg:-mx-8 -mt-8 lg:-mt-10 mb-8 px-4 lg:px-8 pt-8 lg:pt-16 pb-2">
     {% if media.backdrop %}
       <img alt=""
            aria-hidden="true"
@@ -41,8 +41,14 @@
     {% endif %}
 
     {# Top section #}
-    <div class="flex flex-col md:flex-row gap-8 md:gap-10 mb-12 md:mb-8">
-      <div class="w-full md:w-1/4 max-w-[250px] mx-auto md:mx-0">
+    <div class="flex flex-col md:flex-row gap-6 md:gap-10 mb-12 md:mb-8">
+      {% comment %}
+        Mobile: cap poster at 180px so the title isn't pushed half-way down
+        the screen. The in-poster CTA is duplicated by the bottom sticky CTA
+        on phones (see md:hidden block near end of template), so it's hidden
+        below md to remove the second-CTA-on-load awkwardness.
+      {% endcomment %}
+      <div class="w-full md:w-1/4 max-w-[180px] md:max-w-[250px] mx-auto md:mx-0">
         <img alt="{{ media.title }}"
              class="w-full rounded-lg shadow-2xl bg-surface-1 object-cover"
              src="{{ media.image }}">
@@ -54,10 +60,11 @@
             {% comment %}
               Tracked → tap opens the status sheet for quick changes. Status text
                reflects optimistic UI so it updates the moment a sheet button is
-               clicked, before the POST round-trips.
+               clicked, before the POST round-trips. Hidden on mobile — the
+               sticky bottom CTA covers that case.
             {% endcomment %}
             <button type="button"
-                    class="mt-4 px-4 py-3 rounded-lg w-full flex items-center justify-center gap-2 font-medium cursor-pointer btn-primary"
+                    class="mt-4 px-4 py-3 rounded-lg w-full hidden md:flex items-center justify-center gap-2 font-medium cursor-pointer btn-primary"
                     @click="sheetOpen = !sheetOpen"
                     aria-haspopup="menu"
                     :aria-expanded="sheetOpen.toString()">
@@ -127,10 +134,11 @@
               Not tracked → status sheet picks a status + opens the drawer
                with it preset. Same popover surface as the tracked branch so
                picking a status is one tap (not "open drawer, pick from
-               dropdown, save").
+               dropdown, save"). Hidden on mobile — the sticky bottom CTA
+               covers that case.
             {% endcomment %}
             <button type="button"
-                    class="mt-4 px-4 py-3 rounded-lg w-full flex items-center justify-center gap-2 font-medium cursor-pointer btn-primary"
+                    class="mt-4 px-4 py-3 rounded-lg w-full hidden md:flex items-center justify-center gap-2 font-medium cursor-pointer btn-primary"
                     @click="sheetOpen = !sheetOpen"
                     aria-haspopup="menu"
                     :aria-expanded="sheetOpen.toString()">
@@ -296,7 +304,7 @@
             {% if media.details.runtime %}<span class="pill pill-meta">{{ media.details.runtime }}</span>{% endif %}
             {% for genre in media.genres %}<span class="pill pill-accent">{{ genre }}</span>{% endfor %}
           </div>
-          <h1 class="text-3xl md:text-4xl font-semibold tracking-tight mb-3 text-center md:text-start">{{ media.title }}</h1>
+          <h1 class="text-2xl md:text-4xl font-semibold tracking-tight mb-3 text-center md:text-start">{{ media.title }}</h1>
         {% endif %}
 
         {# Description #}
@@ -870,11 +878,7 @@
                 aria-label="Copy as markdown"
                 class="px-4 py-2 bg-surface-2 text-fg rounded-md hover:bg-surface-3 transition duration-300 cursor-pointer"
                 x-data="{ copied: false, title: '{{ media.title|escapejs }}', status: '{{ user_media.status|default:''|escapejs }}', score: '{{ user_media.score|default_if_none:'' }}' }"
-                @click="(async () => {
-                  const url = window.location.href;
-                  const head = (status ? status + ' — ' : '') + (title || 'Untitled') + (score ? ' — ' + score + '/10' : '');
-                  try { await navigator.clipboard.writeText(head + ' — ' + url); copied = true; setTimeout(() => copied = false, 1500); } catch (e) { copied = false }
-                })()">
+                @click="(async () => { const url = window.location.href; const head = (status ? status + ' — ' : '') + (title || 'Untitled') + (score ? ' — ' + score + '/10' : ''); try { await navigator.clipboard.writeText(head + ' — ' + url); copied = true; setTimeout(() => copied = false, 1500); } catch (e) { copied = false } })()">
           <span x-show="!copied">Copy</span>
           <span x-cloak x-show="copied">Copied</span>
         </button>
@@ -946,7 +950,8 @@
                 <span class="w-9 h-9 rounded-md bg-surface-2 text-fg font-semibold flex items-center justify-center shrink-0 text-sm">
                   {{ row.score|floatformat:'-1' }}
                 </span>
-                <a href="{{ row.item|media_url }}" class="flex-1 min-w-0 truncate text-sm text-fg hover:text-indigo-500 transition-colors">
+                <a href="{{ row.item|media_url }}"
+                   class="flex-1 min-w-0 truncate text-sm text-fg hover:text-indigo-500 transition-colors">
                   {{ row.item }}
                 </a>
               </li>
@@ -1077,11 +1082,7 @@
           <ul class="bg-surface-1 rounded-lg overflow-hidden divide-y"
               style="border: 1px solid var(--color-border-subtle)">
             {% for episode in media.episodes %}
-              <li class="hover:bg-surface-2 transition-colors{% if episode.history %} {% else %} opacity-90{% endif %}"
-                  data-episode-number="{{ episode.episode_number }}"
-                  data-watched="{% if episode.history %}true{% else %}false{% endif %}"
-                  style="scroll-margin-top: 7rem"
-                  x-data="{ obfuscated:
+              <li class="hover:bg-surface-2 transition-colors{% if episode.history %} {% else %} opacity-90{% endif %}" data-episode-number="{{ episode.episode_number }}" data-watched="{% if episode.history %}true{% else %}false{% endif %}" style="scroll-margin-top: 7rem" x-data="{ obfuscated:
                 {% if user.obfuscate_unseen_episodes and not episode.history %}
                   true
                 {% else %}

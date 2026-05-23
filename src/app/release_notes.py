@@ -10,10 +10,20 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh78"
+CURRENT_FORK_VERSION = "0.25.2~ynh79"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh79",
+        "date": "2026-05-23",
+        "title": "Tighter mobile media-detail hero",
+        "highlights": [
+            "Media detail pages on mobile: poster is capped at 180px (down from 250px), the hero's top padding is tightened, and the title shrinks one step. Together this lifts the title roughly 150px up so it's above the fold on a phone instead of below the poster + button stack.",
+            "The in-poster 'Add to library' / status button is hidden on mobile — it was duplicated by the bottom sticky CTA that already follows you down the page. Desktop is unchanged (the sidebar poster column still owns the CTA there).",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh78",
         "date": "2026-05-23",
