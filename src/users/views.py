@@ -298,7 +298,16 @@ def preferences(request):
 @require_GET
 def integrations(request):
     """Render the integrations settings page."""
-    return render(request, "users/integrations.html")
+    from integrations.models import WebhookEvent
+
+    recent_webhook_events = list(
+        WebhookEvent.objects.filter(user=request.user).order_by("-created_at")[:20],
+    )
+    return render(
+        request,
+        "users/integrations.html",
+        {"recent_webhook_events": recent_webhook_events},
+    )
 
 
 @require_GET

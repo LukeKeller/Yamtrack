@@ -21,9 +21,48 @@ from app import helpers as app_helpers
 from integrations import exports, scrobble, tasks
 from integrations.imports import anilist, discogs, hardcover, helpers, simkl, trakt
 from integrations.imports.helpers import MediaImportError
+from integrations.models import WebhookEvent
 from integrations.webhooks import emby, jellyfin, plex
 
 logger = logging.getLogger(__name__)
+
+
+def _record_webhook(*, user, source, ok, status_code, payload=None, error=""):
+    """Best-effort write of a WebhookEvent row.
+
+    The webhook handler must keep working even if logging the event fails
+    (e.g. table missing during a partial deploy), so swallow exceptions
+    and just warn.
+    """
+    try:
+        if isinstance(payload, (bytes, bytearray)):
+            sample = payload.decode("utf-8", errors="replace")[:2000]
+        elif isinstance(payload, str):
+            sample = payload[:2000]
+        elif payload is not None:
+            sample = json.dumps(payload, default=str)[:2000]
+        else:
+            sample = ""
+
+        title = ""
+        if isinstance(payload, dict):
+            for key in ("Name", "title", "ItemName"):
+                value = payload.get(key)
+                if value:
+                    title = str(value)
+                    break
+
+        WebhookEvent.record(
+            user=user,
+            source=source,
+            ok=ok,
+            status_code=status_code,
+            title=title,
+            error=str(error),
+            payload_sample=sample,
+        )
+    except Exception:
+        logger.exception("Failed to record WebhookEvent (source=%s)", source)
 
 
 @require_POST
@@ -595,6 +634,7 @@ def export_csv(request):
 @require_POST
 def jellyfin_webhook(request, token):
     """Handle Jellyfin webhook notifications for media playback."""
+    source = WebhookEvent.Source.JELLYFIN
     try:
         user = users.models.User.objects.get(token=token)
     except ObjectDoesNotExist:
@@ -602,6 +642,8 @@ def jellyfin_webhook(request, token):
             "Could not process Jellyfin webhook: Invalid token: %s",
             token,
         )
+        _record_webhook(user=None, source=source, ok=False, status_code=401,
+                        error="Invalid token")
         return HttpResponse(status=401)
 
     # Attach User instance so history_user_id is populated
@@ -609,11 +651,22 @@ def jellyfin_webhook(request, token):
     data = request.body
     if not data:
         logger.warning("Missing payload in Jellyfin webhook request")
+        _record_webhook(user=user, source=source, ok=False, status_code=400,
+                        error="Missing payload")
         return HttpResponse("Missing payload", status=400)
 
-    payload = json.loads(data)
-    processor = jellyfin.JellyfinWebhookProcessor()
-    processor.process_payload(payload, user)
+    try:
+        payload = json.loads(data)
+        processor = jellyfin.JellyfinWebhookProcessor()
+        processor.process_payload(payload, user)
+    except Exception as exc:
+        logger.exception("Jellyfin webhook processing failed")
+        _record_webhook(user=user, source=source, ok=False, status_code=500,
+                        payload=data, error=exc)
+        return HttpResponse(status=500)
+
+    _record_webhook(user=user, source=source, ok=True, status_code=200,
+                    payload=payload)
     return HttpResponse(status=200)
 
 
@@ -622,6 +675,7 @@ def jellyfin_webhook(request, token):
 @require_POST
 def plex_webhook(request, token):
     """Handle Plex webhook notifications for media playback."""
+    source = WebhookEvent.Source.PLEX
     try:
         user = users.models.User.objects.get(token=token)
     except ObjectDoesNotExist:
@@ -629,6 +683,8 @@ def plex_webhook(request, token):
             "Could not process Plex webhook: Invalid token: %s",
             token,
         )
+        _record_webhook(user=None, source=source, ok=False, status_code=401,
+                        error="Invalid token")
         return HttpResponse(status=401)
 
     # Attach User instance so history_user_id is populated
@@ -642,11 +698,22 @@ def plex_webhook(request, token):
     data = request.POST.get("payload")
     if not data:
         logger.warning("Missing payload in Plex webhook request")
+        _record_webhook(user=user, source=source, ok=False, status_code=400,
+                        error="Missing payload")
         return HttpResponse("Missing payload", status=400)
 
-    payload = json.loads(data)
-    processor = plex.PlexWebhookProcessor()
-    processor.process_payload(payload, user)
+    try:
+        payload = json.loads(data)
+        processor = plex.PlexWebhookProcessor()
+        processor.process_payload(payload, user)
+    except Exception as exc:
+        logger.exception("Plex webhook processing failed")
+        _record_webhook(user=user, source=source, ok=False, status_code=500,
+                        payload=data, error=exc)
+        return HttpResponse(status=500)
+
+    _record_webhook(user=user, source=source, ok=True, status_code=200,
+                    payload=payload)
     return HttpResponse(status=200)
 
 
@@ -806,6 +873,7 @@ def listenbrainz_submit_listens(request):
 @require_POST
 def emby_webhook(request, token):
     """Handle Emby webhook notifications for media playback."""
+    source = WebhookEvent.Source.EMBY
     try:
         user = users.models.User.objects.get(token=token)
     except ObjectDoesNotExist:
@@ -813,6 +881,8 @@ def emby_webhook(request, token):
             "Could not process Emby webhook: Invalid token: %s",
             token,
         )
+        _record_webhook(user=None, source=source, ok=False, status_code=401,
+                        error="Invalid token")
         return HttpResponse(status=401)
 
     # Attach User instance so history_user_id is populated
@@ -824,9 +894,20 @@ def emby_webhook(request, token):
     data = request.POST.get("data")
     if not data:
         logger.warning("Missing payload in Emby webhook request")
+        _record_webhook(user=user, source=source, ok=False, status_code=400,
+                        error="Missing payload")
         return HttpResponse("Missing payload", status=400)
 
-    payload = json.loads(data)
-    processor = emby.EmbyWebhookProcessor()
-    processor.process_payload(payload, user)
+    try:
+        payload = json.loads(data)
+        processor = emby.EmbyWebhookProcessor()
+        processor.process_payload(payload, user)
+    except Exception as exc:
+        logger.exception("Emby webhook processing failed")
+        _record_webhook(user=user, source=source, ok=False, status_code=500,
+                        payload=data, error=exc)
+        return HttpResponse(status=500)
+
+    _record_webhook(user=user, source=source, ok=True, status_code=200,
+                    payload=payload)
     return HttpResponse(status=200)
