@@ -9,10 +9,19 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh67"
+CURRENT_FORK_VERSION = "0.25.2~ynh68"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh68",
+        "date": "2026-05-23",
+        "title": "Pre-deploy hotfix",
+        "highlights": [],
+        "fixes": [
+            "What's New modal: the max-height constraint relies on an arbitrary Tailwind class that wasn't in main.css — swapped to one that is, so the modal scrolls inside the viewport instead of spilling past it.",
+        ],
+    },
     {
         "version": "0.25.2~ynh67",
         "date": "2026-05-23",
