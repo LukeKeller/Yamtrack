@@ -380,6 +380,20 @@
             .catch(() => { /* SW is best-effort; ignore registration errors */ });
         });
       }
+
+      // App badge: surface a "1" on the installed PWA icon if the user has
+      // unread release notes. Clears automatically when the modal dismisses
+      // (it POSTs to /users/dismiss_whats_new which the client then reflects
+      // here too). Quietly no-ops where unsupported (Firefox, older Safari).
+      (() => {
+        const hasUnread = {{ whats_new_entries|yesno:"true,false" }};
+        if (!('setAppBadge' in navigator)) return;
+        if (hasUnread) {
+          navigator.setAppBadge(1).catch(() => {});
+        } else {
+          navigator.clearAppBadge().catch(() => {});
+        }
+      })();
     </script>
 
     <script src="{% static 'js/mediaStatusDateHandler.js' %}{% get_static_file_mtime 'js/mediaStatusDateHandler.js' %}"></script>

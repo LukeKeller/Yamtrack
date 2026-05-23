@@ -23,6 +23,16 @@
   ],
   "categories": ["entertainment", "productivity"],
   "lang": "en",
+  "share_target": {
+    "action": "{% url 'share_intake' %}",
+    "method": "POST",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
   "shortcuts": [
     { "name": "Home", "short_name": "Home", "description": "Home", "url": "{% url 'home' %}", "icons": [{ "src": "{% static 'img/shortcuts/home.svg' %}", "sizes": "192x192" }] },
     { "name": "TV Shows", "short_name": "TV", "description": "View your TV Shows", "url": "{% url 'medialist' media_type='tv' %}", "icons": [{ "src": "{% static 'img/shortcuts/tv.svg' %}", "sizes": "192x192" }] },

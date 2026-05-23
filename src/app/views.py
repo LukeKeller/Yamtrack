@@ -17,6 +17,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.utils.text import slugify
 from django.utils.timezone import datetime
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
 from app import config, helpers, history_processor
@@ -1858,3 +1859,59 @@ def webmanifest(request):
     )
     response["Cache-Control"] = "public, max-age=3600"
     return response
+
+
+# Provider URL patterns the Share Target intake recognises. Each entry maps a
+# host (lowercased) to a callable that returns ``(media_type, provider_id)``
+# given the parsed URL's path. Anything unrecognised falls through to /search.
+_SHARE_TARGET_PROVIDERS = {
+    "themoviedb.org": "tmdb",
+    "www.themoviedb.org": "tmdb",
+    "imdb.com": "imdb",
+    "www.imdb.com": "imdb",
+    "myanimelist.net": "mal",
+    "anilist.co": "anilist",
+}
+
+
+def _extract_first_url(*candidates):
+    """Return the first http(s) URL found in the supplied strings."""
+    import re
+
+    pattern = re.compile(r"https?://\S+")
+    for c in candidates:
+        if not c:
+            continue
+        match = pattern.search(c)
+        if match:
+            return match.group(0).rstrip(".,;)")
+    return None
+
+
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
+def share_intake(request):
+    """Web Share Target handler.
+
+    Browsers (or the OS) POST/GET ``title``, ``text``, and ``url`` from the
+    system share sheet. We hunt for the first http(s) URL across all three
+    fields and redirect to /search so the user lands somewhere useful — a
+    follow-up can deep-link directly into provider create flows once we have
+    per-provider URL parsers.
+
+    CSRF is exempted because share sheets don't propagate the cookie /
+    token pair; the login middleware still guarantees the user is signed in
+    and a redirect to /search? doesn't mutate state.
+    """
+    data = request.POST if request.method == "POST" else request.GET
+    shared_url = _extract_first_url(
+        data.get("url"),
+        data.get("text"),
+        data.get("title"),
+    )
+    if shared_url:
+        return redirect(f"{reverse('search')}?q={shared_url}")
+    title = (data.get("title") or data.get("text") or "").strip()
+    if title:
+        return redirect(f"{reverse('search')}?q={title}")
+    return redirect("home")
