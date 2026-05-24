@@ -347,6 +347,23 @@ def get_unit(media_type, short):
     return unit[0] if short else unit[1] if unit else None
 
 
+def format_progress(media_type, value):
+    """Render a raw progress value using the per-type display convention.
+
+    Game progress is minutes; every other type counts in whole units
+    (episodes, chapters, pages, ...) and renders as the bare number.
+    Routing through here keeps callers from having to know the kind --
+    they just hand over ``(media_type, value)``.
+    """
+    if value is None:
+        return ""
+    if media_type == MediaTypes.GAME.value:
+        from app.helpers import minutes_to_hhmm  # noqa: PLC0415 (cycle break)
+
+        return minutes_to_hhmm(value)
+    return str(value)
+
+
 def get_status_config(status):
     """Get the full config dictionary for a status."""
     return STATUS_CONFIG.get(status)

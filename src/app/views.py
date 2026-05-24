@@ -1139,7 +1139,10 @@ def track_modal(
     if media:
         title = media.item
         if media_type == MediaTypes.GAME.value:
-            initial_data["progress"] = helpers.minutes_to_hhmm(media.progress)
+            initial_data["progress"] = config.format_progress(
+                media_type,
+                media.progress,
+            )
     else:
         title = services.get_media_metadata(
             media_type,

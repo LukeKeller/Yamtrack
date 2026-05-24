@@ -1,7 +1,7 @@
 from django.apps import apps
 from django.template.defaultfilters import pluralize
 
-from app import config, helpers
+from app import config
 from app.models import MediaTypes, Status
 from app.templatetags import app_tags
 
@@ -228,7 +228,7 @@ def format_description(field_name, old_value, new_value, media_type=None, user=N
         if field_name == "progress" and media_type:
             verb = config.get_verb(media_type, past_tense=True).title()
             if media_type == MediaTypes.GAME.value:
-                return f"{verb} for {helpers.minutes_to_hhmm(new_value)}"
+                return f"{verb} for {config.format_progress(media_type, new_value)}"
             unit = config.get_unit(media_type, short=False).lower()
             return f"{verb} up to {unit} {new_value}"
 
@@ -284,9 +284,10 @@ def format_description(field_name, old_value, new_value, media_type=None, user=N
         diff_abs = abs(diff)
 
         if media_type == MediaTypes.GAME.value:
+            playtime = config.format_progress(media_type, diff_abs)
             if diff > 0:
-                return f"Added {helpers.minutes_to_hhmm(diff_abs)} of playtime"
-            return f"Removed {helpers.minutes_to_hhmm(diff_abs)} of playtime"
+                return f"Added {playtime} of playtime"
+            return f"Removed {playtime} of playtime"
 
         unit = (
             f"{config.get_unit(media_type, short=False).lower()}{pluralize(new_value)}"
