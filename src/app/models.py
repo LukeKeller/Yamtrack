@@ -2033,6 +2033,12 @@ class Book(Media):
 
     tracker = FieldTracker()
 
+    # Outbound-push echo guard. Set by the Hardcover push task right after a
+    # successful mutation; the post_save signal compares it against
+    # progressed_at to decide whether the update originated locally (push) or
+    # from the inbound importer (don't push).
+    last_hardcover_sync_at = models.DateTimeField(null=True, blank=True)
+
 
 class Comic(Media):
     """Model for comics."""

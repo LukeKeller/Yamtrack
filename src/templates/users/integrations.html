@@ -28,8 +28,7 @@
         <h3 class="text-base font-medium">API Token</h3>
       </div>
       <p class="text-fg-muted mb-4 text-sm">This token is used to authenticate webhook requests from your media servers.</p>
-      <div class="bg-surface-1 p-3 rounded-md mb-4"
-           x-data="{ revealed: false }">
+      <div class="bg-surface-1 p-3 rounded-md mb-4" x-data="{ revealed: false }">
         <div class="flex items-center gap-2">
           <label for="token" class="sr-only">API token</label>
           <input readonly=""
@@ -89,27 +88,44 @@
         processing fails.
       </p>
       {% if recent_webhook_events %}
-        <ul class="bg-surface-1 rounded-md divide-y" style="border-color: var(--color-border-subtle)">
+        <ul class="bg-surface-1 rounded-md divide-y"
+            style="border-color: var(--color-border-subtle)">
           {% for event in recent_webhook_events %}
             <li class="px-3 py-2 text-sm">
               <button type="button"
                       @click="expanded = expanded === {{ event.id }} ? null : {{ event.id }}"
                       class="w-full flex items-center gap-3 text-left cursor-pointer">
                 <span class="pill {% if event.ok %}pill-status-completed{% else %}pill-status-dropped{% endif %} shrink-0 text-[10px]">
-                  {% if event.ok %}{{ event.status_code }}{% else %}{{ event.status_code|default:"err" }}{% endif %}
+                  {% if event.ok %}
+                    {{ event.status_code }}
+                  {% else %}
+                    {{ event.status_code|default:"err" }}
+                  {% endif %}
                 </span>
                 <span class="text-fg-muted uppercase tracking-wider text-[10px] w-16 shrink-0">{{ event.get_source_display }}</span>
                 <span class="flex-1 min-w-0 truncate text-fg">
-                  {% if event.title %}{{ event.title }}{% elif event.error %}<span class="text-status-dropped">{{ event.error|truncatechars:120 }}</span>{% else %}(no title){% endif %}
+                  {% if event.title %}
+                    {{ event.title }}
+                  {% elif event.error %}
+                    <span class="text-status-dropped">{{ event.error|truncatechars:120 }}</span>
+                  {% else %}
+                    (no title)
+                  {% endif %}
                 </span>
                 <span class="text-xs text-fg-faint shrink-0">{{ event.created_at|timesince }} ago</span>
                 <svg class="w-4 h-4 text-fg-faint transition-transform shrink-0"
                      :class="expanded === {{ event.id }} ? 'rotate-180' : ''"
-                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="m6 9 6 6 6-6"/>
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="2">
+                  <path d="m6 9 6 6 6-6" />
                 </svg>
               </button>
-              <div x-show="expanded === {{ event.id }}" x-cloak class="mt-2 pl-3 border-l-2" style="border-color: var(--color-border-default)">
+              <div x-show="expanded === {{ event.id }}"
+                   x-cloak
+                   class="mt-2 pl-3 border-l-2"
+                   style="border-color: var(--color-border-default)">
                 {% if event.error %}
                   <div class="text-xs text-status-dropped font-mono whitespace-pre-wrap break-words mb-2">{{ event.error }}</div>
                 {% endif %}
@@ -448,6 +464,91 @@
           </div>
         </details>
       </div>
+    </div>
+
+    {% comment %}
+      Hardcover Sync — outbound push of book progress / status / score on
+      save. Reuses the import token shape (Bearer-prefixed personal access
+      token from hardcover.app/account/api); validated on connect via
+      ``me { id username }`` and Fernet-encrypted at rest.
+    {% endcomment %}
+    <div class="bg-surface-2 p-5 rounded-lg mb-6">
+      <div class="flex items-center mb-3">
+        {% include "app/icons/book-open.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
+        <h3 class="text-base font-medium">Hardcover Sync</h3>
+      </div>
+      {% if hardcover_integration %}
+        <p class="text-fg-muted mb-4 text-sm">
+          Connected as <span class="font-mono text-fg">@{{ hardcover_integration.hardcover_username }}</span>.
+          Book progress, status, score, and reading dates push to Hardcover automatically when you save a change in Yamtrack.
+        </p>
+        {% if hardcover_integration.last_error %}
+          <div class="bg-surface-1 border border-amber-400/40 rounded-md p-3 mb-4 text-sm text-amber-300">
+            <div class="font-medium mb-1">Last error</div>
+            <div class="text-amber-200/90 font-mono text-xs break-all">{{ hardcover_integration.last_error }}</div>
+            {% if hardcover_integration.last_error_at %}
+              <div class="text-fg-faint text-xs mt-1">at {{ hardcover_integration.last_error_at|date:"Y-m-d H:i" }}</div>
+            {% endif %}
+          </div>
+        {% endif %}
+        <div class="flex justify-between items-center">
+          <p class="text-xs text-fg-faint">
+            {% if hardcover_integration.last_pushed_at %}
+              Last push: {{ hardcover_integration.last_pushed_at|date:"Y-m-d H:i" }}
+            {% else %}
+              No pushes yet — save a book to trigger one.
+            {% endif %}
+          </p>
+          <form method="post" action="{% url 'hardcover_disconnect' %}">
+            {% csrf_token %}
+            <button type="submit"
+                    class="flex items-center px-4 py-2 bg-red-600/80 text-white rounded-md hover:bg-red-700 transition-colors text-sm cursor-pointer">
+              Disconnect
+            </button>
+          </form>
+        </div>
+      {% else %}
+        <p class="text-fg-muted mb-4 text-sm">
+          Push your book progress (page number), status, score, and dates to your <a href="https://hardcover.app"
+    class="text-indigo-400 hover:underline"
+    target="_blank"
+    rel="noopener">Hardcover.app</a> account on save. Paste a personal access token from <a href="https://hardcover.app/account/api"
+    class="text-indigo-400 hover:underline"
+    target="_blank"
+    rel="noopener">hardcover.app/account/api</a>; the token grants full account access, so treat it like a password.
+        </p>
+        <form method="post"
+              action="{% url 'hardcover_connect' %}"
+              class="space-y-3">
+          {% csrf_token %}
+          <div class="bg-surface-1 p-3 rounded-md" x-data="{ revealed: false }">
+            <div class="flex items-center gap-2">
+              <label for="hc-token" class="sr-only">Hardcover API token</label>
+              <input name="token"
+                     id="hc-token"
+                     class="flex-1 py-2 pr-2 pl-3 bg-surface-1 rounded-md text-fg text-sm border-0 focus:ring-0 outline-none font-mono"
+                     :type="revealed ? 'text' : 'password'"
+                     autocomplete="off"
+                     placeholder="Bearer ey... (or just ey...)"
+                     required>
+              <button type="button"
+                      @click="revealed = !revealed"
+                      class="flex items-center cursor-pointer group pr-1 text-fg-muted hover:text-indigo-400 transition-colors"
+                      :aria-label="revealed ? 'Hide token' : 'Reveal token'"
+                      :title="revealed ? 'Hide token' : 'Reveal token'">
+                <span x-show="!revealed">{% include "app/icons/eye.svg" with classes="w-5 h-5" %}</span>
+                <span x-show="revealed">{% include "app/icons/eye-closed.svg" with classes="w-5 h-5" %}</span>
+              </button>
+            </div>
+          </div>
+          <div class="flex justify-end">
+            <button type="submit"
+                    class="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer">
+              Connect
+            </button>
+          </div>
+        </form>
+      {% endif %}
     </div>
   {% endblock settings_content %}
 

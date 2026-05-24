@@ -35,6 +35,12 @@ urlpatterns = [
     path("import/imdb", views.import_imdb, name="import_imdb"),
     path("import/goodreads", views.import_goodreads, name="import_goodreads"),
     path("import/hardcover", views.import_hardcover, name="import_hardcover"),
+    path("hardcover/connect", views.hardcover_connect, name="hardcover_connect"),
+    path(
+        "hardcover/disconnect",
+        views.hardcover_disconnect,
+        name="hardcover_disconnect",
+    ),
     path("import/discogs", views.import_discogs, name="import_discogs"),
     path("import/scrobbles", views.import_scrobbles, name="import_scrobbles"),
     path("export/csv", views.export_csv, name="export_csv"),

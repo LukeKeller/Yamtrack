@@ -1072,6 +1072,24 @@ def sync_metadata(request, source, media_type, media_id, season_number=None):
     return helpers.redirect_back(request)
 
 
+def _fetch_book_total_pages(media_id, source):
+    """Return total page count for a book, or None if unavailable.
+
+    Wrapped in a swallow-everything except: never let a metadata fetch
+    block the user from opening the track modal. Provider metadata is
+    Redis-cached for 24h, so this is cheap on repeat opens.
+    """
+    try:
+        metadata = services.get_media_metadata(MediaTypes.BOOK.value, media_id, source)
+    except Exception:  # noqa: BLE001
+        return None
+    if not metadata:
+        return None
+    return metadata.get("max_progress") or (
+        (metadata.get("details") or {}).get("number_of_pages")
+    )
+
+
 @require_GET
 def track_modal(
     request,
@@ -1134,6 +1152,12 @@ def track_modal(
 
     form = get_form_class(media_type)(instance=media, initial=initial_data)
 
+    book_total_pages = (
+        _fetch_book_total_pages(media_id, source)
+        if media_type == MediaTypes.BOOK.value
+        else None
+    )
+
     return render(
         request,
         "app/components/fill_track.html",
@@ -1143,6 +1167,7 @@ def track_modal(
             "media": media,
             "media_type": media_type,
             "return_url": request.GET["return_url"],
+            "book_total_pages": book_total_pages,
         },
     )
 

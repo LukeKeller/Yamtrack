@@ -309,13 +309,21 @@ def preferences(request):
 @require_GET
 def integrations(request):
     """Render the integrations settings page."""
+    from integrations.models import HardcoverIntegration  # noqa: PLC0415
+
     recent_webhook_events = list(
         WebhookEvent.objects.filter(user=request.user).order_by("-created_at")[:20],
     )
+    hardcover_integration = HardcoverIntegration.objects.filter(
+        user=request.user,
+    ).first()
     return render(
         request,
         "users/integrations.html",
-        {"recent_webhook_events": recent_webhook_events},
+        {
+            "recent_webhook_events": recent_webhook_events,
+            "hardcover_integration": hardcover_integration,
+        },
     )
 
 

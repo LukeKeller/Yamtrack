@@ -2,81 +2,50 @@ import logging
 from collections import defaultdict
 from datetime import UTC, datetime
 
-import requests
 from django.conf import settings
 from django.utils.dateparse import parse_datetime
 
 import app
 from app.models import MediaTypes, Sources, Status
-from app.providers import services
+from integrations import hardcover_client
+from integrations.hardcover_client import HardcoverAPIError, HardcoverAuthError
 from integrations.imports import helpers
 from integrations.imports.helpers import MediaImportError, MediaImportUnexpectedError
 
 logger = logging.getLogger(__name__)
 
-HARDCOVER_API_URL = "https://api.hardcover.app/v1/graphql"
 PAGE_SIZE = 100
 
 # Hardcover status_id -> Yamtrack Status
 HARDCOVER_STATUS_MAP = {
-    1: Status.PLANNING.value,        # Want to Read
-    2: Status.IN_PROGRESS.value,     # Currently Reading
-    3: Status.COMPLETED.value,       # Read
-    4: Status.PAUSED.value,          # Paused
-    5: Status.DROPPED.value,         # Did Not Finish
+    1: Status.PLANNING.value,  # Want to Read
+    2: Status.IN_PROGRESS.value,  # Currently Reading
+    3: Status.COMPLETED.value,  # Read
+    4: Status.PAUSED.value,  # Paused
+    5: Status.DROPPED.value,  # Did Not Finish
 }
 
 
-def normalize_token(token):
-    """Return the token with a Bearer prefix if missing."""
-    token = (token or "").strip()
-    if not token:
-        return token
-    if token.lower().startswith("bearer "):
-        return token
-    return f"Bearer {token}"
+def _execute_import(query, variables, token):
+    """Run a GraphQL query via the shared client, re-raising as MediaImportError.
 
-
-def _execute(query, variables, token):
-    """Run a GraphQL query against Hardcover and return the data dict.
-
-    Raises MediaImportError for auth failures and any GraphQL `errors` payload.
+    Wrapping here keeps the importer's UI surface (which renders
+    MediaImportError messages as user-facing import failures) unchanged
+    after the client extraction.
     """
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": normalize_token(token),
-    }
     try:
-        response = services.api_request(
-            Sources.HARDCOVER.value,
-            "POST",
-            HARDCOVER_API_URL,
-            params={"query": query, "variables": variables},
-            headers=headers,
-        )
-    except requests.exceptions.HTTPError as error:
-        status = error.response.status_code
-        if status in (requests.codes.unauthorized, requests.codes.forbidden):
-            msg = "Invalid or expired Hardcover API token."
-            raise MediaImportError(msg) from error
-        raise
-
-    if response.get("errors"):
-        first = response["errors"][0].get("message", "Unknown Hardcover API error.")
-        msg = f"Hardcover API error: {first}"
-        raise MediaImportError(msg)
-
-    return response.get("data") or {}
+        return hardcover_client.execute(query, variables, token)
+    except (HardcoverAuthError, HardcoverAPIError) as error:
+        raise MediaImportError(str(error)) from error
 
 
 def get_username(token):
     """Validate the token and return the Hardcover username."""
-    data = _execute("query { me { id username } }", {}, token)
-    me_list = data.get("me") or []
-    if not me_list:
-        msg = "Could not look up Hardcover account for this token."
-        raise MediaImportError(msg)
-    return me_list[0]["username"]
+    try:
+        _hc_id, username = hardcover_client.get_me(token)
+    except (HardcoverAuthError, HardcoverAPIError) as error:
+        raise MediaImportError(str(error)) from error
+    return username
 
 
 def importer(token, user, mode, username=None):  # noqa: ARG001
@@ -153,6 +122,8 @@ class HardcoverImporter:
 
     def import_data(self):
         """Stream the user's library and bulk-create books."""
+        from integrations.signals import inbound_sync_window  # noqa: PLC0415
+
         for entry in self._iter_user_books():
             try:
                 self._process_entry(entry)
@@ -160,8 +131,11 @@ class HardcoverImporter:
                 msg = f"Error processing Hardcover entry: {entry}"
                 raise MediaImportUnexpectedError(msg) from e
 
-        helpers.cleanup_existing_media(self.to_delete, self.user)
-        helpers.bulk_create_media(self.bulk_media, self.user)
+        # Wrap the bulk writes so the outbound post_save handler doesn't
+        # treat them as user edits and echo them back to Hardcover.
+        with inbound_sync_window():
+            helpers.cleanup_existing_media(self.to_delete, self.user)
+            helpers.bulk_create_media(self.bulk_media, self.user)
 
         imported_counts = {
             media_type: len(media_list)
@@ -173,7 +147,7 @@ class HardcoverImporter:
     def _iter_user_books(self):
         offset = 0
         while True:
-            data = _execute(
+            data = _execute_import(
                 self.USER_BOOKS_QUERY,
                 {"limit": PAGE_SIZE, "offset": offset},
                 self.token,

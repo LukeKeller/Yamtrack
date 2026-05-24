@@ -13,12 +13,17 @@ Plex / Emby webhook hits — visible on the integrations settings page so
 self-hosters can see when a webhook fired, whether it succeeded, and a
 sample of the payload when it didn't. Capped per-user via a post-insert
 trim (see ``integrations.views`` webhook handlers).
+
+``HardcoverIntegration`` holds a user's encrypted Hardcover API token and
+push settings; ``HardcoverBookMapping`` caches the Yamtrack-Item ↔
+Hardcover-book resolution for OpenLibrary-sourced rows (Hardcover-sourced
+items already carry the Hardcover book id as ``Item.media_id``).
 """
 
 from django.conf import settings
 from django.db import models
 
-from app.models import Play
+from app.models import Item, Play
 
 
 class PlayMBID(models.Model):
@@ -50,6 +55,8 @@ class WebhookEvent(models.Model):
     EVENTS_PER_USER_CAP = 100
 
     class Source(models.TextChoices):
+        """Where the inbound webhook came from."""
+
         JELLYFIN = "jellyfin", "Jellyfin"
         PLEX = "plex", "Plex"
         EMBY = "emby", "Emby"
@@ -79,10 +86,15 @@ class WebhookEvent(models.Model):
 
     def __str__(self):
         """Short label for admin / shell."""
-        return f"{self.source} {'ok' if self.ok else 'error'} {self.created_at:%Y-%m-%d %H:%M}"
+        return (
+            f"{self.source} {'ok' if self.ok else 'error'} "
+            f"{self.created_at:%Y-%m-%d %H:%M}"
+        )
 
     @classmethod
-    def record(cls, *, user, source, ok, status_code, title="", error="", payload_sample=""):
+    def record(
+        cls, *, user, source, ok, status_code, title="", error="", payload_sample=""
+    ):
         """Insert an event and trim older rows beyond the per-user cap.
 
         The trim uses a single query keyed on the (user, -created_at) index
@@ -107,3 +119,74 @@ class WebhookEvent(models.Model):
             .values_list("id", flat=True)[: cls.EVENTS_PER_USER_CAP]
         )
         cls.objects.filter(user=user).exclude(id__in=keep_ids).delete()
+
+
+class HardcoverIntegration(models.Model):
+    """A user's connected Hardcover account.
+
+    One row per Yamtrack user. ``api_token`` is Fernet-encrypted via
+    ``integrations.imports.helpers.encrypt`` so a DB dump alone can't be
+    replayed against the Hardcover API. ``hardcover_user_id`` is cached on
+    connect so the push task doesn't have to ``me { id }`` every time.
+
+    ``enabled`` is the kill switch: leaving the integration connected but
+    paused. ``last_pushed_at`` is a coarse "we did something successfully"
+    timestamp for the settings UI; per-row timing for echo suppression
+    lives on ``Book.last_hardcover_sync_at`` instead.
+    """
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="hardcover",
+    )
+    api_token = models.TextField()
+    hardcover_user_id = models.PositiveIntegerField(null=True, blank=True)
+    hardcover_username = models.CharField(max_length=255, blank=True, default="")
+    enabled = models.BooleanField(default=True)
+    last_pushed_at = models.DateTimeField(null=True, blank=True)
+    last_error = models.TextField(blank=True, default="")
+    last_error_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        """Display the linked Hardcover username, or pk fallback."""
+        return f"Hardcover<{self.hardcover_username or self.pk}>"
+
+
+class HardcoverBookMapping(models.Model):
+    """Cached Yamtrack ``Item`` → Hardcover ``book_id`` resolution.
+
+    Only stores cross-source matches: when ``Item.source == 'hardcover'``,
+    ``Item.media_id`` IS the Hardcover book id, so no row is needed. For
+    ``source == 'openlibrary'`` (or ``'manual'``), the resolver looks up
+    via ISBN-13 first, then a title+author search, and caches the winner
+    here so subsequent pushes skip the round-trip.
+    """
+
+    class MatchMethod(models.TextChoices):
+        """How a Yamtrack Item was matched to its Hardcover counterpart."""
+
+        DIRECT_ID = "direct_id", "Direct ID"
+        ISBN = "isbn", "ISBN-13"
+        TITLE_AUTHOR = "title_author", "Title + Author search"
+        MANUAL = "manual", "Manual override"
+
+    item = models.OneToOneField(
+        Item,
+        on_delete=models.CASCADE,
+        related_name="hardcover_mapping",
+    )
+    hardcover_book_id = models.PositiveIntegerField()
+    hardcover_edition_id = models.PositiveIntegerField(null=True, blank=True)
+    match_method = models.CharField(
+        max_length=16,
+        choices=MatchMethod.choices,
+        default=MatchMethod.ISBN,
+    )
+    last_verified_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        """Item id + resolved Hardcover book id."""
+        return f"Item {self.item_id} → HC book {self.hardcover_book_id}"

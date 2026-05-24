@@ -10,10 +10,23 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh81"
+CURRENT_FORK_VERSION = "0.25.2~ynh82"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh82",
+        "date": "2026-05-24",
+        "title": "Hardcover sync: push book progress on save",
+        "highlights": [
+            "Connect a Hardcover.app account from Settings → Integrations by pasting a personal access token (get yours at hardcover.app/account/api). The token is encrypted at rest with the same Fernet key as other integrations.",
+            "When you save a change to a tracked book in Yamtrack — progress, status, score, start/end dates — it now pushes to your Hardcover library within ~10 seconds. Rapid edits collapse into one push.",
+            "New Pages ↔ % toggle in the book tracking drawer: type pages or percent, the other unit updates live (and the form always submits pages, so nothing changes on the API side).",
+            "Book pages are resolved into Hardcover books via ISBN-13 first, with title+author fallback. Results are cached so repeat pushes for the same book skip the lookup.",
+            "Two-layer echo suppression keeps the existing Hardcover importer and the new outbound push from looping: a thread-local flag for in-process bulk imports, plus a 10-second timestamp window per book.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh81",
         "date": "2026-05-23",

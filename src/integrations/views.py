@@ -20,10 +20,11 @@ from django.views.decorators.http import require_GET, require_POST
 import users
 from app import helpers as app_helpers
 from app.models import MediaTypes, Status
-from integrations import exports, scrobble, tasks
+from integrations import exports, hardcover_client, scrobble, tasks
+from integrations.hardcover_client import HardcoverAPIError, HardcoverAuthError
 from integrations.imports import anilist, discogs, hardcover, helpers, simkl, trakt
 from integrations.imports.helpers import MediaImportError
-from integrations.models import WebhookEvent
+from integrations.models import HardcoverIntegration, WebhookEvent
 from integrations.webhooks import emby, jellyfin, plex
 
 logger = logging.getLogger(__name__)
@@ -1037,3 +1038,55 @@ def quick_log(request, token):  # noqa: C901, PLR0912 — multi-path response ha
             "id": media.pk,
         },
     )
+
+
+@require_POST
+def hardcover_connect(request):
+    """Connect (or update) a Hardcover account by API token.
+
+    Token is validated against ``me { id username }`` before being
+    encrypted-at-rest. An existing integration row is updated in place so
+    users can rotate their annual-reset token without losing their cached
+    book mappings.
+    """
+    token = (request.POST.get("token") or "").strip()
+    if not token:
+        messages.error(request, "Hardcover API token is required.")
+        return redirect("integrations")
+
+    try:
+        hc_user_id, hc_username = hardcover_client.get_me(token)
+    except (HardcoverAuthError, HardcoverAPIError) as error:
+        messages.error(request, str(error))
+        return redirect("integrations")
+
+    enc_token = helpers.encrypt(token)
+    HardcoverIntegration.objects.update_or_create(
+        user=request.user,
+        defaults={
+            "api_token": enc_token,
+            "hardcover_user_id": hc_user_id,
+            "hardcover_username": hc_username,
+            "enabled": True,
+            "last_error": "",
+            "last_error_at": None,
+        },
+    )
+    messages.success(
+        request,
+        f"Connected to Hardcover as @{hc_username}. Book progress will sync on save.",
+    )
+    return redirect("integrations")
+
+
+@require_POST
+def hardcover_disconnect(request):
+    """Disconnect the current user's Hardcover integration.
+
+    Cached ``HardcoverBookMapping`` rows are intentionally kept — they're
+    keyed on Item, not the integration, and would just need to be
+    re-resolved on a future reconnect. No reason to throw them away.
+    """
+    HardcoverIntegration.objects.filter(user=request.user).delete()
+    messages.info(request, "Disconnected from Hardcover. No more progress will sync.")
+    return redirect("integrations")

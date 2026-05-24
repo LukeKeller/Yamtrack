@@ -2,6 +2,7 @@ import logging
 
 from celery import shared_task
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 import events
 from app.mixins import disable_fetch_releases
@@ -181,3 +182,164 @@ def import_scrobbles(file, user_id, mode):
 def enrich_scrobble_mbids(limit=500):
     """Resolve MusicBrainz IDs for pending ListenBrainz scrobbles."""
     return musicbrainz.enrich_pending(limit=limit)
+
+
+@shared_task(
+    name="Push book to Hardcover",
+    autoretry_for=(Exception,),
+    retry_backoff=60,
+    retry_backoff_max=3600,
+    max_retries=3,
+    retry_jitter=True,
+)
+def push_book_to_hardcover(book_id, integration_id):
+    """Push a single Book row's progress/status/score/dates to Hardcover.
+
+    Resolves the Yamtrack Item to a Hardcover book id (using the cached
+    mapping or fresh ISBN/title lookup), ensures a ``user_book`` exists
+    for the user on Hardcover, then updates the latest reading session's
+    ``progress_pages`` (or inserts a new session if there's no active
+    one). Stamps ``Book.last_hardcover_sync_at`` so the inbound importer
+    doesn't echo the change back.
+
+    Retries on any exception with exponential backoff: 60s, 2min, 8min.
+    Auth errors are caught higher up and disable the integration instead.
+    """
+    from app.models import Book  # noqa: PLC0415
+    from integrations import hardcover_mapping  # noqa: PLC0415
+    from integrations.hardcover_client import HardcoverAuthError  # noqa: PLC0415
+    from integrations.imports import helpers as import_helpers  # noqa: PLC0415
+    from integrations.models import HardcoverIntegration  # noqa: PLC0415
+
+    integration = HardcoverIntegration.objects.filter(
+        pk=integration_id,
+        enabled=True,
+    ).first()
+    if not integration:
+        logger.info(
+            "HC push skipped: integration %s missing or disabled.", integration_id
+        )
+        return
+
+    book = Book.objects.filter(pk=book_id).select_related("item").first()
+    if not book:
+        logger.info("HC push skipped: Book %s no longer exists.", book_id)
+        return
+
+    token = import_helpers.decrypt(integration.api_token)
+
+    try:
+        _push_book_inner(book, token, integration_id)
+    except hardcover_mapping.HardcoverResolveError as error:
+        # No match — record on the integration row so the UI can surface it,
+        # but don't keep retrying (each retry costs API budget).
+        HardcoverIntegration.objects.filter(pk=integration_id).update(
+            last_error=str(error),
+            last_error_at=timezone.now(),
+        )
+        logger.warning("HC push: %s", error)
+    except HardcoverAuthError as error:
+        # Token's been rotated / revoked. Disable the integration so we
+        # stop hitting the API; the user reconnects from the settings UI.
+        HardcoverIntegration.objects.filter(pk=integration_id).update(
+            enabled=False,
+            last_error=str(error),
+            last_error_at=timezone.now(),
+        )
+        logger.warning("HC push disabled (auth error): %s", error)
+
+
+def _push_book_inner(book, token, integration_id):
+    """Run the GraphQL choreography; wrapped by ``push_book_to_hardcover``."""
+    from app.models import Status  # noqa: PLC0415
+    from integrations import (  # noqa: PLC0415
+        hardcover_client,
+        hardcover_mapping,
+        signals,
+    )
+    from integrations.models import HardcoverIntegration  # noqa: PLC0415
+
+    hc_book_id, hc_edition_id, _method = hardcover_mapping.resolve_book_id(
+        book.item,
+        token,
+    )
+
+    status_id = _map_yamtrack_status_to_hardcover(book.status)
+    user_book = hardcover_client.get_user_book_for_book(hc_book_id, token)
+
+    if user_book is None:
+        # Book isn't in their Hardcover library yet — add it first.
+        user_book_id = hardcover_client.insert_user_book(hc_book_id, status_id, token)
+    else:
+        user_book_id = user_book["id"]
+        # Only update_user_book if status or rating actually drifted.
+        updates = {}
+        if user_book.get("status_id") != status_id:
+            updates["status_id"] = status_id
+        if book.score is not None:
+            hc_rating = round(float(book.score) / 2 * 2) / 2  # 0..10 → 0..5 half-steps
+            if user_book.get("rating") != hc_rating:
+                updates["rating"] = hc_rating
+        if updates:
+            hardcover_client.update_user_book(user_book_id, updates, token)
+
+    # Progress: update the latest unfinished read in place; otherwise open one.
+    if book.progress or book.start_date or book.end_date:
+        dates_payload = _build_dates_read_input(book, hc_edition_id)
+        existing_reads = (user_book or {}).get("user_book_reads") or []
+        active_read = next(
+            (r for r in existing_reads if not r.get("finished_at")),
+            None,
+        )
+        if active_read and book.status != Status.COMPLETED.value:
+            hardcover_client.update_user_book_read(
+                active_read["id"],
+                dates_payload,
+                token,
+            )
+        else:
+            hardcover_client.insert_user_book_read(
+                user_book_id,
+                dates_payload,
+                token,
+            )
+
+    # Stamp the row (via .update to skip post_save) so we recognise our
+    # own echo if the inbound importer sees the change later.
+    signals.mark_pushed(book.pk)
+    HardcoverIntegration.objects.filter(pk=integration_id).update(
+        last_pushed_at=timezone.now(),
+        last_error="",
+        last_error_at=None,
+    )
+    logger.info("HC push OK: Book %s → HC book %s.", book.pk, hc_book_id)
+
+
+def _map_yamtrack_status_to_hardcover(yamtrack_status):
+    """Yamtrack ``Status.value`` → Hardcover ``status_id`` integer."""
+    from app.models import Status  # noqa: PLC0415
+
+    mapping = {
+        Status.PLANNING.value: 1,
+        Status.IN_PROGRESS.value: 2,
+        Status.COMPLETED.value: 3,
+        Status.PAUSED.value: 4,
+        Status.DROPPED.value: 5,
+    }
+    # Default to "Currently Reading" if the status is unfamiliar — better
+    # than crashing, and the user can correct from Hardcover's UI.
+    return mapping.get(yamtrack_status, 2)
+
+
+def _build_dates_read_input(book, edition_id):
+    """Construct the ``DatesReadInput`` GraphQL object for a Book row."""
+    payload = {}
+    if book.progress:
+        payload["progress_pages"] = int(book.progress)
+    if book.start_date:
+        payload["started_at"] = book.start_date.date().isoformat()
+    if book.end_date:
+        payload["finished_at"] = book.end_date.date().isoformat()
+    if edition_id:
+        payload["edition_id"] = int(edition_id)
+    return payload
