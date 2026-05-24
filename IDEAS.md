@@ -10,8 +10,8 @@ When something ships, move it to "Shipped" with the `~ynhNN` it landed in.
 These were the original short list (2026-05-23) and are the next things to build.
 
 - [x] **Display all scores out of 10** — shipped ynh87 (2026-05-24).
-- [ ] **Stats / year-in-review page** — yearly hours, genre mix, completion streaks. Reuses `app/statistics.py` aggregates (`calculate_streaks`, `get_timeline`, `get_activity_data`, `get_music_stats`). Genre rollup needs `Item.genres` denormalization or live API w/ cache. *(in progress 2026-05-24)*
-- [ ] **TMDB "Where to watch"** — `/movie/{id}/watch/providers` (and `/tv/{id}/watch/providers`), cache 12h, per-user country (add `User.watch_provider_region` if not present), flag-aware streaming chips on movie/TV detail pages. *(promoted into queue 2026-05-24)*
+- [x] **Stats / year-in-review page** — shipped ynh88 (2026-05-24). `/wrapped/` with year chips, hero stats, monthly bars, top rated, day-of-week callout. Hours-watched / pages-read deferred (needs Item runtime/pages backfill).
+- [x] **TMDB "Where to watch"** — shipped ynh89 (2026-05-24). Repositioned the existing provider lookup out of the bottom Details pile into the hero, made provider chips clickable via TMDB's region link, and labeled the region explicitly. Backbone (region preference, TMDB cache, filter_providers) was already in place.
 - [ ] **Bulk-select on lists** — multi-select checkboxes → bulk status/score/delete/add-to-list. Alpine store + action bar on `media_grid_items.html` / `media_table_items.html`; new `bulk_action` view that routes through `Media.save()` for safety, raw `update()` only for pure score/status changes.
 - [ ] **PWA install + offline list browse** — SW already exists (`app/serviceworker.js`); cache home shell + last-rendered list HTML on background sync. Image cache via Cache API with LRU.
 - [ ] **Smarter duplicate/merge detection** — when adding from `mal`, check if same canonical work is already tracked via `openlibrary`/`hardcover`/`tmdb` (fuzzy title+year), offer merge. Heavier follow-up: management command that ranks suspected duplicates across the library.
@@ -67,6 +67,8 @@ User picks from this list once the queue above is shipping. Grouped by theme. No
 
 ## Shipped (recent — see git log for the full list)
 
+- ynh89 — **Where to watch polish** (TMDB streaming chips moved into the detail-page hero, clickable to the JustWatch region link, region labeled in the heading) ✓ from queue
+- ynh88 — **Year in review page at /wrapped/** ✓ from queue
 - ynh87 — **Display all scores out of 10** (detail page hero now matches the IMDb/Hardcover pill style; cards/list/stats already were /10) ✓ from queue
 - ynh86 — Show fork build version in settings sidebar
 - ynh85 — Themes + font picker, live preview

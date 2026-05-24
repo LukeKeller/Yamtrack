@@ -487,6 +487,64 @@
             {% endif %}
           </div>
         {% endif %}
+
+        {% comment %}
+          Streaming chips — moved here from the bottom Details pile so
+          "where can I watch this tonight?" is answered above the fold.
+          The `link` per region is a JustWatch search URL TMDB serves; if
+          it's present we make the chips clickable so a tap goes straight
+          to the provider listing.
+        {% endcomment %}
+        {% if media_type in 'tv,movie' and watch_provider_region == "UNSET" %}
+          <div class="bg-surface-1 rounded-lg px-4 py-3 mt-4 text-sm">
+            <div class="flex items-center gap-2 text-fg-muted">
+              {% include "app/icons/info.svg" with classes="w-4 h-4 shrink-0" %}
+              <span>
+                Set a region in
+                <a href="{% url 'preferences' %}" class="text-accent hover:underline">preferences</a>
+                to see where this is streaming.
+              </span>
+            </div>
+          </div>
+        {% elif watch_providers and watch_providers.providers %}
+          <div class="bg-surface-1 rounded-lg px-4 py-3 mt-4">
+            <div class="flex items-baseline justify-between gap-2 mb-2">
+              <h3 class="text-[11px] font-semibold uppercase tracking-wider text-fg-faint">
+                Streaming in {{ watch_providers.region }}
+              </h3>
+              {% if watch_providers.link %}
+                <a href="{{ watch_providers.link }}"
+                   target="_blank"
+                   rel="noopener"
+                   class="text-[11px] text-fg-muted hover:text-accent transition-colors">All options →</a>
+              {% endif %}
+            </div>
+            <div class="flex flex-wrap gap-2">
+              {% for provider in watch_providers.providers %}
+                {% if watch_providers.link %}
+                  <a href="{{ watch_providers.link }}"
+                     target="_blank"
+                     rel="noopener"
+                     title="{{ provider.provider_name }}"
+                     class="flex items-center gap-2 bg-surface-2 hover:bg-surface-3 rounded-md pl-1 pr-2.5 py-1 transition-colors">
+                    <img class="rounded w-7 h-7" src="{{ provider.image }}" alt="" />
+                    <span class="text-xs font-medium text-fg">{{ provider.provider_name }}</span>
+                  </a>
+                {% else %}
+                  <div title="{{ provider.provider_name }}"
+                       class="flex items-center gap-2 bg-surface-2 rounded-md pl-1 pr-2.5 py-1">
+                    <img class="rounded w-7 h-7" src="{{ provider.image }}" alt="" />
+                    <span class="text-xs font-medium text-fg">{{ provider.provider_name }}</span>
+                  </div>
+                {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+        {% elif watch_providers and not watch_providers.providers and watch_provider_region != "" %}
+          <div class="bg-surface-1 rounded-lg px-4 py-3 mt-4 text-sm text-fg-muted">
+            Not streaming in {{ watch_providers.region }} right now.
+          </div>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -960,30 +1018,6 @@
 
       {# Media Details #}
       <h2 class="text-xl font-bold mb-4">Details</h2>
-      {% if watch_provider_region == "UNSET" or watch_providers is not None %}
-        <div class="bg-surface-1 p-4 rounded-lg my-4">
-          <h3 class="text-sm font-semibold text-fg-muted mb-2">STREAMING</h3>
-          {% if watch_provider_region == "UNSET" %}
-            {% url 'preferences' as preferences_url %}
-            <p class="text-fg">
-              Watch provider region is not configured. Set a region or disable this feature in the
-              <a href="{{ preferences_url }}"
-                 class="hover:text-indigo-500 hover:underline">preferences</a>.
-            </p>
-          {% elif watch_providers %}
-            <div class="grid grid-cols-[repeat(auto-fill,48px)] gap-2 items-center justify-between">
-              {% for provider in watch_providers %}
-                <img class="rounded-md"
-                     src="{{ provider.image }}"
-                     title="{{ provider.provider_name }}"
-                     alt="{{ provider.provider_name }}" />
-              {% endfor %}
-            </div>
-          {% else %}
-            <p class="text-fg">No watch providers</p>
-          {% endif %}
-        </div>
-      {% endif %}
 
       <div class="bg-surface-1 p-4 rounded-lg text-center md:text-start">
         {% if media.details.items %}

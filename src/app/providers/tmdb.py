@@ -793,28 +793,43 @@ def get_collection(collection_response):
 
 
 def filter_providers(all_providers, region):
-    """Filter watch providers by region."""
+    """Filter TMDB watch providers down to one region's flatrate + free chips.
+
+    Returns ``None`` when the user has no region configured (so the caller
+    can render the "set a region" prompt), or a dict with the providers
+    list, the region's JustWatch deep-link, and the region code itself so
+    the template can label the chip group clearly. The list may be empty
+    when the title is tracked but not currently streaming anywhere
+    flatrate/free in that region — callers should distinguish "no data
+    yet" (None) from "no streaming options" (empty list).
+    """
     if region == "":
         return None
 
-    if not all_providers:
-        return []
+    region_providers = (all_providers or {}).get(region, {}) or {}
 
-    # Create a dict to get rid of duplicates across different provider types
-    region_providers = all_providers.get(region, {})
-    flatrate_providers = region_providers.get("flatrate", [])
-    free_providers = region_providers.get("free", [])
+    # Dedupe across flatrate + free; ignore rent/buy/ads — they're noisier
+    # than they are useful when you're trying to answer "can I watch this
+    # tonight without paying extra?".
     providers = {}
-    for provider in [*flatrate_providers, *free_providers]:
+    for provider in (
+        *region_providers.get("flatrate", []),
+        *region_providers.get("free", []),
+    ):
         providers[provider.get("provider_id")] = provider
 
-    # Convert dict back to list and add image URLs
-    providers = list(providers.values())
-    for provider in providers:
+    provider_list = sorted(
+        providers.values(),
+        key=lambda p: p.get("display_priority", 999),
+    )
+    for provider in provider_list:
         provider["image"] = get_image_url(provider.get("logo_path"))
 
-    providers.sort(key=lambda e: e.get("display_priority", 999))
-    return providers
+    return {
+        "providers": provider_list,
+        "link": region_providers.get("link"),
+        "region": region,
+    }
 
 
 def process_episodes(season_metadata, episodes_in_db):

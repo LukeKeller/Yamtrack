@@ -10,10 +10,21 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh88"
+CURRENT_FORK_VERSION = "0.25.2~ynh89"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh89",
+        "date": "2026-05-24",
+        "title": "Where to watch, in the hero",
+        "highlights": [
+            "Streaming providers on movie and TV detail pages moved out of the buried 'Details' section and into the hero, right under the score pills, with a 'Streaming in <region>' label so you can see at a glance whether the title is available where you actually watch.",
+            "Each provider chip is now clickable — it deep-links into the JustWatch listing for the title in your region, so one tap takes you from 'should I add this?' to 'here it is on Netflix'.",
+            "Empty states are clearer: 'Not streaming in <region> right now' when no flatrate/free providers exist, instead of the previous bare 'No watch providers' line.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh88",
         "date": "2026-05-24",
