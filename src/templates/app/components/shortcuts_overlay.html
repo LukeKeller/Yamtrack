@@ -26,9 +26,7 @@
         <button type="button"
                 @click="open = false"
                 class="btn btn-icon btn-ghost"
-                aria-label="Close">
-          {% include "app/icons/x.svg" with classes="w-4 h-4" %}
-        </button>
+                aria-label="Close">{% include "app/icons/x.svg" with classes="w-4 h-4" %}</button>
       </div>
 
       <div class="px-5 py-4 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
@@ -56,6 +54,10 @@
           <kbd>K</kbd>
         </div>
         <div class="flex items-center justify-between gap-3">
+          <span class="text-fg-muted">Rate focused card</span>
+          <span class="flex items-center gap-1"><kbd>1</kbd><span class="text-fg-faint text-xs">-</span><kbd>9</kbd><span class="text-fg-faint text-xs">,</span><kbd>0</kbd><span class="text-fg-faint text-xs">=10</span></span>
+        </div>
+        <div class="flex items-center justify-between gap-3">
           <span class="text-fg-muted">Go home</span>
           <span class="flex items-center gap-1"><kbd>G</kbd><span class="text-fg-faint text-xs">then</span><kbd>H</kbd></span>
         </div>
@@ -75,7 +77,7 @@
 
       <div class="px-5 py-3 border-t text-xs text-fg-faint"
            style="border-color: var(--color-border-default)">
-        J / K only navigate items marked for row navigation. Most media-list and dashboard cards opt in.
+        J / K only navigate items marked for row navigation. Digit hotkeys rate the focused card if it's tracked.
       </div>
     </div>
   </div>

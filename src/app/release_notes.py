@@ -10,10 +10,20 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh80"
+CURRENT_FORK_VERSION = "0.25.2~ynh81"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh81",
+        "date": "2026-05-23",
+        "title": "Quick-rate from cards: kebab popover + 1-9 / 0 hotkeys",
+        "highlights": [
+            "Click the kebab on any tracked media card to get a one-tap 1-10 rating row before the existing actions. The current score is highlighted, and the on-poster score badge updates immediately without a page reload.",
+            "New keyboard hotkeys: focus a card with J/K, then press 1-9 to rate it that value, or 0 to set it to 10. Untracked cards and episode cards are skipped. Modifier-key combos (Ctrl/Cmd+digit) are left alone so browser shortcuts still work.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh80",
         "date": "2026-05-23",

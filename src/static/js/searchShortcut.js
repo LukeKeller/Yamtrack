@@ -4,6 +4,8 @@
 // - ⌘K/^K   open the command palette (also handled by Alpine in cmdk.html)
 // - `?`     toggle the shortcut overlay (Shift+/)
 // - j / k   move focus down / up through items marked [data-row-nav]
+// - 1-9     rate focused card 1..9 (only on cards with [data-quick-rate-url])
+// - 0       rate focused card 10
 // - g h     go home
 // - g d     go to calendar (date)
 // - g l     go to lists
@@ -40,6 +42,71 @@
 
   let awaitingG = false;
   let timer = null;
+
+  // Read Django's csrftoken cookie for fetch-driven mutations (HTMX picks it
+  // up automatically, but the quick-rate hotkey path uses bare fetch).
+  const csrfToken = () => {
+    const match = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : '';
+  };
+
+  // Update or insert the score badge on a card after a successful rate.
+  // Keeps the visual in sync without re-rendering the whole card.
+  const reflectScore = (card, score) => {
+    card.dataset.quickRateScore = String(score);
+    let badge = card.querySelector('[data-quick-rate-badge]');
+    const text = Number.isInteger(score) ? `${score}.0` : String(score);
+    if (badge) {
+      const span = badge.querySelector('span');
+      if (span) span.textContent = text;
+      return;
+    }
+    // No existing badge — insert a minimal one mirroring the template's classes.
+    const poster = card.querySelector('.relative');
+    if (!poster) return;
+    badge = document.createElement('div');
+    badge.setAttribute('data-quick-rate-badge', '');
+    badge.className = 'absolute top-10 left-2 flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-white bg-black/60 backdrop-blur-sm shadow-md';
+    badge.innerHTML = `<svg class="w-3.5 h-3.5 text-amber-400 fill-current" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><span>${text}</span>`;
+    poster.appendChild(badge);
+  };
+
+  const announce = (msg) => {
+    const region = document.getElementById('yt-aria-live');
+    if (!region) return;
+    region.textContent = msg;
+    setTimeout(() => { region.textContent = ''; }, 2500);
+  };
+
+  // POSTs a quick-rate score for the focused card. Returns true if a request
+  // was issued (so the caller can preventDefault), false otherwise.
+  const quickRateFocused = (score) => {
+    const active = document.activeElement;
+    if (!active) return false;
+    const card = active.closest('[data-row-nav]');
+    if (!card) return false;
+    const url = card.dataset.quickRateUrl;
+    if (!url) return false;
+    const body = new URLSearchParams({ score: String(score) });
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrfToken(),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      credentials: 'same-origin',
+      body,
+    })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status))))
+      .then(() => {
+        reflectScore(card, score);
+        announce(`Rated ${score} out of 10`);
+      })
+      .catch(() => {
+        announce('Could not save rating');
+      });
+    return true;
+  };
 
   // j/k focus traversal: walks elements opting in via [data-row-nav].
   // Each card/list-row that wants the shortcut sets the attribute and a
@@ -94,6 +161,15 @@
       return;
     }
 
+    // Digits rate the focused card. 1-9 → that value, 0 → 10 (the only way
+    // to set a 10/10 from the number row). Skip when modifier keys are held
+    // so accelerators like Ctrl+1 aren't hijacked.
+    if (!e.metaKey && !e.ctrlKey && !e.altKey && !e.shiftKey && /^[0-9]$/.test(e.key)) {
+      const score = e.key === '0' ? 10 : Number(e.key);
+      if (quickRateFocused(score)) e.preventDefault();
+      return;
+    }
+
     // Two-key `g X` sequences
     if (awaitingG) {
       awaitingG = false;
@@ -131,12 +207,23 @@
   // can include <span hx-swap-oob="innerHTML:#yt-aria-live">message</span> in
   // any response, but as a fallback we surface generic success on 2xx.
   document.addEventListener('htmx:afterRequest', (e) => {
-    const liveRegion = document.getElementById('yt-aria-live');
-    if (!liveRegion) return;
-    if (liveRegion.textContent.trim()) return; // already set by OOB swap
     const xhr = e.detail && e.detail.xhr;
     if (!xhr || xhr.status < 200 || xhr.status >= 300) return;
     const trigger = e.detail && e.detail.elt;
+
+    // Quick-rate via the popover: keep the on-poster score badge in sync.
+    // The hotkey path calls reflectScore directly, but HTMX clicks need this
+    // catch-all so both surfaces feel identical.
+    if (trigger && trigger.matches('[hx-post*="update-score"]')) {
+      const card = trigger.closest('[data-row-nav]');
+      const score = trigger.getAttribute('hx-vals');
+      const match = score && score.match(/"score"\s*:\s*([0-9.]+)/);
+      if (card && match) reflectScore(card, Number(match[1]));
+    }
+
+    const liveRegion = document.getElementById('yt-aria-live');
+    if (!liveRegion) return;
+    if (liveRegion.textContent.trim()) return; // already set by OOB swap
     const label = trigger && trigger.getAttribute('aria-label');
     if (label) {
       liveRegion.textContent = label;

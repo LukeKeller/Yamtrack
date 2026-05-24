@@ -2,6 +2,7 @@
 
 <div class="{% if secondary_color %}bg-surface-2{% else %}bg-surface-1{% endif %} rounded-lg overflow-hidden shadow-lg relative {% if active %}ring-[1.5px] ring-slate-400{% endif %}"
      data-row-nav
+     {% if media and item.media_type != MediaTypes.EPISODE.value %}data-quick-rate-url="{% url 'update_media_score' item.media_type media.id %}" data-quick-rate-score="{{ media.score|default_if_none:'' }}"{% endif %}
      x-data="{ trackOpen: false, listsOpen: false, historyOpen: false }">
   <div class="relative">
     <a href="{{ item|media_url }}" aria-label="{{ title }}">
@@ -50,7 +51,8 @@
     {% endif %}
 
     {% if media.score|show_media_score:user %}
-      <div class="absolute {% if from_grid %}sm:top-2 sm:right-2 sm:left-auto{% endif %} top-10 left-2 flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-white bg-black/60 backdrop-blur-sm shadow-md">
+      <div class="absolute {% if from_grid %}sm:top-2 sm:right-2 sm:left-auto{% endif %} top-10 left-2 flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-white bg-black/60 backdrop-blur-sm shadow-md"
+           data-quick-rate-badge>
         {% include "app/icons/star.svg" with classes="w-3.5 h-3.5 text-amber-400 fill-current" %}
         <span>{{ media.formatted_score }}</span>
       </div>
@@ -114,9 +116,33 @@
         <div x-show="kebabOpen"
              x-cloak
              x-transition.opacity.duration.150ms
-             class="absolute right-0 top-full mt-1 z-20 w-44 py-1 rounded-md shadow-lg bg-surface-1"
+             class="absolute right-0 top-full mt-1 z-20 w-48 py-1 rounded-md shadow-lg bg-surface-1"
              style="border: 1px solid var(--color-border-default);
                     box-shadow: var(--shadow-elev-2)">
+          {% if media %}
+            <div class="px-3 pt-2 pb-2 border-b"
+                 style="border-color: var(--color-border-default)">
+              <div class="text-[10px] uppercase tracking-wider text-fg-faint mb-1.5">Quick rate</div>
+              <div class="grid grid-cols-5 gap-1"
+                   x-data="{ currentScore: {{ media.score|default_if_none:'null' }} }">
+                {% with rating_range=10|get_range %}
+                  {% for rating_value in rating_range %}
+                    <button type="button"
+                            hx-post="{% url 'update_media_score' item.media_type media.id %}"
+                            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                            hx-vals='{"score": {{ rating_value }} }'
+                            hx-trigger="click"
+                            hx-swap="none"
+                            @click.stop="currentScore = {{ rating_value }}; setTimeout(() => kebabOpen = false, 120)"
+                            class="text-xs font-medium py-1 rounded-sm transition-colors"
+                            :class="currentScore === {{ rating_value }} ? 'bg-accent text-white' : 'bg-surface-2 hover:bg-surface-3 text-fg'"
+                            :title="'{{ rating_value }}/10'"
+                            aria-label="Rate {{ rating_value }} out of 10">{{ rating_value }}</button>
+                  {% endfor %}
+                {% endwith %}
+              </div>
+            </div>
+          {% endif %}
           <button type="button"
                   class="w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-surface-2 transition-colors text-left"
                   hx-get="{% media_view_url 'track_modal' item %}"
