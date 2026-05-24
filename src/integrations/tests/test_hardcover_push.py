@@ -124,6 +124,48 @@ class ResolveBookIdTests(TestCase):
             hardcover_mapping.resolve_book_id(item, "t")
 
 
+class FieldMappingTests(TestCase):
+    """Pure mapping helpers in ``hardcover_mapping``."""
+
+    def test_status_round_trip(self):
+        for value in (
+            Status.PLANNING.value,
+            Status.IN_PROGRESS.value,
+            Status.COMPLETED.value,
+            Status.PAUSED.value,
+            Status.DROPPED.value,
+        ):
+            hc_id = hardcover_mapping.status_to_hardcover(value)
+            self.assertEqual(hardcover_mapping.status_to_yamtrack(hc_id), value)
+
+    def test_unknown_hc_status_is_none(self):
+        self.assertIsNone(hardcover_mapping.status_to_yamtrack(999))
+
+    def test_unknown_yamtrack_status_falls_back(self):
+        # Falls back to "Currently Reading" so push jobs never crash.
+        self.assertEqual(hardcover_mapping.status_to_hardcover("invented"), 2)
+
+    def test_score_round_trip_at_half_steps(self):
+        # 9.0 -> 4.5 -> 9.0 must be stable.
+        self.assertEqual(hardcover_mapping.score_to_hardcover(9.0), 4.5)
+        self.assertEqual(hardcover_mapping.score_to_yamtrack(4.5), 9.0)
+
+    def test_score_none_passthrough(self):
+        # "no rating" must stay "no rating" both directions.
+        self.assertIsNone(hardcover_mapping.score_to_hardcover(None))
+        self.assertIsNone(hardcover_mapping.score_to_yamtrack(None))
+
+    def test_score_to_hardcover_rounds_to_half(self):
+        self.assertEqual(hardcover_mapping.score_to_hardcover(7.3), 3.5)
+        self.assertEqual(hardcover_mapping.score_to_hardcover(7.6), 4.0)
+
+    def test_parse_hc_date_accepts_ymd_and_iso(self):
+        self.assertIsNotNone(hardcover_mapping.parse_hc_date("2026-01-15"))
+        self.assertIsNotNone(hardcover_mapping.parse_hc_date("2026-01-15T10:30:00Z"))
+        self.assertIsNone(hardcover_mapping.parse_hc_date(""))
+        self.assertIsNone(hardcover_mapping.parse_hc_date("not a date"))
+
+
 class SignalEchoSuppressionTests(TestCase):
     """The post_save handler must not loop with the inbound importer."""
 

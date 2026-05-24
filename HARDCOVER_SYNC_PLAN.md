@@ -153,6 +153,8 @@ class HardcoverClient:
 
 Mapping is small but easy to get wrong. Make it a first-class module: `src/integrations/hardcover_mapping.py`.
 
+> **Status (ynh92):** Phase 3.1 (status), 3.2 (score), 3.4 (dates) and the `dates_read_input` helper are now consolidated in `hardcover_mapping.py` as paired `*_to_yamtrack` / `*_to_hardcover` helpers. The inbound importer and outbound push task both route through them — nothing else hard-codes a Hardcover `status_id` or rating scale. `FieldMappingTests` in `tests/test_hardcover_push.py` covers round-trip stability. Phases 3.3 (progress), 3.5 (repeats), and 3.6 (notes/reviews) keep their existing handling.
+
 **3.1. Status mapping.**
 
 | Yamtrack status | Hardcover `status_id` |

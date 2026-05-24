@@ -1,12 +1,11 @@
 import logging
-from datetime import UTC, datetime
 
 from django.conf import settings
 from django.utils.dateparse import parse_datetime
 
 import app
 from app.models import MediaTypes, Sources, Status
-from integrations import hardcover_client
+from integrations import hardcover_client, hardcover_mapping
 from integrations.hardcover_client import HardcoverAPIError, HardcoverAuthError
 from integrations.imports import helpers
 from integrations.imports.base import BaseImporter
@@ -15,15 +14,6 @@ from integrations.imports.helpers import MediaImportError, MediaImportUnexpected
 logger = logging.getLogger(__name__)
 
 PAGE_SIZE = 100
-
-# Hardcover status_id -> Yamtrack Status
-HARDCOVER_STATUS_MAP = {
-    1: Status.PLANNING.value,  # Want to Read
-    2: Status.IN_PROGRESS.value,  # Currently Reading
-    3: Status.COMPLETED.value,  # Read
-    4: Status.PAUSED.value,  # Paused
-    5: Status.DROPPED.value,  # Did Not Finish
-}
 
 
 def _execute_import(query, variables, token):
@@ -173,7 +163,7 @@ class HardcoverImporter(BaseImporter):
             return
 
         status_id = entry.get("status_id")
-        status = HARDCOVER_STATUS_MAP.get(status_id)
+        status = hardcover_mapping.status_to_yamtrack(status_id)
         if not status:
             self.warnings.append(
                 f"{title}: unknown Hardcover status_id {status_id}; skipped.",
@@ -190,9 +180,6 @@ class HardcoverImporter(BaseImporter):
             },
         )
 
-        rating = entry.get("rating")
-        score = round(float(rating) * 2, 1) if rating is not None else None
-
         latest_read = (entry.get("user_book_reads") or [{}])[0]
         progress_pages = latest_read.get("progress_pages") or 0
         if status == Status.COMPLETED.value:
@@ -202,11 +189,11 @@ class HardcoverImporter(BaseImporter):
         instance = app.models.Book(
             item=item,
             user=self.user,
-            score=score,
+            score=hardcover_mapping.score_to_yamtrack(entry.get("rating")),
             progress=progress_pages or 0,
             status=status,
-            start_date=_parse_hc_date(latest_read.get("started_at")),
-            end_date=_parse_hc_date(latest_read.get("finished_at")),
+            start_date=hardcover_mapping.parse_hc_date(latest_read.get("started_at")),
+            end_date=hardcover_mapping.parse_hc_date(latest_read.get("finished_at")),
             notes=entry.get("review_raw") or "",
         )
 
@@ -216,16 +203,3 @@ class HardcoverImporter(BaseImporter):
             instance._history_date = updated_at
 
         self.bulk_media[MediaTypes.BOOK.value].append(instance)
-
-
-def _parse_hc_date(raw):
-    """Parse a Hardcover "YYYY-MM-DD" or ISO datetime string to an aware datetime."""
-    if not raw:
-        return None
-    dt = parse_datetime(raw)
-    if dt:
-        return dt
-    try:
-        return datetime.strptime(raw, "%Y-%m-%d").replace(tzinfo=UTC)
-    except (ValueError, TypeError):
-        return None

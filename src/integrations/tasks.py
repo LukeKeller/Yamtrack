@@ -264,7 +264,7 @@ def _push_book_inner(book, token, integration_id):
         token,
     )
 
-    status_id = _map_yamtrack_status_to_hardcover(book.status)
+    status_id = hardcover_mapping.status_to_hardcover(book.status)
     user_book = hardcover_client.get_user_book_for_book(hc_book_id, token)
 
     if user_book is None:
@@ -276,16 +276,15 @@ def _push_book_inner(book, token, integration_id):
         updates = {}
         if user_book.get("status_id") != status_id:
             updates["status_id"] = status_id
-        if book.score is not None:
-            hc_rating = round(float(book.score) / 2 * 2) / 2  # 0..10 → 0..5 half-steps
-            if user_book.get("rating") != hc_rating:
-                updates["rating"] = hc_rating
+        hc_rating = hardcover_mapping.score_to_hardcover(book.score)
+        if hc_rating is not None and user_book.get("rating") != hc_rating:
+            updates["rating"] = hc_rating
         if updates:
             hardcover_client.update_user_book(user_book_id, updates, token)
 
     # Progress: update the latest unfinished read in place; otherwise open one.
     if book.progress or book.start_date or book.end_date:
-        dates_payload = _build_dates_read_input(book, hc_edition_id)
+        dates_payload = hardcover_mapping.dates_read_input(book, hc_edition_id)
         existing_reads = (user_book or {}).get("user_book_reads") or []
         active_read = next(
             (r for r in existing_reads if not r.get("finished_at")),
@@ -313,33 +312,3 @@ def _push_book_inner(book, token, integration_id):
         last_error_at=None,
     )
     logger.info("HC push OK: Book %s → HC book %s.", book.pk, hc_book_id)
-
-
-def _map_yamtrack_status_to_hardcover(yamtrack_status):
-    """Yamtrack ``Status.value`` → Hardcover ``status_id`` integer."""
-    from app.models import Status  # noqa: PLC0415
-
-    mapping = {
-        Status.PLANNING.value: 1,
-        Status.IN_PROGRESS.value: 2,
-        Status.COMPLETED.value: 3,
-        Status.PAUSED.value: 4,
-        Status.DROPPED.value: 5,
-    }
-    # Default to "Currently Reading" if the status is unfamiliar — better
-    # than crashing, and the user can correct from Hardcover's UI.
-    return mapping.get(yamtrack_status, 2)
-
-
-def _build_dates_read_input(book, edition_id):
-    """Construct the ``DatesReadInput`` GraphQL object for a Book row."""
-    payload = {}
-    if book.progress:
-        payload["progress_pages"] = int(book.progress)
-    if book.start_date:
-        payload["started_at"] = book.start_date.date().isoformat()
-    if book.end_date:
-        payload["finished_at"] = book.end_date.date().isoformat()
-    if edition_id:
-        payload["edition_id"] = int(edition_id)
-    return payload
