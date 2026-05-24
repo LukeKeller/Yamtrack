@@ -1,5 +1,4 @@
 import logging
-from collections import defaultdict
 from datetime import UTC, datetime
 
 from django.conf import settings
@@ -10,6 +9,7 @@ from app.models import MediaTypes, Sources, Status
 from integrations import hardcover_client
 from integrations.hardcover_client import HardcoverAPIError, HardcoverAuthError
 from integrations.imports import helpers
+from integrations.imports.base import BaseImporter
 from integrations.imports.helpers import MediaImportError, MediaImportUnexpectedError
 
 logger = logging.getLogger(__name__)
@@ -61,8 +61,10 @@ def importer(token, user, mode, username=None):  # noqa: ARG001
     return HardcoverImporter(token, user, mode).import_data()
 
 
-class HardcoverImporter:
+class HardcoverImporter(BaseImporter):
     """Import a user's book library from Hardcover."""
+
+    source_label = "Hardcover"
 
     USER_BOOKS_QUERY = """
     query ($limit: Int!, $offset: Int!) {
@@ -105,20 +107,8 @@ class HardcoverImporter:
             user: Django user object.
             mode (str): "new" or "overwrite".
         """
+        super().__init__(user, mode)
         self.token = helpers.decrypt(token)
-        self.user = user
-        self.mode = mode
-        self.warnings = []
-
-        self.existing_media = helpers.get_existing_media(user)
-        self.to_delete = defaultdict(lambda: defaultdict(set))
-        self.bulk_media = defaultdict(list)
-
-        logger.info(
-            "Initialized Hardcover importer for user %s with mode %s",
-            user.username,
-            mode,
-        )
 
     def import_data(self):
         """Stream the user's library and bulk-create books."""
@@ -134,15 +124,7 @@ class HardcoverImporter:
         # Wrap the bulk writes so the outbound post_save handler doesn't
         # treat them as user edits and echo them back to Hardcover.
         with inbound_sync_window():
-            helpers.cleanup_existing_media(self.to_delete, self.user)
-            helpers.bulk_create_media(self.bulk_media, self.user)
-
-        imported_counts = {
-            media_type: len(media_list)
-            for media_type, media_list in self.bulk_media.items()
-        }
-        deduplicated = "\n".join(dict.fromkeys(self.warnings))
-        return imported_counts, deduplicated
+            return self.finalize()
 
     def _iter_user_books(self):
         offset = 0

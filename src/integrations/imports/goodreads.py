@@ -1,5 +1,4 @@
 import logging
-from collections import defaultdict
 from csv import DictReader
 from datetime import datetime
 
@@ -10,6 +9,7 @@ import app
 from app.models import MediaTypes, Sources, Status
 from app.providers import services
 from integrations.imports import helpers
+from integrations.imports.base import BaseImporter
 from integrations.imports.helpers import MediaImportError, MediaImportUnexpectedError
 
 logger = logging.getLogger(__name__)
@@ -21,36 +21,15 @@ def importer(file, user, mode):
     return csv_importer.import_data()
 
 
-class GoodReadsImporter:
+class GoodReadsImporter(BaseImporter):
     """Class to handle importing goodreads data from CSV files."""
 
+    source_label = "GoodReads CSV"
+
     def __init__(self, file, user, mode):
-        """Initialize the importer with file, user, and mode.
-
-        Args:
-            file: Uploaded CSV file object
-            user: Django user object to import data for
-            mode (str): Import mode ("new" or "overwrite")
-        """
+        """Initialize the importer with file, user, and mode."""
+        super().__init__(user, mode)
         self.file = file
-        self.user = user
-        self.mode = mode
-        self.warnings = []
-
-        # Track existing media for "new" mode
-        self.existing_media = helpers.get_existing_media(user)
-
-        # Track media IDs to delete in overwrite mode
-        self.to_delete = defaultdict(lambda: defaultdict(set))
-
-        # Track bulk creation lists for each media type
-        self.bulk_media = defaultdict(list)
-
-        logger.info(
-            "Initialized GoodReads CSV importer for user %s with mode %s",
-            user.username,
-            mode,
-        )
 
     def import_data(self):
         """Import all GoodReads data from the CSV file."""
@@ -73,20 +52,7 @@ class GoodReadsImporter:
                 error_msg = f"Error processing entry: {row}"
                 raise MediaImportUnexpectedError(error_msg) from error
 
-        logger.debug("processed %s", self.bulk_media)
-
-        helpers.cleanup_existing_media(self.to_delete, self.user)
-        helpers.bulk_create_media(self.bulk_media, self.user)
-
-        logger.debug("processed %s", self.bulk_media)
-
-        imported_counts = {
-            media_type: len(media_list)
-            for media_type, media_list in self.bulk_media.items()
-        }
-
-        deduplicated_messages = "\n".join(dict.fromkeys(self.warnings))
-        return imported_counts, deduplicated_messages
+        return self.finalize()
 
     def _process_row(self, row):
         """Process a single row from the CSV file."""

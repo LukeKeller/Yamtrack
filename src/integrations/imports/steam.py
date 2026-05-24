@@ -10,6 +10,7 @@ from app.models import MediaTypes, Sources, Status
 from app.providers import services
 from app.providers.igdb import ExternalGameSource, external_game
 from integrations.imports import helpers
+from integrations.imports.base import BaseImporter
 from integrations.imports.helpers import MediaImportError, MediaImportUnexpectedError
 
 logger = logging.getLogger(__name__)
@@ -23,39 +24,20 @@ def importer(steam_id, user, mode):
     return steam_importer.import_data()
 
 
-class SteamImporter:
+class SteamImporter(BaseImporter):
     """Class to handle importing user game data from Steam."""
 
+    source_label = "Steam"
+
     def __init__(self, steam_id, user, mode):
-        """Initialize the importer with user details and mode.
-
-        Args:
-            steam_id (str): Steam user ID (64-bit SteamID) to import from
-            user: Django user object to import data for
-            mode (str): Import mode ("new" or "overwrite")
-        """
-        self.steam_id = steam_id
-        self.user = user
-        self.mode = mode
-        self.warnings = []
+        """Initialize the importer with user details and mode."""
         self.api_key = settings.STEAM_API_KEY
-
         if not self.api_key:
             msg = "Steam API key not configured in environment variables"
             raise MediaImportError(msg)
-
-        self.existing_media = helpers.get_existing_media(user)
-
-        self.to_delete = defaultdict(lambda: defaultdict(set))
-
-        self.bulk_media = defaultdict(list)
+        super().__init__(user, mode)
+        self.steam_id = steam_id
         self.bulk_media_updates = defaultdict(list)
-
-        logger.info(
-            "Initialized Steam importer for Steam ID %s with mode %s",
-            steam_id,
-            mode,
-        )
 
     def import_data(self):
         """Import user's Steam game library."""

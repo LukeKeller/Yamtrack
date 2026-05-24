@@ -12,7 +12,6 @@ the user (no separate OAuth dance required). Pagination is by ``per_page``
 """
 
 import logging
-from collections import defaultdict
 from datetime import datetime
 
 import requests
@@ -23,6 +22,7 @@ import app
 from app.models import MediaTypes, Sources, Status
 from app.providers import services
 from integrations.imports import helpers
+from integrations.imports.base import BaseImporter
 from integrations.imports.helpers import MediaImportError, MediaImportUnexpectedError
 
 logger = logging.getLogger(__name__)
@@ -88,34 +88,16 @@ def importer(token, user, mode, username=None):
     return DiscogsImporter(token, user, mode, username).import_data()
 
 
-class DiscogsImporter:
+class DiscogsImporter(BaseImporter):
     """Import a user's vinyl collection and wantlist from Discogs."""
 
+    source_label = "Discogs"
+
     def __init__(self, token, user, mode, username=None):
-        """Initialize the importer.
-
-        Args:
-            token (str): Encrypted personal access token (decrypted on init).
-            user: Django user object.
-            mode (str): "new" or "overwrite".
-            username (str, optional): Pre-resolved Discogs username.
-        """
+        """Initialize the importer."""
+        super().__init__(user, mode)
         self.token = helpers.decrypt(token)
-        self.user = user
-        self.mode = mode
         self.username = username or get_username(self.token)
-        self.warnings = []
-
-        self.existing_media = helpers.get_existing_media(user)
-        self.to_delete = defaultdict(lambda: defaultdict(set))
-        self.bulk_media = defaultdict(list)
-
-        logger.info(
-            "Initialized Discogs importer for user %s (Discogs: %s, mode=%s)",
-            user.username,
-            self.username,
-            mode,
-        )
 
     def import_data(self):
         """Stream collection + wantlist and bulk-create records."""
@@ -130,15 +112,7 @@ class DiscogsImporter:
             msg = "Error processing a Discogs entry."
             raise MediaImportUnexpectedError(msg) from e
 
-        helpers.cleanup_existing_media(self.to_delete, self.user)
-        helpers.bulk_create_media(self.bulk_media, self.user)
-
-        imported_counts = {
-            media_type: len(media_list)
-            for media_type, media_list in self.bulk_media.items()
-        }
-        deduplicated = "\n".join(dict.fromkeys(self.warnings))
-        return imported_counts, deduplicated
+        return self.finalize()
 
     def _iter_collection(self):
         url = (

@@ -1,5 +1,4 @@
 import logging
-from collections import defaultdict
 from datetime import UTC
 
 import requests
@@ -13,6 +12,7 @@ from app import helpers as app_helpers
 from app.models import MediaTypes, Sources, Status
 from app.providers import services
 from integrations.imports import helpers
+from integrations.imports.base import BaseImporter
 from integrations.imports.helpers import MediaImportError, MediaImportUnexpectedError
 
 logger = logging.getLogger(__name__)
@@ -92,8 +92,10 @@ def importer(token, user, mode, username):
     return anilist_importer.import_data()
 
 
-class AniListImporter:
+class AniListImporter(BaseImporter):
     """Class to handle importing user data from AniList."""
+
+    source_label = "AniList"
 
     def __init__(self, token, user, mode, username):
         """Initialize the importer with username, user, and mode.
@@ -104,29 +106,9 @@ class AniListImporter:
             user: Django user object to import data for
             mode (str): Import mode ("new" or "overwrite")
         """
+        super().__init__(user, mode)
         self.username = username
-        self.token = token
-        self.user = user
-        self.mode = mode
-        self.warnings = []
-
-        if self.token is not None:
-            self.token = helpers.decrypt(self.token)
-
-        # Track existing media for "new" mode
-        self.existing_media = helpers.get_existing_media(user)
-
-        # Track media IDs to delete in overwrite mode
-        self.to_delete = defaultdict(lambda: defaultdict(set))
-
-        # Track bulk creation lists for each media type
-        self.bulk_media = defaultdict(list)
-
-        logger.info(
-            "Initialized AniList importer for user %s with mode %s",
-            username,
-            mode,
-        )
+        self.token = helpers.decrypt(token) if token is not None else None
 
     def import_data(self):
         """Import all user data from AniList."""
@@ -234,16 +216,7 @@ class AniListImporter:
         self._process_media_data(response["data"]["anime"], MediaTypes.ANIME.value)
         self._process_media_data(response["data"]["manga"], MediaTypes.MANGA.value)
 
-        helpers.cleanup_existing_media(self.to_delete, self.user)
-        helpers.bulk_create_media(self.bulk_media, self.user)
-
-        imported_counts = {
-            media_type: len(media_list)
-            for media_type, media_list in self.bulk_media.items()
-        }
-
-        deduplicated_messages = "\n".join(dict.fromkeys(self.warnings))
-        return imported_counts, deduplicated_messages
+        return self.finalize()
 
     def _process_media_data(self, media_data, media_type):
         """Process media data for a specific type (anime/manga)."""

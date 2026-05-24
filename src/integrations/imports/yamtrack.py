@@ -1,5 +1,4 @@
 import logging
-from collections import defaultdict
 from csv import DictReader
 
 from django.apps import apps
@@ -12,6 +11,7 @@ from app.models import MediaTypes, Sources
 from app.providers import services
 from app.templatetags import app_tags
 from integrations.imports import helpers
+from integrations.imports.base import BaseImporter
 from integrations.imports.helpers import MediaImportError, MediaImportUnexpectedError
 
 logger = logging.getLogger(__name__)
@@ -23,36 +23,15 @@ def importer(file, user, mode):
     return csv_importer.import_data()
 
 
-class YamtrackImporter:
+class YamtrackImporter(BaseImporter):
     """Class to handle importing user data from CSV files."""
 
+    source_label = "Yamtrack CSV"
+
     def __init__(self, file, user, mode):
-        """Initialize the importer with file, user, and mode.
-
-        Args:
-            file: Uploaded CSV file object
-            user: Django user object to import data for
-            mode (str): Import mode ("new" or "overwrite")
-        """
+        """Initialize the importer with file, user, and mode."""
+        super().__init__(user, mode)
         self.file = file
-        self.user = user
-        self.mode = mode
-        self.warnings = []
-
-        # Track existing media for "new" mode
-        self.existing_media = helpers.get_existing_media(user)
-
-        # Track media IDs to delete in overwrite mode
-        self.to_delete = defaultdict(lambda: defaultdict(set))
-
-        # Track bulk creation lists for each media type
-        self.bulk_media = defaultdict(list)
-
-        logger.info(
-            "Initialized Yamtrack CSV importer for user %s with mode %s",
-            user.username,
-            mode,
-        )
 
     def import_data(self):
         """Import all user data from the CSV file."""
@@ -78,16 +57,7 @@ class YamtrackImporter:
                 error_msg = f"Error processing entry: {row}"
                 raise MediaImportUnexpectedError(error_msg) from error
 
-        helpers.cleanup_existing_media(self.to_delete, self.user)
-        helpers.bulk_create_media(self.bulk_media, self.user)
-
-        imported_counts = {
-            media_type: len(media_list)
-            for media_type, media_list in self.bulk_media.items()
-        }
-
-        deduplicated_messages = "\n".join(dict.fromkeys(self.warnings))
-        return imported_counts, deduplicated_messages
+        return self.finalize()
 
     def _process_row(self, row):
         """Process a single row from the CSV file."""

@@ -1,6 +1,5 @@
 import json
 import logging
-from collections import defaultdict
 from pathlib import Path
 
 from django.apps import apps
@@ -10,6 +9,7 @@ from django.utils.dateparse import parse_datetime
 import app
 from app.models import MediaTypes, Sources, Status
 from integrations.imports import helpers
+from integrations.imports.base import BaseImporter
 from integrations.imports.helpers import MediaImportError, MediaImportUnexpectedError
 
 logger = logging.getLogger(__name__)
@@ -21,45 +21,23 @@ def importer(kitsu_id, user, mode):
     return kitsu_importer.import_data()
 
 
-class KitsuImporter:
+class KitsuImporter(BaseImporter):
     """Class to handle importing user data from Kitsu."""
 
+    source_label = "Kitsu"
     KITSU_API_BASE_URL = "https://kitsu.app/api/edge"
     KITSU_PAGE_LIMIT = 500
 
     def __init__(self, kitsu_id, user, mode):
-        """Initialize the importer with Kitsu ID, user, and mode.
-
-        Args:
-            kitsu_id (str): Kitsu username or user ID to import from
-            user: Django user object to import data for
-            mode (str): Import mode ("new" or "overwrite")
-        """
+        """Initialize the importer with Kitsu ID, user, and mode."""
+        super().__init__(user, mode)
         self.kitsu_id = kitsu_id
-        self.user = user
-        self.mode = mode
-        self.warnings = []
-
-        # Track existing media for "new" mode
-        self.existing_media = helpers.get_existing_media(user)
-
-        # Track media IDs to delete in overwrite mode
-        self.to_delete = defaultdict(lambda: defaultdict(set))
-
-        # Track bulk creation lists for each media type
-        self.bulk_media = defaultdict(list)
 
         # Load Kitsu-MU mapping data
         current_file_dir = Path(__file__).resolve().parent
         json_file_path = current_file_dir / "data" / "kitsu-mu-mapping.json"
         with json_file_path.open() as f:
             self.kitsu_mu_mapping = json.load(f)
-
-        logger.info(
-            "Initialized Kitsu importer for user %s with mode %s",
-            kitsu_id,
-            mode,
-        )
 
     def import_data(self):
         """Import all user data from Kitsu."""
@@ -71,17 +49,7 @@ class KitsuImporter:
 
         self._process_media_type(MediaTypes.ANIME.value)
         self._process_media_type(MediaTypes.MANGA.value)
-
-        helpers.cleanup_existing_media(self.to_delete, self.user)
-        helpers.bulk_create_media(self.bulk_media, self.user)
-
-        imported_counts = {
-            media_type: len(media_list)
-            for media_type, media_list in self.bulk_media.items()
-        }
-
-        deduplicated_messages = "\n".join(dict.fromkeys(self.warnings))
-        return imported_counts, deduplicated_messages
+        return self.finalize()
 
     def _get_kitsu_id(self, username):
         """Get the user ID from Kitsu."""

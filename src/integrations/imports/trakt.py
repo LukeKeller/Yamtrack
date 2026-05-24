@@ -13,6 +13,7 @@ from app import helpers as app_helpers
 from app.models import MediaTypes, Sources, Status
 from app.providers import services
 from integrations.imports import helpers
+from integrations.imports.base import BaseImporter
 from integrations.imports.helpers import MediaImportError, MediaImportUnexpectedError
 
 logger = logging.getLogger(__name__)
@@ -159,44 +160,20 @@ def importer(token, user, mode, username, redirect_uri=None):
     return trakt_importer.import_data()
 
 
-class TraktImporter:
+class TraktImporter(BaseImporter):
     """Class to handle importing user data from Trakt."""
 
-    def __init__(self, username, user, mode, refresh_token=None, redirect_uri=None):
-        """Initialize the importer with user details and mode.
+    source_label = "Trakt"
 
-        Args:
-            username (str): Trakt username to import from
-            user: Django user object to import data for
-            mode (str): Import mode ("new" or "overwrite")
-            refresh_token (str, optional): Encrypted OAuth2 refresh token if
-                using OAuth, None for public import
-        """
+    def __init__(self, username, user, mode, refresh_token=None, redirect_uri=None):
+        """Initialize the importer with user details and mode."""
+        super().__init__(user, mode)
         self.username = username
-        self.user = user
-        self.mode = mode
         self.refresh_token = refresh_token
         self.redirect_uri = redirect_uri
         self.user_base_url = f"{TRAKT_API_BASE_URL}/users/{username}"
-        self.warnings = []
-
-        # Track existing media to handle "new" mode correctly
-        self.existing_media = helpers.get_existing_media(user)
-
-        # Track media IDs to delete in overwrite mode
-        self.to_delete = defaultdict(lambda: defaultdict(set))
-
-        # Track bulk creation lists for each media type
-        self.bulk_media = defaultdict(list)
-
-        # Track media instances being created
+        # Trakt-specific: tracks per-source-list media instances for cross-list updates.
         self.media_instances = defaultdict(lambda: defaultdict(list))
-
-        logger.info(
-            "Initialized Trakt importer for user %s with mode %s",
-            username,
-            mode,
-        )
 
     def import_data(self):
         """Import all user data from Trakt."""
@@ -204,17 +181,7 @@ class TraktImporter:
         self.process_watchlist()
         self.process_ratings()
         self.process_comments()
-
-        helpers.cleanup_existing_media(self.to_delete, self.user)
-        helpers.bulk_create_media(self.bulk_media, self.user)
-
-        imported_counts = {
-            media_type: len(media_list)
-            for media_type, media_list in self.bulk_media.items()
-        }
-        deduplicated_messages = "\n".join(dict.fromkeys(self.warnings))
-
-        return imported_counts, deduplicated_messages
+        return self.finalize()
 
     def _make_api_request(self, url):
         """Make a request to the Trakt API with proper headers."""
