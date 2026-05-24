@@ -390,24 +390,22 @@
             </div>
           {% endif %}
 
-          {# User score — half-star widget (display) + integer 1-10 picker (popup) #}
+          {# User score — /10 numeric (matches IMDb/Metacritic pills) + integer 1-10 picker (popup) #}
           {% if user_medias %}
             <div x-data="{ showRatingPopup: false, rating: {{ current_instance.score|default:'null' }}, hoverRating: null }"
                  class="relative">
               <button type="button"
                       @click="showRatingPopup = !showRatingPopup"
-                      class="bg-surface-1 p-3 rounded-lg w-[160px] cursor-pointer text-left hover:bg-surface-2 transition-colors"
+                      class="bg-surface-1 px-3 py-2 rounded-lg w-[96px] cursor-pointer text-center hover:bg-surface-2 transition-colors"
                       aria-label="Your score">
-                <h3 class="text-[11px] font-semibold text-fg-faint mb-1 uppercase tracking-wider">Your score</h3>
-                <div class="flex items-center gap-2">
-                  {% star_widget current_instance.score %}
+                <h3 class="text-xs font-semibold text-fg-muted mb-1 text-center">YOUR SCORE</h3>
+                <div class="flex items-center justify-center">
                   {% if current_instance.score is not None %}
-                    <span class="text-sm font-medium text-accent">{{ current_instance.score|score_to_five }}</span>
+                    <span class="text-lg font-bold text-accent">{{ current_instance.formatted_score }}<span class="text-sm font-medium text-fg-muted">/10</span></span>
                   {% else %}
-                    <span class="text-sm text-fg-faint">—</span>
+                    <span class="text-lg font-bold text-fg-faint">—<span class="text-sm font-medium text-fg-muted">/10</span></span>
                   {% endif %}
                 </div>
-                <p class="text-[11px] text-fg-faint mt-0.5">Click to edit</p>
               </button>
 
               <div x-show="showRatingPopup"

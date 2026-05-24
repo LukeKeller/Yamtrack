@@ -23,8 +23,9 @@ SPOILER_PATTERN = re.compile(r"\|\|(.+?)\|\|", re.DOTALL)
 
 @register.filter(is_safe=True)
 def notes_with_spoilers(value):
-    """Render notes as HTML: escape, wrap ||spoiler|| in a blur-reveal span,
-    then convert newlines to <br>. Replaces the |linebreaksbr filter at
+    """Render notes as HTML: escape, wrap ||spoiler|| in a blur-reveal span.
+
+    Then convert newlines to <br>. Replaces the |linebreaksbr filter at
     points where users may want to hide spoiler text.
 
     The blur + background are inline-styled so a Tailwind rebuild isn't
@@ -43,12 +44,12 @@ def notes_with_spoilers(value):
             'class="cursor-pointer rounded px-1 transition-all" '
             'style="filter: blur(0.35em); background-color: var(--color-surface-3)" '
             "onclick=\"this.removeAttribute('style')\" "
-            'onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.removeAttribute(\'style\')}"'
+            "onkeydown=\"if(event.key==='Enter'||event.key===' '){event.preventDefault();this.removeAttribute('style')}\""  # noqa: E501
             f">{inner}</span>"
         )
 
     transformed = SPOILER_PATTERN.sub(reveal_span, escaped)
-    return mark_safe(transformed.replace("\n", "<br>"))
+    return mark_safe(transformed.replace("\n", "<br>"))  # noqa: S308 — input is escape()'d above and only the SPOILER_PATTERN match is wrapped in an audited span
 
 
 @register.simple_tag
@@ -371,7 +372,7 @@ def short_countdown(dt):
     if total_seconds <= 0:
         return ""
     days = delta.days
-    if days >= 7:
+    if days >= 7:  # noqa: PLR2004 — 7d is the documented "more than a week out" threshold
         return ""
     if days >= 1:
         return f"in {days}d"
@@ -598,37 +599,3 @@ def media_type_slug(media_type):
     if not media_type:
         return ""
     return str(media_type).lower()
-
-
-@register.filter
-def score_to_five(score):
-    """Convert a 0-10 numeric score to a 0-5 'x.x' string with half precision."""
-    if score is None:
-        return ""
-    try:
-        value = float(score) / 2.0
-    except (TypeError, ValueError):
-        return ""
-    half = round(value * 2) / 2
-    if half == int(half):
-        return f"{int(half)}.0"
-    return f"{half}"
-
-
-@register.inclusion_tag("app/components/ui/_stars.html")
-def star_widget(score, *, large=False):
-    """Render five stars filled to represent score/10 with half-star precision.
-
-    Each star is a CSS-masked div; --star-fill controls a horizontal gradient
-    stop so we get smooth half-fills without two separate elements per star.
-    """
-    if score is None:
-        stars = [0] * 5
-    else:
-        remaining = max(0.0, min(10.0, float(score))) / 2.0  # 0..5
-        stars = []
-        for _ in range(5):
-            fill = max(0.0, min(1.0, remaining))
-            stars.append(round(fill * 100))
-            remaining -= 1
-    return {"stars": stars, "large": large}

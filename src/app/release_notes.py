@@ -10,10 +10,20 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh86"
+CURRENT_FORK_VERSION = "0.25.2~ynh87"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh87",
+        "date": "2026-05-24",
+        "title": "Your score now shows out of 10",
+        "highlights": [
+            "The 'Your score' box on media detail pages now displays the score as a number out of 10 (e.g. '8/10') instead of a 5-star widget with a halved value. This matches the way IMDb, Hardcover, and TMDB scores are already shown right next to it on the same page, and matches the way scores already appear on cards, list rows, and the statistics page.",
+            "Picker behaviour is unchanged — click 'Your score' and you still get the 1-10 dot row.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh86",
         "date": "2026-05-24",
