@@ -1212,13 +1212,20 @@
     nav's 40 isn't right — we want the CTA UNDER the nav, but visually ABOVE
     other page content). Hidden on md+ where the hero CTA is reachable as you
     scroll because the right rail keeps it in view.
-    Dispatches @open-track-drawer to the trackOpen Alpine block in the hero.
+    Fires open-track-drawer to flip the trackOpen Alpine state in the hero AND
+    issues hx-get to populate the drawer body — the desktop status-sheet
+    branches do both in tandem; the event alone opens an empty drawer because
+    the body element starts as an empty <div>.
   {% endcomment %}
   <div class="md:hidden fixed inset-x-0 z-35 px-4"
        style="bottom: calc(3.5rem + env(safe-area-inset-bottom) + 0.5rem);
               z-index: 35">
     <button type="button"
             class="btn btn-primary btn-lg w-full shadow-lg"
+            hx-get="{% media_view_url 'track_modal' media %}"
+            hx-vals='{"return_url": "{{ request.get_full_path|urlencode }}"{% if user_medias and current_instance.status %}, "instance_id": "{{ current_instance.id }}"{% endif %}}'
+            hx-target="#{% component_id 'track' media current_instance.id %}"
+            hx-trigger="click"
             onclick="window.dispatchEvent(new CustomEvent('open-track-drawer'))">
       {% if user_medias and current_instance.status %}
         {% include "app/components/ui/status_dot.html" with status=current_instance.status %}

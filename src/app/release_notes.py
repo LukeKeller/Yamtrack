@@ -10,10 +10,19 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh83"
+CURRENT_FORK_VERSION = "0.25.2~ynh84"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh84",
+        "date": "2026-05-24",
+        "title": "Fix: mobile sticky CTA opened a blank track drawer",
+        "highlights": [],
+        "fixes": [
+            "Tapping the sticky bottom CTA on a media detail page on mobile (e.g. 'In Progress' on a book, 'Add to library' on anything not yet tracked) opened the track drawer but the drawer body was empty. The CTA only fired the open-drawer event and never issued the HTMX request that loads the form — a regression introduced when ynh79 hid the in-poster CTA on mobile and made this button the sole entry point. Restored by pairing the event with the matching hx-get, mirroring the desktop status-sheet branches.",
+        ],
+    },
     {
         "version": "0.25.2~ynh83",
         "date": "2026-05-24",
