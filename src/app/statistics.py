@@ -337,18 +337,19 @@ def get_record_listen_stats(item, user, top_n=10, recent_n=10, heatmap_days=365)
     if total_plays == 0:
         return None
 
-    total_seconds = plays.aggregate(
-        s=models.Sum("duration_seconds"),
-    )["s"] or 0
+    total_seconds = (
+        plays.aggregate(
+            s=models.Sum("duration_seconds"),
+        )["s"]
+        or 0
+    )
     # Fallback to an average 3:30 per track when no duration data is stored
     # (scrobbles always carry it; manual vinyl spins don't).
     if total_seconds == 0:
         total_seconds = total_plays * 210
     total_minutes = total_seconds // 60
 
-    unique_tracks = (
-        plays.exclude(track__isnull=True).values("track").distinct().count()
-    )
+    unique_tracks = plays.exclude(track__isnull=True).values("track").distinct().count()
     first_played = (
         plays.order_by("played_at").values_list("played_at", flat=True).first()
     )
@@ -398,9 +399,7 @@ def get_record_listen_stats(item, user, top_n=10, recent_n=10, heatmap_days=365)
         }
         for d in date_range
     ]
-    calendar_weeks = [
-        activity_days[i : i + 7] for i in range(0, len(activity_days), 7)
-    ]
+    calendar_weeks = [activity_days[i : i + 7] for i in range(0, len(activity_days), 7)]
 
     months = []
     mondays_per_month = []
@@ -434,7 +433,7 @@ def get_record_listen_stats(item, user, top_n=10, recent_n=10, heatmap_days=365)
     }
 
 
-def get_music_stats(user, days=None, top_n=15):
+def get_music_stats(user, days=None, top_n=15):  # noqa: C901, PLR0912, PLR0915 — composition function with sequential well-named sections; splitting hurts readability
     """Aggregate the user's Play rows into a music dashboard payload.
 
     ``days`` limits the window (``None`` = all-time). Returns a dict with
@@ -525,9 +524,7 @@ def get_music_stats(user, days=None, top_n=15):
 
     day_counts = {}
     for r in (
-        qs.annotate(d=TruncDate("played_at"))
-        .values("d")
-        .annotate(c=models.Count("id"))
+        qs.annotate(d=TruncDate("played_at")).values("d").annotate(c=models.Count("id"))
     ):
         if r["d"]:
             day_counts[r["d"]] = r["c"]
@@ -548,9 +545,7 @@ def get_music_stats(user, days=None, top_n=15):
         }
         for d in date_range
     ]
-    calendar_weeks = [
-        activity_days[i : i + 7] for i in range(0, len(activity_days), 7)
-    ]
+    calendar_weeks = [activity_days[i : i + 7] for i in range(0, len(activity_days), 7)]
     months = []
     mondays_per_month = []
     current_month = date_range[0].strftime("%b") if date_range else None
@@ -580,17 +575,14 @@ def get_music_stats(user, days=None, top_n=15):
     # "new artists per month" growth curve is meaningful.
     discovery = defaultdict(int)
     for r in (
-        base.exclude(artist="")
-        .values("artist")
-        .annotate(first=models.Min("played_at"))
+        base.exclude(artist="").values("artist").annotate(first=models.Min("played_at"))
     ):
         if r["first"]:
             discovery[timezone.localtime(r["first"]).strftime("%Y-%m")] += 1
     disc_keys = sorted(discovery.keys())
     discoveries = {
         "labels": [
-            datetime.datetime.strptime(k, "%Y-%m")  # noqa: DTZ007
-            .strftime("%b %Y")
+            datetime.datetime.strptime(k, "%Y-%m").strftime("%b %Y")  # noqa: DTZ007
             for k in disc_keys
         ],
         "data": [discovery[k] for k in disc_keys],
@@ -952,6 +944,121 @@ def get_aligned_monday(datetime_obj):
 
     days_to_subtract = datetime_obj.weekday()  # 0=Monday, 6=Sunday
     return datetime_obj - datetime.timedelta(days=days_to_subtract)
+
+
+def get_year_in_review(user, year):  # noqa: C901, PLR0912 — sequential composition of well-named blocks reads cleaner than 3 micro-helpers
+    """Compose a year-end recap dataset for one user and one year.
+
+    Builds count-based metrics only (no runtime/pages — those would need a
+    metadata-derived field on Item that doesn't exist yet). Designed to be
+    cheap: one user_media fetch + one activity_data fetch, both already
+    optimized by the existing helpers.
+    """
+    tz = timezone.get_current_timezone()
+    start_date = datetime.datetime(year, 1, 1, 0, 0, 0, tzinfo=tz)
+    end_date = datetime.datetime(year, 12, 31, 23, 59, 59, tzinfo=tz)
+    # Don't project past today when the user is reviewing the current year —
+    # the activity heatmap and streaks shouldn't include phantom future cells.
+    today_end = timezone.localtime()
+    end_date = min(end_date, today_end)
+
+    user_media, media_count = get_user_media(user, start_date, end_date)
+
+    # Per-type completed counts. We use end_date (the completion stamp set
+    # by Media.save()) inside the year window. For TV / Season, the helper
+    # already restricts the prefetched episodes to the date range, so a
+    # plain status==Completed count over the queryset is correct.
+    completed_by_type = {}
+    total_completed = 0
+    for media_type, queryset in user_media.items():
+        if media_type in (MediaTypes.TV.value, MediaTypes.SEASON.value):
+            # Episode-driven types: count the in-range episodes instead of
+            # the parent rows, so "100 episodes watched" reads honestly.
+            episode_total = 0
+            for parent in queryset:
+                for season in (
+                    [parent]
+                    if media_type == MediaTypes.SEASON.value
+                    else parent.seasons.all()
+                ):
+                    episode_total += sum(1 for _ in season.episodes.all())
+            completed_by_type[media_type] = episode_total
+            total_completed += episode_total
+            continue
+        completed = queryset.filter(status=Status.COMPLETED.value).count()
+        completed_by_type[media_type] = completed
+        total_completed += completed
+
+    # Top rated — reuse the existing score-distribution helper, which
+    # returns the top 14 items annotated with progress relationships.
+    _, top_rated = get_score_distribution(user_media)
+    top_rated = top_rated[:5]
+
+    # Monthly completion counts, stacked by media type, in calendar order.
+    # Each media type contributes one bar segment per month, derived from
+    # the same date_field rule the calendar UI uses (end_date for non-
+    # episodic types, the episode's end_date for TV / Season).
+    monthly = {month: defaultdict(int) for month in range(1, 13)}
+    for media_type, queryset in user_media.items():
+        if media_type in (MediaTypes.TV.value, MediaTypes.SEASON.value):
+            seasons_iter = (
+                queryset
+                if media_type == MediaTypes.SEASON.value
+                else (s for parent in queryset for s in parent.seasons.all())
+            )
+            for season in seasons_iter:
+                for episode in season.episodes.all():
+                    if episode.end_date:
+                        local = timezone.localtime(episode.end_date)
+                        if local.year == year:
+                            monthly[local.month][media_type] += 1
+            continue
+        for media in queryset.filter(status=Status.COMPLETED.value):
+            if media.end_date:
+                local = timezone.localtime(media.end_date)
+                if local.year == year:
+                    monthly[local.month][media_type] += 1
+
+    monthly_completions = []
+    for month_num in range(1, 13):
+        by_type = dict(monthly[month_num])
+        monthly_completions.append(
+            {
+                "month": calendar.month_abbr[month_num],
+                "month_num": month_num,
+                "by_type": by_type,
+                "total": sum(by_type.values()),
+            },
+        )
+
+    peak = max(monthly_completions, key=lambda m: m["total"])
+    peak_month = peak if peak["total"] > 0 else None
+
+    activity = get_activity_data(user, start_date, end_date)
+    activity_stats = activity.get("stats", {})
+
+    media_types_seen = [mt for mt, count in completed_by_type.items() if count]
+
+    return {
+        "year": year,
+        "start_date": start_date,
+        "end_date": end_date,
+        "completed_by_type": completed_by_type,
+        "media_types_seen": media_types_seen,
+        "total_completed": total_completed,
+        "total_tracked": media_count.get("total", 0),
+        "top_rated": top_rated,
+        "monthly_completions": monthly_completions,
+        "peak_month": peak_month,
+        "current_streak": activity_stats.get("current_streak", 0),
+        "longest_streak": activity_stats.get("longest_streak", 0),
+        "most_active_day": activity_stats.get("most_active_day"),
+        "most_active_day_percentage": activity_stats.get(
+            "most_active_day_percentage",
+            0,
+        ),
+        "is_empty": total_completed == 0 and media_count.get("total", 0) == 0,
+    }
 
 
 def get_level(count):

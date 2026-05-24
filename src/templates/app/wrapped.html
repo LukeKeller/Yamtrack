@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% load app_tags %}
+{% load humanize %}
+{% load static %}
+
+{% block title %}
+  {{ year }} in review - Yamtrack
+{% endblock title %}
+
+{% block content %}
+  <div class="space-y-8">
+
+    <header class="space-y-4">
+      <p class="text-xs uppercase tracking-wider text-fg-faint">Year in review</p>
+      <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight">
+        {% if year == current_year %}
+          Your {{ year }} so far
+        {% else %}
+          Your {{ year }}
+        {% endif %}
+      </h1>
+      <div class="flex flex-wrap items-center gap-2">
+        {% for opt in year_options %}
+          <a href="{% url 'wrapped_year' opt %}"
+             class="px-3 py-1 rounded-full text-xs border transition-colors {% if opt == year %}bg-accent text-white border-transparent{% else %}bg-surface-1 hover:bg-surface-2 border-border-subtle text-fg-muted{% endif %}">
+            {{ opt }}
+          </a>
+        {% endfor %}
+        <a href="{% url 'statistics' %}?start-date=all&end-date=all"
+           class="px-3 py-1 rounded-full text-xs border bg-surface-1 hover:bg-surface-2 border-border-subtle text-fg-muted transition-colors">
+          All time →
+        </a>
+      </div>
+    </header>
+
+    {% if recap.is_empty %}
+      <section>
+        <div class="card flex items-center gap-3 px-4 py-6"
+             style="border-color: var(--color-border-subtle)">
+          <span class="w-9 h-9 rounded-md bg-surface-2 text-fg-muted flex items-center justify-center shrink-0">
+            {% include "app/icons/calendar.svg" with classes="w-5 h-5" %}
+          </span>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-medium text-fg">No tracking activity in {{ year }} yet</div>
+            <div class="text-xs text-fg-faint">
+              Add something to your library, then come back — Yamtrack only counts items with a start or completion date inside the year.
+            </div>
+          </div>
+        </div>
+      </section>
+    {% else %}
+
+      {% comment %}
+        Hero stat strip. Four high-signal numbers: total completions,
+        items tracked, current streak, longest streak. Each card is a
+        self-contained block so they collapse cleanly on mobile.
+      {% endcomment %}
+      <section class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="bg-surface-1 rounded-lg p-4">
+          <div class="text-[11px] uppercase tracking-wider text-fg-muted mb-1">Completed</div>
+          <div class="text-3xl font-bold text-accent">{{ recap.total_completed|intcomma }}</div>
+          <div class="text-xs text-fg-faint mt-1">
+            {{ recap.media_types_seen|length }} media type{{ recap.media_types_seen|length|pluralize }}
+          </div>
+        </div>
+        <div class="bg-surface-1 rounded-lg p-4">
+          <div class="text-[11px] uppercase tracking-wider text-fg-muted mb-1">Items in your library this year</div>
+          <div class="text-3xl font-bold text-fg">{{ recap.total_tracked|intcomma }}</div>
+          <div class="text-xs text-fg-faint mt-1">Includes in-progress and planning</div>
+        </div>
+        <div class="bg-surface-1 rounded-lg p-4">
+          <div class="text-[11px] uppercase tracking-wider text-fg-muted mb-1">Current streak</div>
+          <div class="text-3xl font-bold text-fg">{{ recap.current_streak|intcomma }}</div>
+          <div class="text-xs text-fg-faint mt-1">Consecutive days with activity</div>
+        </div>
+        <div class="bg-surface-1 rounded-lg p-4">
+          <div class="text-[11px] uppercase tracking-wider text-fg-muted mb-1">Longest streak</div>
+          <div class="text-3xl font-bold text-fg">{{ recap.longest_streak|intcomma }}</div>
+          <div class="text-xs text-fg-faint mt-1">Best run of the year</div>
+        </div>
+      </section>
+
+      {% if recap.completed_by_type %}
+        <section>
+          <div class="flex items-baseline justify-between mb-3 gap-3">
+            <h2 class="text-lg font-semibold flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+              By media type
+            </h2>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {% for media_type, count in recap.completed_by_type.items %}
+              {% if count %}
+                <a href="{% url 'medialist' media_type %}"
+                   class="rounded-lg p-4 transition-colors hover:bg-surface-2 bg-surface-1 flex flex-col gap-1"
+                   style="border-left: 3px solid var(--color-type-{{ media_type|media_type_slug }})">
+                  <div class="text-xs uppercase tracking-wider text-fg-muted">{{ media_type|media_type_readable_plural }}</div>
+                  <div class="text-2xl font-bold text-fg">{{ count|intcomma }}</div>
+                </a>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
+
+      {% if recap.peak_month %}
+        <section>
+          <div class="card px-4 py-3 flex items-center gap-3"
+               style="border-color: var(--color-border-subtle);
+                      background: var(--color-accent-soft)">
+            <span class="w-9 h-9 rounded-md bg-accent text-white flex items-center justify-center shrink-0">
+              {% include "app/icons/flame.svg" with classes="w-5 h-5" %}
+            </span>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm text-fg">
+                Your biggest month was
+                <span class="font-medium">{{ recap.peak_month.month }}</span>
+                — {{ recap.peak_month.total|intcomma }} completion{{ recap.peak_month.total|pluralize }}.
+              </div>
+            </div>
+          </div>
+        </section>
+      {% endif %}
+
+      {% if recap.monthly_completions %}
+        <section>
+          <div class="flex items-baseline justify-between mb-3 gap-3">
+            <h2 class="text-lg font-semibold flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+              Month by month
+            </h2>
+          </div>
+          {% comment %}
+            CSS-only bar chart — sidesteps loading Chart.js for a single
+            12-bar histogram. Each bar's height is the month total scaled
+            against the year peak.
+          {% endcomment %}
+          {% with peak_total=recap.peak_month.total|default:1 %}
+            <div class="card p-4" style="border-color: var(--color-border-subtle)">
+              <div class="grid grid-cols-12 gap-2 items-end h-40">
+                {% for m in recap.monthly_completions %}
+                  <div class="flex flex-col items-center gap-1 h-full">
+                    <div class="flex-1 w-full flex flex-col justify-end">
+                      {% if m.total %}
+                        <div class="w-full rounded-t bg-accent transition-all"
+                             style="height: {% widthratio m.total peak_total 100 %}%"
+                             title="{{ m.month }}: {{ m.total }}"></div>
+                      {% endif %}
+                    </div>
+                    <div class="text-[10px] text-fg-muted">{{ m.month }}</div>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endwith %}
+        </section>
+      {% endif %}
+
+      {% if recap.top_rated %}
+        <section>
+          <div class="flex items-baseline justify-between mb-3 gap-3">
+            <h2 class="text-lg font-semibold flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+              Top rated
+            </h2>
+            <span class="text-xs text-fg-faint">Highest scores you logged this year</span>
+          </div>
+          <ul class="card divide-y"
+              style="padding: 0;
+                     border-color: var(--color-border-subtle)">
+            {% for media in recap.top_rated %}
+              <li>
+                <a href="{{ media.item|media_url }}"
+                   class="flex items-center gap-3 px-3 py-2.5 hover:bg-surface-2 transition-colors">
+                  <div class="w-10 h-14 rounded overflow-hidden bg-surface-2 shrink-0 ring-1"
+                       style="--tw-ring-color: var(--color-border-subtle)">
+                    <img alt=""
+                         class="lazyload w-full h-full {% if media.item.image != IMG_NONE %}object-cover{% endif %}"
+                         data-src="{{ media.item.image }}"
+                         src="{{ IMG_NONE }}">
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-[10px] text-fg-faint uppercase tracking-wider">{{ media.item.media_type|media_type_readable }}</div>
+                    <div class="text-sm font-medium text-fg truncate">{{ media.item }}</div>
+                  </div>
+                  <div class="text-base font-bold text-accent shrink-0">
+                    {{ media.formatted_score }}<span class="text-xs font-medium text-fg-muted">/10</span>
+                  </div>
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </section>
+      {% endif %}
+
+      {% if recap.most_active_day %}
+        <section>
+          <div class="card px-4 py-3 flex items-center gap-3"
+               style="border-color: var(--color-border-subtle)">
+            <span class="w-9 h-9 rounded-md bg-surface-2 text-fg-muted flex items-center justify-center shrink-0">
+              {% include "app/icons/calendar.svg" with classes="w-5 h-5" %}
+            </span>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm text-fg">
+                <span class="font-medium">{{ recap.most_active_day }}</span>
+                is your most active day —
+                {{ recap.most_active_day_percentage|floatformat:0 }}% of your tracked activity lands there.
+              </div>
+            </div>
+          </div>
+        </section>
+      {% endif %}
+
+    {% endif %}
+
+    <section>
+      <a href="{% url 'statistics' %}"
+         class="text-sm text-fg-muted hover:text-fg transition-colors">Full statistics →</a>
+    </section>
+
+  </div>
+{% endblock content %}

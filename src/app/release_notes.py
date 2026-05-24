@@ -10,10 +10,21 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh87"
+CURRENT_FORK_VERSION = "0.25.2~ynh88"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh88",
+        "date": "2026-05-24",
+        "title": "Year in review page",
+        "highlights": [
+            "New 'Year in review' page at /wrapped/ — a Spotify-Wrapped-style recap of what you completed in a given year. Year chips at the top jump between the current year and the two prior years; 'All time' bounces to the regular Statistics page.",
+            "Includes hero stat cards (completions, items tracked, current streak, longest streak), per-media-type counts, a 'biggest month' callout, a month-by-month bar chart, your top-rated titles for the year, and your most-active day of the week.",
+            "Link added at the top right of the Statistics page so you can jump into it from the existing flow.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh87",
         "date": "2026-05-24",

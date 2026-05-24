@@ -97,6 +97,8 @@ urlpatterns = [
         name="search_parent_season",
     ),
     path("statistics", views.statistics, name="statistics"),
+    path("wrapped/", views.wrapped, name="wrapped"),
+    path("wrapped/<int:year>/", views.wrapped, name="wrapped_year"),
     path(
         "play/record/spin/<source:source>/<str:media_id>",
         views.log_record_spin,

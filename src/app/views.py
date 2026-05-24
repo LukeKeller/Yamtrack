@@ -1597,6 +1597,29 @@ def statistics(request):
     return render(request, "app/statistics.html", context)
 
 
+def wrapped(request, year=None):
+    """Year-in-review recap page (Spotify-Wrapped style for media tracking)."""
+    today = timezone.localdate()
+    current_year = today.year
+
+    if year is None:
+        year = current_year
+
+    # Three-year selector chips plus an "All time" link that just bounces to
+    # the regular /statistics page (which already handles unbounded ranges).
+    year_options = [current_year, current_year - 1, current_year - 2]
+
+    recap = stats.get_year_in_review(request.user, year)
+
+    context = {
+        "recap": recap,
+        "year": year,
+        "current_year": current_year,
+        "year_options": year_options,
+    }
+    return render(request, "app/wrapped.html", context)
+
+
 def ensure_record_tracks(item):
     """Lazily fetch + persist the tracklist for a Discogs record Item.
 
