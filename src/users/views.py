@@ -256,6 +256,7 @@ def preferences(request):
     # Process form submission
     request.user.clickable_media_cards = "clickable_media_cards" in request.POST
     request.user.obfuscate_unseen_episodes = "obfuscate_unseen_episodes" in request.POST
+    request.user.auto_mark_prior_episodes = "auto_mark_prior_episodes" in request.POST
     request.user.quick_watch_date = request.POST.get(
         "quick_watch_date",
         QuickWatchDateChoices.CURRENT_DATE,

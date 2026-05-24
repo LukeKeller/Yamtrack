@@ -10,10 +10,19 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh79"
+CURRENT_FORK_VERSION = "0.25.2~ynh80"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh80",
+        "date": "2026-05-23",
+        "title": "Auto-mark prior episodes (binge-mode opt-in)",
+        "highlights": [
+            "New Preferences toggle: when marking an episode as watched, any earlier un-tracked episodes in the same season are marked too. Off by default. Useful if you binge first and log later — mark S2E8 and S2E1-7 get filled in. Unaired episodes are skipped, the marked date is shared, and existing tracked episodes aren't disturbed.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh79",
         "date": "2026-05-23",

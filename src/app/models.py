@@ -1,5 +1,6 @@
 import logging
 import uuid
+from datetime import timedelta
 
 from django.apps import apps
 from django.conf import settings
@@ -230,7 +231,7 @@ class Item(CalendarTriggerMixin, models.Model):
             events.tasks.reload_calendar(items_to_process=items_to_process)
 
 
-def _mood_highly_rated(qs, fields, now, _):
+def _mood_highly_rated(qs, fields, now, _):  # noqa: ARG001
     if "score" not in fields:
         return qs
     return qs.filter(score__gte=8)
@@ -299,10 +300,6 @@ class MediaManager(models.Manager):
         ``MOOD_FILTERS``; unknown values are ignored so external links
         with stale moods don't 404.
         """
-        from datetime import timedelta
-
-        from django.utils import timezone
-
         model = apps.get_model(app_label="app", model_name=media_type)
         queryset = model.objects.filter(user=user.id)
 
@@ -1657,6 +1654,9 @@ class Season(Media):
 
     def watch(self, episode_number, end_date):
         """Create or add a repeat to an episode of the season."""
+        if self.user.auto_mark_prior_episodes and episode_number > 1:
+            self._backfill_prior_episodes(episode_number, end_date)
+
         item = self.get_episode_item(episode_number)
 
         episode = Episode.objects.create(
@@ -1668,6 +1668,63 @@ class Season(Media):
             "%s created successfully.",
             episode,
         )
+
+    def _backfill_prior_episodes(self, episode_number, end_date):
+        """Create Episode rows for any un-tracked episodes before ``episode_number``.
+
+        Uses a single metadata fetch and ``bulk_create_with_history`` to avoid
+        per-episode provider calls and N round-trips. Skips episodes that are
+        already tracked or that haven't aired yet.
+        """
+        tracked_numbers = set(
+            Episode.objects.filter(
+                related_season=self,
+                item__episode_number__lt=episode_number,
+            ).values_list("item__episode_number", flat=True),
+        )
+
+        missing = [n for n in range(1, episode_number) if n not in tracked_numbers]
+        if not missing:
+            return
+
+        season_metadata = providers.services.get_media_metadata(
+            MediaTypes.SEASON.value,
+            self.item.media_id,
+            self.item.source,
+            [self.item.season_number],
+        )
+
+        current_date = timezone.now().date()
+        episodes_to_create = []
+        for n in missing:
+            ep_meta = next(
+                (e for e in season_metadata["episodes"] if e["episode_number"] == n),
+                None,
+            )
+            if ep_meta is None:
+                continue
+            if not app.helpers.is_released_date(
+                ep_meta.get("air_date"),
+                current_date,
+            ):
+                continue
+            item = self.get_episode_item(n, season_metadata)
+            episodes_to_create.append(
+                Episode(
+                    related_season=self,
+                    item=item,
+                    end_date=end_date,
+                ),
+            )
+
+        if episodes_to_create:
+            bulk_create_with_history(episodes_to_create, Episode)
+            logger.info(
+                "Auto-marked %d prior episodes for %s S%02d",
+                len(episodes_to_create),
+                self.item.title,
+                self.item.season_number,
+            )
 
     def decrease_progress(self):
         """Unwatch the current episode of the season."""

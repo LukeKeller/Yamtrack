@@ -337,6 +337,14 @@ class User(AbstractUser):
     )
 
     # Tracking settings
+    auto_mark_prior_episodes = models.BooleanField(
+        default=False,
+        help_text=(
+            "When marking an episode as watched, also mark any earlier "
+            "un-tracked episodes in the same season."
+        ),
+    )
+
     quick_watch_date = models.CharField(
         max_length=20,
         default=QuickWatchDateChoices.CURRENT_DATE,
