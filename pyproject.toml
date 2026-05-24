@@ -16,7 +16,7 @@ convention = "pep257"
 [tool.djlint]
 custom_blocks = "element,slot,setvar"
 preserve_blank_lines = true
-ignore = "H006,H021"
+ignore = "H006,H021,H025"
 indent = 2
 
 [tool.coverage.run]

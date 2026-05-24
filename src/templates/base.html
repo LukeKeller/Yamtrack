@@ -5,7 +5,8 @@
 <html lang="en"
       class="scheme-dark bg-canvas"
       data-theme="{% if request.user.is_authenticated %}{{ request.user.theme|default:'default' }}{% else %}default{% endif %}"
-      data-density="{% if request.user.is_authenticated %}{{ request.user.density|default:'comfortable' }}{% else %}comfortable{% endif %}">
+      data-density="{% if request.user.is_authenticated %}{{ request.user.density|default:'comfortable' }}{% else %}comfortable{% endif %}"
+      data-font="{% if request.user.is_authenticated %}{{ request.user.font|default:'system' }}{% else %}system{% endif %}">
   <head>
     {# Required meta tags #}
     <meta charset="UTF-8">
@@ -83,15 +84,7 @@
     </script>
     {% block body %}
       <div class="flex min-h-screen bg-canvas text-fg"
-           x-data="{
-             isMobileMenuOpen: false,
-             sidebarCollapsed: document.documentElement.dataset.sidebarCollapsed === 'true',
-             toggleSidebar() {
-               this.sidebarCollapsed = !this.sidebarCollapsed;
-               document.documentElement.dataset.sidebarCollapsed = this.sidebarCollapsed ? 'true' : '';
-               try { localStorage.setItem('yt_sidebar_collapsed', this.sidebarCollapsed ? '1' : '0'); } catch (e) {}
-             }
-           }">
+           x-data="{ isMobileMenuOpen: false, sidebarCollapsed: document.documentElement.dataset.sidebarCollapsed === 'true', toggleSidebar() { this.sidebarCollapsed = !this.sidebarCollapsed; document.documentElement.dataset.sidebarCollapsed = this.sidebarCollapsed ? 'true' : ''; try { localStorage.setItem('yt_sidebar_collapsed', this.sidebarCollapsed ? '1' : '0'); } catch (e) {} } }">
 
         {# Mobile sidebar scrim #}
         <div x-show="isMobileMenuOpen"
@@ -112,7 +105,8 @@
 
           {# Brand #}
           <div class="h-14 border-b border-border-default flex items-center gap-2 px-4">
-            <a href="{% url 'home' %}" class="flex items-center gap-2"
+            <a href="{% url 'home' %}"
+               class="flex items-center gap-2"
                :aria-label="sidebarCollapsed ? 'Yamtrack — home' : ''">
               <div class="w-8 h-8 rounded-md bg-accent flex items-center justify-center text-white font-bold shrink-0">Y</div>
               <span class="font-semibold text-fg sidebar-label">Yamtrack</span>

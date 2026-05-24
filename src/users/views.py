@@ -25,6 +25,7 @@ from users.forms import NotificationSettingsForm, PasswordChangeForm, UserUpdate
 from users.models import (
     DateFormatChoices,
     DensityChoices,
+    FontChoices,
     QuickWatchDateChoices,
     ThemeChoices,
     TimeFormatChoices,
@@ -243,6 +244,7 @@ def preferences(request):
                 "time_format_choices": TimeFormatChoices.choices,
                 "theme_choices": ThemeChoices.choices,
                 "density_choices": DensityChoices.choices,
+                "font_choices": FontChoices.choices,
                 "watch_provider_choices": watch_provider_regions,
                 "timezone_choices": sorted(zoneinfo.available_timezones()),
             },
@@ -280,6 +282,9 @@ def preferences(request):
     density_value = request.POST.get("density", DensityChoices.COMFORTABLE)
     if density_value in DensityChoices.values:
         request.user.density = density_value
+    font_value = request.POST.get("font", FontChoices.SYSTEM)
+    if font_value in FontChoices.values:
+        request.user.font = font_value
     tz_value = (request.POST.get("timezone") or "").strip()
     if tz_value == "" or tz_value in zoneinfo.available_timezones():
         request.user.timezone = tz_value

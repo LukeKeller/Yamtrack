@@ -233,21 +233,29 @@
         </div>
       </div>
 
-      {# Theme — swatch grid (mocks/settings.html) #}
-      <div class="mb-5">
+      {% comment %}
+        Theme picker. Alpine mirrors the [data-theme] attribute on <html>
+        live so clicking a swatch (a) shows the selected-ring instantly and
+        (b) previews the palette across the whole page before saving. Same
+        pattern as the density picker below.
+      {% endcomment %}
+      <div class="mb-5"
+           x-data="{ theme: '{{ user.theme|default:'default' }}' }"
+           x-init="$watch('theme', v => document.documentElement.dataset.theme = v)">
         <div class="p-3 bg-surface-2 rounded-md">
           <div class="flex items-center text-fg mb-1">
             {% include "app/icons/star.svg" with classes="w-5 h-5 mr-2" %}
             <span class="text-sm font-medium">Theme</span>
           </div>
-          <p class="text-xs text-fg-muted ml-7 mb-3">Color theme for the web UI. Takes effect on next page load.</p>
+          <p class="text-xs text-fg-muted ml-7 mb-3">Color theme for the web UI. Previews live; click Save to persist.</p>
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
             {% for choice in theme_choices %}
-              <label class="block cursor-pointer rounded-md p-2 transition-colors hover:bg-surface-3 {% if user.theme == choice.0 %}ring-2 ring-accent bg-surface-3{% endif %}">
+              <label class="block cursor-pointer rounded-md p-2 transition-colors hover:bg-surface-3"
+                     :class="theme === '{{ choice.0 }}' ? 'ring-2 ring-accent bg-surface-3' : ''">
                 <input type="radio"
                        name="theme"
                        value="{{ choice.0 }}"
-                       {% if user.theme == choice.0 %}checked{% endif %}
+                       x-model="theme"
                        class="sr-only">
                 <span class="flex gap-1 mb-1.5">
                   {% if choice.0 == "default" %}
@@ -275,6 +283,11 @@
                     <span class="w-3.5 h-5 rounded-sm" style="background: #303446"></span>
                     <span class="w-3.5 h-5 rounded-sm" style="background: #ca9ee6"></span>
                     <span class="w-3.5 h-5 rounded-sm" style="background: #a6d189"></span>
+                  {% elif choice.0 == "catppuccin-latte" %}
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #eff1f5"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #dce0e8"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #8839ef"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #40a02b"></span>
                   {% elif choice.0 == "nord" %}
                     <span class="w-3.5 h-5 rounded-sm" style="background: #242933"></span>
                     <span class="w-3.5 h-5 rounded-sm" style="background: #3b4252"></span>
@@ -290,6 +303,36 @@
                     <span class="w-3.5 h-5 rounded-sm" style="background: #1f2335"></span>
                     <span class="w-3.5 h-5 rounded-sm" style="background: #7aa2f7"></span>
                     <span class="w-3.5 h-5 rounded-sm" style="background: #9ece6a"></span>
+                  {% elif choice.0 == "rose-pine-moon" %}
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #232136"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #2a273f"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #c4a7e7"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #eb6f92"></span>
+                  {% elif choice.0 == "monokai-pro" %}
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #2d2a2e"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #403e41"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #ff6188"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #ffd866"></span>
+                  {% elif choice.0 == "solarized-dark" %}
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #002b36"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #073642"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #b58900"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #859900"></span>
+                  {% elif choice.0 == "solarized-light" %}
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #fdf6e3"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #eee8d5"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #268bd2"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #cb4b16"></span>
+                  {% elif choice.0 == "synthwave" %}
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #1a0b2e"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #261545"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #ff5cf4"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #00f0ff"></span>
+                  {% elif choice.0 == "newsprint" %}
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #f1e4c8"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #e6d6b1"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #8b2e1f"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #2b1f10"></span>
                   {% else %}
                     <span class="w-3.5 h-5 rounded-sm bg-surface-1"></span>
                     <span class="w-3.5 h-5 rounded-sm bg-surface-2"></span>
@@ -343,6 +386,47 @@
                   {% endif %}
                 </span>
                 <span class="text-sm font-medium">{{ choice.1 }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      {% comment %}
+        Font family — drives [data-font] on <html>. Live-previews via Alpine
+        and persists on POST. Sample text in each option uses the target
+        font-family directly so the preview is visible before save.
+      {% endcomment %}
+      <div class="mb-5"
+           x-data="{ font: '{{ user.font|default:'system' }}' }"
+           x-init="$watch('font', v => document.documentElement.dataset.font = v)">
+        <div class="p-3 bg-surface-2 rounded-md">
+          <div class="flex items-center text-fg mb-1">
+            {% include "app/icons/star.svg" with classes="w-5 h-5 mr-2" %}
+            <span class="text-sm font-medium">Font</span>
+          </div>
+          <p class="text-xs text-fg-muted ml-7 mb-3">
+            Font family used throughout the UI. Uses your OS's built-in fonts (no network requests).
+          </p>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+            {% for choice in font_choices %}
+              <label class="block cursor-pointer rounded-md p-3 text-center transition-colors hover:bg-surface-3"
+                     :class="font === '{{ choice.0 }}' ? 'ring-2 ring-accent bg-surface-3' : ''">
+                <input type="radio"
+                       name="font"
+                       value="{{ choice.0 }}"
+                       x-model="font"
+                       class="sr-only">
+                <span class="block text-2xl leading-none mb-2"
+                      style="{% if choice.0 == 'system' %}font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+                             {% elif choice.0 == 'serif' %}font-family: ui-serif, Georgia, Cambria, Times, serif;
+                             {% elif choice.0 == 'mono' %}font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+                             {% elif choice.0 == 'rounded' %}font-family: ui-rounded, 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Quicksand, sans-serif;
+                             {% elif choice.0 == 'humanist' %}font-family: Seravek, 'Gill Sans Nova', Ubuntu, Calibri, sans-serif;
+                             {% elif choice.0 == 'typewriter' %}font-family: 'Courier Prime', 'Courier New', Courier, monospace;
+                             letter-spacing: 0.01em;
+                             {% endif %}">Aa</span>
+                <span class="text-xs font-medium block">{{ choice.1 }}</span>
               </label>
             {% endfor %}
           </div>

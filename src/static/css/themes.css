@@ -177,3 +177,225 @@ html[data-theme="tokyo-night"] {
 }
 
 html[data-theme="tokyo-night"] { background-color: #1a1b26; }
+
+/* =========================================================================
+ * Rosé Pine Moon
+ * https://rosepinetheme.com/
+ * ========================================================================= */
+
+html[data-theme="rose-pine-moon"] {
+  --color-canvas:    #232136;
+  --color-surface-0: #1f1d2e;
+  --color-surface-1: #2a273f;
+  --color-surface-2: #393552;
+  --color-surface-3: #44415a;
+  --color-surface-4: #56526e;
+  --color-fg:        #e0def4;
+  --color-fg-muted:  #c4c0d6;
+  --color-fg-faint:  #908caa;
+  --color-accent:        #c4a7e7;
+  --color-accent-strong: #ae8fd4;
+  --color-accent-hover:  #9576c1;
+  --color-accent-soft:   rgb(196 167 231 / 0.18);
+}
+
+html[data-theme="rose-pine-moon"] { background-color: #232136; }
+
+/* =========================================================================
+ * Monokai Pro
+ * https://monokai.pro/
+ * ========================================================================= */
+
+html[data-theme="monokai-pro"] {
+  --color-canvas:    #2d2a2e;
+  --color-surface-0: #221f22;
+  --color-surface-1: #363337;
+  --color-surface-2: #403e41;
+  --color-surface-3: #5b595c;
+  --color-surface-4: #727072;
+  --color-fg:        #fcfcfa;
+  --color-fg-muted:  #c1c0c0;
+  --color-fg-faint:  #939293;
+  --color-accent:        #ff6188;
+  --color-accent-strong: #ff4575;
+  --color-accent-hover:  #e63868;
+  --color-accent-soft:   rgb(255 97 136 / 0.18);
+}
+
+html[data-theme="monokai-pro"] { background-color: #2d2a2e; }
+
+/* =========================================================================
+ * Solarized Dark
+ * https://ethanschoonover.com/solarized/
+ * ========================================================================= */
+
+html[data-theme="solarized-dark"] {
+  --color-canvas:    #002b36;
+  --color-surface-0: #00212b;
+  --color-surface-1: #073642;
+  --color-surface-2: #0e4956;
+  --color-surface-3: #195767;
+  --color-surface-4: #586e75;
+  --color-fg:        #fdf6e3;
+  --color-fg-muted:  #93a1a1;
+  --color-fg-faint:  #657b83;
+  --color-accent:        #b58900;
+  --color-accent-strong: #cb4b16;
+  --color-accent-hover:  #af3a0e;
+  --color-accent-soft:   rgb(181 137 0 / 0.18);
+}
+
+html[data-theme="solarized-dark"] { background-color: #002b36; }
+
+/* =========================================================================
+ * Synthwave / Cyberpunk
+ * Hand-tuned: deep indigo canvas, neon pink/cyan accents. The accent-soft
+ * intentionally uses a stronger alpha so glow-like highlights pop.
+ * ========================================================================= */
+
+html[data-theme="synthwave"] {
+  --color-canvas:    #1a0b2e;
+  --color-surface-0: #14082a;
+  --color-surface-1: #261545;
+  --color-surface-2: #34205e;
+  --color-surface-3: #432d78;
+  --color-surface-4: #5b3da0;
+  --color-fg:        #f7f7ff;
+  --color-fg-muted:  #c5b9e3;
+  --color-fg-faint:  #8c7fb4;
+  --color-accent:        #ff5cf4;
+  --color-accent-strong: #f836e6;
+  --color-accent-hover:  #d11dc2;
+  --color-accent-soft:   rgb(255 92 244 / 0.22);
+  --color-border-default: rgb(255 92 244 / 0.18);
+  --color-border-strong:  rgb(255 92 244 / 0.35);
+}
+
+html[data-theme="synthwave"] { background-color: #1a0b2e; }
+
+/* =========================================================================
+ * LIGHT THEMES
+ *
+ * Light themes flip color-scheme so native form controls, scrollbars, and
+ * autofill backgrounds adopt the light system look. The `scheme-dark`
+ * utility on <html> (set in base.html) is overridden here by attribute
+ * specificity (selector with [data-theme=...] beats the .scheme-dark class).
+ * ========================================================================= */
+
+/* Catppuccin Latte — light variant of the catppuccin family.
+ * https://github.com/catppuccin/catppuccin */
+html[data-theme="catppuccin-latte"] {
+  color-scheme: light;
+  --color-canvas:    #eff1f5;
+  --color-surface-0: #e6e9ef;
+  --color-surface-1: #ffffff;
+  --color-surface-2: #dce0e8;
+  --color-surface-3: #ccd0da;
+  --color-surface-4: #bcc0cc;
+  --color-fg:        #4c4f69;
+  --color-fg-muted:  #5c5f77;
+  --color-fg-faint:  #8c8fa1;
+  --color-accent:        #8839ef;
+  --color-accent-strong: #7028d8;
+  --color-accent-hover:  #5f1ec2;
+  --color-accent-soft:   rgb(136 57 239 / 0.14);
+  --color-border-subtle:  rgb(0 0 0 / 0.05);
+  --color-border-default: rgb(0 0 0 / 0.10);
+  --color-border-strong:  rgb(0 0 0 / 0.18);
+}
+
+html[data-theme="catppuccin-latte"] { background-color: #eff1f5; }
+
+/* Solarized Light */
+html[data-theme="solarized-light"] {
+  color-scheme: light;
+  --color-canvas:    #fdf6e3;
+  --color-surface-0: #eee8d5;
+  --color-surface-1: #ffffff;
+  --color-surface-2: #e4dec2;
+  --color-surface-3: #d6cfb2;
+  --color-surface-4: #93a1a1;
+  --color-fg:        #073642;
+  --color-fg-muted:  #586e75;
+  --color-fg-faint:  #839496;
+  --color-accent:        #268bd2;
+  --color-accent-strong: #1572b6;
+  --color-accent-hover:  #105e9c;
+  --color-accent-soft:   rgb(38 139 210 / 0.15);
+  --color-border-subtle:  rgb(0 43 54 / 0.06);
+  --color-border-default: rgb(0 43 54 / 0.12);
+  --color-border-strong:  rgb(0 43 54 / 0.22);
+}
+
+html[data-theme="solarized-light"] { background-color: #fdf6e3; }
+
+/* Newsprint — warm sepia palette evoking aged newspaper stock.
+ * Designed to pair with the Typewriter font for a full vintage look.
+ * Ink-brown accent stands in for the deep red of classic newspaper
+ * headlines without competing with status colors. */
+html[data-theme="newsprint"] {
+  color-scheme: light;
+  --color-canvas:    #f1e4c8;
+  --color-surface-0: #ead7b3;
+  --color-surface-1: #f9f0d8;
+  --color-surface-2: #e6d6b1;
+  --color-surface-3: #d6c193;
+  --color-surface-4: #b89c6a;
+  --color-fg:        #2b1f10;
+  --color-fg-muted:  #5a4527;
+  --color-fg-faint:  #8a7349;
+  --color-accent:        #8b2e1f;
+  --color-accent-strong: #6f2316;
+  --color-accent-hover:  #5a1c12;
+  --color-accent-soft:   rgb(139 46 31 / 0.14);
+  --color-border-subtle:  rgb(43 31 16 / 0.08);
+  --color-border-default: rgb(43 31 16 / 0.14);
+  --color-border-strong:  rgb(43 31 16 / 0.24);
+}
+
+html[data-theme="newsprint"] { background-color: #f1e4c8; }
+
+/* =========================================================================
+ * FONT FAMILIES
+ *
+ * Driven by [data-font] on <html>. All stacks resolve to OS-native fonts —
+ * no @font-face declarations and no network fetches. The default is
+ * system-ui which Tailwind's preflight already sets, so [data-font="system"]
+ * intentionally specifies the same explicit fallback chain to stay
+ * resilient if preflight changes.
+ * ========================================================================= */
+
+html[data-font="system"] {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+               Arial, "Noto Sans", sans-serif, "Apple Color Emoji",
+               "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+html[data-font="serif"] {
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+}
+
+html[data-font="mono"] {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
+               Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+html[data-font="rounded"] {
+  font-family: ui-rounded, "SF Pro Rounded", "Hiragino Maru Gothic ProN",
+               "Quicksand", Comfortaa, Manjari, "Arial Rounded MT Bold",
+               Calibri, source-sans-pro, sans-serif;
+}
+
+html[data-font="humanist"] {
+  font-family: Seravek, "Gill Sans Nova", Ubuntu, Calibri, "DejaVu Sans",
+               source-sans-pro, sans-serif;
+}
+
+/* Typewriter — Courier-family stack with slight letter-spacing to evoke
+ * monospace impact type. Distinct from `mono` (which prefers modern UI
+ * monos like SF Mono / Menlo). */
+html[data-font="typewriter"] {
+  font-family: "Courier Prime", "Courier New", "Lucida Typewriter",
+               "Nimbus Mono PS", Courier, monospace;
+  letter-spacing: 0.01em;
+}

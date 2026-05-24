@@ -115,9 +115,16 @@ class ThemeChoices(models.TextChoices):
     CATPPUCCIN_MOCHA = "catppuccin-mocha", "Catppuccin Mocha"
     CATPPUCCIN_MACCHIATO = "catppuccin-macchiato", "Catppuccin Macchiato"
     CATPPUCCIN_FRAPPE = "catppuccin-frappe", "Catppuccin Frappé"
+    CATPPUCCIN_LATTE = "catppuccin-latte", "Catppuccin Latte (light)"
     NORD = "nord", "Nord"
     GRUVBOX_DARK = "gruvbox-dark", "Gruvbox Dark"
     TOKYO_NIGHT = "tokyo-night", "Tokyo Night"
+    ROSE_PINE_MOON = "rose-pine-moon", "Rosé Pine Moon"
+    MONOKAI_PRO = "monokai-pro", "Monokai Pro"
+    SOLARIZED_DARK = "solarized-dark", "Solarized Dark"
+    SOLARIZED_LIGHT = "solarized-light", "Solarized Light"
+    SYNTHWAVE = "synthwave", "Synthwave"
+    NEWSPRINT = "newsprint", "Newsprint (sepia)"
 
 
 class DensityChoices(models.TextChoices):
@@ -126,6 +133,21 @@ class DensityChoices(models.TextChoices):
     COMPACT = "compact", "Compact"
     COMFORTABLE = "comfortable", "Comfortable"
     COZY = "cozy", "Cozy"
+
+
+class FontChoices(models.TextChoices):
+    """Font family presets — applied via [data-font] on <html>.
+
+    All options resolve to OS-native font stacks, so there are no webfont
+    downloads or external requests.
+    """
+
+    SYSTEM = "system", "System default"
+    SERIF = "serif", "Serif"
+    MONO = "mono", "Monospace"
+    ROUNDED = "rounded", "Rounded"
+    HUMANIST = "humanist", "Humanist"
+    TYPEWRITER = "typewriter", "Typewriter"
 
 
 class User(AbstractUser):
@@ -466,6 +488,13 @@ class User(AbstractUser):
         default=DensityChoices.COMFORTABLE,
         choices=DensityChoices,
         help_text="Grid / card density for media lists.",
+    )
+
+    font = models.CharField(
+        max_length=16,
+        default=FontChoices.SYSTEM,
+        choices=FontChoices,
+        help_text="Font family used throughout the web UI.",
     )
 
     last_seen_version = models.CharField(
