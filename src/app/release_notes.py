@@ -10,10 +10,31 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh84"
+CURRENT_FORK_VERSION = "0.25.2~ynh86"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh86",
+        "date": "2026-05-24",
+        "title": "Fork version visible in Settings",
+        "highlights": [
+            "The current fork build (e.g. 0.25.2~ynh86) now shows at the bottom of the Settings sidebar so you can confirm at a glance which build is running after a YunoHost upgrade.",
+        ],
+        "fixes": [],
+    },
+    {
+        "version": "0.25.2~ynh85",
+        "date": "2026-05-24",
+        "title": "Themes, font picker, live theme preview",
+        "highlights": [
+            "Six new themes — Rosé Pine Moon, Monokai Pro, Solarized Dark, Catppuccin Latte (light), Solarized Light, Newsprint (sepia), plus a bold Synthwave option. The previous eight were all mid-blue darks; this brings real variety.",
+            "Newsprint pairs warm aged-paper surfaces with a deep ink-red accent, and is designed to pair with the new Typewriter font for a full vintage broadsheet look.",
+            "New font picker in Settings → Preferences: System, Serif, Monospace, Rounded, Humanist, Typewriter. All options use OS-native font stacks — zero network requests, no privacy concerns.",
+            "Theme picker now updates instantly when you click a swatch and previews the palette across the whole page live (was server-rendering the selection, so clicking did nothing until you saved).",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh84",
         "date": "2026-05-24",

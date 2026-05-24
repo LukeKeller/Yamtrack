@@ -61,6 +61,17 @@
             {% include "users/_settings_nav_item.html" with url=about_url label="About" icon_template="app/icons/info.svg" %}
           </div>
         </nav>
+
+        {% comment %}
+          Fork build identifier — surfaced on every settings page so you can
+          confirm at a glance which YunoHost build is actually running after
+          an upgrade. Value comes from CURRENT_FORK_VERSION via the
+          export_vars context processor.
+        {% endcomment %}
+        <div class="mt-auto pt-4 text-xs text-fg-faint text-center"
+             title="Fork build pinned by the yamtrack_ynh YunoHost package">
+          Build <span class="font-mono">{{ FORK_VERSION }}</span>
+        </div>
       </aside>
 
       {% comment %}
