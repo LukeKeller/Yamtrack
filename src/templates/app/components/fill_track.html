@@ -49,9 +49,12 @@
                     </div>
                   {% elif field.field.widget.input_type == 'number' %}
                     {% if field.name == "progress" and media_type == "book" and book_total_pages %}
-                      {# Pages ↔ Percent toggle for books. The form field stays in pages
-                         (Book.progress is integer pages); the percent input is a UI
-                         shim that converts via book_total_pages on input/blur. #}
+                      {% comment %}
+                        Pages ↔ Percent toggle for books. The form field stays
+                        in pages (Book.progress is integer pages); the percent
+                        input is a UI shim that converts via book_total_pages
+                        on input/blur.
+                      {% endcomment %}
                       <div x-data="{ unit: 'pages', total: {{ book_total_pages }}, pages: Number(document.getElementById('{{ field.id_for_label }}').value) || 0, setPages(p) { this.pages = Math.max(0, Math.min(this.total, Math.round(Number(p) || 0))); document.getElementById('{{ field.id_for_label }}').value = this.pages; }, setPercent(pct) { const clamped = Math.max(0, Math.min(100, Number(pct) || 0)); this.setPages(Math.round(clamped / 100 * this.total)); }, get percent() { return this.total > 0 ? Math.round(this.pages / this.total * 1000) / 10 : 0; }, }">
                         <div class="flex items-center gap-2 mb-2">
                           <div class="inline-flex bg-surface-2 rounded-md p-0.5 text-xs">

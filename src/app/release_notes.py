@@ -10,10 +10,20 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh82"
+CURRENT_FORK_VERSION = "0.25.2~ynh83"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh83",
+        "date": "2026-05-24",
+        "title": "Fix: book track drawer rendering a Django comment as text",
+        "highlights": [],
+        "fixes": [
+            "The Pages ↔ Percent toggle on the book tracking drawer was rendering its multi-line {# … #} explanation as visible text whenever total page count was known. Replaced with a {% comment %} block so the comment is stripped at render time.",
+            "Fixed the pre-commit hook that's supposed to catch this exact mistake: it was silently passing on macOS because it shelled out to `grep -P`, which BSD grep doesn't support. Rewritten in Python so it runs on both Linux and macOS, and added a portable file-list loop for the no-args branch.",
+        ],
+    },
     {
         "version": "0.25.2~ynh82",
         "date": "2026-05-24",

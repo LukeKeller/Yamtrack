@@ -16,19 +16,38 @@
 set -euo pipefail
 
 if [[ $# -eq 0 ]]; then
-  mapfile -t files < <(find src/templates -name '*.html' -type f)
+  # macOS's bundled bash 3.2 doesn't have `mapfile`; use a portable loop.
+  files=()
+  while IFS= read -r f; do
+    files+=("$f")
+  done < <(find src/templates -name '*.html' -type f)
 else
   files=("$@")
 fi
 
 bad=0
+# Drive the scan with Python rather than grep so we're not dependent on
+# the host having GNU grep -P (BSD grep on macOS doesn't). The previous
+# shell version silently passed on macOS because `grep -P` errored out
+# and `|| true` swallowed it — regressions slipped through pre-commit.
 for f in "${files[@]}"; do
   [[ -f $f ]] || continue
   [[ $f == *.html ]] || continue
-  # Match lines that open `{#` but have no matching `#}` AFTER the open.
-  # `[^{]` lookbehind via grep -P excludes the Handlebars-style `{{#…}}`
-  # tag used in users/integrations.html's webhook payload templates.
-  matches=$(grep -nP '(?<!\{)\{#[^#]*$' "$f" || true)
+  matches=$(python3 - "$f" <<'PY'
+import re
+import sys
+
+# A bad opener: `{#` not preceded by another `{` (so we don't catch the
+# Handlebars-style `{{#…}}` used in users/integrations.html), and with
+# no matching `#}` later on the same line.
+pattern = re.compile(r"(?<!\{)\{#(?![^#\n]*#\})")
+path = sys.argv[1]
+with open(path, encoding="utf-8") as fh:
+    for lineno, line in enumerate(fh, 1):
+        if pattern.search(line):
+            print(f"{lineno}:{line.rstrip()}")
+PY
+)
   if [[ -n $matches ]]; then
     echo "$f:"
     echo "$matches" | sed 's/^/  /'
