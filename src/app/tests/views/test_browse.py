@@ -325,6 +325,79 @@ class BrowseViewTests(TestCase):
         self.assertGreater(strong, weak)
         self.assertGreater(weak, avoided)
 
+    @patch("app.providers.tmdb.browse")
+    def test_browse_hides_non_english_by_default(self, mock_browse):
+        """Non-English originals are dropped unless the user opts in."""
+        mock_browse.return_value = {
+            "page": 1,
+            "total_results": 3,
+            "total_pages": 1,
+            "results": [
+                {
+                    "media_id": "1",
+                    "title": "English Pick",
+                    "media_type": MediaTypes.MOVIE.value,
+                    "source": Sources.TMDB.value,
+                    "image": "",
+                    "original_language": "en",
+                },
+                {
+                    "media_id": "2",
+                    "title": "Japanese Pick",
+                    "media_type": MediaTypes.MOVIE.value,
+                    "source": Sources.TMDB.value,
+                    "image": "",
+                    "original_language": "ja",
+                },
+                {
+                    "media_id": "3",
+                    "title": "Korean Pick",
+                    "media_type": MediaTypes.MOVIE.value,
+                    "source": Sources.TMDB.value,
+                    "image": "",
+                    "original_language": "ko",
+                },
+            ],
+        }
+        response = self.client.get(reverse("browse"))
+        self.assertContains(response, "English Pick")
+        self.assertNotContains(response, "Japanese Pick")
+        self.assertNotContains(response, "Korean Pick")
+
+    @patch("app.providers.tmdb.browse")
+    def test_browse_includes_non_english_when_opted_in(self, mock_browse):
+        """Toggling the pref surfaces non-English tiles again."""
+        self.user.browse_include_non_english = True
+        self.user.save(update_fields=["browse_include_non_english"])
+        mock_browse.return_value = {
+            "page": 1,
+            "total_results": 1,
+            "total_pages": 1,
+            "results": [
+                {
+                    "media_id": "2",
+                    "title": "Japanese Pick",
+                    "media_type": MediaTypes.MOVIE.value,
+                    "source": Sources.TMDB.value,
+                    "image": "",
+                    "original_language": "ja",
+                },
+            ],
+        }
+        response = self.client.get(reverse("browse"))
+        self.assertContains(response, "Japanese Pick")
+
+    def test_toggle_browse_language_flips_pref(self):
+        """POST flips browse_include_non_english and redirects."""
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.browse_include_non_english)
+        self.client.post(reverse("toggle_browse_language"))
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.browse_include_non_english)
+        self.client.post(reverse("toggle_browse_language"))
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.browse_include_non_english)
+
     def test_dismiss_item_rejects_invalid_input(self):
         """Missing required fields return 400; unknown source/type return 400."""
         response = self.client.post(reverse("dismiss_item"), {})

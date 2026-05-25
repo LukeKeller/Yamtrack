@@ -618,6 +618,19 @@ def browse(request):
                 r for r in data["results"]
                 if str(r.get("media_id")) not in dismissed_ids
             ]
+        # English-only filter — keep results whose original_language is
+        # English (or unset, since some TMDB entries lack the field).
+        # Off when the user has opted into non-English titles. Only
+        # applies to TMDB results; other sources don't populate the
+        # field, so leaving them untouched is safer than dropping them.
+        if (
+            source == Sources.TMDB.value
+            and not request.user.browse_include_non_english
+        ):
+            data["results"] = [
+                r for r in data["results"]
+                if (r.get("original_language") or "en") == "en"
+            ]
         # Annotate with personal match scores so the % badge can render.
         # No-op on cold-start / unsupported sources.
         data["results"] = taste.attach_match_scores(
@@ -1496,6 +1509,22 @@ def media_delete(request):
         logger.warning("The %s was already deleted before.", media_type)
 
     return helpers.redirect_back(request)
+
+
+@require_POST
+def toggle_browse_language(request):
+    """Flip the English-only Browse filter and bounce back to the referrer.
+
+    Posts back to whatever page the toggle was triggered from (Browse,
+    typically). We deliberately don't accept a target state in the
+    payload — the button is a pure flip, which is easier to reason
+    about than an idempotent set call and matches how Yamtrack's
+    other inline toggles work.
+    """
+    user = request.user
+    user.browse_include_non_english = not user.browse_include_non_english
+    user.save(update_fields=["browse_include_non_english"])
+    return redirect(request.META.get("HTTP_REFERER") or "browse")
 
 
 @require_POST

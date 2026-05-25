@@ -1125,6 +1125,7 @@ def browse(media_type, category, page, watch_region=None):
             "media_type": media_type,
             "title": get_title(media),
             "image": get_image_url(media.get("poster_path")),
+            "original_language": media.get("original_language") or "",
             "genre_names": [
                 genre_map[gid]
                 for gid in media.get("genre_ids") or []

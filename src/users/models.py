@@ -358,6 +358,15 @@ class User(AbstractUser):
         help_text="Blur unseen episode images and descriptions",
     )
 
+    browse_include_non_english = models.BooleanField(
+        default=False,
+        help_text=(
+            "Include movies / TV in non-English original languages on the "
+            "Browse page. Off by default so the discovery feed isn't dominated "
+            "by foreign-language titles you can't immediately watch."
+        ),
+    )
+
     # Tracking settings
     auto_mark_prior_episodes = models.BooleanField(
         default=False,

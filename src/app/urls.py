@@ -73,6 +73,11 @@ urlpatterns = [
     path("media_delete", views.media_delete, name="media_delete"),
     path("dismiss_item", views.dismiss_item, name="dismiss_item"),
     path(
+        "toggle_browse_language",
+        views.toggle_browse_language,
+        name="toggle_browse_language",
+    ),
+    path(
         "user_messages/mark_shown",
         views.mark_user_messages_shown,
         name="mark_user_messages_shown",

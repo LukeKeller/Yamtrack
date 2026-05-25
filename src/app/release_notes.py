@@ -10,10 +10,21 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh101"
+CURRENT_FORK_VERSION = "0.25.2~ynh102"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh102",
+        "date": "2026-05-25",
+        "title": "English-only Browse filter by default",
+        "highlights": [
+            "Browse now hides movies / TV whose TMDB original language isn't English by default — keeps the discovery feed focused on titles you can immediately watch instead of being dominated by anime / K-drama / Bollywood results that bubble up high in 'popular'.",
+            "Added an 'English only / All languages' toggle button in the Browse header. One click flips the preference; it's remembered per user.",
+            "Applies to TMDB sources only (Trakt and other sources don't expose original_language consistently). The filter passes through tiles missing the field rather than dropping them.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh101",
         "date": "2026-05-25",
