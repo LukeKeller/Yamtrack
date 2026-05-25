@@ -10,10 +10,20 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh102"
+CURRENT_FORK_VERSION = "0.25.2~ynh103"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh103",
+        "date": "2026-05-25",
+        "title": "Japanese in default Browse languages + comment fix",
+        "highlights": [
+            "Default Browse language allowlist now includes Japanese (anime) alongside English. The toggle button reads 'EN / JA only' / 'All languages' to match.",
+            "Fixed a stray Django template comment that was rendering as visible text above the language toggle ('{# English-only filter toggle... #}'). Django's {# ... #} only works on a single line; switched to {% comment %} which handles multi-line.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh102",
         "date": "2026-05-25",

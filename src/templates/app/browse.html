@@ -38,19 +38,23 @@
              {% if layout == 'list' %} class="p-2 cursor-pointer bg-indigo-600 text-white flex items-center" {% else %} class="p-2 cursor-pointer bg-surface-2 hover:bg-surface-3 flex items-center" {% endif %}
              title="List View">{% include "app/icons/list.svg" with classes="w-5 h-5" %}</a>
         </div>
-        {# English-only filter toggle. Only meaningful for TMDB; other
-           browse sources don't expose original_language. #}
+        {% comment %}
+          Language filter toggle. Only meaningful for TMDB; other browse
+          sources don't expose original_language. Default allowlist is
+          English + Japanese (anime); flipping the toggle shows
+          everything regardless of language.
+        {% endcomment %}
         {% if source == 'tmdb' %}
           <form method="post" action="{% url 'toggle_browse_language' %}">
             {% csrf_token %}
             <button type="submit"
                     class="px-3 py-1.5 text-sm rounded-md transition-colors duration-200 cursor-pointer flex items-center gap-1.5 {% if user.browse_include_non_english %}bg-indigo-600 text-white{% else %}bg-gray-700 text-fg hover:bg-gray-600{% endif %}"
-                    title="{% if user.browse_include_non_english %}Showing all languages — click to hide non-English{% else %}Showing English only — click to include non-English{% endif %}">
+                    title="{% if user.browse_include_non_english %}Showing all languages — click to limit to EN / JA{% else %}Showing English + Japanese — click to include all languages{% endif %}">
               {% include "app/icons/cube.svg" with classes="w-4 h-4" %}
               {% if user.browse_include_non_english %}
                 All languages
               {% else %}
-                English only
+                EN / JA only
               {% endif %}
             </button>
           </form>

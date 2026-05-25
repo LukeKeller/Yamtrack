@@ -618,18 +618,21 @@ def browse(request):
                 r for r in data["results"]
                 if str(r.get("media_id")) not in dismissed_ids
             ]
-        # English-only filter — keep results whose original_language is
-        # English (or unset, since some TMDB entries lack the field).
-        # Off when the user has opted into non-English titles. Only
-        # applies to TMDB results; other sources don't populate the
-        # field, so leaving them untouched is safer than dropping them.
+        # Default language filter — keep only original_language in
+        # English or Japanese (Japanese included because the user
+        # tracks anime through the same Browse views). Off when the
+        # user has opted into all languages. Only applies to TMDB;
+        # other sources don't populate original_language consistently
+        # so leaving them untouched is safer than dropping them. Items
+        # missing the field pass through (treat as English by default).
         if (
             source == Sources.TMDB.value
             and not request.user.browse_include_non_english
         ):
+            allowed_languages = {"en", "ja"}
             data["results"] = [
                 r for r in data["results"]
-                if (r.get("original_language") or "en") == "en"
+                if (r.get("original_language") or "en") in allowed_languages
             ]
         # Annotate with personal match scores so the % badge can render.
         # No-op on cold-start / unsupported sources.

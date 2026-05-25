@@ -361,9 +361,10 @@ class User(AbstractUser):
     browse_include_non_english = models.BooleanField(
         default=False,
         help_text=(
-            "Include movies / TV in non-English original languages on the "
-            "Browse page. Off by default so the discovery feed isn't dominated "
-            "by foreign-language titles you can't immediately watch."
+            "Include all original languages on the Browse page. Off by "
+            "default — only English + Japanese (anime) are shown, so "
+            "the discovery feed isn't dominated by titles you can't "
+            "immediately watch."
         ),
     )
 

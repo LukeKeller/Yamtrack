@@ -326,8 +326,8 @@ class BrowseViewTests(TestCase):
         self.assertGreater(weak, avoided)
 
     @patch("app.providers.tmdb.browse")
-    def test_browse_hides_non_english_by_default(self, mock_browse):
-        """Non-English originals are dropped unless the user opts in."""
+    def test_browse_default_allowlist_is_english_and_japanese(self, mock_browse):
+        """Default filter keeps en + ja and drops other languages."""
         mock_browse.return_value = {
             "page": 1,
             "total_results": 3,
@@ -361,7 +361,7 @@ class BrowseViewTests(TestCase):
         }
         response = self.client.get(reverse("browse"))
         self.assertContains(response, "English Pick")
-        self.assertNotContains(response, "Japanese Pick")
+        self.assertContains(response, "Japanese Pick")
         self.assertNotContains(response, "Korean Pick")
 
     @patch("app.providers.tmdb.browse")
