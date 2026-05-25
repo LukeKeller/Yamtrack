@@ -120,9 +120,11 @@
                     {{ field|add_class:"input" }}
                   {% endif %}
                 </div>
-                {# Quick-fill chips for date inputs — mirrors the episode
-                   track form's "Now / Air date" affordance. Only renders
-                   when we actually have a date to stamp. #}
+                {% comment %}
+                  Quick-fill chips for date inputs — mirrors the episode
+                  track form's "Now / Air date" affordance. Only renders
+                  when we actually have a date to stamp.
+                {% endcomment %}
                 {% if field.name == "start_date" or field.name == "end_date" %}
                   <div class="flex flex-wrap gap-1.5 mt-1.5">
                     <button type="button"

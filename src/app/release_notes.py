@@ -10,10 +10,19 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh105"
+CURRENT_FORK_VERSION = "0.25.2~ynh106"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh106",
+        "date": "2026-05-25",
+        "title": "Fix leaked comment in track modal",
+        "highlights": [
+            "Fixed a multi-line {# ... #} comment in the track-modal template that was rendering as visible text under every form field — same Django template gotcha that bit the Browse page in ynh102 (single-line only; switched to {% comment %} which handles multi-line cleanly).",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh105",
         "date": "2026-05-25",
