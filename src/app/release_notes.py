@@ -10,10 +10,20 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh103"
+CURRENT_FORK_VERSION = "0.25.2~ynh104"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh104",
+        "date": "2026-05-25",
+        "title": "Browse language filter: hide Hindi only",
+        "highlights": [
+            "Flipped the Browse language filter from an English/Japanese allowlist to a Hindi-only blocklist — Hindi titles flooding the discovery feed was the actual problem; everything else (Korean, French, Spanish, etc.) now passes through by default.",
+            "Toggle button reads 'Hindi hidden' / 'All languages' to match.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh103",
         "date": "2026-05-25",

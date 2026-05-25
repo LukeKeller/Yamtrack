@@ -361,10 +361,10 @@ class User(AbstractUser):
     browse_include_non_english = models.BooleanField(
         default=False,
         help_text=(
-            "Include all original languages on the Browse page. Off by "
-            "default — only English + Japanese (anime) are shown, so "
-            "the discovery feed isn't dominated by titles you can't "
-            "immediately watch."
+            "Include Hindi titles on the Browse page. Off by default — "
+            "Bollywood entries dominate TMDB's 'popular' lists in some "
+            "regions despite being unwatchable for users who don't speak "
+            "the language. Field name kept for migration history."
         ),
     )
 

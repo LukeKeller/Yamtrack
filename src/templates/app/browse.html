@@ -40,21 +40,21 @@
         </div>
         {% comment %}
           Language filter toggle. Only meaningful for TMDB; other browse
-          sources don't expose original_language. Default allowlist is
-          English + Japanese (anime); flipping the toggle shows
-          everything regardless of language.
+          sources don't expose original_language. Default behavior is
+          to hide Hindi titles (Bollywood often dominates 'popular');
+          flipping the toggle shows them again.
         {% endcomment %}
         {% if source == 'tmdb' %}
           <form method="post" action="{% url 'toggle_browse_language' %}">
             {% csrf_token %}
             <button type="submit"
                     class="px-3 py-1.5 text-sm rounded-md transition-colors duration-200 cursor-pointer flex items-center gap-1.5 {% if user.browse_include_non_english %}bg-indigo-600 text-white{% else %}bg-gray-700 text-fg hover:bg-gray-600{% endif %}"
-                    title="{% if user.browse_include_non_english %}Showing all languages — click to limit to EN / JA{% else %}Showing English + Japanese — click to include all languages{% endif %}">
+                    title="{% if user.browse_include_non_english %}Showing all languages — click to hide Hindi{% else %}Hiding Hindi titles — click to show all languages{% endif %}">
               {% include "app/icons/cube.svg" with classes="w-4 h-4" %}
               {% if user.browse_include_non_english %}
                 All languages
               {% else %}
-                EN / JA only
+                Hindi hidden
               {% endif %}
             </button>
           </form>

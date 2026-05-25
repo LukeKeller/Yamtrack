@@ -326,11 +326,11 @@ class BrowseViewTests(TestCase):
         self.assertGreater(weak, avoided)
 
     @patch("app.providers.tmdb.browse")
-    def test_browse_default_allowlist_is_english_and_japanese(self, mock_browse):
-        """Default filter keeps en + ja and drops other languages."""
+    def test_browse_default_blocks_hindi_only(self, mock_browse):
+        """Default filter drops Hindi tiles, leaves everything else alone."""
         mock_browse.return_value = {
             "page": 1,
-            "total_results": 3,
+            "total_results": 4,
             "total_pages": 1,
             "results": [
                 {
@@ -357,16 +357,25 @@ class BrowseViewTests(TestCase):
                     "image": "",
                     "original_language": "ko",
                 },
+                {
+                    "media_id": "4",
+                    "title": "Hindi Pick",
+                    "media_type": MediaTypes.MOVIE.value,
+                    "source": Sources.TMDB.value,
+                    "image": "",
+                    "original_language": "hi",
+                },
             ],
         }
         response = self.client.get(reverse("browse"))
         self.assertContains(response, "English Pick")
         self.assertContains(response, "Japanese Pick")
-        self.assertNotContains(response, "Korean Pick")
+        self.assertContains(response, "Korean Pick")
+        self.assertNotContains(response, "Hindi Pick")
 
     @patch("app.providers.tmdb.browse")
-    def test_browse_includes_non_english_when_opted_in(self, mock_browse):
-        """Toggling the pref surfaces non-English tiles again."""
+    def test_browse_shows_hindi_when_opted_in(self, mock_browse):
+        """Toggling the pref re-surfaces Hindi tiles."""
         self.user.browse_include_non_english = True
         self.user.save(update_fields=["browse_include_non_english"])
         mock_browse.return_value = {
@@ -375,17 +384,17 @@ class BrowseViewTests(TestCase):
             "total_pages": 1,
             "results": [
                 {
-                    "media_id": "2",
-                    "title": "Japanese Pick",
+                    "media_id": "4",
+                    "title": "Hindi Pick",
                     "media_type": MediaTypes.MOVIE.value,
                     "source": Sources.TMDB.value,
                     "image": "",
-                    "original_language": "ja",
+                    "original_language": "hi",
                 },
             ],
         }
         response = self.client.get(reverse("browse"))
-        self.assertContains(response, "Japanese Pick")
+        self.assertContains(response, "Hindi Pick")
 
     def test_toggle_browse_language_flips_pref(self):
         """POST flips browse_include_non_english and redirects."""
