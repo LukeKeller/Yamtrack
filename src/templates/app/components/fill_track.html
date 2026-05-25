@@ -52,10 +52,13 @@
                       {% comment %}
                         Pages ↔ Percent toggle for books. The form field stays
                         in pages (Book.progress is integer pages); the percent
-                        input is a UI shim that converts via book_total_pages
-                        on input/blur.
+                        input is a UI shim that converts via book_total_pages.
+                        percentText holds the raw string the user is typing so
+                        the round-trip through integer pages doesn't rewrite
+                        the input mid-keystroke; it re-syncs on blur, unit
+                        toggle, and any pages change driven elsewhere.
                       {% endcomment %}
-                      <div x-data="{ unit: 'pages', total: {{ book_total_pages }}, pages: Number(document.getElementById('{{ field.id_for_label }}').value) || 0, setPages(p) { this.pages = Math.max(0, Math.min(this.total, Math.round(Number(p) || 0))); document.getElementById('{{ field.id_for_label }}').value = this.pages; }, setPercent(pct) { const clamped = Math.max(0, Math.min(100, Number(pct) || 0)); this.setPages(Math.round(clamped / 100 * this.total)); }, get percent() { return this.total > 0 ? Math.round(this.pages / this.total * 1000) / 10 : 0; }, }">
+                      <div x-data="{ unit: 'pages', total: {{ book_total_pages }}, pages: Number(document.getElementById('{{ field.id_for_label }}').value) || 0, percentText: '', init() { this.percentText = String(this.computedPercent); this.$watch('unit', u => { if (u === 'percent') this.percentText = String(this.computedPercent); }); }, setPages(p) { this.pages = Math.max(0, Math.min(this.total, Math.round(Number(p) || 0))); document.getElementById('{{ field.id_for_label }}').value = this.pages; this.percentText = String(this.computedPercent); }, setPercent(pct) { const n = Number(pct); if (Number.isNaN(n)) return; const clamped = Math.max(0, Math.min(100, n)); this.pages = Math.max(0, Math.min(this.total, Math.round(clamped / 100 * this.total))); document.getElementById('{{ field.id_for_label }}').value = this.pages; }, adjustPercent(delta) { this.setPercent(this.computedPercent + delta); this.percentText = String(this.computedPercent); }, get computedPercent() { return this.total > 0 ? Math.round(this.pages / this.total * 1000) / 10 : 0; }, }">
                         <div class="flex items-center gap-2 mb-2">
                           <div class="inline-flex bg-surface-2 rounded-md p-0.5 text-xs">
                             <button type="button"
@@ -80,20 +83,21 @@
                                  step="0.5"
                                  x-show="unit === 'percent'"
                                  x-cloak
-                                 :value="percent"
-                                 @input="setPercent($event.target.value)"
+                                 :value="percentText"
+                                 @input="percentText = $event.target.value; setPercent($event.target.value)"
+                                 @blur="percentText = String(computedPercent)"
                                  class="input pr-12 absolute inset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
                           <div class="absolute inset-y-0 right-0 flex flex-col">
                             <button type="button"
                                     class="flex-1 px-2 hover:bg-surface-3 transition-colors rounded-tr-sm border-s text-fg-muted"
                                     style="border-color: var(--color-border-default)"
-                                    @click="unit === 'pages' ? setPages(pages + 1) : setPercent(percent + 0.5)">
+                                    @click="unit === 'pages' ? setPages(pages + 1) : adjustPercent(0.5)">
                               {% include "app/icons/chevron-up.svg" with classes="w-3 h-3" %}
                             </button>
                             <button type="button"
                                     class="flex-1 px-2 hover:bg-surface-3 transition-colors rounded-br-sm border-s border-t text-fg-muted"
                                     style="border-color: var(--color-border-default)"
-                                    @click="unit === 'pages' ? setPages(pages - 1) : setPercent(percent - 0.5)">
+                                    @click="unit === 'pages' ? setPages(pages - 1) : adjustPercent(-0.5)">
                               {% include "app/icons/chevron-down.svg" with classes="w-3 h-3" %}
                             </button>
                           </div>
