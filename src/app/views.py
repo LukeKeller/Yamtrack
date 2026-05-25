@@ -1393,15 +1393,31 @@ def track_modal(
                 media_type,
                 media.progress,
             )
+        # Pull release / air date for the quick-fill button next to the
+        # start_date / end_date inputs. Soft-fail to None — if metadata
+        # is gone or the provider is down, the buttons just don't render.
+        release_date_iso = None
+        try:
+            meta = services.get_media_metadata(
+                media_type,
+                media_id,
+                source,
+                [season_number],
+            )
+            release_date_iso = _release_date_iso(meta)
+        except services.ProviderAPIError:
+            pass
     else:
-        title = services.get_media_metadata(
+        meta = services.get_media_metadata(
             media_type,
             media_id,
             source,
             [season_number],
-        )["title"]
+        )
+        title = meta["title"]
         if media_type == MediaTypes.SEASON.value:
             title += f" S{season_number}"
+        release_date_iso = _release_date_iso(meta)
 
     form = get_form_class(media_type)(instance=media, initial=initial_data)
 
@@ -1421,6 +1437,7 @@ def track_modal(
             "media_type": media_type,
             "return_url": request.GET["return_url"],
             "book_total_pages": book_total_pages,
+            "release_date_iso": release_date_iso,
         },
     )
 
@@ -1511,6 +1528,37 @@ def media_delete(request):
         logger.warning("The %s was already deleted before.", media_type)
 
     return helpers.redirect_back(request)
+
+
+def _release_date_iso(meta):
+    """Extract a YYYY-MM-DD release / air date from media metadata.
+
+    Different providers stash this under different keys
+    (``release_date`` for movies, ``first_air_date`` for TV, ``released``
+    for Discogs records, etc.). Returns the first one that looks
+    parseable, or None. The string is sliced to the first 10 chars so
+    full ISO timestamps with time-of-day get trimmed cleanly into the
+    ``YYYY-MM-DD`` shape both HTML date inputs and datetime-local
+    inputs (with a ``T00:00`` suffix) accept.
+    """
+    if not meta:
+        return None
+    details = meta.get("details") or {}
+    candidates = (
+        details.get("release_date"),
+        details.get("first_air_date"),
+        details.get("released"),
+        meta.get("release_date"),
+        meta.get("first_air_date"),
+    )
+    iso_date_length = len("YYYY-MM-DD")
+    for value in candidates:
+        if not value:
+            continue
+        text = str(value).strip()
+        if len(text) >= iso_date_length and text[4] == "-" and text[7] == "-":
+            return text[:iso_date_length]
+    return None
 
 
 @require_POST

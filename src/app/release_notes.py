@@ -10,10 +10,21 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh104"
+CURRENT_FORK_VERSION = "0.25.2~ynh105"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh105",
+        "date": "2026-05-25",
+        "title": "Quick-fill 'Today / Release date' on track form",
+        "highlights": [
+            "Added 'Today' and 'Release date' (or 'Air date' for TV / anime) quick-fill chips under the Start date and End date inputs in the track modal. Mirrors the affordance the episode tracker already had, now available for movies, TV, anime, manga, games, books, comics, board games, and records.",
+            "Release date is pulled from each provider's metadata (TMDB release_date / first_air_date, Discogs released, etc.) and slotted into the date input — works for both DateInput and DateTimeInput forms (datetime gets a T00:00 suffix).",
+            "Chip only renders when the provider actually returned a parseable date, so older imports or sparse providers don't show an empty button.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh104",
         "date": "2026-05-25",
