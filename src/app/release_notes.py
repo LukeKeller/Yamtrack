@@ -10,10 +10,21 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh96"
+CURRENT_FORK_VERSION = "0.25.2~ynh97"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh97",
+        "date": "2026-05-25",
+        "title": "Discography on the record page",
+        "highlights": [
+            "Record detail pages now include a 'More by <artist>' section under the listening stats: up to 12 other Discogs releases by the same artist, with an emerald 'Owned' badge on the ones you already track and a click-through to the existing record detail page.",
+            "A 'See all on artist page →' link in the section header opens the full Discogs discography page (introduced in ynh96) with filters for 'In your library' / 'Not in your library' / 'All' and sorts by year or title.",
+            "Artist names in the 'ARTIST' row of a record's Details are clickable too — each credited artist links to their own discography page.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh96",
         "date": "2026-05-25",

@@ -664,7 +664,55 @@ def media_details(request, source, media_type, media_id, title):  # noqa: ARG001
         # (Discogs releases past LPs as A/B/C/D… up to box sets). Fall back
         # to A/B so 7"s and untracked records still show useful buttons.
         context["record_spin_sides"] = _record_side_choices(record_item)
+
+        # "More by this artist" — full Discogs discography of the credited
+        # artist, with the current release filtered out and the user's
+        # library overlaid so owned albums get an Owned badge. Soft-fails
+        # to None on any Discogs error so the page still renders.
+        primary_artist = _primary_artist(media_metadata.get("details", {}))
+        if primary_artist:
+            try:
+                artist_id = discogs.artist_lookup(primary_artist)
+                if artist_id:
+                    full_disco = discogs.artist_discography(artist_id)
+                    other = [r for r in full_disco if r["media_id"] != media_id]
+                    other_ids = {r["media_id"] for r in other}
+                    owned = {
+                        rec.item.media_id: rec
+                        for rec in Record.objects.filter(
+                            user=request.user,
+                            item__source=Sources.DISCOGS.value,
+                            item__media_type=MediaTypes.RECORD.value,
+                            item__media_id__in=other_ids,
+                        ).select_related("item")
+                    }
+                    context["artist_discography"] = [
+                        {"release": r, "media": owned.get(r["media_id"])}
+                        for r in other
+                    ]
+                    context["artist_discography_name"] = primary_artist
+                    context["artist_discography_owned"] = sum(
+                        1 for r in context["artist_discography"] if r["media"]
+                    )
+            except services.ProviderAPIError:
+                logger.warning(
+                    "Discogs discography lookup failed for %r",
+                    primary_artist,
+                )
     return render(request, "app/media_details.html", context)
+
+
+def _primary_artist(details):
+    """Return the first credited artist name from a record's details dict.
+
+    Discogs joins multiple credits with ", " (see
+    ``providers.discogs.format_artists``); we link to the first one.
+    """
+    artist = (details or {}).get("artist") or ""
+    if not artist:
+        return None
+    first = artist.split(",", 1)[0].strip()
+    return first or None
 
 
 def _comparable_items(user, media_type, current_instance, *, limit=5):

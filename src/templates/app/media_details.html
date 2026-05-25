@@ -751,6 +751,47 @@
     </section>
   {% endif %}
 
+  {# Discography — other releases by the same Discogs artist. #}
+  {% if artist_discography %}
+    <section class="mb-12">
+      <div class="flex items-baseline justify-between gap-3 mb-4 flex-wrap">
+        <h2 class="text-2xl font-bold">More by {{ artist_discography_name }}</h2>
+        <a href="{% url 'artist_details' name=artist_discography_name %}"
+           class="text-sm text-accent hover:underline">See all on artist page →</a>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        {% for entry in artist_discography|slice:":12" %}
+          <a href="{% url 'media_details' source='discogs' media_type='record' media_id=entry.release.media_id title=entry.release.title|slug %}"
+             class="block group">
+            <div class="bg-surface-1 rounded-lg overflow-hidden shadow-lg relative {% if entry.media %}ring-[1.5px] ring-emerald-500{% endif %}">
+              {% if entry.release.image and entry.release.image != IMG_NONE %}
+                <img alt="{{ entry.release.title }}"
+                     class="lazyload w-full aspect-square bg-surface-2 object-cover"
+                     data-src="{{ entry.release.image }}"
+                     src="{{ IMG_NONE }}">
+              {% else %}
+                <div class="w-full aspect-square flex items-center justify-center"
+                     style="background: color-mix(in srgb, var(--color-type-record) 18%, var(--color-surface-2))">
+                  <span class="text-4xl font-bold uppercase select-none"
+                        style="color: var(--color-type-record)">{{ entry.release.title|slice:":1" }}</span>
+                </div>
+              {% endif %}
+              {% if entry.media %}
+                <div class="absolute top-1.5 left-1.5 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-600/90 text-white text-[10px] font-medium shadow-md backdrop-blur-sm">
+                  {% include "app/icons/states/completed.svg" with classes="w-3 h-3" %}
+                  <span>Owned</span>
+                </div>
+              {% endif %}
+            </div>
+            <div class="text-xs font-medium text-fg group-hover:text-indigo-400 line-clamp-1 mt-1.5 px-0.5 transition-colors"
+                 title="{{ entry.release.title }}">{{ entry.release.title }}</div>
+            {% if entry.release.year %}<div class="text-[11px] text-fg-faint px-0.5">{{ entry.release.year }}</div>{% endif %}
+          </a>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
   {% comment %}
     Two-column body: main content on the left (cast / related / episodes),
      metadata rail (Your history / Actions / Streaming / Details) on the
