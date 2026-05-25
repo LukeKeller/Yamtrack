@@ -81,7 +81,26 @@
        behind a kebab popover in the top-right so the artwork stays clean.
        Episodes get a single primary action (mark watched) instead of the
        kebab because the eye-toggle is the main thing you want there.
+
+       The kebab is opacity-0 + hover-only, so on touch devices it's
+       effectively unreachable. When show_dismiss is on (Browse), we add
+       a separate always-visible "X" in the top-left so mobile users
+       have a tappable way to dismiss without first having to reveal
+       the kebab.
     {% endcomment %}
+    {% if show_dismiss and not media %}
+      <button title="Not interested"
+              hx-post="{% url 'dismiss_item' %}"
+              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+              hx-vals='{"source": "{{ item.source }}", "media_type": "{{ item.media_type }}", "media_id": "{{ item.media_id }}", "title": "{{ title|escapejs }}"}'
+              hx-target="closest [data-dismiss-target]"
+              hx-swap="delete swap:200ms"
+              @click.stop
+              class="absolute top-2 left-2 btn btn-icon btn-sm z-10"
+              style="background: rgb(0 0 0 / 0.55);
+                     color: white;
+                     backdrop-filter: blur(8px)">{% include "app/icons/x.svg" with classes="w-3.5 h-3.5" %}</button>
+    {% endif %}
     {% if item.media_type == MediaTypes.EPISODE.value %}
       <button @click="trackOpen = true"
               class="absolute top-2 right-2 btn btn-icon btn-sm opacity-0 hover-tap:opacity-100 transition-opacity{% if user.clickable_media_cards %} pointer-coarse:hidden{% endif %}"

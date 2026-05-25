@@ -10,10 +10,21 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh99"
+CURRENT_FORK_VERSION = "0.25.2~ynh100"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh100",
+        "date": "2026-05-25",
+        "title": "Mobile-tappable dismiss button",
+        "highlights": [
+            "Added an always-visible 'X' button in the top-left of each Browse tile (grid view) for items that aren't already in your library. The kebab menu it lived in was hover-only, so touch devices couldn't reach 'Not interested' — this button is tappable directly.",
+            "Doesn't render when the tile is already tracked (the status chip lives in the same corner, and dismissing something you're already engaging with doesn't make sense).",
+            "List-view layout already had a dedicated dismiss button in the action row, so no change needed there.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh99",
         "date": "2026-05-25",
