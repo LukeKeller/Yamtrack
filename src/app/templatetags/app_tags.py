@@ -174,6 +174,19 @@ def is_list(arg1):
 
 
 @register.filter
+def split_artists(value):
+    """Split a Discogs-style comma-joined artist string into a list.
+
+    Discogs joins multiple credited artists with ", " (see
+    ``providers.discogs.format_artists``). The artist detail link needs
+    one name per chip, so we re-split before rendering.
+    """
+    if not value:
+        return []
+    return [part.strip() for part in str(value).split(",") if part.strip()]
+
+
+@register.filter
 def exclude_keys(mapping, csv_keys):
     """Return a new dict without the comma-separated keys.
 

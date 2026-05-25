@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+{% load app_tags %}
+
+{% block title %}
+  {{ artist.name }} - Yamtrack
+{% endblock title %}
+
+{% block content %}
+  {# Header #}
+  <div class="flex flex-col md:flex-row gap-8 md:gap-10 mb-10">
+    <div class="w-full md:w-1/4 max-w-[250px] mx-auto md:mx-0">
+      <img alt="{{ artist.name }}"
+           class="w-full rounded-lg shadow-lg bg-surface-1 {% if artist.image != IMG_NONE %}object-cover{% endif %}"
+           src="{{ artist.image }}">
+    </div>
+
+    <div class="w-full md:w-3/4">
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+        <div>
+          <h1 class="text-3xl font-bold mb-2">{{ artist.name }}</h1>
+          {% if artist.real_name %}<p class="text-sm text-fg-muted">{{ artist.real_name }}</p>{% endif %}
+        </div>
+        {% if artist.source_url %}
+          <div class="flex items-center gap-2">
+            <a href="{{ artist.source_url }}"
+               target="_blank"
+               rel="noopener"
+               class="px-3 py-2 rounded-md bg-surface-2 hover:bg-surface-3 text-white text-sm flex items-center gap-2"
+               title="Open Discogs page for {{ artist.name }}">
+              {% include "app/icons/external-link.svg" with classes="w-4 h-4" %}
+              Discogs
+            </a>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if artist_not_found %}
+        <p class="text-fg-muted">
+          No Discogs artist matched that name. Showing nothing — try the artist's exact Discogs spelling.
+        </p>
+      {% endif %}
+
+      {% if artist.members %}
+        <div class="text-sm text-fg mb-3">
+          <span class="text-fg-muted">Members:</span> {{ artist.members|join:", " }}
+        </div>
+      {% endif %}
+
+      {% if artist.profile %}
+        <div class="mb-6">
+          <div x-data="{ isExpanded: false, isClamped: false, checkClamp() { const element = this.$refs.bioText; this.isClamped = element.scrollHeight > element.clientHeight; } }"
+               x-init="$nextTick(() => checkClamp())">
+            <p x-ref="bioText"
+               :class="isExpanded ? '' : 'line-clamp-5'"
+               class="text-fg text-pretty">{{ artist.profile|linebreaksbr }}</p>
+            <button x-show="isClamped"
+                    @click="isExpanded = !isExpanded"
+                    class="text-indigo-400 hover:text-indigo-300 text-sm mt-2 focus:outline-none transition-colors cursor-pointer">
+              <span x-text="isExpanded ? 'Show less' : 'Read more'"></span>
+            </button>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if total_count %}
+    <div class="bg-surface-1 rounded-lg p-4 mb-6 grid grid-cols-2 sm:grid-cols-3 gap-3">
+      <div>
+        <div class="text-xs text-fg-faint uppercase tracking-wider">Releases</div>
+        <div class="text-2xl font-semibold">{{ total_count }}</div>
+      </div>
+      <div>
+        <div class="text-xs text-fg-faint uppercase tracking-wider">In your library</div>
+        <div class="text-2xl font-semibold">{{ owned_count }}</div>
+      </div>
+      <div>
+        <div class="text-xs text-fg-faint uppercase tracking-wider">Coverage</div>
+        <div class="text-2xl font-semibold">
+          {% if total_count %}
+            {% widthratio owned_count total_count 100 %}%
+          {% else %}
+            —
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {# Filters #}
+  <div class="flex flex-col gap-y-4 mb-6">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-y-3">
+      <h2 class="text-xl font-bold">
+        Discography
+        {% if shown_count != total_count %}
+          <span class="text-sm text-fg-muted font-normal">({{ shown_count }} of {{ total_count }} shown)</span>
+        {% else %}
+          <span class="text-sm text-fg-muted font-normal">({{ total_count }} release{{ total_count|pluralize }})</span>
+        {% endif %}
+      </h2>
+
+      <div class="flex items-center gap-x-3 flex-wrap">
+        <label class="text-sm text-fg-muted">Sort</label>
+        <select onchange="window.location.search = new URLSearchParams({...Object.fromEntries(new URLSearchParams(window.location.search)), sort: this.value}).toString()"
+                class="bg-surface-2 text-white text-sm rounded-md px-3 py-1.5 border border-transparent focus:border-indigo-500 outline-none cursor-pointer">
+          {% for value, label in sort_choices %}
+            <option value="{{ value }}" {% if value == sort_by %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-2">
+      <span class="text-sm text-fg-muted self-center mr-1">Filter:</span>
+      {% for value, label in filter_choices %}
+        <a href="?filter={{ value }}&sort={{ sort_by }}"
+           class="px-3 py-1.5 text-sm rounded-md transition-colors duration-200 cursor-pointer {% if filter_by == value %}bg-indigo-600 text-white{% else %}bg-gray-700 text-fg hover:bg-gray-600{% endif %}">
+          {{ label }}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# Discography grid #}
+  {% if releases %}
+    <div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
+      {% for entry in releases %}
+        <div class="flex flex-col gap-1">
+          <div class="bg-surface-1 rounded-lg overflow-hidden shadow-lg relative {% if entry.media %}ring-[1.5px] ring-emerald-500{% endif %}">
+            <a href="{% url 'media_details' source='discogs' media_type='record' media_id=entry.release.media_id title=entry.release.title|slug %}"
+               aria-label="{{ entry.release.title }}">
+              {% if entry.release.image == IMG_NONE %}
+                <div class="w-full aspect-square flex items-center justify-center"
+                     style="background: color-mix(in srgb, var(--color-type-record) 18%, var(--color-surface-2))"
+                     title="{{ entry.release.title }}">
+                  <span class="text-4xl font-bold uppercase select-none"
+                        style="color: var(--color-type-record)">{{ entry.release.title|slice:":1" }}</span>
+                </div>
+              {% else %}
+                <img alt="{{ entry.release.title }}"
+                     class="lazyload w-full aspect-square bg-surface-2 object-cover"
+                     data-src="{{ entry.release.image }}"
+                     src="{{ IMG_NONE }}">
+              {% endif %}
+            </a>
+
+            {% if entry.media %}
+              <div class="absolute top-2 left-2 flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-600/90 text-white text-xs font-medium shadow-md backdrop-blur-sm">
+                {% include "app/icons/states/completed.svg" with classes="w-3.5 h-3.5" %}
+                <span>{{ entry.media.status|media_status_readable:'record' }}</span>
+              </div>
+            {% endif %}
+
+            {% if entry.media.score|show_media_score:user %}
+              <div class="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-white bg-black/60 backdrop-blur-sm shadow-md">
+                {% include "app/icons/star.svg" with classes="w-3.5 h-3.5 text-amber-400 fill-current" %}
+                <span>{{ entry.media.formatted_score }}</span>
+              </div>
+            {% endif %}
+          </div>
+          <a href="{% url 'media_details' source='discogs' media_type='record' media_id=entry.release.media_id title=entry.release.title|slug %}"
+             class="text-sm font-medium text-fg hover:text-indigo-400 line-clamp-1 px-1 transition-colors"
+             title="{{ entry.release.title }}">{{ entry.release.title }}</a>
+          {% if entry.release.year %}<div class="text-xs text-fg-faint px-1">{{ entry.release.year }}</div>{% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="flex flex-col items-center justify-center py-24 px-4 bg-surface-1 rounded-lg">
+      <div class="bg-surface-2 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+        {% include "app/icons/music-note.svg" with classes="w-8 h-8 text-fg-muted" %}
+      </div>
+      <h3 class="text-xl font-semibold mb-2">No releases to show</h3>
+      <p class="text-fg-muted text-center max-w-md">
+        {% if artist_not_found %}
+          Try the artist's exact Discogs spelling.
+        {% else %}
+          Try a different filter — this artist's discography is empty under the current criteria.
+        {% endif %}
+      </p>
+    </div>
+  {% endif %}
+{% endblock content %}

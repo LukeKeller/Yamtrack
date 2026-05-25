@@ -1025,7 +1025,14 @@
             {% for key, value in side_details.items %}
               <div class="mb-4">
                 <h3 class="text-sm font-semibold text-fg-muted">{{ key|no_underscore|upper }}</h3>
-                {% if value|is_list %}
+                {% if key == 'artist' and media.media_type == MediaTypes.RECORD.value and value %}
+                  <p class="text-fg flex flex-wrap gap-x-2 gap-y-1 justify-center md:justify-start">
+                    {% for artist_name in value|split_artists %}
+                      <a href="{% url 'artist_details' name=artist_name %}"
+                         class="hover:text-indigo-500 transition-colors">{{ artist_name }}</a>
+                    {% endfor %}
+                  </p>
+                {% elif value|is_list %}
                   {% for item in value %}<p class="text-fg">{{ item|iso_date_format:request.user }}</p>{% endfor %}
                 {% else %}
                   <p class="text-fg">{{ value|default_if_none:"Unknown"|iso_date_format:request.user }}</p>

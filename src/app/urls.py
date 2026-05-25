@@ -27,6 +27,14 @@ urlpatterns = [
         name="person_details",
     ),
     path(
+        # ``path:`` lets artist names with slashes through (AC/DC, etc.).
+        # No other route lives under ``/artist/<...>`` so the greedy match
+        # is safe.
+        "artist/<path:name>",
+        views.artist_details,
+        name="artist_details",
+    ),
+    path(
         "update-score/<media_type:media_type>/<int:instance_id>",
         views.update_media_score,
         name="update_media_score",

@@ -133,6 +133,7 @@
     --color-status-paused-soft: rgb(251 191 36 / 0.14);
     --color-status-dropped: #fb7185;
     --color-status-dropped-soft: rgb(251 113 133 / 0.14);
+    --color-type-record: #fb7185;
     --color-border-subtle: rgb(255 255 255 / 0.04);
     --color-border-default: rgb(255 255 255 / 0.08);
   }
@@ -671,6 +672,9 @@
   }
   .aspect-2\/3 {
     aspect-ratio: 2/3;
+  }
+  .aspect-square {
+    aspect-ratio: 1 / 1;
   }
   .aspect-video {
     aspect-ratio: var(--aspect-video);
@@ -1614,6 +1618,12 @@
       background-color: color-mix(in oklab, var(--color-emerald-600) 20%, transparent);
     }
   }
+  .bg-emerald-600\/90 {
+    background-color: color-mix(in srgb, oklch(59.6% 0.145 163.225) 90%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-emerald-600) 90%, transparent);
+    }
+  }
   .bg-fg-faint {
     background-color: var(--color-fg-faint);
   }
@@ -2351,6 +2361,9 @@
   }
   .ring-canvas {
     --tw-ring-color: var(--color-canvas);
+  }
+  .ring-emerald-500 {
+    --tw-ring-color: var(--color-emerald-500);
   }
   .ring-indigo-500 {
     --tw-ring-color: var(--color-indigo-500);

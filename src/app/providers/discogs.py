@@ -210,6 +210,168 @@ def tracks(media_id):
     return out
 
 
+def artist_lookup(name):
+    """Resolve an artist name to a Discogs artist ID.
+
+    Discogs treats artist names as fuzzy queries, so we ask for the top
+    artist hit, take the first result, and return its numeric ID.
+    Returns ``None`` when the search has no hits.
+    """
+    if not name:
+        return None
+    cache_key = f"{Sources.DISCOGS.value}_artist_lookup_{name.lower()}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached or None  # cached "" means "no match"; turn back into None
+
+    try:
+        response = services.api_request(
+            Sources.DISCOGS.value,
+            "GET",
+            f"{BASE_URL}/database/search",
+            params={"q": name, "type": "artist", "per_page": 5},
+            headers=auth_headers(),
+        )
+    except requests.exceptions.HTTPError as error:
+        handle_error(error)
+
+    results = response.get("results") or []
+    # Prefer an exact (case-insensitive) name match, fall back to first hit.
+    target = name.strip().lower()
+    chosen = next(
+        (r for r in results if (r.get("title") or "").strip().lower() == target),
+        results[0] if results else None,
+    )
+    artist_id = str(chosen["id"]) if chosen and chosen.get("id") else ""
+
+    cache.set(cache_key, artist_id)
+    return artist_id or None
+
+
+def artist(artist_id):
+    """Get artist metadata (name, image, profile, urls) from Discogs."""
+    cache_key = f"{Sources.DISCOGS.value}_artist_{artist_id}"
+    data = cache.get(cache_key)
+    if data is not None:
+        return data
+
+    try:
+        response = services.api_request(
+            Sources.DISCOGS.value,
+            "GET",
+            f"{BASE_URL}/artists/{artist_id}",
+            params={},
+            headers=auth_headers(),
+        )
+    except requests.exceptions.HTTPError as error:
+        if error.response.status_code == requests.codes.not_found:
+            services.raise_not_found_error(
+                Sources.DISCOGS.value,
+                artist_id,
+                "artist",
+            )
+        handle_error(error)
+
+    data = {
+        "artist_id": str(response["id"]),
+        "name": response.get("name") or f"Artist #{response['id']}",
+        "image": pick_image(response),
+        "profile": response.get("profile") or "",
+        "source_url": response.get("uri")
+        or f"https://www.discogs.com/artist/{artist_id}",
+        "real_name": response.get("realname") or "",
+        "name_variations": response.get("namevariations") or [],
+        "members": [
+            m.get("name")
+            for m in (response.get("members") or [])
+            if m.get("name")
+        ],
+        "urls": response.get("urls") or [],
+    }
+    cache.set(cache_key, data)
+    return data
+
+
+def artist_discography(artist_id):
+    """Return the artist's discography as a list of release dicts.
+
+    Each entry has: ``media_id`` (a Discogs release ID suitable for the
+    record detail URL), ``master_id`` (when the entry is a master),
+    ``title``, ``year``, ``image``, ``format``, ``label``, and
+    ``role`` (kept so the template can flag side credits).
+
+    Filters to ``role == "Main"`` (skipping Producer/Composer/etc. credits)
+    and dedupes by master so each album shows once even when the artist
+    has multiple pressings of the same release.
+    """
+    cache_key = f"{Sources.DISCOGS.value}_artist_discography_{artist_id}"
+    data = cache.get(cache_key)
+    if data is not None:
+        return data
+
+    try:
+        response = services.api_request(
+            Sources.DISCOGS.value,
+            "GET",
+            f"{BASE_URL}/artists/{artist_id}/releases",
+            params={
+                "per_page": 100,
+                "sort": "year",
+                "sort_order": "desc",
+            },
+            headers=auth_headers(),
+        )
+    except requests.exceptions.HTTPError as error:
+        if error.response.status_code == requests.codes.not_found:
+            services.raise_not_found_error(
+                Sources.DISCOGS.value,
+                artist_id,
+                "artist",
+            )
+        handle_error(error)
+
+    raw = response.get("releases") or []
+    out = []
+    seen_masters = set()
+    seen_releases = set()
+    for entry in raw:
+        if (entry.get("role") or "Main") != "Main":
+            continue  # skip producer / composer / appearance credits
+
+        entry_type = entry.get("type") or "release"
+        if entry_type == "master":
+            master_id = entry.get("id")
+            main_release = entry.get("main_release") or entry.get("id")
+            if master_id in seen_masters:
+                continue
+            seen_masters.add(master_id)
+            link_id = str(main_release)
+        else:
+            release_id = entry.get("id")
+            if release_id in seen_releases:
+                continue
+            seen_releases.add(release_id)
+            link_id = str(release_id)
+
+        out.append(
+            {
+                "media_id": link_id,
+                "master_id": str(entry.get("id")) if entry_type == "master" else "",
+                "type": entry_type,
+                "title": entry.get("title") or f"Discogs #{link_id}",
+                "year": entry.get("year") or None,
+                "image": entry.get("thumb") or settings.IMG_NONE,
+                "format": entry.get("format") or "",
+                "label": entry.get("label") or "",
+                "role": entry.get("role") or "Main",
+            },
+        )
+
+    out.sort(key=lambda r: (r["year"] or 0, r["title"]), reverse=True)
+    cache.set(cache_key, out)
+    return out
+
+
 def parse_track_position(position):
     """Parse a Discogs position string into (side_letter, track_number).
 

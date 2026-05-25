@@ -862,6 +862,119 @@ def person_details(request, person_id, name):  # noqa: ARG001 name for URL
     return render(request, "app/person.html", context)
 
 
+ARTIST_DISCO_FILTERS = (
+    ("all", "All"),
+    ("owned", "In your library"),
+    ("missing", "Not in your library"),
+)
+
+ARTIST_DISCO_SORTS = (
+    ("year_desc", "Newest"),
+    ("year_asc", "Oldest"),
+    ("title", "Title"),
+)
+
+
+def _sort_annotated_releases(annotated, sort_by):
+    """Sort the annotated artist-discography list in place by ``sort_by``."""
+    if sort_by == "year_asc":
+        annotated.sort(
+            key=lambda r: (
+                r["release"]["year"] or 9999,
+                (r["release"]["title"] or "").lower(),
+            ),
+        )
+    elif sort_by == "title":
+        annotated.sort(key=lambda r: (r["release"]["title"] or "").lower())
+    else:  # year_desc (default)
+        annotated.sort(
+            key=lambda r: (
+                -(r["release"]["year"] or 0),
+                (r["release"]["title"] or "").lower(),
+            ),
+        )
+
+
+@require_GET
+def artist_details(request, name):
+    """Render the Discogs artist page with their full discography.
+
+    Each release is annotated with the user's tracked Record (if any) so
+    the template can flag owned entries and link them straight to the
+    record detail page.
+    """
+    artist_id = discogs.artist_lookup(name)
+    if not artist_id:
+        return render(
+            request,
+            "app/artist.html",
+            {
+                "artist": {"name": name, "image": settings.IMG_NONE},
+                "artist_not_found": True,
+                "releases": [],
+                "total_count": 0,
+                "owned_count": 0,
+                "filter_choices": ARTIST_DISCO_FILTERS,
+                "sort_choices": ARTIST_DISCO_SORTS,
+                "filter_by": "all",
+                "sort_by": "year_desc",
+            },
+            status=404,
+        )
+
+    artist_metadata = discogs.artist(artist_id)
+    releases = discogs.artist_discography(artist_id)
+
+    # Map every release media_id to the user's Record (if tracked) so the
+    # grid can show an "Owned" badge and link straight to the existing
+    # detail page without a second per-card query.
+    release_ids = {r["media_id"] for r in releases}
+    user_records = {
+        rec.item.media_id: rec
+        for rec in Record.objects.filter(
+            user=request.user,
+            item__source=Sources.DISCOGS.value,
+            item__media_type=MediaTypes.RECORD.value,
+            item__media_id__in=release_ids,
+        ).select_related("item")
+    }
+
+    annotated = []
+    for release in releases:
+        media = user_records.get(release["media_id"])
+        annotated.append({"release": release, "media": media})
+
+    filter_by = request.GET.get("filter", "all")
+    if filter_by not in {key for key, _ in ARTIST_DISCO_FILTERS}:
+        filter_by = "all"
+    if filter_by == "owned":
+        annotated = [r for r in annotated if r["media"] is not None]
+    elif filter_by == "missing":
+        annotated = [r for r in annotated if r["media"] is None]
+
+    sort_by = request.GET.get("sort", "year_desc")
+    if sort_by not in {key for key, _ in ARTIST_DISCO_SORTS}:
+        sort_by = "year_desc"
+    _sort_annotated_releases(annotated, sort_by)
+
+    # owned_count reflects the unfiltered library overlap so the header
+    # number stays stable while the user toggles filters.
+    owned_count = len(user_records)
+
+    context = {
+        "artist": artist_metadata,
+        "releases": annotated,
+        "total_count": len(releases),
+        "owned_count": owned_count,
+        "shown_count": len(annotated),
+        "filter_choices": ARTIST_DISCO_FILTERS,
+        "sort_choices": ARTIST_DISCO_SORTS,
+        "filter_by": filter_by,
+        "sort_by": sort_by,
+    }
+    return render(request, "app/artist.html", context)
+
+
 @require_GET
 def season_details(request, source, media_id, title, season_number):  # noqa: ARG001 For URL
     """Return the details page for a season."""
