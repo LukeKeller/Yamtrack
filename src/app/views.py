@@ -129,6 +129,11 @@ def home(request):
         "current_sort": sort_by,
         "sort_choices": HomeSortChoices.choices,
         "items_limit": items_limit,
+        # Opts the mobile calendar list into the "anchor to today" mode
+        # (cap height + scroll-to-today on render). The dedicated
+        # /calendar page leaves the list unbounded so users can browse
+        # months chronologically.
+        "calendar_anchor_today": True,
         **build_calendar_context(request.user),
     }
     return render(request, "app/home.html", context)

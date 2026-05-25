@@ -791,6 +791,9 @@
   .max-h-\[70svh\] {
     max-height: 70svh;
   }
+  .max-h-\[70vh\] {
+    max-height: 70vh;
+  }
   .max-h-\[80svh\] {
     max-height: 80svh;
   }
@@ -3140,6 +3143,11 @@
       display: none;
     }
   }
+  .sm\:max-h-none {
+    @media (width >= 40rem) {
+      max-height: none;
+    }
+  }
   .sm\:w-28 {
     @media (width >= 40rem) {
       width: calc(var(--spacing) * 28);
@@ -3188,6 +3196,11 @@
   .sm\:justify-between {
     @media (width >= 40rem) {
       justify-content: space-between;
+    }
+  }
+  .sm\:overflow-visible {
+    @media (width >= 40rem) {
+      overflow: visible;
     }
   }
   .sm\:pt-20 {

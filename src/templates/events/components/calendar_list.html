@@ -1,9 +1,20 @@
 {% load app_tags %}
 {% load events_tags %}
 
-<div class="space-y-6">
+{% comment %}
+  When this list is rendered on the home page (calendar_anchor_today=True)
+  and the visible month is the current month, we cap the mobile list
+  height and scroll to today on render. Past days hide above the fold
+  and stay reachable via a scroll-up gesture inside the section. On the
+  dedicated /calendar page the flag is unset so the list grows
+  naturally. The cap is mobile-only — at sm: and above we drop it.
+{% endcomment %}
+<div data-calendar-list
+     data-today-day="{% if calendar_anchor_today and month == today.month and year == today.year %}{{ today.day }}{% endif %}"
+     class="space-y-6{% if calendar_anchor_today and month == today.month and year == today.year %} max-h-[70vh] overflow-y-auto sm:max-h-none sm:overflow-visible{% endif %}">
   {% for day, releases in release_dict.items %}
-    <div class="bg-surface-3 rounded-lg overflow-hidden">
+    <div id="cal-day-{{ day }}"
+         class="bg-surface-3 rounded-lg overflow-hidden">
       <div class="px-4 py-3 font-medium flex items-center justify-between {% if day == today.day and month == today.month and year == today.year %}bg-indigo-600{% else %}bg-gray-600{% endif %}">
         <span>{% day_of_week day month year %}, {{ month_name }} {{ day }}</span>
         {% if day == today.day and month == today.month and year == today.year %}
@@ -34,3 +45,20 @@
     </div>
   {% endfor %}
 </div>
+
+<script>
+  (() => {
+    const root = document.querySelector('[data-calendar-list][data-today-day]:not([data-today-day=""])');
+    if (!root) return;
+    const target = document.getElementById('cal-day-' + root.dataset.todayDay);
+    if (!target) return;
+    // Manual scrollTop instead of scrollIntoView so the page itself
+    // doesn't jump — we only want to position within the calendar
+    // section, not pull all the home content out of view.
+    requestAnimationFrame(() => {
+      const containerTop = root.getBoundingClientRect().top;
+      const targetTop = target.getBoundingClientRect().top;
+      root.scrollTop = targetTop - containerTop;
+    });
+  })();
+</script>
