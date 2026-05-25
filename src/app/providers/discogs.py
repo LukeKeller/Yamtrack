@@ -127,6 +127,13 @@ def record(media_id):
     title = format_title(response)
     image = pick_image(response)
 
+    raw_artists = response.get("artists") or []
+    artists_info = [
+        {"id": str(a["id"]), "name": a["name"]}
+        for a in raw_artists
+        if a.get("id") and a.get("name")
+    ]
+
     data = {
         "media_id": str(response["id"]),
         "source": Sources.DISCOGS.value,
@@ -139,8 +146,9 @@ def record(media_id):
         "genres": response.get("genres") or [],
         "score": format_score(response.get("community", {}).get("rating")),
         "score_count": response.get("community", {}).get("rating", {}).get("count", 0),
+        "artists": artists_info,
         "details": {
-            "artist": format_artists(response.get("artists")),
+            "artist": format_artists(raw_artists),
             "label": format_labels(response.get("labels")),
             "format": format_formats(response.get("formats")),
             "country": response.get("country"),
@@ -248,6 +256,56 @@ def artist_lookup(name):
     return artist_id or None
 
 
+def artist_search(query, limit=6):
+    """Search Discogs for artists matching ``query``.
+
+    Returns a list of ``{name, image, profile_url}`` dicts so the search
+    page can show artist matches alongside record results. The Discogs
+    artist search returns ``title`` (display name including any " (2)"
+    disambiguation), ``thumb`` (small avatar), and an ``id`` we don't
+    use here — the artist details page is keyed by name, and the name
+    in ``title`` is what users typed to find this match.
+
+    Names with disambiguation suffixes (e.g. ``Beyoncé (2)``) are kept
+    as-is so users can pick the right one; the artist details view does
+    the same suffix-stripping on its end to resolve to a stable ID.
+    """
+    if not query or not query.strip():
+        return []
+    cache_key = (
+        f"{Sources.DISCOGS.value}_artist_search_{query.strip().lower()}_{limit}"
+    )
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    try:
+        response = services.api_request(
+            Sources.DISCOGS.value,
+            "GET",
+            f"{BASE_URL}/database/search",
+            params={"q": query, "type": "artist", "per_page": limit},
+            headers=auth_headers(),
+        )
+    except requests.exceptions.HTTPError:
+        return []
+
+    out = []
+    for r in response.get("results") or []:
+        name = (r.get("title") or "").strip()
+        if not name:
+            continue
+        out.append(
+            {
+                "name": name,
+                "image": r.get("cover_image") or r.get("thumb") or settings.IMG_NONE,
+                "discogs_id": str(r.get("id") or ""),
+            },
+        )
+    cache.set(cache_key, out)
+    return out
+
+
 def artist(artist_id):
     """Get artist metadata (name, image, profile, urls) from Discogs."""
     cache_key = f"{Sources.DISCOGS.value}_artist_{artist_id}"
@@ -303,8 +361,13 @@ def artist_discography(artist_id):
     Filters to ``role == "Main"`` (skipping Producer/Composer/etc. credits)
     and dedupes by master so each album shows once even when the artist
     has multiple pressings of the same release.
+
+    Covers come from two endpoints merged by master_id: the artist's
+    /releases listing gives us main_release IDs and year, the database
+    search gives us a reliable cover_image (the /releases listing's thumb
+    is empty for a large fraction of entries).
     """
-    cache_key = f"{Sources.DISCOGS.value}_artist_discography_{artist_id}"
+    cache_key = f"{Sources.DISCOGS.value}_artist_discography_v2_{artist_id}"
     data = cache.get(cache_key)
     if data is not None:
         return data
@@ -330,6 +393,11 @@ def artist_discography(artist_id):
             )
         handle_error(error)
 
+    # Build cover map keyed by master_id from the search endpoint (which
+    # returns cover_image / thumb reliably). Best-effort: if the lookup
+    # fails for any reason, we fall back to the /releases listing thumbs.
+    cover_by_master = _artist_master_covers(artist_id)
+
     raw = response.get("releases") or []
     out = []
     seen_masters = set()
@@ -340,7 +408,7 @@ def artist_discography(artist_id):
 
         entry_type = entry.get("type") or "release"
         if entry_type == "master":
-            master_id = entry.get("id")
+            master_id = str(entry.get("id"))
             main_release = entry.get("main_release") or entry.get("id")
             if master_id in seen_masters:
                 continue
@@ -348,19 +416,21 @@ def artist_discography(artist_id):
             link_id = str(main_release)
         else:
             release_id = entry.get("id")
+            master_id = ""
             if release_id in seen_releases:
                 continue
             seen_releases.add(release_id)
             link_id = str(release_id)
 
+        image = cover_by_master.get(master_id) or entry.get("thumb") or ""
         out.append(
             {
                 "media_id": link_id,
-                "master_id": str(entry.get("id")) if entry_type == "master" else "",
+                "master_id": master_id,
                 "type": entry_type,
                 "title": entry.get("title") or f"Discogs #{link_id}",
                 "year": entry.get("year") or None,
-                "image": entry.get("thumb") or settings.IMG_NONE,
+                "image": image or settings.IMG_NONE,
                 "format": entry.get("format") or "",
                 "label": entry.get("label") or "",
                 "role": entry.get("role") or "Main",
@@ -370,6 +440,47 @@ def artist_discography(artist_id):
     out.sort(key=lambda r: (r["year"] or 0, r["title"]), reverse=True)
     cache.set(cache_key, out)
     return out
+
+
+def _artist_master_covers(artist_id):
+    """Return ``{master_id: cover_url}`` for masters credited to the artist.
+
+    The /artists/<id>/releases endpoint's ``thumb`` field is empty for
+    many entries, so we hit /database/search?artist=<name>&type=master
+    once to grab cover_image / thumb URLs and merge them in. Soft-fails
+    to an empty dict if the lookup errors out — the caller falls back to
+    whatever thumbs the /releases listing provided.
+    """
+    try:
+        artist_data = artist(artist_id)
+    except services.ProviderAPIError:
+        return {}
+    name = (artist_data or {}).get("name")
+    if not name:
+        return {}
+
+    try:
+        response = services.api_request(
+            Sources.DISCOGS.value,
+            "GET",
+            f"{BASE_URL}/database/search",
+            params={
+                "artist": name,
+                "type": "master",
+                "per_page": 100,
+            },
+            headers=auth_headers(),
+        )
+    except requests.exceptions.HTTPError:
+        return {}
+
+    covers = {}
+    for r in response.get("results") or []:
+        master_id = str(r.get("id") or "")
+        image = r.get("cover_image") or r.get("thumb") or ""
+        if master_id and image and image != settings.IMG_NONE:
+            covers[master_id] = image
+    return covers
 
 
 def parse_track_position(position):

@@ -10,10 +10,21 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh97"
+CURRENT_FORK_VERSION = "0.25.2~ynh98"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh98",
+        "date": "2026-05-25",
+        "title": "Reliable discography images + artist search",
+        "highlights": [
+            "Album covers in the 'More by artist' section (record page) and the artist discography page now use Discogs' search-by-artist cover URLs, which populate reliably — the previous /artists/<id>/releases 'thumb' field was empty for most entries, so most tiles fell back to monogram placeholders.",
+            "Record pages now resolve the artist via the canonical Discogs artist ID embedded in the release metadata, not a fuzzy name search — so the section shows up reliably even for artists with disambiguation suffixes like 'Beyoncé (2)' that previously confused the lookup.",
+            "Music search now surfaces matching artists at the top of the record results: type an artist name in the search bar with type=Records and you'll see clickable artist chips (avatar + name) that open the full discography page — no longer need to own one of their records first.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh97",
         "date": "2026-05-25",

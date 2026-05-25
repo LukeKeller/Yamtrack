@@ -516,11 +516,27 @@ def media_search(request):
             request, data["results"], "search"
         )
 
+    # For Discogs record searches, surface matching artists at the top so
+    # users can browse a discography without first having to add one of
+    # the artist's records. Capped to 6 hits to keep the strip compact;
+    # only shown on page 1 since paging is per-result-type.
+    artist_matches = []
+    if (
+        media_type == MediaTypes.RECORD.value
+        and source == Sources.DISCOGS.value
+        and page == 1
+    ):
+        try:
+            artist_matches = discogs.artist_search(query, limit=6)
+        except services.ProviderAPIError:
+            artist_matches = []
+
     context = {
         "data": data,
         "source": source,
         "media_type": media_type,
         "layout": layout,
+        "artist_matches": artist_matches,
     }
 
     return render(request, "app/search.html", context)
@@ -669,10 +685,17 @@ def media_details(request, source, media_type, media_id, title):  # noqa: ARG001
         # artist, with the current release filtered out and the user's
         # library overlaid so owned albums get an Owned badge. Soft-fails
         # to None on any Discogs error so the page still renders.
-        primary_artist = _primary_artist(media_metadata.get("details", {}))
-        if primary_artist:
+        # Prefer the Discogs artist ID embedded in the release metadata
+        # over a name-based lookup: artists with disambiguation suffixes
+        # like "Beyoncé (2)" trip the fuzzy search, but the release
+        # already tells us the exact ID.
+        primary_artist_info = _primary_artist_info(media_metadata)
+        if primary_artist_info:
+            primary_artist = primary_artist_info["name"]
             try:
-                artist_id = discogs.artist_lookup(primary_artist)
+                artist_id = primary_artist_info.get("id") or discogs.artist_lookup(
+                    primary_artist,
+                )
                 if artist_id:
                     full_disco = discogs.artist_discography(artist_id)
                     other = [r for r in full_disco if r["media_id"] != media_id]
@@ -702,17 +725,26 @@ def media_details(request, source, media_type, media_id, title):  # noqa: ARG001
     return render(request, "app/media_details.html", context)
 
 
-def _primary_artist(details):
-    """Return the first credited artist name from a record's details dict.
+def _primary_artist_info(media_metadata):
+    """Return ``{"id", "name"}`` for the first credited artist.
 
-    Discogs joins multiple credits with ", " (see
-    ``providers.discogs.format_artists``); we link to the first one.
+    Prefers the structured ``artists`` list from the Discogs release
+    response (each entry carries the canonical artist ID). Falls back to
+    parsing the joined ``details.artist`` string when the structured
+    list is missing — e.g., cached responses from before this field
+    existed, or non-Discogs sources.
     """
-    artist = (details or {}).get("artist") or ""
-    if not artist:
+    artists = media_metadata.get("artists") or []
+    if artists:
+        first = artists[0]
+        if first.get("name"):
+            return {"id": first.get("id"), "name": first["name"]}
+
+    joined = (media_metadata.get("details") or {}).get("artist") or ""
+    if not joined:
         return None
-    first = artist.split(",", 1)[0].strip()
-    return first or None
+    name = joined.split(",", 1)[0].strip()
+    return {"id": None, "name": name} if name else None
 
 
 def _comparable_items(user, media_type, current_instance, *, limit=5):
