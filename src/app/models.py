@@ -895,6 +895,50 @@ class UserMessage(models.Model):
         return self.level
 
 
+class DismissedItem(models.Model):
+    """A media tile the user marked 'not interested' on the Browse page.
+
+    Stored as a denormalized (source, media_type, media_id) tuple rather
+    than a FK to ``Item`` because Browse surfaces provider items that
+    don't have an Item row yet — we don't want to materialize Items just
+    to record a dismissal. ``title`` is captured at dismissal time so a
+    future "manage dismissed items" page can list them without
+    re-hitting the provider.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="dismissed_items",
+    )
+    source = models.CharField(max_length=20, choices=Sources.choices)
+    media_type = models.CharField(max_length=20, choices=MediaTypes.choices)
+    media_id = models.CharField(max_length=64)
+    title = models.CharField(max_length=255, blank=True, default="")
+    dismissed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        """Meta options for the model."""
+
+        ordering = ["-dismissed_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "source", "media_type", "media_id"],
+                name="app_dismissed_unique",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=["user", "media_type", "source"],
+                name="app_dismissed_filter_idx",
+            ),
+        ]
+
+    def __str__(self):
+        """Return a readable identifier."""
+        return f"{self.title or self.media_id} ({self.media_type})"
+
+
 class Media(models.Model):
     """Abstract model for all media types."""
 

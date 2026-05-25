@@ -2,6 +2,7 @@
 
 <div class="{% if secondary_color %}bg-surface-2{% else %}bg-surface-1{% endif %} rounded-lg overflow-hidden shadow-lg relative {% if active %}ring-[1.5px] ring-slate-400{% endif %}"
      data-row-nav
+     data-dismiss-target
      {% if media and item.media_type != MediaTypes.EPISODE.value %}data-quick-rate-url="{% url 'update_media_score' item.media_type media.id %}" data-quick-rate-score="{{ media.score|default_if_none:'' }}"{% endif %}
      x-data="{ trackOpen: false, listsOpen: false, historyOpen: false }">
   <div class="relative">
@@ -177,6 +178,19 @@
             {% include "app/icons/history.svg" with classes="w-3.5 h-3.5 text-fg-muted" %}
             View history
           </button>
+          {% if show_dismiss %}
+            <button type="button"
+                    class="w-full flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-surface-2 transition-colors text-left text-fg-muted"
+                    hx-post="{% url 'dismiss_item' %}"
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                    hx-vals='{"source": "{{ item.source }}", "media_type": "{{ item.media_type }}", "media_id": "{{ item.media_id }}", "title": "{{ title|escapejs }}"}'
+                    hx-target="closest [data-dismiss-target]"
+                    hx-swap="delete swap:200ms"
+                    @click.stop="kebabOpen = false">
+              {% include "app/icons/circle-x.svg" with classes="w-3.5 h-3.5 text-fg-muted" %}
+              Not interested
+            </button>
+          {% endif %}
         </div>
       </div>
     {% endif %}

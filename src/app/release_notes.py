@@ -10,10 +10,21 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh98"
+CURRENT_FORK_VERSION = "0.25.2~ynh99"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh99",
+        "date": "2026-05-25",
+        "title": "'Not interested' on the Browse page",
+        "highlights": [
+            "Every tile on the Browse page now has a 'Not interested' option in its kebab menu (grid view) or a circle-X button next to the action pills (list view). Click it and the tile disappears with a soft fade and won't come back on future visits.",
+            "Dismissals persist per user, scoped to (source, media_type, media_id), and apply to both TMDB and Trakt source modes.",
+            "Stored as data we can mine later — the 'not interested' signal is just as useful for personalization as the 'completed/loved' signals, so the table is set up to feed future recommendation tweaks.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh98",
         "date": "2026-05-25",

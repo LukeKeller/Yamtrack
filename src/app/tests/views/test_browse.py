@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
-from app.models import MediaTypes, Sources
+from app.models import DismissedItem, MediaTypes, Sources
 
 
 class BrowseViewTests(TestCase):
@@ -163,6 +163,89 @@ class BrowseViewTests(TestCase):
             "anticipated",
             1,
         )
+
+    @patch("app.providers.tmdb.browse")
+    def test_browse_filters_out_dismissed_items(self, mock_browse):
+        """Dismissed tiles are filtered out of browse results."""
+        mock_browse.return_value = {
+            "page": 1,
+            "total_results": 2,
+            "total_pages": 1,
+            "results": [
+                {
+                    "media_id": "111",
+                    "title": "Keep Me",
+                    "media_type": MediaTypes.MOVIE.value,
+                    "source": Sources.TMDB.value,
+                    "image": "http://example.com/keep.jpg",
+                },
+                {
+                    "media_id": "222",
+                    "title": "Hide Me",
+                    "media_type": MediaTypes.MOVIE.value,
+                    "source": Sources.TMDB.value,
+                    "image": "http://example.com/hide.jpg",
+                },
+            ],
+        }
+        DismissedItem.objects.create(
+            user=self.user,
+            source=Sources.TMDB.value,
+            media_type=MediaTypes.MOVIE.value,
+            media_id="222",
+            title="Hide Me",
+        )
+
+        response = self.client.get(reverse("browse"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Keep Me")
+        self.assertNotContains(response, "Hide Me")
+
+    def test_dismiss_item_persists_and_is_idempotent(self):
+        """POSTing to dismiss_item creates a row; repeats are no-ops."""
+        payload = {
+            "source": Sources.TMDB.value,
+            "media_type": MediaTypes.MOVIE.value,
+            "media_id": "999",
+            "title": "Not For Me",
+        }
+        response = self.client.post(
+            reverse("dismiss_item"),
+            payload,
+            headers={"hx-request": "true"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            DismissedItem.objects.filter(user=self.user, media_id="999").count(),
+            1,
+        )
+
+        response = self.client.post(
+            reverse("dismiss_item"),
+            payload,
+            headers={"hx-request": "true"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            DismissedItem.objects.filter(user=self.user, media_id="999").count(),
+            1,
+        )
+
+    def test_dismiss_item_rejects_invalid_input(self):
+        """Missing required fields return 400; unknown source/type return 400."""
+        response = self.client.post(reverse("dismiss_item"), {})
+        self.assertEqual(response.status_code, 400)
+
+        response = self.client.post(
+            reverse("dismiss_item"),
+            {
+                "source": "not-a-source",
+                "media_type": MediaTypes.MOVIE.value,
+                "media_id": "1",
+            },
+        )
+        self.assertEqual(response.status_code, 400)
 
     @override_settings(TRAKT_API="")
     @patch("app.providers.tmdb.browse")

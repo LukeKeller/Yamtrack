@@ -28,6 +28,7 @@ from app.models import (
     MOOD_LABELS,
     TV,
     BasicMedia,
+    DismissedItem,
     Item,
     MediaTypes,
     Play,
@@ -591,6 +592,22 @@ def browse(request):
         data = provider.browse(media_type, category, page)
 
     if data.get("results"):
+        # Drop tiles the user previously marked 'not interested' so they
+        # don't keep cluttering the discovery rows. Filter before
+        # enrichment so we don't waste a DB query annotating items we're
+        # about to throw away.
+        dismissed_ids = set(
+            DismissedItem.objects.filter(
+                user=request.user,
+                source=source,
+                media_type=media_type,
+            ).values_list("media_id", flat=True),
+        )
+        if dismissed_ids:
+            data["results"] = [
+                r for r in data["results"]
+                if r.get("media_id") not in dismissed_ids
+            ]
         data["results"] = helpers.enrich_items_with_user_data(
             request, data["results"], "browse"
         )
@@ -602,6 +619,7 @@ def browse(request):
         "categories": categories,
         "layout": layout,
         "source": source,
+        "show_dismiss": True,
         "sources": [
             {"value": entry["value"], "label": entry["label"]}
             for entry in available_sources
@@ -1460,6 +1478,40 @@ def media_delete(request):
         logger.warning("The %s was already deleted before.", media_type)
 
     return helpers.redirect_back(request)
+
+
+@require_POST
+def dismiss_item(request):
+    """Record that the user marked a Browse tile 'not interested'.
+
+    Idempotent: re-dismissing the same tile is a no-op. Returns 204 so
+    the HTMX caller can swap the card out of the DOM via hx-swap=delete
+    without any markup ping-pong; falls back to a referer redirect for
+    non-HTMX clients (mostly tests).
+    """
+    source = request.POST.get("source", "").strip()
+    media_type = request.POST.get("media_type", "").strip()
+    media_id = request.POST.get("media_id", "").strip()
+    title = request.POST.get("title", "").strip()[:255]
+
+    if not (source and media_type and media_id):
+        return HttpResponseBadRequest("missing source/media_type/media_id")
+    if source not in Sources.values or media_type not in MediaTypes.values:
+        return HttpResponseBadRequest("unknown source or media_type")
+
+    DismissedItem.objects.get_or_create(
+        user=request.user,
+        source=source,
+        media_type=media_type,
+        media_id=media_id,
+        defaults={"title": title},
+    )
+
+    if request.headers.get("HX-Request"):
+        # 200 (not 204) so hx-swap="delete" actually fires — HTMX skips
+        # the swap on 204 responses.
+        return HttpResponse(b"")
+    return redirect(request.META.get("HTTP_REFERER") or "browse")
 
 
 @require_POST

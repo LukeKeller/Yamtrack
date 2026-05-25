@@ -1,6 +1,7 @@
 {% load app_tags %}
 
 <div class="bg-surface-1 rounded-lg overflow-hidden hover:bg-surface-2 transition-colors duration-200"
+     data-dismiss-target
      x-data="{ trackOpen: false, listsOpen: false, historyOpen: false }">
   <div class="flex items-center p-4 gap-4">
     <div class="shrink-0 relative">
@@ -60,6 +61,16 @@
                   hx-target="#{% component_id 'history' item %}"
                   hx-trigger="click once"
                   @click="historyOpen = true">{% include "app/icons/history.svg" with classes="w-4 h-4" %}</button>
+
+          {% if show_dismiss %}
+            <button class="p-2.5 bg-surface-2 text-fg-muted rounded-full hover:bg-surface-3 hover:text-fg hover:scale-110 transition-all duration-200 cursor-pointer"
+                    title="Not interested"
+                    hx-post="{% url 'dismiss_item' %}"
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                    hx-vals='{"source": "{{ item.source }}", "media_type": "{{ item.media_type }}", "media_id": "{{ item.media_id }}", "title": "{{ title|escapejs }}"}'
+                    hx-target="closest [data-dismiss-target]"
+                    hx-swap="delete swap:200ms">{% include "app/icons/circle-x.svg" with classes="w-4 h-4" %}</button>
+          {% endif %}
         </div>
       </div>
     </div>

@@ -5,6 +5,7 @@ from django.contrib import admin
 from django.contrib.admin.sites import AlreadyRegistered
 
 from app.models import (
+    DismissedItem,
     Episode,
     Item,
     Play,
@@ -47,6 +48,16 @@ class UserMessageAdmin(admin.ModelAdmin):
     list_filter = ["level", "shown_at"]
 
 
+@admin.register(DismissedItem)
+class DismissedItemAdmin(admin.ModelAdmin):
+    """Custom admin for 'not interested' dismissals."""
+
+    search_fields = ["user__username", "title", "media_id"]
+    list_display = ["__str__", "user", "source", "media_type", "dismissed_at"]
+    list_filter = ["media_type", "source"]
+    date_hierarchy = "dismissed_at"
+
+
 @admin.register(Play)
 class PlayAdmin(admin.ModelAdmin):
     """Custom admin for Play model."""
@@ -83,7 +94,15 @@ class MediaAdmin(admin.ModelAdmin):
 
 # Auto-register remaining models
 app_models = apps.get_app_config("app").get_models()
-SpecialModels = ["Item", "Episode", "BasicMedia", "UserMessage", "Play", "Track"]
+SpecialModels = [
+    "Item",
+    "Episode",
+    "BasicMedia",
+    "UserMessage",
+    "Play",
+    "Track",
+    "DismissedItem",
+]
 for model in app_models:
     if (
         not model.__name__.startswith("Historical")
