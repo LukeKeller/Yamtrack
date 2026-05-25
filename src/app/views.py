@@ -317,9 +317,15 @@ def _recent_activity(user, *, limit=8):
     rows = []
     common_fields = ("id", "history_type", "history_date")
     for name in BasicMedia.objects.get_historical_models():
+        # Episode rows are noise at the home-rail level (one per tick) and the
+        # live `episode` model has no `user` field for the hydration filter
+        # below -- its user lives on related_season.user. Season/TV activity
+        # already covers the show-level signal.
+        if name == "historicalepisode":
+            continue
         model = apps.get_model("app", name)
-        # `status` is on most but not all subclasses (Episode has no status of
-        # its own), so probe per-model and skip the field when absent.
+        # `status` is on most but not all subclasses, so probe per-model and
+        # skip the field when absent.
         field_names = {f.name for f in model._meta.fields}
         fields = common_fields + (("status",) if "status" in field_names else ())
         recent = (
