@@ -219,6 +219,13 @@
     <a href="{{ item|media_url }}"
        class="text-sm font-semibold text-white hover:text-indigo-400 transition duration-300 line-clamp-1"
        title="{{ title }}">{{ title }}</a>
+    {% if item.match_score and not media %}
+      {# Personal match score, shown only on tiles the user hasn't engaged with. #}
+      <div class="mt-1 flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full {% if item.match_score >= 80 %}bg-emerald-400{% elif item.match_score >= 60 %}bg-amber-400{% else %}bg-fg-faint{% endif %}"></span>
+        <span class="text-xs font-medium {% if item.match_score >= 80 %}text-emerald-400{% elif item.match_score >= 60 %}text-amber-400{% else %}text-fg-muted{% endif %}">{{ item.match_score }}% match</span>
+      </div>
+    {% endif %}
   </div>
 
   {% if item.media_type == MediaTypes.EPISODE.value %}

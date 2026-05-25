@@ -21,7 +21,7 @@ from django.utils.timezone import datetime
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 
-from app import config, helpers, history_processor
+from app import config, helpers, history_processor, taste
 from app import statistics as stats
 from app.forms import EpisodeForm, ManualItemForm, get_form_class
 from app.models import (
@@ -582,12 +582,20 @@ def browse(request):
     layout = request.GET.get("layout", "grid")
 
     if source == Sources.TMDB.value:
-        data = provider.browse(
-            media_type,
-            category,
-            page,
-            request.user.watch_provider_region,
-        )
+        if category == "for_you":
+            data = provider.for_you_browse(
+                media_type,
+                request.user,
+                page,
+                request.user.watch_provider_region,
+            )
+        else:
+            data = provider.browse(
+                media_type,
+                category,
+                page,
+                request.user.watch_provider_region,
+            )
     else:
         data = provider.browse(media_type, category, page)
 
@@ -595,7 +603,9 @@ def browse(request):
         # Drop tiles the user previously marked 'not interested' so they
         # don't keep cluttering the discovery rows. Filter before
         # enrichment so we don't waste a DB query annotating items we're
-        # about to throw away.
+        # about to throw away. (for_you_browse already filters its own
+        # candidate pool against dismissals + library; the redundant
+        # filter here is a no-op for that category.)
         dismissed_ids = set(
             DismissedItem.objects.filter(
                 user=request.user,
@@ -606,8 +616,16 @@ def browse(request):
         if dismissed_ids:
             data["results"] = [
                 r for r in data["results"]
-                if r.get("media_id") not in dismissed_ids
+                if str(r.get("media_id")) not in dismissed_ids
             ]
+        # Annotate with personal match scores so the % badge can render.
+        # No-op on cold-start / unsupported sources.
+        data["results"] = taste.attach_match_scores(
+            request.user,
+            media_type,
+            source,
+            data["results"],
+        )
         data["results"] = helpers.enrich_items_with_user_data(
             request, data["results"], "browse"
         )

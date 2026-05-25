@@ -2,6 +2,7 @@ import logging
 from datetime import timedelta
 
 import requests
+from django.apps import apps
 from django.conf import settings
 from django.core.cache import cache
 from django.utils import timezone
@@ -962,6 +963,7 @@ DEFAULT_WATCH_REGION = "US"
 STREAMING_WINDOW_DAYS = 180
 
 MOVIE_BROWSE_CATEGORIES = (
+    ("for_you", "For You"),
     ("popular", "Popular"),
     ("now_playing", "In Theaters"),
     ("streaming", "Streaming Now"),
@@ -973,6 +975,7 @@ MOVIE_BROWSE_CATEGORIES = (
 )
 
 TV_BROWSE_CATEGORIES = (
+    ("for_you", "For You"),
     ("popular", "Popular"),
     ("on_the_air", "On The Air"),
     ("airing_today", "Airing Today"),
@@ -1114,6 +1117,7 @@ def browse(media_type, category, page, watch_region=None):
     except requests.exceptions.HTTPError as error:
         handle_error(error)
 
+    genre_map = get_genre_map(media_type)
     results = [
         {
             "media_id": media["id"],
@@ -1121,6 +1125,11 @@ def browse(media_type, category, page, watch_region=None):
             "media_type": media_type,
             "title": get_title(media),
             "image": get_image_url(media.get("poster_path")),
+            "genre_names": [
+                genre_map[gid]
+                for gid in media.get("genre_ids") or []
+                if gid in genre_map
+            ],
         }
         for media in response.get("results", [])
     ]
@@ -1133,6 +1142,131 @@ def browse(media_type, category, page, watch_region=None):
     }
 
     cache.set(cache_key, data)
+    return data
+
+
+def get_genre_map(media_type):
+    """Return ``{tmdb_genre_id: name}`` for the given media type.
+
+    TMDB returns ``genre_ids`` (not names) on discover / popular /
+    trending results, so we need a lookup table to translate. The
+    /genre/movie/list and /genre/tv/list endpoints provide it. Cached
+    for 7 days — TMDB's official genre list barely ever changes.
+    """
+    cache_key = f"tmdb_genre_map_{media_type}"
+    data = cache.get(cache_key)
+    if data is not None:
+        return data
+
+    path = (
+        "genre/movie/list"
+        if media_type == MediaTypes.MOVIE.value
+        else "genre/tv/list"
+    )
+    try:
+        response = services.api_request(
+            Sources.TMDB.value,
+            "GET",
+            f"{base_url}/{path}",
+            params=base_params,
+        )
+    except requests.exceptions.HTTPError:
+        return {}
+
+    data = {entry["id"]: entry["name"] for entry in response.get("genres") or []}
+    cache.set(cache_key, data, 60 * 60 * 24 * 7)
+    return data
+
+
+def for_you_browse(media_type, user, page, watch_region=None):
+    """Personalized browse list scored against the user's taste profile.
+
+    Aggregates a candidate pool from the existing TMDB browse
+    categories (popular + top_rated + trending), enriches each with
+    genre names, attaches a match score from
+    ``app.taste.attach_match_scores``, drops items the user already
+    tracks or dismissed, and returns them sorted by descending match.
+
+    Falls back to the "popular" list when the user lacks enough
+    positive signal for the taste profile to be meaningful — same
+    contract as ``browse()`` so the caller doesn't have to special-case
+    cold-start users.
+    """
+    # Local imports to dodge circular-import cycles
+    # (tmdb -> taste -> services -> tmdb).
+    from app import taste  # noqa: PLC0415
+    from app.models import DismissedItem  # noqa: PLC0415
+
+    profile = taste.build_profile(user, media_type)
+    if not taste.has_enough_signal(profile):
+        return browse(media_type, "popular", page, watch_region)
+
+    cache_key = (
+        f"browse_{Sources.TMDB.value}_{media_type}_for_you_{user.id}"
+        f"_{watch_region or DEFAULT_WATCH_REGION}_{page}"
+    )
+    data = cache.get(cache_key)
+    if data is not None:
+        return data
+
+    # Pull a handful of pages from a few stable categories. Keeps total
+    # API spend bounded; we'd rather re-rank a great candidate pool
+    # than mint a 50-page personalized feed nobody scrolls past.
+    candidate_sources = ("popular", "top_rated", "trending")
+    seen = {}
+    for category in candidate_sources:
+        for src_page in (1, 2, 3):
+            try:
+                slice_data = browse(media_type, category, src_page, watch_region)
+            except Exception:  # noqa: BLE001
+                logger.warning("for_you: %s page %s failed", category, src_page)
+                continue
+            for r in slice_data.get("results") or []:
+                seen.setdefault(r["media_id"], r)
+
+    dismissed_ids = set(
+        DismissedItem.objects.filter(
+            user=user,
+            source=Sources.TMDB.value,
+            media_type=media_type,
+        ).values_list("media_id", flat=True),
+    )
+
+    model = apps.get_model("app", media_type)
+    owned_ids = set(
+        model.objects.filter(
+            user=user,
+            item__source=Sources.TMDB.value,
+            item__media_type=media_type,
+        ).values_list("item__media_id", flat=True),
+    )
+
+    candidates = [
+        r
+        for mid, r in seen.items()
+        if str(mid) not in dismissed_ids and str(mid) not in owned_ids
+    ]
+
+    for r in candidates:
+        r["match_score"] = taste.score_item(profile, r.get("genre_names") or [])
+
+    candidates.sort(key=lambda r: r.get("match_score", 0), reverse=True)
+
+    page_size = 20
+    total = len(candidates)
+    total_pages = max(1, (total + page_size - 1) // page_size)
+    page = max(1, min(int(page), total_pages))
+    start = (page - 1) * page_size
+    end = start + page_size
+
+    data = {
+        "page": page,
+        "total_results": total,
+        "total_pages": total_pages,
+        "results": candidates[start:end],
+    }
+
+    cache.set(cache_key, data, 60 * 30)  # 30 min — taste invalidations also clear
     return data
 
 

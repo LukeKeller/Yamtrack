@@ -31,6 +31,13 @@
               {% include "app/icons/cube.svg" with classes="w-4 h-4" %}
               {{ item.media_type|default_source }}
             </span>
+
+            {% if item.match_score and not media %}
+              <span class="flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full {% if item.match_score >= 80 %}bg-emerald-400{% elif item.match_score >= 60 %}bg-amber-400{% else %}bg-fg-faint{% endif %}"></span>
+                <span class="font-medium {% if item.match_score >= 80 %}text-emerald-400{% elif item.match_score >= 60 %}text-amber-400{% else %}text-fg-muted{% endif %}">{{ item.match_score }}% match</span>
+              </span>
+            {% endif %}
           </div>
         </div>
 

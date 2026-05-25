@@ -10,10 +10,22 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh100"
+CURRENT_FORK_VERSION = "0.25.2~ynh101"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh101",
+        "date": "2026-05-25",
+        "title": "% match badges + 'For You' Browse category",
+        "highlights": [
+            "Each Browse tile (TMDB movies/TV) now shows a personal '% match' badge based on a per-user taste profile — weighted genre bags built from your rated/completed items (positive) and your dismissed/dropped items (negative). Color-coded green ≥80, amber ≥60, muted below.",
+            "Added a 'For You' category at the top of the Browse tabs. It pulls a candidate pool from Popular + Top Rated + Trending, drops items you've already tracked or dismissed, scores them against your taste profile, and shows the top matches by descending score. Falls back to the regular Popular list when you don't have enough rated items yet (currently 5).",
+            "Badges hide on tiles you've already engaged with (status chip wins that real estate), and on cold-start users (fewer than 5 rated items) until the signal is meaningful.",
+            "Taste profiles are cached per (user, media_type) for 24h and automatically invalidated whenever you save a score, complete an item, dismiss something, or change a status — so changes show up on the next Browse load.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh100",
         "date": "2026-05-25",
