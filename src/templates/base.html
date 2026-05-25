@@ -390,8 +390,9 @@
       })();
     </script>
 
-    <script src="{% static 'js/mediaStatusDateHandler.js' %}{% get_static_file_mtime 'js/mediaStatusDateHandler.js' %}"></script>
-    <script src="{% static 'js/searchShortcut.js' %}{% get_static_file_mtime 'js/searchShortcut.js' %}"
+    <script defer src="{% static 'js/mediaStatusDateHandler.js' %}{% get_static_file_mtime 'js/mediaStatusDateHandler.js' %}"></script>
+    <script defer
+            src="{% static 'js/searchShortcut.js' %}{% get_static_file_mtime 'js/searchShortcut.js' %}"
             data-shortcut-home="{% url 'home' %}"
             data-shortcut-calendar="{% url 'calendar' %}"
             data-shortcut-lists="{% url 'lists' %}"></script>

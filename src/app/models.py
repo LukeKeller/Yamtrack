@@ -4,6 +4,7 @@ from datetime import timedelta
 
 from django.apps import apps
 from django.conf import settings
+from django.core.cache import cache
 from django.core.validators import (
     DecimalValidator,
     MaxValueValidator,
@@ -226,7 +227,19 @@ class Item(CalendarTriggerMixin, models.Model):
             items_to_process = [self]
 
         if delay:
-            events.tasks.reload_calendar.delay(items_to_process=items_to_process)
+            # Coalesce rapid-fire reloads for the same item: marking a
+            # whole season's episodes watched used to queue one
+            # reload_calendar task per save, all doing the same work.
+            # We hold a per-item Redis flag for ~30s; the first call
+            # in that window schedules the task with a short countdown,
+            # subsequent calls find the flag set and skip enqueueing.
+            target = items_to_process[0]
+            dedup_key = f"reload_calendar:item:{target.pk}"
+            if cache.add(dedup_key, "1", timeout=30):
+                events.tasks.reload_calendar.apply_async(
+                    kwargs={"items_to_process": items_to_process},
+                    countdown=3,
+                )
         else:
             events.tasks.reload_calendar(items_to_process=items_to_process)
 
@@ -980,10 +993,28 @@ class Media(models.Model):
     notes = models.TextField(blank=True, default="")
 
     class Meta:
-        """Meta options for the model."""
+        """Meta options for the model.
+
+        ``indexes`` here propagate to every concrete subclass that
+        doesn't override ``Meta`` (Movie, Anime, Manga, Game, Book,
+        Comic, BoardGame, Record). TV / Season override the Meta and
+        repeat these indexes explicitly. The two indexes cover the two
+        hottest filter / sort patterns: status filtering on the media
+        list, and recent-progress sort on the home page.
+        """
 
         abstract = True
         ordering = ["user", "item", "-created_at"]
+        indexes = [
+            models.Index(
+                fields=["user", "status"],
+                name="%(app_label)s_%(class)s_user_st_idx",
+            ),
+            models.Index(
+                fields=["user", "progressed_at"],
+                name="%(app_label)s_%(class)s_user_pr_idx",
+            ),
+        ]
 
     def __str__(self):
         """Return the title of the media."""
@@ -1088,13 +1119,26 @@ class TV(Media):
     tracker = FieldTracker()
 
     class Meta:
-        """Meta options for the model."""
+        """Meta options for the model.
+
+        TV's ``progress`` / ``progressed_at`` / ``start_date`` /
+        ``end_date`` are computed @properties (aggregated from seasons),
+        so the inherited Media columns are shadowed and don't exist on
+        this table. That's why we don't carry the
+        ``user+progressed_at`` index here — only ``user+status``.
+        """
 
         ordering = ["user", "item"]
         constraints = [
             models.UniqueConstraint(
                 fields=["user", "item"],
                 name="%(app_label)s_%(class)s_unique_item_user",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=["user", "status"],
+                name="%(app_label)s_%(class)s_user_st_idx",
             ),
         ]
 
@@ -1467,12 +1511,22 @@ class Season(Media):
         """Limit the uniqueness of seasons.
 
         Only one season per media can have the same season number.
+        Like TV, Season exposes the date / progress fields as
+        @properties aggregated from its episodes, so the inherited
+        Media columns are shadowed and we only index ``user+status``
+        here.
         """
 
         constraints = [
             models.UniqueConstraint(
                 fields=["related_tv", "item"],
                 name="%(app_label)s_season_unique_tv_item",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=["user", "status"],
+                name="%(app_label)s_%(class)s_user_st_idx",
             ),
         ]
 
@@ -1970,6 +2024,15 @@ class Episode(models.Model):
             "item__episode_number",
             "-end_date",
             "-created_at",
+        ]
+        # The (related_season, end_date) index supports the calendar
+        # queries that look up "episodes a user finished" through the
+        # FK; (end_date,) supports the global "watched on this day"
+        # path. FK on related_season already has an implicit index, so
+        # this covers the second column.
+        indexes = [
+            models.Index(fields=["related_season", "end_date"]),
+            models.Index(fields=["end_date"]),
         ]
 
     def __str__(self):

@@ -3,6 +3,7 @@ import logging
 from celery import states
 from celery.signals import before_task_publish
 from django.apps import apps
+from django.core.cache import cache
 from django.db.backends.signals import connection_created
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
@@ -32,6 +33,16 @@ def _invalidate_taste(user_id, media_type):
     taste.invalidate(user_id, media_type)
 
 
+def _invalidate_sidebar_counts(user_id):
+    """Drop the cached per-user sidebar count dict.
+
+    The key shape matches ``SIDEBAR_COUNTS_CACHE_KEY`` in
+    ``app.templatetags.app_tags``; duplicated as a literal here to avoid
+    importing the templatetags module at signal-registration time.
+    """
+    cache.delete(f"app:sidebar_counts:user:{user_id}")
+
+
 def _hook_taste_invalidation():
     """Wire post_save / post_delete on every Media subclass + DismissedItem.
 
@@ -46,13 +57,20 @@ def _hook_taste_invalidation():
             model = apps.get_model("app", media_type)
         except LookupError:
             continue
+        # Episode rows live under a Season and have no ``user_id`` of
+        # their own — skip wiring; the parent Season's save fires its
+        # own signal when an episode finale flips the season status.
+        if not any(f.name == "user" for f in model._meta.fields):
+            continue
         # Closure captures media_type via default arg to avoid the late-binding pitfall.
 
         def _on_save(sender, instance, media_type=media_type, **kwargs):  # noqa: ARG001
             _invalidate_taste(instance.user_id, media_type)
+            _invalidate_sidebar_counts(instance.user_id)
 
         def _on_delete(sender, instance, media_type=media_type, **kwargs):  # noqa: ARG001
             _invalidate_taste(instance.user_id, media_type)
+            _invalidate_sidebar_counts(instance.user_id)
 
         post_save.connect(_on_save, sender=model, weak=False)
         post_delete.connect(_on_delete, sender=model, weak=False)

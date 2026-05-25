@@ -5,6 +5,7 @@ from pathlib import Path
 from django import template
 from django.apps import apps
 from django.conf import settings
+from django.core.cache import cache
 from django.urls import reverse
 from django.utils import formats, timezone
 from django.utils.dateparse import parse_date
@@ -303,16 +304,45 @@ def get_search_media_types(user):
     ]
 
 
+SIDEBAR_COUNTS_CACHE_KEY = "app:sidebar_counts:user:{user_id}"
+SIDEBAR_COUNTS_CACHE_TIMEOUT = 60 * 60 * 24  # invalidated on Media save/delete
+
+
+def _sidebar_counts_for_user(user, enabled_types):
+    """Return a {media_type: count} dict, cached per-user in Redis.
+
+    Cache key is invalidated by the post_save/post_delete hooks in
+    ``app.signals`` whenever any Media subclass row changes for the user,
+    so the dict is always cheap on subsequent reads but never stale.
+    """
+    cache_key = SIDEBAR_COUNTS_CACHE_KEY.format(user_id=user.id)
+    counts = cache.get(cache_key)
+    if counts is not None:
+        return counts
+
+    counts = {}
+    for media_type in enabled_types:
+        try:
+            model = apps.get_model(app_label="app", model_name=media_type)
+        except LookupError:
+            counts[media_type] = None
+            continue
+        counts[media_type] = model.objects.filter(user=user.id).count()
+    cache.set(cache_key, counts, timeout=SIDEBAR_COUNTS_CACHE_TIMEOUT)
+    return counts
+
+
 @register.simple_tag
 def get_sidebar_media_types(user, *, with_counts=False):
     """Return available media types for sidebar navigation based on user preferences.
 
     When `with_counts=True` each entry also gets a `count` field — the number
-    of tracked items of that type for this user. Counts run as one COUNT()
-    query per enabled type; the helper is opt-in so the global cmdk overlay
-    (which doesn't need counts) doesn't pay for them.
+    of tracked items of that type for this user. Counts are cached per-user
+    in Redis (invalidated by ``app.signals`` on any Media write), so the
+    common case of repeated full-page navigations does zero COUNT queries.
     """
     enabled_types = user.get_enabled_media_types()
+    counts = _sidebar_counts_for_user(user, enabled_types) if with_counts else None
     items = []
     for media_type in enabled_types:
         entry = {
@@ -320,12 +350,7 @@ def get_sidebar_media_types(user, *, with_counts=False):
             "display_name": media_type_readable_plural(media_type),
         }
         if with_counts:
-            try:
-                model = apps.get_model(app_label="app", model_name=media_type)
-            except LookupError:
-                entry["count"] = None
-            else:
-                entry["count"] = model.objects.filter(user=user.id).count()
+            entry["count"] = counts.get(media_type)
         items.append(entry)
     return items
 

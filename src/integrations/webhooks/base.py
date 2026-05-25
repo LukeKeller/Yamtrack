@@ -62,9 +62,14 @@ class BaseWebhookProcessor:
             self._process_movie(payload, user, ids)
 
     def _process_tv(self, payload, user, ids):
+        # Fetch the Kometa anime mapping once up front when anime detection
+        # is enabled; the AniDB and TVDB branches below both consume it,
+        # and calling _fetch_mapping_data twice doubled the cache lookups
+        # for every TV webhook.
+        mapping_data = self._fetch_mapping_data() if user.anime_enabled else None
+
         anidb_id = ids.get("anidb_id")
         if user.anime_enabled and anidb_id:
-            mapping_data = self._fetch_mapping_data()
             matching_entry = mapping_data.get(anidb_id)
             episode_number = self._get_episode_number(payload)
 
@@ -108,7 +113,6 @@ class BaseWebhookProcessor:
             return
 
         if user.anime_enabled:
-            mapping_data = self._fetch_mapping_data()
             mal_id, episode_offset = self._get_mal_id_from_tvdb(
                 mapping_data,
                 tvdb_episode["series_id"],
@@ -208,7 +212,10 @@ class BaseWebhookProcessor:
         if data is None:
             url = "https://raw.githubusercontent.com/Kometa-Team/Anime-IDs/refs/heads/master/anime_ids.json"
             data = app.providers.services.api_request("GITHUB", "GET", url)
-            cache.set("anime_mapping_data", data)
+            # 24h matches CACHE_TIMEOUT for provider responses; without an
+            # explicit timeout Django's default of 5 minutes refetches the
+            # ~30KB JSON on every webhook burst.
+            cache.set("anime_mapping_data", data, timeout=60 * 60 * 24)
         return data
 
     def _get_mal_id_from_tvdb(
