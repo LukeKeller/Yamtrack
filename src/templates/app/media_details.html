@@ -519,23 +519,49 @@
                    class="text-[11px] text-fg-muted hover:text-accent transition-colors">All options →</a>
               {% endif %}
             </div>
+            {% comment %}
+              Each chip gets a "you have this" highlight when the
+              provider_id is in the user's subscribed set (from
+              Preferences → Streaming services). The highlight is just
+              a ring + tinted background — preserves the existing
+              chip-list shape so nothing reflows.
+            {% endcomment %}
             <div class="flex flex-wrap gap-2">
               {% for provider in watch_providers.providers %}
-                {% if watch_providers.link %}
-                  <a href="{{ watch_providers.link }}"
-                     target="_blank"
-                     rel="noopener"
-                     title="{{ provider.provider_name }}"
-                     class="flex items-center gap-2 bg-surface-2 hover:bg-surface-3 rounded-md pl-1 pr-2.5 py-1 transition-colors">
-                    <img class="rounded w-7 h-7" src="{{ provider.image }}" alt="" />
-                    <span class="text-xs font-medium text-fg">{{ provider.provider_name }}</span>
-                  </a>
+                {% if provider.provider_id in subscribed_provider_ids %}
+                  {% if watch_providers.link %}
+                    <a href="{{ watch_providers.link }}"
+                       target="_blank"
+                       rel="noopener"
+                       title="{{ provider.provider_name }} — on your services"
+                       class="flex items-center gap-2 rounded-md pl-1 pr-2.5 py-1 transition-colors bg-accent-soft ring-1 ring-accent text-accent">
+                      <img class="rounded w-7 h-7" src="{{ provider.image }}" alt="" />
+                      <span class="text-xs font-medium">{{ provider.provider_name }}</span>
+                    </a>
+                  {% else %}
+                    <div title="{{ provider.provider_name }} — on your services"
+                         class="flex items-center gap-2 rounded-md pl-1 pr-2.5 py-1 bg-accent-soft ring-1 ring-accent text-accent">
+                      <img class="rounded w-7 h-7" src="{{ provider.image }}" alt="" />
+                      <span class="text-xs font-medium">{{ provider.provider_name }}</span>
+                    </div>
+                  {% endif %}
                 {% else %}
-                  <div title="{{ provider.provider_name }}"
-                       class="flex items-center gap-2 bg-surface-2 rounded-md pl-1 pr-2.5 py-1">
-                    <img class="rounded w-7 h-7" src="{{ provider.image }}" alt="" />
-                    <span class="text-xs font-medium text-fg">{{ provider.provider_name }}</span>
-                  </div>
+                  {% if watch_providers.link %}
+                    <a href="{{ watch_providers.link }}"
+                       target="_blank"
+                       rel="noopener"
+                       title="{{ provider.provider_name }}"
+                       class="flex items-center gap-2 bg-surface-2 hover:bg-surface-3 rounded-md pl-1 pr-2.5 py-1 transition-colors">
+                      <img class="rounded w-7 h-7" src="{{ provider.image }}" alt="" />
+                      <span class="text-xs font-medium text-fg">{{ provider.provider_name }}</span>
+                    </a>
+                  {% else %}
+                    <div title="{{ provider.provider_name }}"
+                         class="flex items-center gap-2 bg-surface-2 rounded-md pl-1 pr-2.5 py-1">
+                      <img class="rounded w-7 h-7" src="{{ provider.image }}" alt="" />
+                      <span class="text-xs font-medium text-fg">{{ provider.provider_name }}</span>
+                    </div>
+                  {% endif %}
                 {% endif %}
               {% endfor %}
             </div>

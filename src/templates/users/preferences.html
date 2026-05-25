@@ -455,6 +455,36 @@
         </div>
       </div>
 
+      {% comment %}
+        Streaming services the user subscribes to. Powers the home "Watch
+        tonight" rail (Planning items currently streamable on a service
+        the user has) and a highlight on the media_details provider chips
+        for matches. Curated list from app.config.STREAMING_PROVIDERS.
+      {% endcomment %}
+      <div class="mb-5">
+        <div class="p-3 bg-surface-2 rounded-md">
+          <div class="flex items-center text-fg mb-1">
+            {% include "app/icons/flame.svg" with classes="w-5 h-5 mr-2" %}
+            <span class="text-sm font-medium">Streaming services</span>
+          </div>
+          <p class="text-xs text-fg-muted ml-7 mb-3">
+            Pick the services you subscribe to. The home page surfaces a "Watch tonight" rail of Planning items currently streaming on one of them.
+          </p>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+            {% for provider in streaming_provider_choices %}
+              <label class="flex items-center gap-2 px-3 py-2 bg-surface-3 rounded-md cursor-pointer hover:bg-surface-3/80 has-[:checked]:ring-2 has-[:checked]:ring-indigo-400 transition">
+                <input type="checkbox"
+                       name="streaming_providers"
+                       value="{{ provider.id }}"
+                       class="w-4 h-4 accent-indigo-500"
+                       {% if provider.id in subscribed_provider_ids %}checked{% endif %}>
+                <span class="text-sm text-fg truncate">{{ provider.name }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
       <div class="border-t border-gray-600 my-5"></div>
 
       {# Media Types Settings #}

@@ -422,6 +422,18 @@ class User(AbstractUser):
         help_text="Region to show watch providers for",
     )
 
+    # Comma-separated TMDB provider IDs the user subscribes to. Drives the
+    # "Watch tonight" home rail (filtered to currently-streamable items)
+    # and lights up matching chips on the media_details page. The curated
+    # list of selectable providers lives in ``app.config.STREAMING_PROVIDERS``;
+    # ``app.config.parse_streaming_providers`` turns this text back into a
+    # set[int] for filtering.
+    streaming_providers = models.TextField(
+        blank=True,
+        default="",
+        help_text="Comma-separated TMDB provider IDs the user subscribes to.",
+    )
+
     # Calendar preferences
     calendar_layout = models.CharField(
         max_length=20,

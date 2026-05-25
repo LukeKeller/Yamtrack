@@ -122,6 +122,7 @@ def home(request):
     context = {
         "home_sections": home_sections,
         "up_next": up_next,
+        "watch_tonight": _watch_tonight(request.user),
         "recent_activity": _recent_activity(request.user, limit=8),
         "on_this_day": _on_this_day(request.user, limit=8),
         "stale_planning": _stale_planning(request.user, limit=5),
@@ -267,6 +268,125 @@ def _palate_cleanser(user, *, window_days=30, dominance=0.7):
                 "dominant_pct": round(dominant_count / total * 100),
             }
     return None
+
+
+_WATCH_TONIGHT_CANDIDATE_CAP = 30  # how many recent Planning rows we look at
+_WATCH_TONIGHT_LIMIT = 8  # rendered rail length
+
+
+def _recent_planning_candidates(user, *, cap):
+    """Recent Planning movies + TV (TMDB only) for the streaming rail.
+
+    Returns a list of ``(media_type, media)`` tuples. TMDB-only because
+    only TMDB metadata carries watch-provider data today.
+    """
+    candidates = []
+    for media_type in (MediaTypes.MOVIE.value, MediaTypes.TV.value):
+        try:
+            model = apps.get_model("app", media_type)
+        except LookupError:
+            continue
+        qs = (
+            model.objects.filter(
+                user=user,
+                status=Status.PLANNING.value,
+                item__source=Sources.TMDB.value,
+            )
+            .select_related("item")
+            .order_by("-created_at")[:cap]
+        )
+        candidates.extend((media_type, media) for media in qs)
+    return candidates
+
+
+def _available_providers_in_region(meta, region):
+    """Return the set of TMDB provider IDs streaming this item in ``region``.
+
+    Pulls flatrate + free buckets; ignores rent / buy / ads (matches the
+    media_details chip filter). Returns an empty set when the metadata
+    or region key is missing.
+    """
+    region_data = (meta.get("providers") or {}).get(region) or {}
+    return {
+        p.get("provider_id")
+        for p in (region_data.get("flatrate") or []) + (region_data.get("free") or [])
+    }
+
+
+def _watch_tonight(user, *, limit=_WATCH_TONIGHT_LIMIT):
+    """Top matched Planning Movies / TV currently streaming on a user's services.
+
+    Returns a list of ``{"media", "item", "match_score", "providers"}`` dicts
+    sorted by best taste-match first. Empty when the user has set no
+    streaming services, has no region selected, or no Planning items
+    have cached metadata yet.
+
+    Cold-cache behavior: we **never** trigger a TMDB fetch from here —
+    we read metadata via ``cache.get_many`` only. Titles the user has
+    viewed are cached for 24h, so the rail fills in organically as the
+    user browses their library. This keeps the home page request bounded
+    to a single Redis round-trip regardless of Planning-list size.
+    """
+    subscribed = config.parse_streaming_providers(user.streaming_providers)
+    region = user.watch_provider_region or ""
+    if not subscribed or region in ("", "UNSET"):
+        return []
+
+    candidates = _recent_planning_candidates(user, cap=_WATCH_TONIGHT_CANDIDATE_CAP)
+    if not candidates:
+        return []
+
+    cache_keys = [
+        f"{Sources.TMDB.value}_{mt}_{media.item.media_id}" for mt, media in candidates
+    ]
+    cached = cache.get_many(cache_keys)
+    if not cached:
+        return []
+
+    # Build taste profiles lazily — one per media_type — and only when
+    # the user has enough signal. Otherwise we still rank by recency.
+    profiles = {}
+    for mt in (MediaTypes.MOVIE.value, MediaTypes.TV.value):
+        profile = taste.build_profile(user, mt)
+        if taste.has_enough_signal(profile):
+            profiles[mt] = profile
+
+    provider_lookup = {
+        entry["id"]: entry["name"] for entry in config.STREAMING_PROVIDERS
+    }
+
+    results = []
+    for (media_type, media), key in zip(candidates, cache_keys, strict=True):
+        meta = cached.get(key)
+        if not meta:
+            continue
+        matches = subscribed & _available_providers_in_region(meta, region)
+        if not matches:
+            continue
+        profile = profiles.get(media_type)
+        match_score = (
+            taste.score_item(profile, meta.get("genres") or []) if profile else None
+        )
+        results.append(
+            {
+                "media": media,
+                "item": media.item,
+                "media_type": media_type,
+                "match_score": match_score,
+                "providers": [
+                    {"id": pid, "name": provider_lookup.get(pid, "")} for pid in matches
+                ],
+            },
+        )
+
+    # Best match first; ties by most-recently-added Planning row.
+    results.sort(
+        key=lambda r: (
+            -(r["match_score"] or 0),
+            -r["media"].created_at.timestamp(),
+        ),
+    )
+    return results[:limit]
 
 
 def _stale_planning(user, *, limit=5, days=180):
@@ -620,7 +740,8 @@ def browse(request):
         )
         if dismissed_ids:
             data["results"] = [
-                r for r in data["results"]
+                r
+                for r in data["results"]
                 if str(r.get("media_id")) not in dismissed_ids
             ]
         # Default language filter — Hindi-language titles dominate
@@ -629,13 +750,11 @@ def browse(request):
         # we drop them by default. Everything else passes through.
         # Toggleable; TMDB-only since other sources don't populate
         # original_language consistently.
-        if (
-            source == Sources.TMDB.value
-            and not request.user.browse_include_non_english
-        ):
+        if source == Sources.TMDB.value and not request.user.browse_include_non_english:
             blocked_languages = {"hi"}
             data["results"] = [
-                r for r in data["results"]
+                r
+                for r in data["results"]
                 if (r.get("original_language") or "") not in blocked_languages
             ]
         # Annotate with personal match scores so the % badge can render.
@@ -695,6 +814,13 @@ def media_details(request, source, media_type, media_id, title):  # noqa: ARG001
     else:
         watch_providers = None
 
+    # Subscribed-provider IDs so the template can highlight chips that
+    # the user actually has a sub for. Computed once here, passed in as
+    # a set for cheap ``in`` checks in the loop.
+    subscribed_provider_ids = config.parse_streaming_providers(
+        request.user.streaming_providers,
+    )
+
     context = {
         "media": media_metadata,
         "media_type": media_type,
@@ -702,6 +828,7 @@ def media_details(request, source, media_type, media_id, title):  # noqa: ARG001
         "current_instance": current_instance,
         "watch_providers": watch_providers,
         "watch_provider_region": request.user.watch_provider_region,
+        "subscribed_provider_ids": subscribed_provider_ids,
         "comparable_items": _comparable_items(
             request.user,
             media_type,
@@ -766,8 +893,7 @@ def media_details(request, source, media_type, media_id, title):  # noqa: ARG001
                         ).select_related("item")
                     }
                     context["artist_discography"] = [
-                        {"release": r, "media": owned.get(r["media_id"])}
-                        for r in other
+                        {"release": r, "media": owned.get(r["media_id"])} for r in other
                     ]
                     context["artist_discography_name"] = primary_artist
                     context["artist_discography_owned"] = sum(
@@ -1166,6 +1292,9 @@ def season_details(request, source, media_id, title, season_number):  # noqa: AR
             season_metadata.get("providers"), request.user.watch_provider_region
         ),
         "watch_provider_region": request.user.watch_provider_region,
+        "subscribed_provider_ids": config.parse_streaming_providers(
+            request.user.streaming_providers,
+        ),
     }
     return render(request, "app/media_details.html", context)
 

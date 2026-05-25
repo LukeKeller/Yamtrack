@@ -17,6 +17,7 @@ from django.template.defaultfilters import pluralize
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 from django_celery_beat.models import PeriodicTask
 
+from app import config as app_config
 from app.models import Item, MediaTypes
 from app.providers import tmdb
 from app.release_notes import CURRENT_FORK_VERSION
@@ -226,12 +227,34 @@ def test_notification(request):
     return redirect("notifications")
 
 
+def _sanitize_streaming_providers(raw_values):
+    """Filter a POST list of provider IDs against the curated allowlist.
+
+    Returns a comma-separated string ready to drop into
+    ``User.streaming_providers``. Reject anything that doesn't match a
+    known entry so a tampered POST can't smuggle arbitrary IDs through.
+    """
+    known_provider_ids = {entry["id"] for entry in app_config.STREAMING_PROVIDERS}
+    selected = []
+    for raw in raw_values:
+        try:
+            value = int(raw)
+        except (TypeError, ValueError):
+            continue
+        if value in known_provider_ids:
+            selected.append(str(value))
+    return ",".join(selected)
+
+
 @require_http_methods(["GET", "POST"])
 def preferences(request):
     """Render the preferences settings page."""
     media_types = MediaTypes.values
     media_types.remove(MediaTypes.EPISODE.value)
     watch_provider_regions = tmdb.watch_provider_regions()
+    subscribed_provider_ids = app_config.parse_streaming_providers(
+        request.user.streaming_providers,
+    )
 
     if request.method == "GET":
         return render(
@@ -247,6 +270,8 @@ def preferences(request):
                 "font_choices": FontChoices.choices,
                 "watch_provider_choices": watch_provider_regions,
                 "timezone_choices": sorted(zoneinfo.available_timezones()),
+                "streaming_provider_choices": app_config.STREAMING_PROVIDERS,
+                "subscribed_provider_ids": subscribed_provider_ids,
             },
         )
 
@@ -295,6 +320,10 @@ def preferences(request):
         request.user.watch_provider_region = provider_region
     else:
         request.user.watch_provider_region = "UNSET"
+
+    request.user.streaming_providers = _sanitize_streaming_providers(
+        request.POST.getlist("streaming_providers"),
+    )
 
     # Update user preferences for each media type
     for media_type in media_types:

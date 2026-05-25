@@ -130,6 +130,60 @@
       </section>
     {% endif %}
 
+    {% if watch_tonight %}
+      {% comment %}
+        Top Planning matches that are currently streaming on a service
+        the user has linked in Preferences. Ranked by taste-match %
+        when the user has enough history, otherwise by recency.
+        Provider lookups read straight from the metadata Redis cache
+        (no extra TMDB calls on this page render) — items the user
+        hasn't viewed yet simply don't appear until their metadata
+        gets warmed by a detail-page visit.
+      {% endcomment %}
+      <section data-row-nav-group>
+        <div class="flex items-baseline justify-between mb-3 gap-3">
+          <h2 class="text-lg font-semibold flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+            Watch tonight
+          </h2>
+          <span class="text-xs text-fg-faint">Streaming now on your services</span>
+        </div>
+        <div class="flex gap-3 overflow-x-auto no-scrollbar -mx-4 lg:-mx-8 px-4 lg:px-8 pb-2 snap-x snap-mandatory">
+          {% for row in watch_tonight %}
+            <div class="snap-start shrink-0 w-80 rounded-lg bg-surface-1 hover:bg-surface-2 transition-colors relative group overflow-hidden border"
+                 style="border-color: var(--color-border-subtle)"
+                 data-row-nav>
+              <a href="{{ row.item|media_url }}"
+                 class="flex gap-3 items-stretch min-w-0 p-3"
+                 aria-label="{{ row.item }}">
+                <div class="w-14 h-20 rounded-md overflow-hidden bg-surface-2 shrink-0 ring-1"
+                     style="--tw-ring-color: var(--color-border-subtle)">
+                  <img alt=""
+                       class="lazyload w-full h-full {% if row.item.image != IMG_NONE %}object-cover{% endif %}"
+                       data-src="{{ row.item.image }}"
+                       src="{{ IMG_NONE }}">
+                </div>
+                <div class="flex-1 min-w-0 flex flex-col">
+                  <div class="text-[10px] text-fg-faint uppercase tracking-wider mb-0.5">
+                    {{ row.item.media_type|media_type_readable }}
+                    {% if row.match_score is not None %}
+                      · <span class="text-accent">{{ row.match_score }}% match</span>
+                    {% endif %}
+                  </div>
+                  <div class="text-sm font-semibold truncate text-fg">{{ row.item }}</div>
+                  <div class="text-xs text-fg-muted truncate mt-auto pt-1">
+                    {% for p in row.providers %}
+                      <span class="inline-block px-1.5 py-0.5 rounded bg-surface-3 text-fg-muted text-[10px] mr-1">{{ p.name }}</span>
+                    {% endfor %}
+                  </div>
+                </div>
+              </a>
+            </div>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+
     {% if palate_cleanser %}
       <section>
         <div class="card flex items-center gap-3 px-4 py-3"

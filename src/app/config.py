@@ -395,3 +395,51 @@ def get_status_stats_color(status):
 def get_status_background_color(status):
     """Get the background color for a status."""
     return get_status_property(status, "background_color")
+
+
+# --- Streaming Providers ---
+# Curated list of major TMDB watch providers shown in the user preferences
+# picker. The IDs are TMDB ``provider_id`` values (globally stable across
+# regions — Netflix is 8 everywhere, etc.). Regional availability of any
+# given title is still determined by ``watch_provider_region``; this list
+# just controls which checkboxes the user sees.
+#
+# Order in this list is the display order. Logo paths are TMDB's static
+# logo paths — the existing ``get_image_url`` helper resolves them.
+STREAMING_PROVIDERS = [
+    {"id": 8, "name": "Netflix", "logo": "/t2yyOv40HZeVlLjYsCsPHnWLk4W.jpg"},
+    {"id": 337, "name": "Disney+", "logo": "/97yvRBw1GzX7fXprcF80er19ot.jpg"},
+    {"id": 1899, "name": "Max", "logo": "/jbe4gVSfRlbPTdESXhEKpornsfu.jpg"},
+    {"id": 15, "name": "Hulu", "logo": "/giwM8XX4V2AQb9vsoN7yti82tKK.jpg"},
+    {"id": 9, "name": "Prime Video", "logo": "/pvske1MyAoymrs5bguRfVqYiM9a.jpg"},
+    {"id": 350, "name": "Apple TV+", "logo": "/2E03IAZsX4ZaUqM7tXlctEPMGWS.jpg"},
+    {"id": 531, "name": "Paramount+", "logo": "/h5DcR0J2EESLitnhR8xLG1QymTE.jpg"},
+    {"id": 386, "name": "Peacock", "logo": "/drPlq5beqXtBaP7MNs8W616YRhm.jpg"},
+    {"id": 283, "name": "Crunchyroll", "logo": "/8Gt1iClBlzTeQs8WQm8UrCoIxnQ.jpg"},
+    {"id": 73, "name": "Tubi", "logo": "/lh4aGpd6PHTwPVHtohtoVMu6mAQ.jpg"},
+    {"id": 300, "name": "Pluto TV", "logo": "/i9zsmIeLpenfg14j0lhcfwhUTja.jpg"},
+    {"id": 192, "name": "YouTube", "logo": "/wRrXFXdHkb02WaIzdLdCdQ3kdjJ.jpg"},
+]
+
+
+def parse_streaming_providers(raw):
+    """Parse a stored comma-separated provider-id string into a set of ints.
+
+    Unknown ids are dropped silently so a stale row doesn't crash rendering
+    if the curated list changes between deploys.
+    """
+    if not raw:
+        return set()
+    known = {entry["id"] for entry in STREAMING_PROVIDERS}
+    result = set()
+    for raw_token in raw.split(","):
+        token = raw_token.strip()
+        if not token:
+            continue
+        try:
+            value = int(token)
+        except ValueError:
+            continue
+        if value in known:
+            result.add(value)
+    return result
