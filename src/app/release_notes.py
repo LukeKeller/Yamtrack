@@ -10,10 +10,21 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh89"
+CURRENT_FORK_VERSION = "0.25.2~ynh96"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh96",
+        "date": "2026-05-25",
+        "title": "Artist discography page",
+        "highlights": [
+            "Click the artist name on any record detail page to open a new artist page (Discogs-backed) showing the full discography, sorted by year with title fallback. Multiple credited artists each link to their own page.",
+            "Releases you already track are flagged with an emerald 'Owned' badge and link straight to the existing record detail page; the header shows total releases, library overlap count, and a coverage percentage.",
+            "Filter the grid by 'In your library', 'Not in your library', or 'All', and sort by newest / oldest / title.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh89",
         "date": "2026-05-24",
