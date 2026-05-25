@@ -197,6 +197,7 @@ CI (`app-tests.yml`) runs `ruff check src` and the test suite. **The PR check fa
 - **Encrypt OAuth tokens before persisting.** Never store raw tokens in `PeriodicTask.kwargs` or anywhere else.
 - **Don't add a default `0`-rating sentinel.** A score of `None` means "no rating"; preserve that on round-trips with external APIs.
 - **Templates use Tailwind utility classes directly.** No CSS modules. The custom palette (`bg-[#2a2f35]`, `bg-[#39404b]`, `bg-[#262a2f]`) is repeated by hand — match it.
+- **Django template comments: `{# #}` is single-line only.** Anything that wraps to a second line *leaks* — the second/third lines render as visible text in the page. `djlint` won't catch it. Use `{% comment %} ... {% endcomment %}` for any multi-line note. Before commit/push, run `git diff -- '*.html' | grep -E '^\+.*\{#'` and visually confirm each match is on a single closed line. This has bitten us twice in this branch (ynh102→103, ynh105→106).
 - **Don't write new docs unless asked.** Wiki pages live in the upstream `Yamtrack.wiki` repo, not here. Markdown in this tree is rare on purpose.
 - **No emojis in code.** README has them; source files don't.
 - **Pre-existing models keep `Meta.ordering` and at least one of `UniqueConstraint` / `CheckConstraint`** for safety across SQLite/Postgres — match the style when adding new ones.
