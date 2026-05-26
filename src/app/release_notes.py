@@ -10,10 +10,24 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh106"
+CURRENT_FORK_VERSION = "0.25.2~ynh112"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh112",
+        "date": "2026-05-25",
+        "title": "PWA upgrade: offline, install, push, sync",
+        "highlights": [
+            "Offline fallback: pages you've visited recently render straight from cache, and a dedicated offline page appears for routes the cache hasn't seen. Service worker now uses per-strategy caches (NetworkFirst for navigations, CacheFirst for static and posters) instead of a single bare cache.",
+            "Safer SW updates: a new version no longer activates mid-session and replace assets under your feet. When a new SW is waiting, a 'New version available — Reload' toast appears in the corner. Click it to apply.",
+            "App-icon badge now combines today's airing releases with unread What's New notes. Refreshes after every HTMX action (rating, status toggle) and when you return to the tab — so the badge tracks the real number, not just a yes/no for unread notes.",
+            "Custom install prompt: a download icon appears next to the bell when the browser thinks Yamtrack is installable. One tap → install. iOS Safari is unchanged (Add to Home Screen there is a manual flow).",
+            "Web Push notifications (opt-in per device): Settings → Notifications has a new card. Enable on this device, and release alerts arrive as OS-level push notifications even when the tab is closed. Existing Apprise URLs keep working alongside push; per-show exclusions apply to both channels. Requires the server admin to set VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY.",
+            "Offline write queue: if you mark something watched or change a status while offline, the change is held in IndexedDB and replayed automatically when you reconnect. A small 'N queued' chip appears in the header while items are pending; a toast confirms when the queue drains. Chromium also runs the drain via Background Sync even with the tab closed.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh106",
         "date": "2026-05-25",
