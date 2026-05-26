@@ -11,7 +11,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.defaultfilters import pluralize
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
@@ -224,6 +224,95 @@ def test_notification(request):
     except Exception:
         logger.exception("Error sending notification")
 
+    return redirect("notifications")
+
+
+@require_GET
+def push_vapid_key(request):  # noqa: ARG001 — Django view signature
+    """Return the VAPID public key (or a disabled marker) for the client."""
+    from users import push  # noqa: PLC0415 — keeps pywebpush import lazy
+
+    if not push.push_enabled():
+        return JsonResponse({"enabled": False, "publicKey": None})
+    return JsonResponse(
+        {"enabled": True, "publicKey": settings.VAPID_PUBLIC_KEY},
+    )
+
+
+@require_POST
+def push_subscribe(request):
+    """Persist a PushSubscription for this user.
+
+    Re-subscribing the same endpoint updates the keys in place so a
+    rotated p256dh/auth pair doesn't leave a stale row behind.
+    """
+    from users.models import PushSubscription  # noqa: PLC0415
+
+    try:
+        data = json.loads(request.body)
+        endpoint = data["endpoint"]
+        keys = data["keys"]
+        p256dh = keys["p256dh"]
+        auth = keys["auth"]
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+        return HttpResponse("Invalid subscription payload", status=400)
+
+    ua = request.headers.get("user-agent", "")[:300]
+    PushSubscription.objects.update_or_create(
+        endpoint=endpoint,
+        defaults={
+            "user": request.user,
+            "p256dh": p256dh,
+            "auth": auth,
+            "user_agent": ua,
+        },
+    )
+    return JsonResponse({"ok": True})
+
+
+@require_POST
+def push_unsubscribe(request):
+    """Remove a PushSubscription for this user."""
+    from users.models import PushSubscription  # noqa: PLC0415
+
+    try:
+        data = json.loads(request.body)
+        endpoint = data["endpoint"]
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+        return HttpResponse("Invalid unsubscribe payload", status=400)
+
+    PushSubscription.objects.filter(user=request.user, endpoint=endpoint).delete()
+    return JsonResponse({"ok": True})
+
+
+@require_POST
+def push_test(request):
+    """Send a test push to every subscription on this user."""
+    from users import push  # noqa: PLC0415
+
+    if not push.push_enabled():
+        messages.error(
+            request,
+            "Web Push is not configured (set VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY).",
+        )
+        return redirect("notifications")
+
+    count = push.push_to_user(
+        request.user,
+        title="Yamtrack — test push",
+        body="Push notifications are working. You'll get release alerts here.",
+        url=request.build_absolute_uri("/"),
+    )
+    if count > 0:
+        messages.success(
+            request,
+            f"Sent test push to {count} subscription{'s' if count != 1 else ''}.",
+        )
+    else:
+        messages.error(
+            request,
+            "No active push subscriptions found on this account.",
+        )
     return redirect("notifications")
 
 

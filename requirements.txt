@@ -20,6 +20,7 @@ icalendar==7.0.3
 Pillow==12.2.0
 psycopg[binary,pool]==3.3.3
 python-decouple==3.8
+pywebpush==2.0.3
 redis[hiredis]==7.4.0
 requests==2.33.1
 requests-ratelimiter==0.9.3

@@ -846,3 +846,51 @@ class User(AbstractUser):
         """Regenerate the user's token."""
         self.token = generate_token()
         self.save(update_fields=["token"])
+
+
+class PushSubscription(models.Model):
+    """A Web Push subscription registered from an installed PWA / browser.
+
+    One row per (user, endpoint). The same user can have multiple
+    subscriptions across devices; each device registers its own endpoint.
+    Endpoints are unique across all users — push services issue distinct
+    endpoints per browser install, so a collision means the prior user
+    must have unsubscribed and we should adopt the row.
+    """
+
+    user = models.ForeignKey(
+        "users.User",
+        on_delete=models.CASCADE,
+        related_name="push_subscriptions",
+    )
+    endpoint = models.URLField(
+        max_length=600,
+        unique=True,
+        help_text="Push service endpoint URL issued by the browser.",
+    )
+    p256dh = models.CharField(
+        max_length=200,
+        help_text="Base64url-encoded public key for payload encryption.",
+    )
+    auth = models.CharField(
+        max_length=200,
+        help_text="Base64url-encoded auth secret for payload encryption.",
+    )
+    user_agent = models.CharField(max_length=300, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        """Meta options for PushSubscription."""
+
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["endpoint"],
+                name="unique_push_endpoint",
+            ),
+        ]
+
+    def __str__(self):
+        """Short identifier used in admin and logs."""
+        return f"{self.user.username} — {self.endpoint[:48]}…"

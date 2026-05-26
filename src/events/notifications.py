@@ -10,6 +10,7 @@ from django.utils import timezone
 from app.models import TV, MediaTypes, Season
 from app.templatetags import app_tags
 from events.models import INACTIVE_TRACKING_STATUSES, Event
+from users import push as web_push
 
 logger = logging.getLogger(__name__)
 
@@ -19,14 +20,18 @@ def send_releases():
     now = timezone.now()
     thirty_minutes_ago = now - timezone.timedelta(minutes=30)
 
-    # Get users who should receive notifications
+    # Get users who should receive notifications — either via Apprise URLs
+    # or an active Web Push subscription. ``isnull=False`` on the M2M is
+    # the canonical "has at least one related" check; ``distinct()`` keeps
+    # multi-subscription users from being multiplied across the join.
     users = (
         get_user_model()
         .objects.filter(
-            ~Q(notification_urls=""),
+            Q(~Q(notification_urls="")) | Q(push_subscriptions__isnull=False),
             release_notifications_enabled=True,
         )
-        .prefetch_related("notification_excluded_items")
+        .distinct()
+        .prefetch_related("notification_excluded_items", "push_subscriptions")
     )
 
     if not users.exists():
@@ -78,14 +83,17 @@ def send_daily_digest():
     today_start_utc = today_start.astimezone(UTC)
     today_end_utc = today_end.astimezone(UTC)
 
-    # Get users who have enabled daily digest
+    # Get users who have enabled daily digest. Eligible via Apprise URLs
+    # OR an active Web Push subscription (see send_releases for the same
+    # pattern).
     users = (
         get_user_model()
         .objects.filter(
-            ~Q(notification_urls=""),
+            Q(~Q(notification_urls="")) | Q(push_subscriptions__isnull=False),
             daily_digest_enabled=True,
         )
-        .prefetch_related("notification_excluded_items")
+        .distinct()
+        .prefetch_related("notification_excluded_items", "push_subscriptions")
     )
 
     if not users.exists():
@@ -389,18 +397,19 @@ def deliver_notifications(user_releases, users, title):
             logger.error("User %s not found", user_id)
             continue
 
-        # Get notification URLs for this user
         urls = [
             url.strip() for url in user.notification_urls.splitlines() if url.strip()
         ]
-        if not urls:
-            continue
-
-        # Format notification
         notification_body = format_notification(releases=releases)
 
-        # Send notification
-        send_user_notification(user, urls, title, notification_body)
+        # Apprise channel (Discord/Telegram/etc.). Skips silently when
+        # the user hasn't configured any URLs.
+        if urls:
+            send_user_notification(user, urls, title, notification_body)
+
+        # Web Push channel. Skips silently when the user has no
+        # subscriptions or VAPID isn't configured.
+        send_user_push(user, releases, title)
 
 
 def format_notification(releases):
@@ -451,6 +460,37 @@ def format_notification(releases):
     notification_body.append("Enjoy your media!")
 
     return "\n".join(notification_body)
+
+
+def send_user_push(user, releases, title):
+    """Send a single Web Push per device summarising the user's releases.
+
+    Push notifications appear as one OS-level toast; we collapse the
+    release list into a count + a leading title rather than rendering
+    the full Apprise body (which can exceed the ~4KB push payload).
+    Clicking the notification opens the calendar so the user sees the
+    full list in context.
+    """
+    if not web_push.push_enabled():
+        return
+    if not getattr(user, "push_subscriptions", None):
+        return
+    if not user.push_subscriptions.exists():
+        return
+
+    count = len(releases)
+    first = releases[0]
+    body = str(first) if count == 1 else f"{first} (+{count - 1} more)"
+
+    try:
+        web_push.push_to_user(
+            user,
+            title=title,
+            body=body,
+            url="/calendar",
+        )
+    except Exception:
+        logger.exception("Push notification batch failed for %s", user.username)
 
 
 def send_user_notification(user, urls, title, body):

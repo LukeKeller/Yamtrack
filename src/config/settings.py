@@ -652,3 +652,29 @@ if not REGISTRATION:
 REDIRECT_LOGIN_TO_SSO = config("REDIRECT_LOGIN_TO_SSO", default=False, cast=bool)
 
 SESSION_COOKIE_AGE = config("SESSION_COOKIE_AGE", default=60 * 60 * 24 * 14, cast=int)
+
+# Web Push (VAPID). Enables browser push notifications via the service
+# worker. Both keys must be present for push to activate; otherwise the
+# subscribe endpoints return ``{"enabled": false}`` and the UI hides
+# the feature. Generate keys via the py-vapid CLI (``vapid --gen``)
+# and set the two env vars below. Never commit the private key.
+VAPID_PUBLIC_KEY = config(
+    "VAPID_PUBLIC_KEY",
+    default=secret(
+        "VAPID_PUBLIC_KEY_FILE",
+        "",
+    ),
+)
+VAPID_PRIVATE_KEY = config(
+    "VAPID_PRIVATE_KEY",
+    default=secret(
+        "VAPID_PRIVATE_KEY_FILE",
+        "",
+    ),
+)
+# `sub` claim required by push services. Use a URL or mailto: that points
+# at the operator of this instance — used for abuse follow-up only.
+VAPID_CLAIM_SUB = config(
+    "VAPID_CLAIM_SUB",
+    default="mailto:admin@yamtrack.local",
+)

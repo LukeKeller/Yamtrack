@@ -138,6 +138,43 @@ async function networkFirstDefault(request) {
   }
 }
 
+// Web Push (VAPID). The push event delivers a JSON payload; the
+// notificationclick handler focuses an existing app window (or opens
+// one) and navigates to the linked URL.
+self.addEventListener('push', (event) => {
+  let data = {};
+  if (event.data) {
+    try { data = event.data.json(); }
+    catch (_) { data = { title: 'Yamtrack', body: event.data.text() }; }
+  }
+  const title = data.title || 'Yamtrack';
+  const opts = {
+    body: data.body || '',
+    icon: data.icon || "{% static 'favicon/android-chrome-192x192.png' %}",
+    badge: "{% static 'favicon/favicon-32x32.png' %}",
+    data: { url: data.url || '/' },
+    requireInteraction: false,
+  };
+  event.waitUntil(self.registration.showNotification(title, opts));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = (event.notification.data && event.notification.data.url) || '/';
+  event.waitUntil((async () => {
+    const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of all) {
+      // Prefer focusing an existing window over opening a new one.
+      if ('focus' in client) {
+        try { await client.navigate(target); } catch (_) {}
+        return client.focus();
+      }
+    }
+    if (self.clients.openWindow) return self.clients.openWindow(target);
+    return null;
+  })());
+});
+
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
