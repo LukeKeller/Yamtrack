@@ -10,10 +10,19 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh121"
+CURRENT_FORK_VERSION = "0.25.2~ynh122"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh122",
+        "date": "2026-05-26",
+        "title": "Public API endpoints actually reach Django (KOReader, ListenBrainz, webhooks)",
+        "highlights": [
+            "Fixed the ``/yamtrack`` URL prefix not being stripped before the SSO-bypass carve-out forwards to Django, which was making /api/koreader, /api/scrobble (ListenBrainz), and /webhook/{jellyfin,plex,emby} silently 404. The carve-out's nginx ``location`` is a regex location, and a regex location can't use the trailing-slash trick the UI block uses to strip the app prefix — so requests like ``/yamtrack/api/koreader/users/auth`` were being passed through unchanged, and Django (whose routes don't include the ``/yamtrack`` prefix) had no idea what to do with them. The SSO bypass itself was working; the URL just never landed on a registered route. ~ynh122 strips the prefix via a captured group in ``proxy_pass`` (allowed inside regex locations; doesn't mutate ``$uri`` the way a ``rewrite`` would, so SSOWAT's allowlist check at the access phase still sees the original ``/yamtrack/...`` URI and lets the request through). The ListenBrainz scrobble endpoint and the media-server webhooks were broken the same way and are also fixed.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh121",
         "date": "2026-05-26",
