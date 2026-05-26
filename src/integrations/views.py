@@ -24,7 +24,8 @@ from integrations import exports, hardcover_client, scrobble, tasks
 from integrations.hardcover_client import HardcoverAPIError, HardcoverAuthError
 from integrations.imports import anilist, discogs, hardcover, helpers, simkl, trakt
 from integrations.imports.helpers import MediaImportError
-from integrations.models import HardcoverIntegration, WebhookEvent
+from integrations.koreader import _apply_progress_to_book
+from integrations.models import HardcoverIntegration, KOReaderBookMapping, WebhookEvent
 from integrations.webhooks import emby, jellyfin, plex
 
 logger = logging.getLogger(__name__)
@@ -1076,6 +1077,69 @@ def hardcover_connect(request):
         request,
         f"Connected to Hardcover as @{hc_username}. Book progress will sync on save.",
     )
+    return redirect("integrations")
+
+
+@require_POST
+def koreader_link(request):
+    """Bind an unmapped KOReader document hash to a Book ``Item``.
+
+    Reached from the integrations settings page. After binding, the
+    last-known percentage stored on the mapping row is replayed onto
+    the Book so the user doesn't have to wait for the next KOReader
+    sync to see the catch-up.
+    """
+    document = (request.POST.get("document_hash") or "").strip().lower()
+    item_id = (request.POST.get("item_id") or "").strip()
+    if not document or not item_id:
+        messages.error(request, "Pick a book to link.")
+        return redirect("integrations")
+
+    mapping = KOReaderBookMapping.objects.filter(
+        user=request.user,
+        document_hash=document,
+    ).first()
+    if mapping is None:
+        messages.error(request, "Unknown KOReader document hash.")
+        return redirect("integrations")
+
+    item_model = apps.get_model("app", "Item")
+    try:
+        item = item_model.objects.get(pk=item_id, media_type="book")
+    except ObjectDoesNotExist:
+        messages.error(request, "Book not found in your library.")
+        return redirect("integrations")
+
+    mapping.item = item
+    mapping.save(update_fields=["item"])
+
+    if mapping.last_progress_at is not None and mapping.last_percentage > 0:
+        try:
+            _apply_progress_to_book(request.user, item, mapping.last_percentage)
+        except Exception:
+            logger.exception("Replaying KOReader progress after bind failed")
+            messages.warning(
+                request,
+                f"Linked, but couldn't replay progress onto {item.title}.",
+            )
+        else:
+            messages.success(request, f"Linked KOReader sync to {item.title}.")
+            return redirect("integrations")
+
+    messages.success(request, f"Linked KOReader sync to {item.title}.")
+    return redirect("integrations")
+
+
+@require_POST
+def koreader_unlink(request):
+    """Drop a KOReader document mapping for the current user."""
+    document = (request.POST.get("document_hash") or "").strip().lower()
+    deleted, _ = KOReaderBookMapping.objects.filter(
+        user=request.user,
+        document_hash=document,
+    ).delete()
+    if deleted:
+        messages.info(request, "KOReader mapping removed.")
     return redirect("integrations")
 
 

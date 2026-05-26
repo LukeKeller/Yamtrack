@@ -432,7 +432,12 @@ def preferences(request):
 @require_GET
 def integrations(request):
     """Render the integrations settings page."""
-    from integrations.models import HardcoverIntegration  # noqa: PLC0415
+    from django.apps import apps  # noqa: PLC0415
+
+    from integrations.models import (  # noqa: PLC0415
+        HardcoverIntegration,
+        KOReaderBookMapping,
+    )
 
     recent_webhook_events = list(
         WebhookEvent.objects.filter(user=request.user).order_by("-created_at")[:20],
@@ -440,12 +445,33 @@ def integrations(request):
     hardcover_integration = HardcoverIntegration.objects.filter(
         user=request.user,
     ).first()
+
+    koreader_mappings = list(
+        KOReaderBookMapping.objects.filter(user=request.user)
+        .select_related("item")
+        .order_by("item__title", "-last_progress_at"),
+    )
+    koreader_unbound_count = sum(1 for m in koreader_mappings if m.item_id is None)
+    item_model = apps.get_model("app", "Item")
+    koreader_book_choices = list(
+        item_model.objects.filter(
+            book__user=request.user,
+            media_type="book",
+        )
+        .order_by("title")
+        .values("id", "title")
+        .distinct(),
+    )
+
     return render(
         request,
         "users/integrations.html",
         {
             "recent_webhook_events": recent_webhook_events,
             "hardcover_integration": hardcover_integration,
+            "koreader_mappings": koreader_mappings,
+            "koreader_unbound_count": koreader_unbound_count,
+            "koreader_book_choices": koreader_book_choices,
         },
     )
 

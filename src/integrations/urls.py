@@ -1,6 +1,6 @@
 from django.urls import path
 
-from integrations import views
+from integrations import koreader, views
 
 urlpatterns = [
     path("import/trakt-oauth", views.trakt_oauth, name="trakt_oauth"),
@@ -75,4 +75,26 @@ urlpatterns = [
         name="listenbrainz_submit_listens",
     ),
     path("api/quick-log/<str:token>", views.quick_log, name="quick_log"),
+    path(
+        "api/koreader/users/create",
+        koreader.users_create,
+        name="koreader_users_create",
+    ),
+    path(
+        "api/koreader/users/auth",
+        koreader.users_auth,
+        name="koreader_users_auth",
+    ),
+    path(
+        "api/koreader/syncs/progress",
+        koreader.progress_put,
+        name="koreader_progress_put",
+    ),
+    path(
+        "api/koreader/syncs/progress/<str:document>",
+        koreader.progress_get,
+        name="koreader_progress_get",
+    ),
+    path("koreader/link", views.koreader_link, name="koreader_link"),
+    path("koreader/unlink", views.koreader_unlink, name="koreader_unlink"),
 ]

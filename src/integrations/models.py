@@ -18,6 +18,14 @@ trim (see ``integrations.views`` webhook handlers).
 push settings; ``HardcoverBookMapping`` caches the Yamtrack-Item ↔
 Hardcover-book resolution for OpenLibrary-sourced rows (Hardcover-sourced
 items already carry the Hardcover book id as ``Item.media_id``).
+
+``KOReaderBookMapping`` is the inbound side of KOReader's progress-sync
+plugin (the kosync protocol). Each row binds a KOReader-computed file
+hash (32-char hex MD5 of the ebook's binary content) to an optional
+Yamtrack ``Item``. Rows are created on first PUT from a device; until
+the user links a hash to a book in the integrations UI, the row sits
+unmapped and only stores the raw progress / percentage so a future bind
+can backfill the Book.
 """
 
 from django.conf import settings
@@ -190,3 +198,70 @@ class HardcoverBookMapping(models.Model):
     def __str__(self):
         """Item id + resolved Hardcover book id."""
         return f"Item {self.item_id} → HC book {self.hardcover_book_id}"
+
+
+class KOReaderBookMapping(models.Model):
+    """Per-user binding of a KOReader file hash to a Yamtrack book Item.
+
+    The kosync protocol keys every PUT on a 32-char MD5 of the ebook
+    file's contents — KOReader has no concept of ISBN, OpenLibrary id, or
+    any other metadata identifier the rest of the app uses, so a mapping
+    table is the only way to bridge the two. ``item`` is nullable: when
+    KOReader pushes progress for a hash we've never seen, we create the
+    row in unbound state and surface it in the integrations settings
+    page for the user to link manually. ``last_*`` columns persist the
+    raw kosync payload so a delayed bind can replay it onto the Book.
+
+    ``(user, document_hash)`` is the natural key. The same physical
+    file shared between two users still gets independent rows (KOReader
+    progress is private; we don't want one user's reading to flow into
+    another's Book row).
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="koreader_mappings",
+    )
+    document_hash = models.CharField(
+        max_length=32,
+        help_text="32-char hex MD5 KOReader computes per ebook file.",
+    )
+    item = models.ForeignKey(
+        Item,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="koreader_mappings",
+    )
+    last_progress = models.TextField(
+        blank=True,
+        default="",
+        help_text="Opaque KOReader position string (epubcfi or xpointer).",
+    )
+    last_percentage = models.FloatField(default=0.0)
+    last_device = models.CharField(max_length=255, blank=True, default="")
+    last_device_id = models.CharField(max_length=64, blank=True, default="")
+    last_progress_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        """Newest-bound first; one row per (user, document_hash)."""
+
+        ordering = ["-last_progress_at", "-created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "document_hash"],
+                name="koreader_unique_user_document",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["user", "document_hash"]),
+        ]
+
+    def __str__(self):
+        """Short label for admin / shell."""
+        return (
+            f"KOReader {self.document_hash[:8]}… → "
+            f"{self.item_id or 'unbound'} (user {self.user_id})"
+        )
