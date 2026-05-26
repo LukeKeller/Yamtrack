@@ -1,3 +1,4 @@
+from datetime import date
 from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
@@ -7,6 +8,7 @@ from django.test import TestCase, override_settings
 from app.helpers import (
     build_absolute_app_url,
     enrich_items_with_user_data,
+    extract_release_date,
     form_error_messages,
     get_configured_app_url,
     minutes_to_hhmm,
@@ -114,6 +116,47 @@ class HelpersTest(TestCase):
             request,
             "Release Date: Enter a valid date.",
         )
+
+
+class ExtractReleaseDateTest(TestCase):
+    """extract_release_date pulls a date out of every provider shape we use."""
+
+    def test_tv_first_air_date(self):
+        """TV metadata exposes the premiere as details.first_air_date."""
+        meta = {"details": {"first_air_date": "1966-09-08"}}
+        self.assertEqual(extract_release_date(meta), date(1966, 9, 8))
+
+    def test_movie_release_date(self):
+        """Movie metadata exposes the release as details.release_date."""
+        meta = {"details": {"release_date": "1972-03-14"}}
+        self.assertEqual(extract_release_date(meta), date(1972, 3, 14))
+
+    def test_anime_start_date(self):
+        """Anime/manga/comic metadata uses details.start_date."""
+        meta = {"details": {"start_date": "2020-04-11"}}
+        self.assertEqual(extract_release_date(meta), date(2020, 4, 11))
+
+    def test_book_publish_date(self):
+        """Book metadata exposes details.publish_date (year-only is fine)."""
+        meta = {"details": {"publish_date": "1949"}}
+        self.assertEqual(extract_release_date(meta), date(1949, 1, 1))
+
+    def test_boardgame_year_only(self):
+        """Board game metadata gives an int year — still a usable date."""
+        meta = {"details": {"year": 1995}}
+        self.assertEqual(extract_release_date(meta), date(1995, 1, 1))
+
+    def test_top_level_fallback(self):
+        """Some provider payloads surface the date at the root payload."""
+        # e.g. tmdb.py:763 sets ``first_air_date`` on the root.
+        meta = {"first_air_date": "1987-09-28"}
+        self.assertEqual(extract_release_date(meta), date(1987, 9, 28))
+
+    def test_missing(self):
+        """Empty / None inputs return None rather than raising."""
+        self.assertIsNone(extract_release_date({"details": {}}))
+        self.assertIsNone(extract_release_date({}))
+        self.assertIsNone(extract_release_date(None))
 
 
 class EnrichItemsWithUserDataTest(TestCase):

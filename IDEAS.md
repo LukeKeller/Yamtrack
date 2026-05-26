@@ -16,6 +16,7 @@ These were the original short list (2026-05-23) and are the next things to build
 - [ ] **PWA install + offline list browse** — SW already exists (`app/serviceworker.js`); cache home shell + last-rendered list HTML on background sync. Image cache via Cache API with LRU.
 - [ ] **Smarter duplicate/merge detection** — when adding from `mal`, check if same canonical work is already tracked via `openlibrary`/`hardcover`/`tmdb` (fuzzy title+year), offer merge. Heavier follow-up: management command that ranks suspected duplicates across the library.
 - [ ] **Hardcover inbound sync** — push side already shipped (ynh82). Plan in `HARDCOVER_SYNC_PLAN.md`. Still TODO: `me { user_books }` poll, identity map (`HardcoverBookMapping`), echo suppression via `last_hardcover_sync_at`.
+- [ ] **List Import (paste-and-match)** — `/import/list` view: textarea of `<media_type>: <title>` lines (or simple titles with a per-textarea default type) → for each line `services.search(...)`, take top hit, batch-add to a new `CustomList`. Confidence threshold + a per-row "pick from candidates" confirm UI for ambiguous matches. Reuses `lists_modal`'s Item-creation flow.
 
 ---
 
@@ -67,6 +68,7 @@ User picks from this list once the queue above is shipping. Grouped by theme. No
 
 ## Shipped (recent — see git log for the full list)
 
+- ynh110 — **Release Date sort on custom lists** (`Item.air_date` generalized from "episode air date" to a premiere/release date for any media type; new `ListDetailSortChoices.RELEASE_DATE`; `lists_modal` populates `air_date` at Item-creation time; `backfill_item_release_dates` management command for existing rows)
 - ynh89 — **Where to watch polish** (TMDB streaming chips moved into the detail-page hero, clickable to the JustWatch region link, region labeled in the heading) ✓ from queue
 - ynh88 — **Year in review page at /wrapped/** ✓ from queue
 - ynh87 — **Display all scores out of 10** (detail page hero now matches the IMDb/Hardcover pill style; cards/list/stats already were /10) ✓ from queue

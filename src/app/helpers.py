@@ -102,13 +102,44 @@ def format_search_response(page, per_page, total_results, results):
     }
 
 
+RELEASE_DATE_KEYS = (
+    "first_air_date",
+    "release_date",
+    "start_date",
+    "publish_date",
+    "released",
+    "year",
+)
+
+
+def extract_release_date(metadata):
+    """Pull a release/premiere date out of a ``get_media_metadata`` payload.
+
+    Walks a small set of provider-specific keys nested under ``details``
+    (and falls back to the top-level payload) so the caller doesn't need
+    to know which provider was used. Returns a ``date`` or ``None``.
+    """
+    if not isinstance(metadata, dict):
+        return None
+    for container in (metadata.get("details") or {}, metadata):
+        if not isinstance(container, dict):
+            continue
+        for key in RELEASE_DATE_KEYS:
+            parsed = parse_air_date(container.get(key))
+            if parsed is not None:
+                return parsed
+    return None
+
+
 def parse_air_date(air_date):
     """Parse a provider air-date value into a ``date``, returning None if unparseable.
 
-    Accepts ``"YYYY-MM-DD"``, ``"YYYY-MM"``, ``"YYYY"``, ``date``, or
-    ``datetime``. Partial strings collapse to Jan 1 / day 1, matching
-    ``is_released_date``.
+    Accepts ``"YYYY-MM-DD"``, ``"YYYY-MM"``, ``"YYYY"``, ``date``,
+    ``datetime``, or a plain ``int`` year. Partial strings collapse to
+    Jan 1 / day 1, matching ``is_released_date``.
     """
+    if isinstance(air_date, int) and not isinstance(air_date, bool):
+        air_date = str(air_date)
     if isinstance(air_date, datetime):
         if timezone.is_naive(air_date):
             return air_date.date()

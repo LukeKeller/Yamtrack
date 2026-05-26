@@ -1,3 +1,4 @@
+from datetime import date
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -462,6 +463,36 @@ class ListDetailViewTests(TestCase):
 
     @patch.object(get_user_model(), "update_preference")
     @patch.object(CustomList, "user_can_view")
+    def test_list_detail_view_sorting_by_release_date(
+        self,
+        mock_user_can_view,
+        mock_update_preference,
+    ):
+        """Items with the earliest air_date come first; NULLs sink last."""
+        mock_user_can_view.return_value = True
+        # Avoid creating Movie/TV/Anime rows here — their save() chain
+        # hits the live TMDB endpoint, which has no key in the dev env
+        # and is irrelevant to what release_date sorting does.
+        Item.objects.filter(pk=self.tv_item.pk).update(air_date=date(1987, 9, 28))
+        Item.objects.filter(pk=self.movie_item.pk).update(air_date=date(1972, 3, 14))
+        # anime_item intentionally left without an air_date
+
+        # Need status_filter to be "All" so the view doesn't strip items
+        # by tracking status (we deliberately have no Media rows here).
+        mock_update_preference.side_effect = ["release_date", "All"]
+        response = self.client.get(
+            reverse("list_detail", args=[self.custom_list.id]) + "?sort=release_date",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["current_sort"], "release_date")
+        ordered_titles = [item.title for item in response.context["items"]]
+        self.assertEqual(
+            ordered_titles,
+            ["Test Movie", "Test TV Show", "Test Anime"],
+        )
+
+    @patch.object(get_user_model(), "update_preference")
+    @patch.object(CustomList, "user_can_view")
     def test_list_detail_view_htmx_request(
         self,
         mock_user_can_view,
@@ -690,6 +721,7 @@ class ListsModalViewTests(TestCase):
         mock_get_metadata.return_value = {
             "title": "New Movie",
             "image": "http://example.com/new_image.jpg",
+            "details": {"release_date": "2023-06-15"},
         }
 
         # Test the view
@@ -701,13 +733,14 @@ class ListsModalViewTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-        # Check that a new item was created
+        # Check that a new item was created with air_date pulled from metadata
         self.assertTrue(
             Item.objects.filter(media_id="999", source=Sources.TMDB.value).exists(),
         )
         new_item = Item.objects.get(media_id="999", source=Sources.TMDB.value)
         self.assertEqual(new_item.title, "New Movie")
         self.assertEqual(new_item.image, "http://example.com/new_image.jpg")
+        self.assertEqual(new_item.air_date, date(2023, 6, 15))
 
     @patch("app.providers.services.get_media_metadata")
     @patch("lists.models.CustomList.objects.get_user_lists_with_item")

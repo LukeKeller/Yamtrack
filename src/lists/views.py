@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
 
 from app import helpers
+from app.helpers import extract_release_date
 from app.models import Item, MediaManager, MediaTypes
 from app.providers import services
 from lists.forms import CustomListForm
@@ -147,6 +148,10 @@ def list_detail(request, list_id):
             F("episode_number").asc(nulls_first=True),
         ],
         "media_type": ["media_type"],
+        "release_date": [
+            F("air_date").asc(nulls_last=True),
+            F("title").asc(nulls_last=True),
+        ],
     }
     items = items.order_by(
         *sort_mapping.get(params["sort_by"], ["-customlistitem__date_added"]),
@@ -279,6 +284,7 @@ def lists_modal(
             episode_number=episode_number,
             title=metadata["title"],
             image=metadata["image"],
+            air_date=extract_release_date(metadata),
         )
 
     custom_lists = CustomList.objects.get_user_lists_with_item(request.user, item)

@@ -87,9 +87,12 @@ class Item(CalendarTriggerMixin, models.Model):
     season_number = models.PositiveIntegerField(null=True, blank=True)
     episode_number = models.PositiveIntegerField(null=True, blank=True)
 
-    # Populated for episode items so air dates can be sorted/filtered without
-    # re-hitting the provider on every page render. Nullable because not every
-    # source (or import path) carries this data.
+    # Premiere / release date for the item — episodes (per-episode air date),
+    # TV shows and seasons (first_air_date), movies and games (release_date),
+    # anime/manga/comics (start_date), books (publish_date), board games (year).
+    # Populated lazily by the creation paths that have metadata to hand; older
+    # rows are filled in by the ``backfill_item_release_dates`` command.
+    # Nullable because not every source or import path carries this data.
     air_date = models.DateField(null=True, blank=True)
 
     # Optional aggregation metadata (currently populated by the Discogs importer
