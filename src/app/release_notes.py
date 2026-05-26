@@ -10,10 +10,21 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh112"
+CURRENT_FORK_VERSION = "0.25.2~ynh119"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh119",
+        "date": "2026-05-26",
+        "title": "KOReader sync + reliable YunoHost upgrades",
+        "highlights": [
+            "KOReader sync: Yamtrack now speaks the kosync protocol at /api/koreader, so KOReader on your e-reader can push reading progress (current page, percent, document hash, device) without going through SSO. Configure it under Settings → Integrations → KOReader.",
+            "KOReader UI enrichments on the integrations page: each recent sync shows the book cover, an In-progress / Completed status pill, current page, the device that sent it, and a relative-time stamp — so you can confirm a sync landed without leaving the page.",
+            "YunoHost upgrades no longer get stuck adding new public sub-paths. The /api/koreader carve-out is added to the api permission on every upgrade via an idempotent ``yunohost user permission url --add-url`` (matching the nginx side, which already re-rendered). Earlier ~ynh116/117/118 attempts used the wrong CLI subcommand and triggered safety-rollbacks; ~ynh119 splits the calls and ``|| true``s each one so a permission-CLI hiccup can never abort an otherwise-working upgrade.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh112",
         "date": "2026-05-25",
