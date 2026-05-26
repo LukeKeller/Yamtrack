@@ -133,6 +133,7 @@ urlpatterns = [
     ),
     path("serviceworker.js", views.service_worker, name="service_worker"),
     path("site.webmanifest", views.webmanifest, name="webmanifest"),
+    path("offline/", views.offline, name="offline"),
     path("cmdk/search", views.cmdk_search, name="cmdk_search"),
     path("share-intake/", views.share_intake, name="share_intake"),
 ]

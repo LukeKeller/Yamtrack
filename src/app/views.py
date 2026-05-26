@@ -1708,7 +1708,7 @@ def toggle_browse_language(request):
     user = request.user
     user.browse_include_non_english = not user.browse_include_non_english
     user.save(update_fields=["browse_include_non_english"])
-    return redirect(request.META.get("HTTP_REFERER") or "browse")
+    return redirect(request.headers.get("referer") or "browse")
 
 
 @require_POST
@@ -1742,7 +1742,7 @@ def dismiss_item(request):
         # 200 (not 204) so hx-swap="delete" actually fires — HTMX skips
         # the swap on 204 responses.
         return HttpResponse(b"")
-    return redirect(request.META.get("HTTP_REFERER") or "browse")
+    return redirect(request.headers.get("referer") or "browse")
 
 
 @require_POST
@@ -2525,6 +2525,19 @@ def webmanifest(request):
         content_type="application/manifest+json",
     )
     response["Cache-Control"] = "public, max-age=3600"
+    return response
+
+
+@login_not_required
+@require_GET
+def offline(request):
+    """Offline fallback page precached by the service worker.
+
+    Kept standalone (no extends base.html) so the cached response renders
+    correctly regardless of which user installed the SW.
+    """
+    response = render(request, "app/offline.html")
+    response["Cache-Control"] = "no-cache"
     return response
 
 

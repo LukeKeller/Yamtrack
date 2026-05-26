@@ -368,12 +368,81 @@
     {% endblock js %}
 
     <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('{% url "service_worker" %}', { scope: '{{ request.META.SCRIPT_NAME|default:"/" }}/' })
-            .catch(() => { /* SW is best-effort; ignore registration errors */ });
+      // Service worker registration + safe update handshake.
+      //
+      // We never call self.skipWaiting() inside the SW's install handler,
+      // because that activates the new worker mid-session and replaces
+      // assets while the user is mid-action. Instead the SW waits for a
+      // SKIP_WAITING message; this page surfaces a toast first, posts the
+      // message on user accept, and reloads when the new SW takes over.
+      (() => {
+        if (!('serviceWorker' in navigator)) return;
+
+        const scope = '{{ request.META.SCRIPT_NAME|default:"/" }}/';
+        let reloading = false;
+
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (reloading) return;
+          reloading = true;
+          window.location.reload();
         });
-      }
+
+        function showUpdateToast(waitingWorker) {
+          if (document.getElementById('yt-sw-update-toast')) return;
+          const toast = document.createElement('div');
+          toast.id = 'yt-sw-update-toast';
+          toast.setAttribute('role', 'status');
+          // Sits above the mobile bottom nav (h ~3.5rem + safe-area) on
+          // small screens; bottom-right on desktop.
+          toast.className = 'fixed right-4 z-50 bg-surface-0 border border-border-default rounded-md shadow-lg p-3 flex items-center gap-3 max-w-sm';
+          toast.style.bottom = 'calc(env(safe-area-inset-bottom) + 5rem)';
+          toast.innerHTML = ''
+            + '<div class="text-sm text-fg flex-1">A new version of Yamtrack is available.</div>'
+            + '<button type="button" id="yt-sw-update-reload" class="px-3 py-1.5 text-sm rounded-md bg-accent text-white hover:opacity-90">Reload</button>'
+            + '<button type="button" id="yt-sw-update-dismiss" aria-label="Dismiss" class="px-2 text-fg-muted hover:text-fg">&times;</button>';
+          document.body.appendChild(toast);
+          // On wider screens drop the toast back to the corner — no mobile
+          // nav to clear.
+          if (window.matchMedia('(min-width: 1024px)').matches) {
+            toast.style.bottom = '1rem';
+          }
+          document.getElementById('yt-sw-update-reload').addEventListener('click', () => {
+            waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+          });
+          document.getElementById('yt-sw-update-dismiss').addEventListener('click', () => {
+            toast.remove();
+          });
+        }
+
+        function trackInstalling(worker) {
+          worker.addEventListener('statechange', () => {
+            // An "installed" state while a controller already exists means
+            // this is an upgrade, not a first install — only then prompt.
+            if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+              showUpdateToast(worker);
+            }
+          });
+        }
+
+        window.addEventListener('load', async () => {
+          try {
+            const reg = await navigator.serviceWorker.register(
+              '{% url "service_worker" %}',
+              { scope }
+            );
+
+            if (reg.waiting && navigator.serviceWorker.controller) {
+              // SW from a previous session is queued — surface the toast immediately.
+              showUpdateToast(reg.waiting);
+            }
+            if (reg.installing) trackInstalling(reg.installing);
+
+            reg.addEventListener('updatefound', () => {
+              if (reg.installing) trackInstalling(reg.installing);
+            });
+          } catch (_) { /* registration is best-effort */ }
+        });
+      })();
 
       // App badge: surface a "1" on the installed PWA icon if the user has
       // unread release notes. Clears automatically when the modal dismisses
@@ -390,7 +459,8 @@
       })();
     </script>
 
-    <script defer src="{% static 'js/mediaStatusDateHandler.js' %}{% get_static_file_mtime 'js/mediaStatusDateHandler.js' %}"></script>
+    <script defer
+            src="{% static 'js/mediaStatusDateHandler.js' %}{% get_static_file_mtime 'js/mediaStatusDateHandler.js' %}"></script>
     <script defer
             src="{% static 'js/searchShortcut.js' %}{% get_static_file_mtime 'js/searchShortcut.js' %}"
             data-shortcut-home="{% url 'home' %}"

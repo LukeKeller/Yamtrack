@@ -1,0 +1,61 @@
+{% load static %}
+{% load app_tags %}
+<!DOCTYPE html>
+<html lang="en" class="scheme-dark bg-canvas" data-theme="default">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+          content="Yamtrack is offline — pages you have visited recently remain available.">
+    <meta name="keywords" content="Yamtrack, offline">
+    <title>Offline — Yamtrack</title>
+    <link rel="stylesheet"
+          href="{% static 'css/main.css' %}{% get_static_file_mtime 'css/main.css' %}">
+    <link rel="stylesheet"
+          href="{% static 'css/themes.css' %}{% get_static_file_mtime 'css/themes.css' %}">
+    <link rel="icon"
+          type="image/png"
+          sizes="32x32"
+          href="{% static 'favicon/favicon-32x32.png' %}">
+    <meta name="theme-color" content="#181a1b">
+  </head>
+  <body class="bg-canvas text-fg">
+    <div class="min-h-screen flex flex-col items-center justify-center p-6">
+      <div class="text-center max-w-md">
+        <div class="w-16 h-16 rounded-2xl bg-accent mx-auto mb-6 flex items-center justify-center text-white text-3xl font-bold">
+          Y
+        </div>
+        <h1 class="text-2xl font-semibold mb-2">You're offline</h1>
+        <p class="text-fg-muted mb-6">
+          Yamtrack can't reach the network right now. Pages you've visited recently are still available — try the back button, or retry once you're reconnected.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          <button type="button"
+                  onclick="window.location.reload()"
+                  class="px-5 py-2.5 rounded-md bg-accent text-white hover:opacity-90 transition-opacity">
+            Retry
+          </button>
+          <a href="{% url 'home' %}"
+             class="px-5 py-2.5 rounded-md bg-surface-2 text-fg hover:bg-surface-3 transition-colors">Home</a>
+        </div>
+        <p id="yt-offline-status"
+           class="mt-6 text-xs text-fg-faint"
+           aria-live="polite"></p>
+      </div>
+    </div>
+    <script>
+      // When the browser reports connectivity again, auto-retry the last
+      // page so the user lands somewhere useful without a manual tap.
+      (() => {
+        const status = document.getElementById('yt-offline-status');
+        const setStatus = (msg) => { if (status) status.textContent = msg; };
+        if (navigator.onLine) setStatus('Connection looks restored — try Retry.');
+        window.addEventListener('online', () => {
+          setStatus('Back online. Reloading…');
+          setTimeout(() => window.location.reload(), 300);
+        });
+        window.addEventListener('offline', () => setStatus('Still offline.'));
+      })();
+    </script>
+  </body>
+</html>
