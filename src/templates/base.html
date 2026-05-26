@@ -261,13 +261,28 @@
               </form>
             </div>
 
-            {# Right cluster: cmdk trigger / theme / bell #}
+            {# Right cluster: cmdk trigger / install / theme / bell #}
             <div class="flex items-center gap-1">
               <button type="button"
                       class="btn btn-icon btn-ghost"
                       @click="$dispatch('cmdk-open')"
                       aria-label="Open command palette">
                 {% include "app/icons/magnifying-glass.svg" with classes="w-4 h-4" %}
+              </button>
+              {% comment %}
+                Install Yamtrack — hidden until the browser fires
+                `beforeinstallprompt`. The handler in the SW-registration
+                script below toggles `data-install-available` on <html> and
+                this rule reveals the button via the `[data-install-available]`
+                CSS attribute selector.
+              {% endcomment %}
+              <button type="button"
+                      id="yt-install-app"
+                      class="btn btn-icon btn-ghost yt-install-trigger"
+                      hidden
+                      title="Install Yamtrack as an app"
+                      aria-label="Install Yamtrack as an app">
+                {% include "app/icons/download.svg" with classes="w-4 h-4" %}
               </button>
               <a href="{% url 'preferences' %}"
                  class="btn btn-icon btn-ghost"
@@ -444,18 +459,81 @@
         });
       })();
 
-      // App badge: surface a "1" on the installed PWA icon if the user has
-      // unread release notes. Clears automatically when the modal dismisses
-      // (it POSTs to /users/dismiss_whats_new which the client then reflects
-      // here too). Quietly no-ops where unsupported (Firefox, older Safari).
+      // App badge: combines today's airing releases + unread release notes
+      // into a single number on the installed PWA icon. Fetches the count
+      // from a small JSON endpoint so the value reflects HTMX state changes
+      // (rating, status toggles) without needing a full page reload.
+      // Quietly no-ops where unsupported (Firefox, older Safari).
       (() => {
-        const hasUnread = {{ whats_new_entries|yesno:"true,false" }};
         if (!('setAppBadge' in navigator)) return;
-        if (hasUnread) {
-          navigator.setAppBadge(1).catch(() => {});
-        } else {
-          navigator.clearAppBadge().catch(() => {});
-        }
+        const url = '{% url "badge_count" %}';
+        const refresh = async () => {
+          try {
+            const r = await fetch(url, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } });
+            if (!r.ok) return;
+            const { count } = await r.json();
+            if (count > 0) {
+              navigator.setAppBadge(count).catch(() => {});
+            } else {
+              navigator.clearAppBadge().catch(() => {});
+            }
+          } catch (_) { /* offline / network error — leave badge as-is */ }
+        };
+        refresh();
+        // Re-check when the user returns to the tab; covers the case where
+        // a release time passed while the app was backgrounded.
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') refresh();
+        });
+        // After an HTMX swap (rating, status toggle, dismissing whats-new),
+        // refresh on a short debounce.
+        let pending;
+        document.addEventListener('htmx:afterRequest', (evt) => {
+          if (evt.detail && evt.detail.failed) return;
+          clearTimeout(pending);
+          pending = setTimeout(refresh, 400);
+        });
+      })();
+
+      // Install prompt — capture `beforeinstallprompt` so we can show a
+      // custom trigger at a time that fits the UI, instead of relying on
+      // the browser's hidden default banner.
+      (() => {
+        // Reveal the hidden header button only after the browser deems the
+        // PWA installable. iOS Safari never fires this event, so the button
+        // stays hidden there — that platform uses Share → Add to Home Screen.
+        let deferred = null;
+        const button = document.getElementById('yt-install-app');
+        if (!button) return;
+
+        // If we're already running as an installed PWA, never offer install.
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+          || window.navigator.standalone === true;
+        if (isStandalone) return;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+          e.preventDefault();
+          deferred = e;
+          button.hidden = false;
+        });
+
+        button.addEventListener('click', async () => {
+          if (!deferred) return;
+          button.disabled = true;
+          try {
+            deferred.prompt();
+            await deferred.userChoice;
+          } finally {
+            deferred = null;
+            button.hidden = true;
+            button.disabled = false;
+          }
+        });
+
+        window.addEventListener('appinstalled', () => {
+          deferred = null;
+          button.hidden = true;
+        });
       })();
     </script>
 

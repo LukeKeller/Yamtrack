@@ -2541,6 +2541,44 @@ def offline(request):
     return response
 
 
+@login_not_required
+@require_GET
+def badge_count(request):
+    """Return the PWA app-icon badge count.
+
+    Sums two signals so the installed icon's badge reflects "things waiting
+    for you today":
+      - calendar events airing today (user-local) on tracked media
+      - 1 if there are any unseen What's New release-note entries
+
+    Called from base.html on load; the value drives `navigator.setAppBadge`.
+    Best-effort: any exception collapses to 0 so the badge never breaks UI.
+    """
+    from app import release_notes  # noqa: PLC0415 — cheap, view-only
+    from events.models import Event  # noqa: PLC0415 — avoid app-load cycle
+
+    if not request.user.is_authenticated:
+        return JsonResponse({"count": 0})
+
+    today = timezone.localdate()
+    try:
+        airing = Event.objects.get_user_events(request.user, today, today).count()
+    except Exception:
+        logger.exception("badge_count: failed to query today's events")
+        airing = 0
+
+    whats_new = 0
+    last_seen = getattr(request.user, "last_seen_version", None)
+    if last_seen != release_notes.CURRENT_FORK_VERSION and release_notes.entries_since(
+        last_seen,
+    ):
+        whats_new = 1
+
+    response = JsonResponse({"count": airing + whats_new})
+    response["Cache-Control"] = "no-store"
+    return response
+
+
 # Provider URL patterns the Share Target intake recognises. Each entry maps a
 # host (lowercased) to a callable that returns ``(media_type, provider_id)``
 # given the parsed URL's path. Anything unrecognised falls through to /search.
