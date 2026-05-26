@@ -463,6 +463,25 @@ def integrations(request):
         .distinct(),
     )
 
+    # Attach the linked Book row to each mapping so the template can show
+    # live status / page count without a per-row query. One query keyed on
+    # the set of bound item ids covers the whole list.
+    book_model = apps.get_model("app", "Book")
+    bound_item_ids = [m.item_id for m in koreader_mappings if m.item_id]
+    if bound_item_ids:
+        books_by_item = {
+            book.item_id: book
+            for book in book_model.objects.filter(
+                user=request.user,
+                item_id__in=bound_item_ids,
+            )
+        }
+        for mapping in koreader_mappings:
+            mapping.book = books_by_item.get(mapping.item_id)
+    else:
+        for mapping in koreader_mappings:
+            mapping.book = None
+
     return render(
         request,
         "users/integrations.html",

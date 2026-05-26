@@ -613,30 +613,71 @@
 
       {% if koreader_mappings %}
         <div class="text-sm font-medium mb-2">
-          Linked books
+          Synced books
           {% if koreader_unbound_count %}
             <span class="text-xs text-amber-400 ml-2">{{ koreader_unbound_count }} waiting to be linked</span>
           {% endif %}
         </div>
         <div class="space-y-2">
           {% for mapping in koreader_mappings %}
-            <div class="bg-surface-1 rounded-md p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-              <div class="min-w-0">
-                {% if mapping.item %}
-                  <div class="text-sm text-fg truncate">{{ mapping.item.title }}</div>
-                {% else %}
-                  <div class="text-sm text-amber-400">Unlinked — pick a book below</div>
-                {% endif %}
-                <div class="text-xs text-fg-faint font-mono truncate">{{ mapping.document_hash }}</div>
-                <div class="text-xs text-fg-faint">
-                  {% if mapping.last_progress_at %}
-                    {{ mapping.last_percentage|floatformat:1 }}% via {{ mapping.last_device|default:"unknown device" }} · {{ mapping.last_progress_at|date:"Y-m-d H:i" }}
+            <div class="bg-surface-1 rounded-md p-3 flex gap-3">
+              {% if mapping.item %}
+                <a href="{% url 'media_details' source=mapping.item.source media_type=mapping.item.media_type media_id=mapping.item.media_id title=mapping.item.title|slug %}"
+                   class="shrink-0 block"
+                   title="Open {{ mapping.item.title }}">
+                  <img src="{{ mapping.item.image }}"
+                       alt=""
+                       class="w-12 h-18 object-cover rounded-sm bg-surface-2"
+                       loading="lazy"
+                       style="width:48px;height:72px">
+                </a>
+              {% else %}
+                <div class="shrink-0 w-12 h-18 rounded-sm bg-surface-2 flex items-center justify-center text-fg-faint"
+                     style="width:48px;height:72px"
+                     aria-hidden="true">
+                  {% include "app/icons/book-open.svg" with classes="w-5 h-5" %}
+                </div>
+              {% endif %}
+              <div class="min-w-0 flex-1">
+                <div class="flex items-start gap-2 flex-wrap">
+                  {% if mapping.item %}
+                    <a href="{% url 'media_details' source=mapping.item.source media_type=mapping.item.media_type media_id=mapping.item.media_id title=mapping.item.title|slug %}"
+                       class="text-sm text-fg truncate hover:text-indigo-400 transition-colors">{{ mapping.item.title }}</a>
                   {% else %}
-                    No progress received yet.
+                    <div class="text-sm text-amber-400">Unlinked — pick a book below</div>
+                  {% endif %}
+                  {% if mapping.book %}
+                    {% if mapping.book.status == "Completed" %}
+                      {% include "app/components/ui/pill.html" with variant="status-completed" label="Completed" %}
+                    {% elif mapping.book.status == "In progress" %}
+                      {% include "app/components/ui/pill.html" with variant="status-in-progress" label="In progress" %}
+                    {% elif mapping.book.status == "Planning" %}
+                      {% include "app/components/ui/pill.html" with variant="status-planning" label="Planning" %}
+                    {% elif mapping.book.status == "Paused" %}
+                      {% include "app/components/ui/pill.html" with variant="status-paused" label="Paused" %}
+                    {% elif mapping.book.status == "Dropped" %}
+                      {% include "app/components/ui/pill.html" with variant="status-dropped" label="Dropped" %}
+                    {% endif %}
                   {% endif %}
                 </div>
+                <div class="text-xs text-fg-muted mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
+                  <span>{{ mapping.last_percentage|floatformat:1 }}%</span>
+                  {% if mapping.book %}<span>page {{ mapping.book.progress }}</span>{% endif %}
+                  {% if mapping.last_device %}
+                    <span title="{{ mapping.last_device_id|default:'no device id' }}">
+                      on {{ mapping.last_device }}{% if mapping.last_device_id %} · {{ mapping.last_device_id }}{% endif %}
+                    </span>
+                  {% endif %}
+                  {% if mapping.last_progress_at %}
+                    <span title="{{ mapping.last_progress_at|date:'Y-m-d H:i:s' }}">{{ mapping.last_progress_at|timesince }} ago</span>
+                  {% else %}
+                    <span class="text-fg-faint">no progress yet</span>
+                  {% endif %}
+                </div>
+                <div class="text-xs text-fg-faint font-mono mt-1 break-all"
+                     title="KOReader document hash">{{ mapping.document_hash }}</div>
               </div>
-              <div class="flex items-center gap-2 shrink-0">
+              <div class="flex flex-col md:flex-row items-end md:items-center gap-2 shrink-0">
                 {% if not mapping.item %}
                   <form method="post"
                         action="{% url 'koreader_link' %}"
