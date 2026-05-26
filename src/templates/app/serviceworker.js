@@ -70,6 +70,71 @@ self.addEventListener('message', (event) => {
   }
 });
 
+// Background Sync (Chromium only). Drains the same IndexedDB queue the
+// page-side offlineQueue.js writes to. Limitation: the SW can't read
+// `document.cookie`, so replays here use the X-CSRFToken from the queued
+// request (potentially stale). If a replay fails 403, it's dropped; the
+// page-driven replay path will pick it up with a fresh token on next
+// page load.
+const OFFLINE_DB_NAME = 'yt-offline';
+const OFFLINE_DB_VERSION = 1;
+const OFFLINE_STORE = 'mutations';
+const SYNC_TAG = 'yt-replay';
+
+function openOfflineDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(OFFLINE_DB_NAME, OFFLINE_DB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(OFFLINE_STORE)) {
+        db.createObjectStore(OFFLINE_STORE, { keyPath: 'id', autoIncrement: true });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function drainOfflineQueue() {
+  const db = await openOfflineDB();
+  const all = await new Promise((resolve, reject) => {
+    const tx = db.transaction(OFFLINE_STORE, 'readonly');
+    const req = tx.objectStore(OFFLINE_STORE).getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+  for (const it of all) {
+    try {
+      const res = await fetch(it.url, {
+        method: it.method,
+        credentials: 'include',
+        headers: it.headers,
+        body: it.body,
+      });
+      const drop = res.ok || (res.status >= 400 && res.status < 500 && res.status !== 408 && res.status !== 429);
+      if (drop) {
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(OFFLINE_STORE, 'readwrite');
+          tx.objectStore(OFFLINE_STORE).delete(it.id);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        });
+      }
+    } catch (_) {
+      // Network still down — Background Sync will retry later.
+      break;
+    }
+  }
+  const clients = await self.clients.matchAll({ type: 'window' });
+  for (const c of clients) c.postMessage({ type: 'YT_REPLAY_DONE' });
+}
+
+self.addEventListener('sync', (event) => {
+  if (event.tag === SYNC_TAG) {
+    event.waitUntil(drainOfflineQueue());
+  }
+});
+
 async function trimCache(cacheName, maxEntries) {
   const cache = await caches.open(cacheName);
   const keys = await cache.keys();

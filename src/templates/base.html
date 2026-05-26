@@ -292,6 +292,15 @@
               <a href="{% url 'notifications' %}"
                  class="btn btn-icon btn-ghost relative"
                  title="Notifications">{% include "app/icons/bell.svg" with classes="w-4 h-4" %}</a>
+              {% comment %}
+                Offline-queue indicator. Hidden by default; offlineQueue.js
+                reveals it when there are pending mutations waiting for the
+                network to come back. Tooltip explains the state on hover.
+              {% endcomment %}
+              <span id="yt-offline-queue-indicator"
+                    hidden
+                    class="hidden lg:inline-flex items-center gap-1 px-2 py-1 ml-1 text-[11px] font-medium rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                    title="Pending changes will sync when the network returns"></span>
             </div>
           </header>
 
@@ -537,6 +546,8 @@
       })();
     </script>
 
+    <script defer
+            src="{% static 'js/offlineQueue.js' %}{% get_static_file_mtime 'js/offlineQueue.js' %}"></script>
     <script defer
             src="{% static 'js/mediaStatusDateHandler.js' %}{% get_static_file_mtime 'js/mediaStatusDateHandler.js' %}"></script>
     <script defer
