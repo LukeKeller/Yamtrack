@@ -10,18 +10,18 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh120"
+CURRENT_FORK_VERSION = "0.25.2~ynh121"
 
 
 RELEASE_NOTES = [
     {
-        "version": "0.25.2~ynh120",
+        "version": "0.25.2~ynh121",
         "date": "2026-05-26",
         "title": "KOReader sync + reliable YunoHost upgrades",
         "highlights": [
             "KOReader sync: Yamtrack now speaks the kosync protocol at /api/koreader, so KOReader on your e-reader can push reading progress (current page, percent, document hash, device) without going through SSO. Configure it under Settings → Integrations → KOReader.",
             "KOReader UI enrichments on the integrations page: each recent sync shows the book cover, an In-progress / Completed status pill, current page, the device that sent it, and a relative-time stamp — so you can confirm a sync landed without leaving the page.",
-            "YunoHost upgrades no longer silently fail to refresh the API permission allowlist. The /api/koreader carve-out is added on every upgrade via idempotent ``ynh_permission_url --add_url`` / ``ynh_permission_update --add`` packaging-helper calls (helpers v2.1). The raw ``yunohost user permission`` CLI surface changed across YunoHost versions, so the earlier ~ynh116..119 attempts each picked an invocation that wasn't valid on the installed box (``url`` subcommand missing, ``--add visitors`` not recognized on ``update``, etc.) and quietly fell through their ``|| true`` guards — the upgrades 'succeeded' but the allowlist stayed stale and KOReader sync stayed SSO-blocked. The helpers wrap whatever syntax the installed YunoHost actually supports, so this round works regardless of host version.",
+            "YunoHost upgrades now reliably refresh the API permission allowlist so /api/koreader is publicly reachable on existing installs. After several iterations (~ynh116..120) that each hit a different version-skew between the raw ``yunohost user permission`` CLI and what the installed host actually accepted, the upgrade script now calls the packaging helpers ``ynh_permission_url --add_url`` and ``ynh_permission_update --add`` (helpers v2.1) — these wrap whatever syntax the local YunoHost supports. ~ynh120 was the first version where the upgrade ran without warnings on the raw CLI, but the helper itself was called with the fully-qualified ``$app.api`` permission name (the helpers internally re-prepend ``$app``, producing ``yamtrack_fork.yamtrack_fork.api`` and crashing inside ``permission.py``); ~ynh121 passes just ``api`` and finally lands the change.",
         ],
         "fixes": [],
     },
