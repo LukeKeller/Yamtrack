@@ -11,11 +11,14 @@ from app import helpers
 from app.helpers import extract_release_date
 from app.models import Item, MediaManager, MediaTypes
 from app.providers import services
-from lists.forms import CustomListForm
+from app.providers.services import ProviderAPIError
+from lists.forms import CustomListForm, ListImportForm
 from lists.models import CustomList, CustomListItem
 from users.models import ListDetailSortChoices, ListSortChoices, MediaStatusChoices
 
 logger = logging.getLogger(__name__)
+
+UNMATCHED_PREVIEW_LIMIT = 5
 
 
 @require_GET
@@ -294,6 +297,118 @@ def lists_modal(
         "lists/components/fill_lists.html",
         {"item": item, "custom_lists": custom_lists},
     )
+
+
+def _resolve_or_create_item(search_hit):
+    """Return the Item described by a search-result dict, creating if needed.
+
+    Tries to populate ``air_date`` from a metadata fetch so the new
+    "Release Date" sort works immediately for freshly-imported items.
+    Failures are logged and treated as missing data — never fatal.
+    """
+    media_id = str(search_hit["media_id"])
+    source = search_hit["source"]
+    media_type = search_hit["media_type"]
+    item = Item.objects.filter(
+        media_id=media_id,
+        source=source,
+        media_type=media_type,
+        season_number=None,
+        episode_number=None,
+    ).first()
+    if item is not None:
+        return item
+
+    air_date = None
+    try:
+        metadata = services.get_media_metadata(media_type, media_id, source)
+        air_date = extract_release_date(metadata)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            "List import: metadata fetch failed for %s/%s/%s: %s",
+            media_type,
+            source,
+            media_id,
+            exc,
+        )
+
+    return Item.objects.create(
+        media_id=media_id,
+        source=source,
+        media_type=media_type,
+        title=search_hit["title"],
+        image=search_hit["image"],
+        air_date=air_date,
+    )
+
+
+@require_GET
+def list_import_form(request):
+    """Render the empty list-import form."""
+    return render(request, "lists/import_list.html", {"form": ListImportForm()})
+
+
+@require_POST
+def list_import(request):
+    """Bulk-create a new CustomList from a pasted list of titles."""
+    form = ListImportForm(request.POST)
+    if not form.is_valid():
+        return render(request, "lists/import_list.html", {"form": form})
+
+    titles = form.cleaned_data["titles"]
+    media_type = form.cleaned_data["media_type"]
+
+    custom_list = CustomList.objects.create(
+        name=form.cleaned_data["name"],
+        description=form.cleaned_data["description"],
+        owner=request.user,
+    )
+
+    matched_count = 0
+    unmatched = []
+    for title in titles:
+        try:
+            results = services.search(media_type, title, page=1)
+        except ProviderAPIError as exc:
+            logger.warning("List import: search failed for %r: %s", title, exc)
+            unmatched.append(title)
+            continue
+
+        hits = results.get("results") or []
+        if not hits:
+            unmatched.append(title)
+            continue
+
+        item = _resolve_or_create_item(hits[0])
+        _, created = CustomListItem.objects.get_or_create(
+            item=item,
+            custom_list=custom_list,
+        )
+        if created:
+            matched_count += 1
+
+    if matched_count == 0:
+        # Don't leave behind an empty list — re-render the form with
+        # the user's inputs so they can adjust the media type or fix typos.
+        custom_list.delete()
+        messages.error(
+            request,
+            "Nothing matched any of those titles — list not created.",
+        )
+        return render(request, "lists/import_list.html", {"form": form})
+
+    messages.success(
+        request,
+        f"Added {matched_count} item(s) to {custom_list.name!r}.",
+    )
+    if unmatched:
+        preview = ", ".join(unmatched[:UNMATCHED_PREVIEW_LIMIT])
+        overflow = len(unmatched) - UNMATCHED_PREVIEW_LIMIT
+        if overflow > 0:
+            preview += f" and {overflow} more"
+        messages.warning(request, f"Could not match: {preview}")
+
+    return redirect("list_detail", list_id=custom_list.id)
 
 
 @require_POST

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}
+  Import List - Yamtrack
+{% endblock title %}
+
+{% block content %}
+  <div class="mx-auto max-w-2xl">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold mb-2">Import List</h1>
+      <p class="text-fg-muted">
+        Paste a list of titles and Yamtrack will search each one, take the top
+        match, and add the matches to a new custom list. Best for canonical
+        lists like franchises or "best of" rankings.
+      </p>
+    </div>
+
+    <form method="post" action="{% url 'list_import' %}" class="space-y-6">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="bg-red-900/40 border border-red-700 text-red-200 rounded-md p-3 text-sm">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <div>
+        <label for="{{ form.name.id_for_label }}"
+               class="block text-sm font-medium mb-2 text-fg">{{ form.name.label }}</label>
+        {{ form.name|add_class:"w-full p-2 bg-surface-2 rounded-md text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500" }}
+        {% if form.name.errors %}<p class="text-red-400 text-sm mt-1">{{ form.name.errors|join:" " }}</p>{% endif %}
+      </div>
+
+      <div>
+        <label for="{{ form.description.id_for_label }}"
+               class="block text-sm font-medium mb-2 text-fg">
+          {{ form.description.label }} <span class="text-fg-muted font-normal">(optional)</span>
+        </label>
+        {{ form.description|add_class:"w-full p-2 bg-surface-2 rounded-md text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500" }}
+        {% if form.description.errors %}
+          <p class="text-red-400 text-sm mt-1">{{ form.description.errors|join:" " }}</p>
+        {% endif %}
+      </div>
+
+      <div>
+        <label for="{{ form.media_type.id_for_label }}"
+               class="block text-sm font-medium mb-2 text-fg">{{ form.media_type.label }}</label>
+        {{ form.media_type|add_class:"w-full p-2 bg-surface-2 rounded-md text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none" }}
+        <p class="text-fg-muted text-sm mt-1">{{ form.media_type.help_text }}</p>
+        {% if form.media_type.errors %}
+          <p class="text-red-400 text-sm mt-1">{{ form.media_type.errors|join:" " }}</p>
+        {% endif %}
+      </div>
+
+      <div>
+        <label for="{{ form.titles.id_for_label }}"
+               class="block text-sm font-medium mb-2 text-fg">Titles</label>
+        {{ form.titles|add_class:"w-full p-2 bg-surface-2 rounded-md text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono text-sm" }}
+        <p class="text-fg-muted text-sm mt-1">{{ form.titles.help_text }}</p>
+        {% if form.titles.errors %}<p class="text-red-400 text-sm mt-1">{{ form.titles.errors|join:" " }}</p>{% endif %}
+      </div>
+
+      <div class="flex items-center justify-between pt-2">
+        <a href="{% url 'lists' %}"
+           class="text-sm text-fg-muted hover:text-fg transition-colors">Cancel</a>
+        <button type="submit"
+                class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors cursor-pointer">
+          Import &amp; Create List
+        </button>
+      </div>
+    </form>
+  </div>
+{% endblock content %}

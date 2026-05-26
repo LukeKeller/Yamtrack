@@ -23,5 +23,7 @@ urlpatterns = [
     path("list/create", views.create, name="list_create"),
     path("list/edit", views.edit, name="list_edit"),
     path("list/delete", views.delete, name="list_delete"),
+    path("list/import", views.list_import_form, name="list_import_form"),
+    path("list/import/submit", views.list_import, name="list_import"),
     path("list_item_toggle", views.list_item_toggle, name="list_item_toggle"),
 ]

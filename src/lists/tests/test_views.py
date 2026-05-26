@@ -6,6 +6,7 @@ from django.test import Client, RequestFactory, TestCase
 from django.urls import reverse
 
 from app.models import TV, Anime, Item, MediaTypes, Movie, Sources, Status
+from lists.forms import MAX_IMPORT_TITLES
 from lists.models import CustomList, CustomListItem
 
 
@@ -940,3 +941,161 @@ class ListItemToggleTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.context["has_item"])  # Item was removed
+
+
+class ListImportTests(TestCase):
+    """Tests for the bulk list-import form + view."""
+
+    def setUp(self):
+        """Set up a logged-in user."""
+        self.client = Client()
+        self.credentials = {"username": "test", "password": "12345"}
+        self.user = get_user_model().objects.create_user(**self.credentials)
+        self.client.login(**self.credentials)
+
+    def test_get_renders_form(self):
+        """GET /list/import renders the empty form."""
+        response = self.client.get(reverse("list_import_form"))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "lists/import_list.html")
+        self.assertIn("form", response.context)
+
+    @patch("app.providers.services.get_media_metadata")
+    @patch("app.providers.services.search")
+    def test_post_creates_list_with_matched_items(
+        self,
+        mock_search,
+        mock_metadata,
+    ):
+        """Each pasted title is searched and the top hit is added to the list."""
+        # Two hits — TOS at id 253, TNG at id 655.
+        mock_search.side_effect = [
+            {
+                "results": [
+                    {
+                        "media_id": 253,
+                        "source": Sources.TMDB.value,
+                        "media_type": MediaTypes.TV.value,
+                        "title": "Star Trek",
+                        "image": "http://example.com/tos.jpg",
+                    },
+                ],
+            },
+            {
+                "results": [
+                    {
+                        "media_id": 655,
+                        "source": Sources.TMDB.value,
+                        "media_type": MediaTypes.TV.value,
+                        "title": "Star Trek: The Next Generation",
+                        "image": "http://example.com/tng.jpg",
+                    },
+                ],
+            },
+        ]
+        mock_metadata.side_effect = [
+            {"details": {"first_air_date": "1966-09-08"}},
+            {"details": {"first_air_date": "1987-09-28"}},
+        ]
+
+        response = self.client.post(
+            reverse("list_import"),
+            {
+                "name": "Star Trek",
+                "description": "test",
+                "media_type": MediaTypes.TV.value,
+                "titles": "Star Trek\nStar Trek: The Next Generation",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        new_list = CustomList.objects.get(name="Star Trek", owner=self.user)
+        self.assertEqual(new_list.items.count(), 2)
+        titles = sorted(new_list.items.values_list("title", flat=True))
+        self.assertEqual(
+            titles,
+            ["Star Trek", "Star Trek: The Next Generation"],
+        )
+        # air_date was populated from the metadata mock
+        tng = new_list.items.get(media_id="655")
+        self.assertEqual(tng.air_date, date(1987, 9, 28))
+
+    @patch("app.providers.services.get_media_metadata")
+    @patch("app.providers.services.search")
+    def test_post_with_no_matches_does_not_leave_empty_list(
+        self,
+        mock_search,
+        _mock_metadata,
+    ):
+        """If nothing matches, the empty list is deleted and form re-rendered."""
+        mock_search.return_value = {"results": []}
+
+        response = self.client.post(
+            reverse("list_import"),
+            {
+                "name": "Mystery",
+                "media_type": MediaTypes.TV.value,
+                "titles": "asdfqwer\nzxcvbnm",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "lists/import_list.html")
+        self.assertFalse(CustomList.objects.filter(name="Mystery").exists())
+
+    @patch("app.providers.services.search")
+    def test_post_with_mixed_matches_keeps_list(self, mock_search):
+        """Partial matches still create the list; unmatched are surfaced."""
+        mock_search.side_effect = [
+            {
+                "results": [
+                    {
+                        "media_id": 253,
+                        "source": Sources.TMDB.value,
+                        "media_type": MediaTypes.TV.value,
+                        "title": "Star Trek",
+                        "image": "http://example.com/tos.jpg",
+                    },
+                ],
+            },
+            {"results": []},  # second title has no hits
+        ]
+
+        response = self.client.post(
+            reverse("list_import"),
+            {
+                "name": "Partial",
+                "media_type": MediaTypes.TV.value,
+                "titles": "Star Trek\nzzz-no-such-show",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        new_list = CustomList.objects.get(name="Partial", owner=self.user)
+        self.assertEqual(new_list.items.count(), 1)
+
+    def test_post_with_empty_titles_returns_form_error(self):
+        """Blank titles field bounces back to the form."""
+        response = self.client.post(
+            reverse("list_import"),
+            {
+                "name": "Empty",
+                "media_type": MediaTypes.TV.value,
+                "titles": "\n\n   \n",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "lists/import_list.html")
+        self.assertFalse(CustomList.objects.filter(name="Empty").exists())
+
+    def test_post_with_too_many_titles_returns_form_error(self):
+        """Cap is enforced at the form layer."""
+        titles = "\n".join(f"title-{i}" for i in range(MAX_IMPORT_TITLES + 1))
+        response = self.client.post(
+            reverse("list_import"),
+            {
+                "name": "TooMany",
+                "media_type": MediaTypes.TV.value,
+                "titles": titles,
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "lists/import_list.html")
+        self.assertFalse(CustomList.objects.filter(name="TooMany").exists())
