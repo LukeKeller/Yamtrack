@@ -10,10 +10,19 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh133"
+CURRENT_FORK_VERSION = "0.25.2~ynh134"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh134",
+        "date": "2026-05-27",
+        "title": "OPDS Authorization header now reaches Django (KOReader auth works end-to-end)",
+        "highlights": [
+            'The ynh133 fix made HEAD reach the catalog, but KOReader\'s Basic auth still bounced at 401 — YunoHost\'s plain <span class="font-mono">proxy_params</span> nginx snippet (which our public-endpoint carve-out uses) does not explicitly forward the <span class="font-mono">Authorization</span> header. KOReader was sending credentials, nginx was swallowing them before Django saw them, and the basic-auth handler always read an empty header → 401. ~ynh134 adds <span class="font-mono">proxy_set_header Authorization $http_authorization;</span> to the carve-out so the header survives the proxy hop. kosync uses custom <span class="font-mono">x-auth-*</span> headers that nginx forwards by default, which is why kosync was unaffected.',
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh133",
         "date": "2026-05-27",
