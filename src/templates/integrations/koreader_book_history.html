@@ -46,6 +46,51 @@
     {{ datasets_json|json_script:"koreader-history-data" }}
     <script src="{% static 'js/libraries/chartjs-4.4.9.min.js' %}"></script>
     <script src="{% static 'js/koreader-history-chart.js' %}{% get_static_file_mtime 'js/koreader-history-chart.js' %}"></script>
+
+    {% if sessions %}
+      <div class="bg-surface-1 rounded-lg p-5">
+        <div class="flex items-baseline justify-between mb-3">
+          <h2 class="text-lg font-medium">Inferred reading sessions</h2>
+          <span class="text-xs text-fg-faint">grouped by 30-min idle gaps</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="text-fg-muted text-left text-xs uppercase tracking-wide">
+              <tr class="border-b border-surface-2">
+                <th class="px-3 py-2 font-medium">Started</th>
+                <th class="px-3 py-2 font-medium">Ended</th>
+                <th class="px-3 py-2 font-medium text-right">Duration</th>
+                <th class="px-3 py-2 font-medium text-right">Progress</th>
+                <th class="px-3 py-2 font-medium text-right">Events</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for session in sessions %}
+                <tr class="border-b border-surface-2/40 last:border-b-0 hover:bg-surface-2/30">
+                  <td class="px-3 py-2 text-fg-muted">{{ session.start|date:"M j, Y H:i" }}</td>
+                  <td class="px-3 py-2 text-fg-muted">{{ session.end|date:"M j, Y H:i" }}</td>
+                  <td class="px-3 py-2 text-right">
+                    {% if session.duration_minutes %}
+                      {{ session.duration_minutes }} min
+                    {% else %}
+                      &lt; 1 min
+                    {% endif %}
+                  </td>
+                  <td class="px-3 py-2 text-right">
+                    {% if session.percent_traversed %}
+                      +{{ session.percent_traversed_pct|floatformat:1 }}%
+                    {% else %}
+                      —
+                    {% endif %}
+                  </td>
+                  <td class="px-3 py-2 text-right text-fg-muted">{{ session.event_count }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% endif %}
   {% else %}
     <div class="bg-surface-1 rounded-lg p-8 text-center">
       <p class="text-fg-muted">

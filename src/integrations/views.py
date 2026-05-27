@@ -1,5 +1,6 @@
 """Contains views for importing and exporting media data from various sources."""
 
+import datetime
 import json
 import logging
 import secrets
@@ -26,6 +27,11 @@ from integrations.hardcover_client import HardcoverAPIError, HardcoverAuthError
 from integrations.imports import anilist, discogs, hardcover, helpers, simkl, trakt
 from integrations.imports.helpers import MediaImportError
 from integrations.koreader import _apply_progress_to_book
+from integrations.koreader_stats import (
+    CADENCE_WINDOW_DAYS,
+    compute_daily_cadence,
+    compute_sessions,
+)
 from integrations.models import (
     HardcoverIntegration,
     KOReaderBookMapping,
@@ -1228,6 +1234,27 @@ def koreader_book_history(request, book_pk):
 
     datasets = list(by_device.values())
 
+    # Most users have one KOReaderBookMapping per tracked Book — pass
+    # it through directly so the helper restricts at the query layer.
+    # The rare case (multiple hashes for the same Item, e.g. two epub
+    # editions) falls back to a Python filter across the user's full
+    # session list, since mapping changes split sessions in the helper.
+    mappings = list(
+        KOReaderBookMapping.objects.filter(
+            user=request.user,
+            item=book.item,
+        ),
+    )
+    if len(mappings) == 1:
+        sessions = compute_sessions(request.user, mapping=mappings[0])
+    elif mappings:
+        mapping_ids = {m.id for m in mappings}
+        sessions = [
+            s for s in compute_sessions(request.user) if s.mapping_id in mapping_ids
+        ]
+    else:
+        sessions = []
+
     return render(
         request,
         "integrations/koreader_book_history.html",
@@ -1236,7 +1263,174 @@ def koreader_book_history(request, book_pk):
             "datasets_json": json.dumps(datasets),
             "event_count": len(events),
             "device_count": len(datasets),
+            "sessions": sessions,
         },
+    )
+
+
+def _cadence_heatmap_grid(cadence, *, start, today):
+    """Shape ``cadence`` rows into a 53-week heatmap grid for the template.
+
+    Returns ``weeks``, a list of 53 columns of 7 dicts each. Cells
+    outside the configured window (top of the first column and bottom
+    of the last, since today rarely lands on Sunday) get
+    ``in_window=False`` so the template renders them as blanks.
+
+    The intensity bucket (0-4) drives the cell colour. The scale upper
+    bound is clamped to ``[1.0, 3.0]`` so a single binge day doesn't
+    wash the rest of the grid out, and so a sparse user with a
+    sub-1.0 max still gets four useful shades.
+    """
+    by_date = {row["date"]: row for row in cadence}
+
+    grid_end = today + datetime.timedelta(days=6 - today.weekday())
+    grid_start = grid_end - datetime.timedelta(days=53 * 7 - 1)
+
+    max_percent = max((row["percent_read"] for row in cadence), default=0.0)
+    scale_max = max(1.0, min(max_percent, 3.0))
+
+    def _bucket(percent):
+        if percent <= 0:
+            return 0
+        ratio = min(1.0, percent / scale_max)
+        # Four visual quartiles plus "no activity" gives the GitHub-y
+        # five-step palette the template paints.
+        return min(4, 1 + int(ratio * 4))
+
+    weeks = []
+    cursor = grid_start
+    while cursor <= grid_end:
+        column = []
+        for _ in range(7):
+            row = by_date.get(cursor)
+            column.append(
+                {
+                    "date": cursor,
+                    "in_window": start <= cursor <= today,
+                    "percent_read": row["percent_read"] if row else 0.0,
+                    "mapping_count": row["mapping_count"] if row else 0,
+                    "event_count": row["event_count"] if row else 0,
+                    "bucket": _bucket(row["percent_read"]) if row else 0,
+                },
+            )
+            cursor += datetime.timedelta(days=1)
+        weeks.append(column)
+    return weeks
+
+
+def _cadence_streaks(active_dates, *, start, today):
+    """Return (current_streak, longest_streak) over the window.
+
+    Current streak counts back from ``today`` and stops on the first
+    inactive day; longest is the maximum consecutive run anywhere in
+    ``[start, today]``.
+    """
+    longest = 0
+    run = 0
+    day = start
+    while day <= today:
+        if day in active_dates:
+            run += 1
+            longest = max(longest, run)
+        else:
+            run = 0
+        day += datetime.timedelta(days=1)
+
+    current = 0
+    day = today
+    while day >= start and day in active_dates:
+        current += 1
+        day -= datetime.timedelta(days=1)
+    return current, longest
+
+
+@require_GET
+def koreader_cadence(request):
+    """Reading-cadence heatmap built from the kosync event log.
+
+    Renders a GitHub-style 7x53 contribution grid for the last
+    ``CADENCE_WINDOW_DAYS`` days, with each cell coloured by the
+    user's positive forward-progress across all KOReader-synced books
+    that day (one "book unit" = 1.0). The aggregation lives in
+    ``koreader_stats.compute_daily_cadence``; this view shapes its
+    result into the grid the template iterates over plus headline
+    stats (active days, current/longest streak, biggest day) for the
+    cards above the grid.
+    """
+    today = timezone.localdate()
+    start = today - datetime.timedelta(days=CADENCE_WINDOW_DAYS - 1)
+
+    cadence = compute_daily_cadence(request.user, since=start, until=today)
+    weeks = _cadence_heatmap_grid(cadence, start=start, today=today)
+
+    active_dates = {row["date"] for row in cadence if row["percent_read"] > 0}
+    current_streak, longest_streak = _cadence_streaks(
+        active_dates,
+        start=start,
+        today=today,
+    )
+
+    return render(
+        request,
+        "integrations/koreader_cadence.html",
+        {
+            "weeks": weeks,
+            "weekday_labels": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+            "active_days": len(active_dates),
+            "total_percent": sum(row["percent_read"] for row in cadence),
+            "longest_streak": longest_streak,
+            "current_streak": current_streak,
+            "biggest_day": max(
+                cadence,
+                key=lambda r: r["percent_read"],
+                default=None,
+            ),
+            "window_days": CADENCE_WINDOW_DAYS,
+            "today": today,
+        },
+    )
+
+
+@require_GET
+def koreader_sessions(request):
+    """Cross-book sessions page: every inferred reading session.
+
+    Pairs with the per-book panel on ``/koreader/history/<book>`` —
+    that one is scoped to a single Book; this one lists everything in
+    one place so the user can see "what did I read on Sunday across
+    all my books." The session grouping rule is identical between the
+    two views (gap > 30min OR mapping change closes a session).
+
+    The mapping → Item lookup is N+1-ish but bounded: with the helper
+    capped to ``limit=200`` recent sessions we resolve at most that
+    many mapping rows, and they're nearly all already in the page's
+    set (one Item per book). A single ``select_related`` on the
+    mapping FK keeps the per-row Book/Item resolution cheap.
+    """
+    sessions = compute_sessions(request.user, limit=200)
+    mapping_ids = {s.mapping_id for s in sessions}
+    mappings = {
+        m.id: m
+        for m in KOReaderBookMapping.objects.filter(
+            id__in=mapping_ids,
+            user=request.user,
+        ).select_related("item")
+    }
+
+    rows = []
+    for session in sessions:
+        mapping = mappings.get(session.mapping_id)
+        rows.append(
+            {
+                "session": session,
+                "item": mapping.item if mapping else None,
+            },
+        )
+
+    return render(
+        request,
+        "integrations/koreader_sessions.html",
+        {"rows": rows},
     )
 
 

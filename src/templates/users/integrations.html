@@ -559,8 +559,14 @@
           {% include "app/icons/book-open.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
           <h3 class="text-base font-medium">KOReader Progress Sync</h3>
         </div>
-        <a href="{% url 'koreader_devices' %}"
-           class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors whitespace-nowrap">Devices →</a>
+        <div class="flex items-center gap-3 text-xs whitespace-nowrap">
+          <a href="{% url 'koreader_cadence' %}"
+             class="text-indigo-400 hover:text-indigo-300 transition-colors">Cadence →</a>
+          <a href="{% url 'koreader_sessions' %}"
+             class="text-indigo-400 hover:text-indigo-300 transition-colors">Sessions →</a>
+          <a href="{% url 'koreader_devices' %}"
+             class="text-indigo-400 hover:text-indigo-300 transition-colors">Devices →</a>
+        </div>
       </div>
       <p class="text-fg-muted mb-4 text-sm">
         Configure KOReader's <span class="font-mono text-xs">Progress sync</span> plugin to push reading progress into Yamtrack. Each ebook is identified by KOReader's file hash; the first PUT for a new hash shows up below for you to link to a book in your library.

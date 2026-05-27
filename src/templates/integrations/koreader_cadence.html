@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load app_tags %}
+
+{% block title %}
+  KOReader cadence — Yamtrack
+{% endblock title %}
+
+{% block content %}
+  <div class="mb-6">
+    <a href="{% url 'integrations' %}"
+       class="text-fg-muted hover:text-fg text-sm inline-flex items-center gap-1 mb-3">← Back to integrations</a>
+    <h1 class="text-2xl font-bold mb-1">Reading cadence</h1>
+    <p class="text-fg-muted">
+      How much you've read on each day in the last {{ window_days }} days, sourced from KOReader's progress syncs. One full "book unit" per day is the heaviest shade.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+    <div class="bg-surface-1 rounded-lg p-4">
+      <p class="text-fg-muted text-xs uppercase tracking-wide">Active days</p>
+      <p class="text-2xl font-bold mt-1">{{ active_days }}</p>
+      <p class="text-xs text-fg-faint mt-1">in the last {{ window_days }}</p>
+    </div>
+    <div class="bg-surface-1 rounded-lg p-4">
+      <p class="text-fg-muted text-xs uppercase tracking-wide">Current streak</p>
+      <p class="text-2xl font-bold mt-1">{{ current_streak }} day{{ current_streak|pluralize }}</p>
+      <p class="text-xs text-fg-faint mt-1">longest: {{ longest_streak }}</p>
+    </div>
+    <div class="bg-surface-1 rounded-lg p-4">
+      <p class="text-fg-muted text-xs uppercase tracking-wide">Total progress</p>
+      <p class="text-2xl font-bold mt-1">{{ total_percent|floatformat:1 }}</p>
+      <p class="text-xs text-fg-faint mt-1">book-units (sum of % across books)</p>
+    </div>
+    <div class="bg-surface-1 rounded-lg p-4">
+      <p class="text-fg-muted text-xs uppercase tracking-wide">Biggest day</p>
+      {% if biggest_day %}
+        <p class="text-2xl font-bold mt-1">{{ biggest_day.percent_read|floatformat:2 }}</p>
+        <p class="text-xs text-fg-faint mt-1">on {{ biggest_day.date|date:"M j, Y" }}</p>
+      {% else %}
+        <p class="text-2xl font-bold mt-1">—</p>
+        <p class="text-xs text-fg-faint mt-1">no syncs yet</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="bg-surface-1 rounded-lg p-5 mb-6 overflow-x-auto">
+    <div class="flex gap-2 min-w-max">
+      <div class="flex flex-col gap-[3px] text-[10px] text-fg-faint pt-[2px] mr-1 select-none">
+        {% for label in weekday_labels %}
+          <div class="h-[12px] leading-[12px]">
+            {% if forloop.counter0|divisibleby:2 %}{{ label }}{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+      <div class="flex gap-[3px]">
+        {% for week in weeks %}
+          <div class="flex flex-col gap-[3px]">
+            {% for day in week %}
+              <div class="w-[12px] h-[12px] rounded-[2px] {% if not day.in_window %}bg-transparent {% elif day.bucket == 0 %}bg-surface-2 {% elif day.bucket == 1 %}bg-indigo-500/25 {% elif day.bucket == 2 %}bg-indigo-500/50 {% elif day.bucket == 3 %}bg-indigo-500/75 {% else %}bg-indigo-500{% endif %}"
+                   title="{{ day.date|date:'M j, Y' }} — {% if day.in_window %}{{ day.percent_read|floatformat:2 }} book-units · {{ day.event_count }} sync{{ day.event_count|pluralize }} · {{ day.mapping_count }} book{{ day.mapping_count|pluralize }}{% else %}(outside window){% endif %}">
+              </div>
+            {% endfor %}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 text-xs text-fg-muted mt-4">
+      <span>Less</span>
+      <div class="w-[12px] h-[12px] rounded-[2px] bg-surface-2"></div>
+      <div class="w-[12px] h-[12px] rounded-[2px] bg-indigo-500/25"></div>
+      <div class="w-[12px] h-[12px] rounded-[2px] bg-indigo-500/50"></div>
+      <div class="w-[12px] h-[12px] rounded-[2px] bg-indigo-500/75"></div>
+      <div class="w-[12px] h-[12px] rounded-[2px] bg-indigo-500"></div>
+      <span>More</span>
+    </div>
+  </div>
+
+  <p class="text-xs text-fg-faint">
+    Cadence counts only forward progress per day — re-reading earlier chapters doesn't subtract.
+    A "book-unit" is one whole book's percentage; multiple books in one day add up
+    (so two books taken from 0%→50% on the same day reads as 1.0).
+  </p>
+{% endblock content %}

@@ -768,6 +768,9 @@
   .h-\[5px\] {
     height: 5px;
   }
+  .h-\[12px\] {
+    height: 12px;
+  }
   .h-\[420px\] {
     height: 420px;
   }
@@ -918,6 +921,9 @@
   .w-152 {
     width: calc(var(--spacing) * 152);
   }
+  .w-\[12px\] {
+    width: 12px;
+  }
   .w-\[96px\] {
     width: 96px;
   }
@@ -1010,6 +1016,9 @@
   }
   .min-w-\[56px\] {
     min-width: 56px;
+  }
+  .min-w-max {
+    min-width: max-content;
   }
   .flex-1 {
     flex: 1;
@@ -1203,6 +1212,9 @@
   }
   .gap-12 {
     gap: calc(var(--spacing) * 12);
+  }
+  .gap-\[3px\] {
+    gap: 3px;
   }
   .gap-px {
     gap: 1px;
@@ -1407,6 +1419,9 @@
   }
   .rounded-2xl {
     border-radius: var(--radius-2xl);
+  }
+  .rounded-\[2px\] {
+    border-radius: 2px;
   }
   .rounded-full {
     border-radius: calc(infinity * 1px);
@@ -1722,10 +1737,22 @@
       background-color: color-mix(in oklab, var(--color-indigo-500) 10%, transparent);
     }
   }
+  .bg-indigo-500\/25 {
+    background-color: color-mix(in srgb, oklch(58.5% 0.233 277.117) 25%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-indigo-500) 25%, transparent);
+    }
+  }
   .bg-indigo-500\/50 {
     background-color: color-mix(in srgb, oklch(58.5% 0.233 277.117) 50%, transparent);
     @supports (color: color-mix(in lab, red, red)) {
       background-color: color-mix(in oklab, var(--color-indigo-500) 50%, transparent);
+    }
+  }
+  .bg-indigo-500\/75 {
+    background-color: color-mix(in srgb, oklch(58.5% 0.233 277.117) 75%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--color-indigo-500) 75%, transparent);
     }
   }
   .bg-indigo-600 {
@@ -2046,6 +2073,9 @@
   .pt-24 {
     padding-top: calc(var(--spacing) * 24);
   }
+  .pt-\[2px\] {
+    padding-top: 2px;
+  }
   .pr-1 {
     padding-right: calc(var(--spacing) * 1);
   }
@@ -2171,6 +2201,10 @@
   }
   .text-\[11px\] {
     font-size: 11px;
+  }
+  .leading-\[12px\] {
+    --tw-leading: 12px;
+    line-height: 12px;
   }
   .leading-none {
     --tw-leading: 1;

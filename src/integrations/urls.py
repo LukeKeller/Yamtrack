@@ -112,4 +112,14 @@ urlpatterns = [
         views.koreader_unmatched,
         name="koreader_unmatched",
     ),
+    path(
+        "koreader/cadence",
+        views.koreader_cadence,
+        name="koreader_cadence",
+    ),
+    path(
+        "koreader/sessions",
+        views.koreader_sessions,
+        name="koreader_sessions",
+    ),
 ]

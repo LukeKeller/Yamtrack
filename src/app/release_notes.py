@@ -10,10 +10,21 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh126"
+CURRENT_FORK_VERSION = "0.25.2~ynh127"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh127",
+        "date": "2026-05-26",
+        "title": "KOReader: reading cadence heatmap + inferred sessions",
+        "highlights": [
+            'New page: <strong>Reading cadence</strong> at ``/koreader/cadence`` (linked from the integrations card alongside Devices). Renders a GitHub-style 7x53 contribution grid for the last 53 weeks, with each cell coloured by the day\'s positive forward progress summed across all your KOReader-synced books. One full "book-unit" per day is the heaviest shade. Headline cards above the grid show active days, current/longest reading streak, total progress over the window, and the biggest single day. Re-reading earlier chapters never subtracts (max-minus-min per (day, book) is clamped to positive), so a partial re-read still reports as a zero-delta day rather than going negative across midnight.',
+            "New page: <strong>Reading sessions</strong> at ``/koreader/sessions`` (also linked from the integrations card). Groups consecutive KOReader syncs into inferred sessions — a new session opens after a 30-minute idle gap, or when you switch to a different book. Each row shows start/end, duration in minutes, percent progress made within the session, the book, and the underlying event count. Sessions that are both shorter than a minute and only one event (KOReader's book-open ping) are dropped, while a long single-event session is kept.",
+            'Same sessions table also surfaces below the per-book history chart at ``/koreader/history/<book>`` — "book details once attached" — so you can see exactly when you sat down with a specific book without leaving its detail view.',
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh126",
         "date": "2026-05-26",
