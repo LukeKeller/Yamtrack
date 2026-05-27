@@ -1304,12 +1304,13 @@ def koreader_book_history(request, book_pk):
     """Per-book reading-history view, sourced from the kosync event log.
 
     The ``KOReaderBookMapping`` row only carries the latest state, so the
-    actual timeline lives in ``KOReaderProgressEvent``. We group events
-    by device for Chart.js so each device renders as its own dataset
-    (own colour, own legend entry, hover tooltips per point). If the
-    user has more than one mapping bound to the same Item (e.g. they
-    re-downloaded a different epub edition), events from all of them
-    appear on the same chart in chronological order.
+    actual timeline lives in ``KOReaderProgressEvent``. Sessions
+    (clustered from events with <30min idle gaps) feed a "Book Journey"
+    bar chart — one bar per session, height = cumulative % at end of
+    session, stacked so the brighter tip shows the gain made in that
+    sitting. If the user has more than one mapping bound to the same
+    Item (e.g. they re-downloaded a different epub edition), sessions
+    from all of them appear on the same chart in chronological order.
     """
     book_model = apps.get_model("app", "book")
     book = get_object_or_404(book_model, pk=book_pk, user=request.user)
@@ -1320,25 +1321,8 @@ def koreader_book_history(request, book_pk):
             mapping__item=book.item,
         )
         .order_by("created_at")
-        .values("created_at", "percentage", "progress", "device", "device_id"),
+        .values("created_at", "percentage", "device", "device_id"),
     )
-
-    by_device = {}
-    for ev in events:
-        key = ev["device_id"] or ev["device"] or "unknown"
-        label = ev["device"] or ev["device_id"] or "Unknown device"
-        bucket = by_device.setdefault(key, {"label": label, "points": []})
-        bucket["points"].append(
-            {
-                # Epoch ms keeps Chart.js on the linear axis (no
-                # chartjs-adapter-date-fns dependency to ship).
-                "x": int(ev["created_at"].timestamp() * 1000),
-                "y": round(ev["percentage"] * 100, 2),
-                "page": ev["progress"],
-            },
-        )
-
-    datasets = list(by_device.values())
 
     # Most users have one KOReaderBookMapping per tracked Book — pass
     # it through directly so the helper restricts at the query layer.
@@ -1363,14 +1347,50 @@ def koreader_book_history(request, book_pk):
 
     total_minutes, _session_count, _avg = aggregate_reading_time(sessions)
 
+    # Latest kosync percentage. ``book.progress`` for a Book is a page
+    # count, not a percentage — rendering it with a % suffix has been
+    # confusing users who happened to be at "N pages" where N looked
+    # plausible as a percentage. Use the actual fraction KOReader
+    # pushed (mapping.last_percentage, 0.0-1.0) for the headline stat.
+    current_percentage = None
+    if events:
+        current_percentage = round(events[-1]["percentage"] * 100, 1)
+    elif mappings:
+        latest_mapping = max(
+            (m for m in mappings if m.last_progress_at is not None),
+            key=lambda m: m.last_progress_at,
+            default=None,
+        )
+        if latest_mapping is not None:
+            current_percentage = round(latest_mapping.last_percentage * 100, 1)
+
+    # Sessions come back newest-first; the chart wants oldest-first so
+    # the bars read left-to-right chronologically.
+    journey_sessions = list(reversed(sessions))
+    journey_data = [
+        {
+            "label": s.start.strftime("%b %-d"),
+            "started": s.start.isoformat(),
+            "ended": s.end.isoformat(),
+            "duration_min": s.duration_minutes,
+            "start_pct": round(s.percent_start * 100, 1),
+            "end_pct": round(s.percent_end * 100, 1),
+            "delta_pct": round(s.percent_traversed_pct, 1),
+        }
+        for s in journey_sessions
+    ]
+
     return render(
         request,
         "integrations/koreader_book_history.html",
         {
             "book": book,
-            "datasets_json": json.dumps(datasets),
+            "journey_json": json.dumps(journey_data),
             "event_count": len(events),
-            "device_count": len(datasets),
+            "device_count": len({
+                (ev["device_id"] or ev["device"] or "unknown") for ev in events
+            }),
+            "current_percentage": current_percentage,
             "sessions": sessions,
             "total_minutes": total_minutes,
             "total_hours": total_minutes / 60,

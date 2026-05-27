@@ -456,12 +456,33 @@ class BookHistoryViewTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "koreader-history-data")
-        # The dataset payload is rendered inside a json_script tag, so the
-        # label and the percentage values should both round-trip.
-        self.assertContains(response, "kindle")
         self.assertIn("event_count", response.context)
         self.assertEqual(response.context["event_count"], 3)
         self.assertEqual(response.context["device_count"], 1)
+        # Latest event was 0.7 → 70% headline stat.
+        self.assertEqual(response.context["current_percentage"], 70.0)
+
+    def test_current_percentage_uses_kosync_fraction_not_pages(self):
+        """Regression: don't render book.progress (pages) with a % suffix.
+
+        Before this fix, ``Current progress`` displayed
+        ``{{ book.progress }}%`` — but ``book.progress`` for Books is
+        the page count. So a reader 71 pages into any book saw "71%",
+        regardless of book length. The headline stat must come from
+        ``mapping.last_percentage`` (the actual 0.0-1.0 fraction
+        KOReader pushed), independent of the page count.
+        """
+        self.book.progress = 71
+        self.book.save(update_fields=["progress"])
+        # Latest sync was at 12% — even though book.progress=71, the
+        # headline must reflect the kosync percentage.
+        self._event(0.12)
+        response = self.client.get(
+            reverse("koreader_book_history", args=[self.book.pk]),
+        )
+        self.assertEqual(response.context["current_percentage"], 12.0)
+        # And the pages number is surfaced separately, without a %.
+        self.assertContains(response, "71 pages")
 
     def test_groups_by_device(self):
         self._event(0.1, device="kindle", device_id="k1")
