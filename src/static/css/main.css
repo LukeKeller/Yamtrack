@@ -3522,6 +3522,11 @@
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
   }
+  .md\:grid-cols-5 {
+    @media (width >= 48rem) {
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+  }
   .md\:grid-cols-\[200px_1fr\] {
     @media (width >= 48rem) {
       grid-template-columns: 200px 1fr;

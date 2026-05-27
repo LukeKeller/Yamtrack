@@ -15,6 +15,33 @@
     </p>
   </div>
 
+  <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+    <div class="bg-surface-1 rounded-lg p-4">
+      <p class="text-fg-muted text-xs uppercase tracking-wide">Total time read</p>
+      <p class="text-2xl font-bold mt-1">{{ total_hours|floatformat:1 }}h</p>
+      <p class="text-xs text-fg-faint mt-1">{{ total_minutes|floatformat:0 }} minutes</p>
+    </div>
+    <div class="bg-surface-1 rounded-lg p-4">
+      <p class="text-fg-muted text-xs uppercase tracking-wide">Sessions</p>
+      <p class="text-2xl font-bold mt-1">{{ session_count }}</p>
+      {% if session_count > displayed_count %}
+        <p class="text-xs text-fg-faint mt-1">showing {{ displayed_count }} most recent</p>
+      {% else %}
+        <p class="text-xs text-fg-faint mt-1">all-time</p>
+      {% endif %}
+    </div>
+    <div class="bg-surface-1 rounded-lg p-4">
+      <p class="text-fg-muted text-xs uppercase tracking-wide">Average session</p>
+      {% if session_count %}
+        <p class="text-2xl font-bold mt-1">{{ avg_session_minutes|floatformat:0 }} min</p>
+        <p class="text-xs text-fg-faint mt-1">across all sessions</p>
+      {% else %}
+        <p class="text-2xl font-bold mt-1">—</p>
+        <p class="text-xs text-fg-faint mt-1">no sessions yet</p>
+      {% endif %}
+    </div>
+  </div>
+
   {% if rows %}
     <div class="overflow-x-auto bg-surface-1 rounded-lg">
       <table class="w-full text-sm">

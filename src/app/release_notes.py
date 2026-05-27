@@ -10,10 +10,21 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh128"
+CURRENT_FORK_VERSION = "0.25.2~ynh129"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh129",
+        "date": "2026-05-26",
+        "title": "KOReader: reading-time stats everywhere",
+        "highlights": [
+            "Reading time (in hours/minutes) now surfaces across all the KOReader pages, derived from inferred session durations. <strong>/koreader/cadence</strong> gains three cards below the streak/active-days row: total reading time over the 53-week window, average session length, and minutes per active day. <strong>/koreader/sessions</strong> gains headline cards for total time read, session count, and average session length (the table itself stays capped at 200 rows; the totals are computed across every session so heavy readers' all-time totals don't truncate as the table paginates).",
+            'Per-book history page (<strong>/koreader/history/&lt;book&gt;</strong>) gains a fifth stat card showing total reading time for that specific book — so you can answer "how many hours did I spend on this one" without opening a calculator. The book detail page\'s KOReader summary card (next to Notes) also gains a "Xh read" badge alongside the existing percentage and last-sync info.',
+            "All time figures come from the same noise-filtered session list the rest of the KOReader UI uses (30-minute idle gap or book change closes a session; sub-minute single-event pings are dropped), so the numbers stay consistent across every view.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh128",
         "date": "2026-05-26",

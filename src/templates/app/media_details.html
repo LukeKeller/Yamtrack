@@ -355,6 +355,10 @@
             <div class="bg-surface-1 rounded-md p-3 space-y-2">
               <div class="text-xs text-fg-muted flex flex-wrap gap-x-3 gap-y-0.5">
                 <span class="text-fg">{{ koreader_summary.mapping.last_percentage|floatformat:1 }}%</span>
+                {% if koreader_summary.total_minutes %}
+                  <span class="text-fg"
+                        title="{{ koreader_summary.total_minutes|floatformat:0 }} minutes across all sessions">{{ koreader_summary.total_hours|floatformat:1 }}h read</span>
+                {% endif %}
                 {% if koreader_summary.mapping.last_device %}
                   <span title="{{ koreader_summary.mapping.last_device_id|default:'no device id' }}">on {{ koreader_summary.mapping.last_device }}</span>
                 {% endif %}

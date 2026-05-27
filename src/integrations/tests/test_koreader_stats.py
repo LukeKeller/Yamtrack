@@ -18,6 +18,8 @@ from django.utils import timezone
 
 from app.models import Book, Item, MediaTypes, Sources, Status
 from integrations.koreader_stats import (
+    ReadingSession,
+    aggregate_reading_time,
     compute_daily_cadence,
     compute_sessions,
 )
@@ -351,6 +353,68 @@ class SessionsViewTests(TestCase):
         self.assertEqual(response.context["rows"], [])
 
 
+class AggregateReadingTimeTests(TestCase):
+    """``aggregate_reading_time`` sums duration_minutes across sessions."""
+
+    def _session(self, duration_min):
+        now = timezone.now()
+        return ReadingSession(
+            start=now,
+            end=now + datetime.timedelta(minutes=duration_min),
+            mapping_id=1,
+            event_count=2,
+            percent_start=0.1,
+            percent_end=0.2,
+        )
+
+    def test_empty_sessions_returns_zero(self):
+        minutes, count, avg = aggregate_reading_time([])
+        self.assertEqual(minutes, 0)
+        self.assertEqual(count, 0)
+        self.assertEqual(avg, 0)
+
+    def test_sums_minutes_and_computes_average(self):
+        sessions = [self._session(10), self._session(20), self._session(30)]
+        minutes, count, avg = aggregate_reading_time(sessions)
+        self.assertEqual(minutes, 60)
+        self.assertEqual(count, 3)
+        self.assertEqual(avg, 20.0)
+
+
+class ReadingTimeViewsTests(TestCase):
+    """Cadence, sessions, and per-book history views surface reading-time."""
+
+    def setUp(self):
+        self.user = _make_user()
+        self.client.force_login(self.user)
+        self.item = _make_book_item()
+        self.mapping = _make_mapping(self.user, self.item, "a" * 32)
+
+    def _three_event_session(self):
+        now = timezone.now()
+        for offset in (30, 20, 10):
+            _add_event(
+                self.mapping,
+                percentage=0.1 + (30 - offset) * 0.01,
+                at=now - datetime.timedelta(minutes=offset),
+            )
+
+    def test_cadence_view_includes_reading_time(self):
+        self._three_event_session()
+        response = self.client.get(reverse("koreader_cadence"))
+        self.assertEqual(response.status_code, 200)
+        self.assertGreater(response.context["total_minutes"], 0)
+        self.assertEqual(response.context["session_count"], 1)
+
+    def test_sessions_view_includes_headline_stats(self):
+        self._three_event_session()
+        response = self.client.get(reverse("koreader_sessions"))
+        self.assertEqual(response.status_code, 200)
+        self.assertGreater(response.context["total_minutes"], 0)
+        self.assertEqual(response.context["session_count"], 1)
+        self.assertGreater(response.context["avg_session_minutes"], 0)
+
+
 class BookDetailKOReaderCardTests(TestCase):
     """The book detail page surfaces the KOReader summary card when bound."""
 
@@ -423,3 +487,6 @@ class BookDetailKOReaderCardTests(TestCase):
         self.assertEqual(summary["event_count"], 2)
         self.assertEqual(summary["mapping"].pk, self.mapping.pk)
         self.assertEqual(len(summary["sessions"]), 1)
+        # ~5 min between the two events.
+        self.assertGreater(summary["total_minutes"], 0)
+        self.assertEqual(summary["total_hours"], summary["total_minutes"] / 60)

@@ -15,7 +15,7 @@
     </p>
   </div>
 
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
     <div class="bg-surface-1 rounded-lg p-4">
       <p class="text-fg-muted text-xs uppercase tracking-wide">Active days</p>
       <p class="text-2xl font-bold mt-1">{{ active_days }}</p>
@@ -39,6 +39,34 @@
       {% else %}
         <p class="text-2xl font-bold mt-1">—</p>
         <p class="text-xs text-fg-faint mt-1">no syncs yet</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+    <div class="bg-surface-1 rounded-lg p-4">
+      <p class="text-fg-muted text-xs uppercase tracking-wide">Total reading time</p>
+      <p class="text-2xl font-bold mt-1">{{ total_hours|floatformat:1 }}h</p>
+      <p class="text-xs text-fg-faint mt-1">across {{ session_count }} session{{ session_count|pluralize }}</p>
+    </div>
+    <div class="bg-surface-1 rounded-lg p-4">
+      <p class="text-fg-muted text-xs uppercase tracking-wide">Average session</p>
+      {% if session_count %}
+        <p class="text-2xl font-bold mt-1">{{ avg_session_minutes|floatformat:0 }} min</p>
+        <p class="text-xs text-fg-faint mt-1">across {{ session_count }} session{{ session_count|pluralize }}</p>
+      {% else %}
+        <p class="text-2xl font-bold mt-1">—</p>
+        <p class="text-xs text-fg-faint mt-1">no sessions yet</p>
+      {% endif %}
+    </div>
+    <div class="bg-surface-1 rounded-lg p-4">
+      <p class="text-fg-muted text-xs uppercase tracking-wide">Per active day</p>
+      {% if active_days %}
+        <p class="text-2xl font-bold mt-1">{{ minutes_per_active_day|floatformat:0 }} min</p>
+        <p class="text-xs text-fg-faint mt-1">on days you read</p>
+      {% else %}
+        <p class="text-2xl font-bold mt-1">—</p>
+        <p class="text-xs text-fg-faint mt-1">no active days yet</p>
       {% endif %}
     </div>
   </div>

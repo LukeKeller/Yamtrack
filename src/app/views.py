@@ -788,14 +788,17 @@ def browse(request):
 def _koreader_book_summary(user, book):
     """Return a compact KOReader summary for ``book`` or ``None``.
 
-    Used by the book detail view to render a card with last-sync info
-    plus the three most recent inferred sessions. Returns ``None``
-    when the user has no KOReader mappings for the book, or has
-    mappings but no events yet. Imports the stats helper lazily so the
-    media_details path doesn't pay the import cost for non-book
-    requests.
+    Used by the book detail view to render a card with last-sync info,
+    total reading time, and the three most recent inferred sessions.
+    Returns ``None`` when the user has no KOReader mappings for the
+    book, or has mappings but no events yet. Imports the stats helper
+    lazily so the media_details path doesn't pay the import cost for
+    non-book requests.
     """
-    from integrations.koreader_stats import compute_sessions  # noqa: PLC0415
+    from integrations.koreader_stats import (  # noqa: PLC0415
+        aggregate_reading_time,
+        compute_sessions,
+    )
 
     koreader_event_model = apps.get_model("integrations", "KOReaderProgressEvent")
     koreader_mapping_model = apps.get_model("integrations", "KOReaderBookMapping")
@@ -819,12 +822,14 @@ def _koreader_book_summary(user, book):
     # splits on mapping change and we want sessions for any of the
     # book's mappings.
     if len(mappings) == 1:
-        sessions = compute_sessions(user, mapping=mappings[0], limit=3)
+        all_sessions = compute_sessions(user, mapping=mappings[0])
     else:
         mapping_ids = {m.id for m in mappings}
-        sessions = [s for s in compute_sessions(user) if s.mapping_id in mapping_ids][
-            :3
+        all_sessions = [
+            s for s in compute_sessions(user) if s.mapping_id in mapping_ids
         ]
+    total_minutes, _session_count, _avg = aggregate_reading_time(all_sessions)
+    sessions = all_sessions[:3]
 
     latest_mapping = max(
         (m for m in mappings if m.last_progress_at is not None),
@@ -835,6 +840,8 @@ def _koreader_book_summary(user, book):
         "mapping": latest_mapping,
         "sessions": sessions,
         "event_count": event_count,
+        "total_minutes": total_minutes,
+        "total_hours": total_minutes / 60,
     }
 
 

@@ -29,6 +29,7 @@ from integrations.imports.helpers import MediaImportError
 from integrations.koreader import _apply_progress_to_book
 from integrations.koreader_stats import (
     CADENCE_WINDOW_DAYS,
+    aggregate_reading_time,
     compute_daily_cadence,
     compute_sessions,
 )
@@ -1326,6 +1327,8 @@ def koreader_book_history(request, book_pk):
     else:
         sessions = []
 
+    total_minutes, _session_count, _avg = aggregate_reading_time(sessions)
+
     return render(
         request,
         "integrations/koreader_book_history.html",
@@ -1335,6 +1338,8 @@ def koreader_book_history(request, book_pk):
             "event_count": len(events),
             "device_count": len(datasets),
             "sessions": sessions,
+            "total_minutes": total_minutes,
+            "total_hours": total_minutes / 60,
         },
     )
 
@@ -1441,6 +1446,18 @@ def koreader_cadence(request):
         today=today,
     )
 
+    # Reading-time stats derive from the full session list, scoped by
+    # date so they line up with the heatmap window. Sessions inherit
+    # the cadence helper's positive-only / noise-filtered semantics.
+    window_sessions = [
+        s for s in compute_sessions(request.user) if start <= s.start.date() <= today
+    ]
+    total_minutes, session_count, avg_minutes = aggregate_reading_time(
+        window_sessions,
+    )
+    active_day_count = len(active_dates) or 1
+    minutes_per_active_day = total_minutes / active_day_count
+
     return render(
         request,
         "integrations/koreader_cadence.html",
@@ -1458,6 +1475,11 @@ def koreader_cadence(request):
             ),
             "window_days": CADENCE_WINDOW_DAYS,
             "today": today,
+            "total_minutes": total_minutes,
+            "total_hours": total_minutes / 60,
+            "session_count": session_count,
+            "avg_session_minutes": avg_minutes,
+            "minutes_per_active_day": minutes_per_active_day,
         },
     )
 
@@ -1477,8 +1499,16 @@ def koreader_sessions(request):
     many mapping rows, and they're nearly all already in the page's
     set (one Item per book). A single ``select_related`` on the
     mapping FK keeps the per-row Book/Item resolution cheap.
+
+    Headline stats (total time, count, average) are computed over the
+    *full* session list rather than the 200-row display window, so a
+    heavy reader's "total time read" doesn't truncate as the table
+    paginates.
     """
-    sessions = compute_sessions(request.user, limit=200)
+    all_sessions = compute_sessions(request.user)
+    total_minutes, session_count, avg_minutes = aggregate_reading_time(all_sessions)
+
+    sessions = all_sessions[:200]
     mapping_ids = {s.mapping_id for s in sessions}
     mappings = {
         m.id: m
@@ -1501,7 +1531,14 @@ def koreader_sessions(request):
     return render(
         request,
         "integrations/koreader_sessions.html",
-        {"rows": rows},
+        {
+            "rows": rows,
+            "total_minutes": total_minutes,
+            "total_hours": total_minutes / 60,
+            "session_count": session_count,
+            "avg_session_minutes": avg_minutes,
+            "displayed_count": len(rows),
+        },
     )
 
 

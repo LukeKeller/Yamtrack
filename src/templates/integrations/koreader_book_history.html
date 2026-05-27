@@ -18,7 +18,7 @@
     </p>
   </div>
 
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
     <div class="bg-surface-1 rounded-lg p-4">
       <p class="text-fg-muted text-xs uppercase tracking-wide">Sync events</p>
       <p class="text-2xl font-bold mt-1">{{ event_count }}</p>
@@ -30,6 +30,16 @@
     <div class="bg-surface-1 rounded-lg p-4">
       <p class="text-fg-muted text-xs uppercase tracking-wide">Current progress</p>
       <p class="text-2xl font-bold mt-1">{{ book.progress|default:0 }}%</p>
+    </div>
+    <div class="bg-surface-1 rounded-lg p-4">
+      <p class="text-fg-muted text-xs uppercase tracking-wide">Total time</p>
+      {% if total_minutes %}
+        <p class="text-2xl font-bold mt-1">{{ total_hours|floatformat:1 }}h</p>
+        <p class="text-xs text-fg-faint mt-1">{{ total_minutes|floatformat:0 }} min</p>
+      {% else %}
+        <p class="text-2xl font-bold mt-1">—</p>
+        <p class="text-xs text-fg-faint mt-1">no sessions</p>
+      {% endif %}
     </div>
     <div class="bg-surface-1 rounded-lg p-4">
       <p class="text-fg-muted text-xs uppercase tracking-wide">Status</p>

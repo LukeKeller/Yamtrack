@@ -234,3 +234,17 @@ def compute_sessions(
     if limit is not None:
         sessions = sessions[:limit]
     return sessions
+
+
+def aggregate_reading_time(sessions):
+    """Return ``(total_minutes, session_count, avg_minutes)`` for ``sessions``.
+
+    ``avg_minutes`` is ``0`` when there are no sessions (avoids divide-
+    by-zero in templates). Designed to be called once at view time
+    with the same ``sessions`` list the template iterates over — no
+    extra DB roundtrip.
+    """
+    minutes = sum(s.duration_minutes for s in sessions)
+    count = len(sessions)
+    avg = (minutes / count) if count else 0
+    return minutes, count, avg
