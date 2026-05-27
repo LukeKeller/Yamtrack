@@ -1,71 +1,37 @@
-// Renders the per-book KOReader reading-history chart: percentage over
-// time, one dataset per device so each gets its own colour and legend
-// entry. Data is embedded by the koreader_book_history view; x values
-// are epoch ms (so Chart.js can run on the linear axis without needing
-// a date-adapter library shipped alongside chartjs-4.4.9).
+// Renders the per-book "Book Journey" chart: one bar per reading
+// session (clustered server-side from kosync events on a 30-min idle
+// gap), stacked into a "start %" base and a "delta %" tip so the tip
+// reads as the gain the user made in that session and the full bar
+// height reads as the cumulative % reached at the end of it.
+//
+// X axis is categorical (one slot per session, evenly spaced). The
+// label is the session start date — long real-world gaps between
+// sessions are surfaced via the date labels rather than wide visual
+// gaps so the bars stay readable on a phone-width canvas. Tooltip
+// shows the full date, duration, and start→end percentages.
 
 document.addEventListener("DOMContentLoaded", function () {
   const node = document.getElementById("koreader-history-data");
   if (!node) return;
 
-  let datasets;
+  let sessions;
   try {
-    datasets = JSON.parse(node.textContent);
+    sessions = JSON.parse(node.textContent);
   } catch (err) {
     console.error("koreader-history: malformed dataset payload", err);
     return;
   }
-  if (!Array.isArray(datasets) || datasets.length === 0) return;
+  if (!Array.isArray(sessions) || sessions.length === 0) return;
 
   const canvas = document.getElementById("koreader-history-chart");
   if (!canvas) return;
 
-  // Tailwind 500-shade hues; readable on the dark surface. Order matters:
-  // the Nth device gets palette[N % len].
-  const palette = [
-    "#6366f1", // indigo
-    "#22c55e", // green
-    "#f59e0b", // amber
-    "#ec4899", // pink
-    "#06b6d4", // cyan
-    "#a855f7", // purple
-    "#ef4444", // red
-    "#84cc16", // lime
-  ];
+  const labels = sessions.map((s) => s.label);
+  const baseData = sessions.map((s) => s.start_pct);
+  const deltaData = sessions.map((s) => s.delta_pct);
 
-  const chartDatasets = datasets.map((d, i) => {
-    const color = palette[i % palette.length];
-    return {
-      label: d.label,
-      data: d.points.map((p) => ({ x: p.x, y: p.y, page: p.page })),
-      borderColor: color,
-      backgroundColor: color,
-      pointRadius: 3,
-      pointHoverRadius: 5,
-      borderWidth: 2,
-      tension: 0.15,
-      showLine: true, // connect a device's points chronologically
-    };
-  });
-
-  const allX = chartDatasets.flatMap((d) => d.data.map((p) => p.x));
-  const minX = Math.min.apply(null, allX);
-  const maxX = Math.max.apply(null, allX);
-
-  // Format epoch ms → human-friendly tick label. Width-aware: if the
-  // span is < 36h, show "May 26 14:00"; otherwise show "May 26".
-  const span = maxX - minX;
-  const dense = span < 36 * 60 * 60 * 1000;
-  const fmtTick = (ms) => {
-    const d = new Date(ms);
-    const date = d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-    if (!dense) return date;
-    const time = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
-    return `${date} ${time}`;
-  };
-  const fmtTooltipTitle = (items) => {
-    const ms = items[0].parsed.x;
-    const d = new Date(ms);
+  const fmtDate = (iso) => {
+    const d = new Date(iso);
     return d.toLocaleString(undefined, {
       month: "short",
       day: "numeric",
@@ -75,27 +41,50 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   };
 
+  const fmtDuration = (mins) => {
+    if (!mins) return "< 1 min";
+    if (mins < 60) return `${mins} min`;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m ? `${h}h ${m}m` : `${h}h`;
+  };
+
   new Chart(canvas, {
-    type: "scatter",
-    data: { datasets: chartDatasets },
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: "Already read",
+          data: baseData,
+          backgroundColor: "rgba(249,115,22,0.35)", // muted orange (base)
+          borderColor: "rgba(249,115,22,0.35)",
+          stack: "journey",
+          borderRadius: { topLeft: 0, topRight: 0, bottomLeft: 4, bottomRight: 4 },
+          borderSkipped: false,
+        },
+        {
+          label: "This session",
+          data: deltaData,
+          backgroundColor: "#f97316", // vivid orange (delta tip)
+          borderColor: "#f97316",
+          stack: "journey",
+          borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
+          borderSkipped: false,
+        },
+      ],
+    },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      parsing: false, // x is a number, y is a number
       scales: {
         x: {
-          type: "linear",
-          min: minX,
-          max: maxX,
-          ticks: {
-            color: "#9ca3af",
-            maxRotation: 0,
-            autoSkipPadding: 20,
-            callback: fmtTick,
-          },
-          grid: { color: "rgba(148,163,184,0.12)" },
+          stacked: true,
+          ticks: { color: "#9ca3af", maxRotation: 0, autoSkipPadding: 12 },
+          grid: { display: false },
         },
         y: {
+          stacked: true,
           min: 0,
           max: 100,
           ticks: {
@@ -112,12 +101,16 @@ document.addEventListener("DOMContentLoaded", function () {
         },
         tooltip: {
           callbacks: {
-            title: fmtTooltipTitle,
+            title: (items) => {
+              const s = sessions[items[0].dataIndex];
+              return fmtDate(s.started);
+            },
             label: (ctx) => {
-              const p = ctx.raw;
-              const pct = p.y.toFixed(1) + "%";
-              const page = p.page ? ` · page ${p.page}` : "";
-              return `${ctx.dataset.label}: ${pct}${page}`;
+              const s = sessions[ctx.dataIndex];
+              if (ctx.datasetIndex === 1) {
+                return `Read this session: +${s.delta_pct.toFixed(1)}% (${fmtDuration(s.duration_min)})`;
+              }
+              return `Reached: ${s.end_pct.toFixed(1)}% (from ${s.start_pct.toFixed(1)}%)`;
             },
           },
         },

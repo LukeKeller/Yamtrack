@@ -29,7 +29,14 @@
     </div>
     <div class="bg-surface-1 rounded-lg p-4">
       <p class="text-fg-muted text-xs uppercase tracking-wide">Current progress</p>
-      <p class="text-2xl font-bold mt-1">{{ book.progress|default:0 }}%</p>
+      {% if current_percentage is not None %}
+        <p class="text-2xl font-bold mt-1">{{ current_percentage|floatformat:0 }}%</p>
+        {% if book.progress %}
+          <p class="text-xs text-fg-faint mt-1">{{ book.progress }} pages</p>
+        {% endif %}
+      {% else %}
+        <p class="text-2xl font-bold mt-1">—</p>
+      {% endif %}
     </div>
     <div class="bg-surface-1 rounded-lg p-4">
       <p class="text-fg-muted text-xs uppercase tracking-wide">Total time</p>
@@ -53,7 +60,7 @@
         <canvas id="koreader-history-chart"></canvas>
       </div>
     </div>
-    {{ datasets_json|json_script:"koreader-history-data" }}
+    {{ journey_json|json_script:"koreader-history-data" }}
     <script src="{% static 'js/libraries/chartjs-4.4.9.min.js' %}"></script>
     <script src="{% static 'js/koreader-history-chart.js' %}{% get_static_file_mtime 'js/koreader-history-chart.js' %}"></script>
 
