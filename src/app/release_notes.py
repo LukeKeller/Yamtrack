@@ -10,10 +10,19 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh131"
+CURRENT_FORK_VERSION = "0.25.2~ynh132"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh132",
+        "date": "2026-05-27",
+        "title": "OPDS endpoint reachable on YunoHost installs (SSO carve-out)",
+        "highlights": [
+            'Fixes the ynh131 OPDS feature on YunoHost installs: the SSO layer was 302-redirecting unauthenticated requests to <span class="font-mono">/library/opds/</span> before Yamtrack\'s HTTP-Basic handler could run, so KOReader\'s OPDS browser saw a login page instead of the catalog. ~ynh132 adds <span class="font-mono">/library/opds</span> to both the nginx regex carve-out and the YunoHost <span class="font-mono">api</span> permission allowlist (same pattern as the existing <span class="font-mono">/api/koreader</span> kosync carve-out), so KOReader can authenticate with its own credentials.',
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh131",
         "date": "2026-05-27",
