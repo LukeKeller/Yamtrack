@@ -43,6 +43,7 @@ from app.models import (
 )
 from app.providers import discogs, manual, services, tmdb, trakt
 from app.templatetags import app_tags
+from events.models import Event
 from events.views import build_calendar_context
 from users.models import (
     DateFormatChoices,
@@ -299,6 +300,48 @@ def _recent_planning_candidates(user, *, cap):
     return candidates
 
 
+def _releases_today_candidates(user):
+    """In progress / Planning movies + TV (TMDB only) with a release event today.
+
+    Returns a list of ``(media_type, media)`` tuples. Episodes air against
+    the season item, so we collect TV media via the season's parent media_id.
+    """
+    today = timezone.localdate()
+    today_events = Event.objects.get_user_events(user, today, today)
+
+    movie_media_ids = set()
+    tv_media_ids = set()
+    for event in today_events:
+        item = event.item
+        if item.source != Sources.TMDB.value:
+            continue
+        if item.media_type == MediaTypes.MOVIE.value:
+            movie_media_ids.add(item.media_id)
+        elif item.media_type == MediaTypes.SEASON.value:
+            tv_media_ids.add(item.media_id)
+
+    active_statuses = [Status.IN_PROGRESS.value, Status.PLANNING.value]
+    candidates = []
+    for media_type, media_ids in (
+        (MediaTypes.MOVIE.value, movie_media_ids),
+        (MediaTypes.TV.value, tv_media_ids),
+    ):
+        if not media_ids:
+            continue
+        try:
+            model = apps.get_model("app", media_type)
+        except LookupError:
+            continue
+        qs = model.objects.filter(
+            user=user,
+            status__in=active_statuses,
+            item__source=Sources.TMDB.value,
+            item__media_id__in=media_ids,
+        ).select_related("item")
+        candidates.extend((media_type, media) for media in qs)
+    return candidates
+
+
 def _available_providers_in_region(meta, region):
     """Return the set of TMDB provider IDs streaming this item in ``region``.
 
@@ -313,26 +356,50 @@ def _available_providers_in_region(meta, region):
     }
 
 
-def _watch_tonight(user, *, limit=_WATCH_TONIGHT_LIMIT):
-    """Top matched Planning Movies / TV currently streaming on a user's services.
+def _merge_watch_tonight_candidates(today_candidates, recent_candidates):
+    """Merge release-today and recent-Planning candidates, deduped by media pk."""
+    candidates = []
+    seen = set()
+    for mt, media in (*today_candidates, *recent_candidates):
+        key = (mt, media.pk)
+        if key in seen:
+            continue
+        seen.add(key)
+        candidates.append((mt, media))
+    return candidates
 
-    Returns a list of ``{"media", "item", "match_score", "providers"}`` dicts
-    sorted by best taste-match first. Empty when the user has set no
-    streaming services, has no region selected, or no Planning items
-    have cached metadata yet.
+
+def _watch_tonight(user, *, limit=_WATCH_TONIGHT_LIMIT):
+    """Top In progress / Planning Movies / TV streaming on a user's services.
+
+    Returns a list of ``{"media", "item", "match_score", "providers",
+    "releases_today"}`` dicts. Items with a release event today (new
+    episode airing or movie hitting streaming) are sorted to the front
+    so the user does not miss a same-day drop; everything else falls
+    back to best taste-match, then most recently added. Empty when the
+    user has set no streaming services, has no region selected, or no
+    candidate items have cached metadata yet.
 
     Cold-cache behavior: we **never** trigger a TMDB fetch from here —
     we read metadata via ``cache.get_many`` only. Titles the user has
     viewed are cached for 24h, so the rail fills in organically as the
     user browses their library. This keeps the home page request bounded
-    to a single Redis round-trip regardless of Planning-list size.
+    to a single Redis round-trip regardless of candidate-list size.
     """
     subscribed = config.parse_streaming_providers(user.streaming_providers)
     region = user.watch_provider_region or ""
     if not subscribed or region in ("", "UNSET"):
         return []
 
-    candidates = _recent_planning_candidates(user, cap=_WATCH_TONIGHT_CANDIDATE_CAP)
+    # Items with a release today (In progress + Planning) go to the front;
+    # recent Planning items fill in the rest of the rail.
+    today_candidates = _releases_today_candidates(user)
+    today_keys = {(mt, media.pk) for mt, media in today_candidates}
+    recent_candidates = _recent_planning_candidates(
+        user,
+        cap=_WATCH_TONIGHT_CANDIDATE_CAP,
+    )
+    candidates = _merge_watch_tonight_candidates(today_candidates, recent_candidates)
     if not candidates:
         return []
 
@@ -373,15 +440,17 @@ def _watch_tonight(user, *, limit=_WATCH_TONIGHT_LIMIT):
                 "item": media.item,
                 "media_type": media_type,
                 "match_score": match_score,
+                "releases_today": (media_type, media.pk) in today_keys,
                 "providers": [
                     {"id": pid, "name": provider_lookup.get(pid, "")} for pid in matches
                 ],
             },
         )
 
-    # Best match first; ties by most-recently-added Planning row.
+    # Releases today first, then best match, then most-recently-added.
     results.sort(
         key=lambda r: (
+            not r["releases_today"],
             -(r["match_score"] or 0),
             -r["media"].created_at.timestamp(),
         ),

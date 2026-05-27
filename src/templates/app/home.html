@@ -132,8 +132,11 @@
 
     {% if watch_tonight %}
       {% comment %}
-        Top Planning matches that are currently streaming on a service
-        the user has linked in Preferences. Ranked by taste-match %
+        Top In progress / Planning matches that are currently streaming
+        on a service the user has linked in Preferences. Items with a
+        release event today (a new episode airing tonight, a movie
+        landing on a service) are pinned to the front so same-day drops
+        do not get missed. Remaining slots are ranked by taste-match %
         when the user has enough history, otherwise by recency.
         Provider lookups read straight from the metadata Redis cache
         (no extra TMDB calls on this page render) — items the user
@@ -166,6 +169,9 @@
                 <div class="flex-1 min-w-0 flex flex-col">
                   <div class="text-[10px] text-fg-faint uppercase tracking-wider mb-0.5">
                     {{ row.item.media_type|media_type_readable }}
+                    {% if row.releases_today %}
+                      · <span class="text-accent font-semibold">Today</span>
+                    {% endif %}
                     {% if row.match_score is not None %}
                       · <span class="text-accent">{{ row.match_score }}% match</span>
                     {% endif %}
