@@ -10,10 +10,20 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh137"
+CURRENT_FORK_VERSION = "0.25.2~ynh138"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh138",
+        "date": "2026-05-27",
+        "title": "KOReader book history: real Current Progress %, Book Journey chart",
+        "highlights": [
+            'The <strong>Current progress</strong> headline on <span class="font-mono">/koreader/book/&lt;id&gt;/</span> was rendering <span class="font-mono">book.progress</span> (a page count) with a <span class="font-mono">%</span> suffix. A reader 71 pages into any book saw "71%" regardless of the book\'s length — coincidentally plausible at 100 pages, nonsense otherwise. The headline now comes from the actual kosync percentage the device last pushed (<span class="font-mono">mapping.last_percentage</span>, 0.0-1.0), with the page count surfaced as a small subtitle.',
+            'The per-event scatter/line chart is replaced with a <strong>Book Journey</strong> stacked bar chart: one bar per inferred reading session (clustered from kosync events on a 30-minute idle gap), height = cumulative % at end of session, with a brighter top segment showing the % gained in that sitting. Tooltip carries the full date, start→end %, and session duration. Bars stay readable on phone-width canvases by spacing evenly rather than time-positioning — real-world gaps surface in the date labels instead.',
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh137",
         "date": "2026-05-27",
