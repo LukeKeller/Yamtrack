@@ -21,6 +21,7 @@ urlpatterns = [
     path("", include("users.urls")),
     path("", include("lists.urls")),
     path("", include("events.urls")),
+    path("library/", include("library.urls")),
     path("select2/", include("django_select2.urls")),
     path(
         "health/",

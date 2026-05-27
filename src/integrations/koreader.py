@@ -216,23 +216,51 @@ def progress_put(request):
             "last_progress_at": now,
         },
     )
-    # Filename-mode auto-bind: if this is a fresh mapping (or an
-    # existing-but-unbound row, e.g. someone hit a hash before but
-    # we couldn't match it pre-feature), see if md5(<title>.epub)
-    # for any of the user's library books matches the incoming hash.
-    # Skips the lookup once an item is already bound — manual links
-    # win over our guess.
+    # Auto-bind: when the mapping is fresh (or existing-but-unbound),
+    # try two cheap lookups in order before giving up and surfacing the
+    # hash on /koreader/unmatched. Manual links always win — once
+    # ``item_id`` is set we never overwrite it from an auto path.
+    #
+    # 1. LibraryFile lookup (uploaded through Yamtrack → we know the
+    #    md5 at upload time → O(1) via the indexed unique constraint).
+    #    Wins when the user used OPDS to side-load the book.
+    # 2. find_match_for_hash (filename-mode guess: md5(<title>.epub)
+    #    across the user's tracked books). Wins when KOReader is in
+    #    filename mode and the file happens to be named after its
+    #    title even though we didn't host it.
     if mapping.item_id is None:
-        matched_item = find_match_for_hash(user, document)
-        if matched_item is not None:
-            mapping.item = matched_item
+        from library.models import LibraryFile  # noqa: PLC0415
+
+        library_file = (
+            LibraryFile.objects.filter(
+                user=user,
+                koreader_filename_md5=document,
+                item__isnull=False,
+            )
+            .select_related("item")
+            .first()
+        )
+        if library_file is not None:
+            mapping.item = library_file.item
             mapping.save(update_fields=["item"])
             logger.info(
-                "KOReader filename-mode auto-bound %s → item %s (user %s)",
+                "KOReader OPDS auto-bound %s → item %s via LibraryFile %s (user %s)",
                 document,
-                matched_item.pk,
+                library_file.item_id,
+                library_file.pk,
                 user.pk,
             )
+        else:
+            matched_item = find_match_for_hash(user, document)
+            if matched_item is not None:
+                mapping.item = matched_item
+                mapping.save(update_fields=["item"])
+                logger.info(
+                    "KOReader filename-mode auto-bound %s → item %s (user %s)",
+                    document,
+                    matched_item.pk,
+                    user.pk,
+                )
     KOReaderProgressEvent.objects.create(
         mapping=mapping,
         user=user,

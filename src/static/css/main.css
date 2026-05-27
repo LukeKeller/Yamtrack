@@ -2642,6 +2642,47 @@
       background-color: var(--color-indigo-600);
     }
   }
+  .file\:mr-3 {
+    &::file-selector-button {
+      margin-right: calc(var(--spacing) * 3);
+    }
+  }
+  .file\:cursor-pointer {
+    &::file-selector-button {
+      cursor: pointer;
+    }
+  }
+  .file\:rounded-md {
+    &::file-selector-button {
+      border-radius: var(--radius-md);
+    }
+  }
+  .file\:border-0 {
+    &::file-selector-button {
+      border-style: var(--tw-border-style);
+      border-width: 0px;
+    }
+  }
+  .file\:bg-indigo-600 {
+    &::file-selector-button {
+      background-color: var(--color-indigo-600);
+    }
+  }
+  .file\:px-4 {
+    &::file-selector-button {
+      padding-inline: calc(var(--spacing) * 4);
+    }
+  }
+  .file\:py-2 {
+    &::file-selector-button {
+      padding-block: calc(var(--spacing) * 2);
+    }
+  }
+  .file\:text-white {
+    &::file-selector-button {
+      color: var(--color-white);
+    }
+  }
   .after\:absolute {
     &::after {
       content: var(--tw-content);
@@ -3140,6 +3181,15 @@
     &:hover {
       @media (hover: hover) {
         --tw-ring-color: var(--color-white);
+      }
+    }
+  }
+  .file\:hover\:bg-indigo-700 {
+    &::file-selector-button {
+      &:hover {
+        @media (hover: hover) {
+          background-color: var(--color-indigo-700);
+        }
       }
     }
   }

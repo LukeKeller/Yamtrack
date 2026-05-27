@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Library — Yamtrack
+{% endblock title %}
+
+{% block content %}
+  <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <h1 class="text-2xl font-bold mb-1">Library</h1>
+      <p class="text-fg-muted text-sm max-w-3xl">
+        Files you've uploaded to Yamtrack. Books here are served over OPDS for KOReader (settings → Integrations → OPDS catalog URL) and auto-bind to your tracked books on the next kosync push.
+      </p>
+    </div>
+    <a href="{% url 'library_upload' %}"
+       class="shrink-0 px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer">
+      Upload
+    </a>
+  </div>
+
+  <div class="mb-4 flex flex-wrap gap-2 text-sm">
+    {% with active="px-3 py-1 rounded-md bg-indigo-600 text-white" idle="px-3 py-1 rounded-md bg-surface-1 text-fg-muted hover:text-fg" %}
+      <a href="?filter=all"
+         class="{% if filter_mode == 'all' %}{{ active }}{% else %}{{ idle }}{% endif %}">
+        All <span class="text-fg-faint">({{ total_count }})</span>
+      </a>
+      <a href="?filter=unmatched"
+         class="{% if filter_mode == 'unmatched' %}{{ active }}{% else %}{{ idle }}{% endif %}">
+        Unmatched <span class="text-fg-faint">({{ unmatched_count }})</span>
+      </a>
+      <a href="?filter=matched"
+         class="{% if filter_mode == 'matched' %}{{ active }}{% else %}{{ idle }}{% endif %}">Matched</a>
+    {% endwith %}
+  </div>
+
+  {% if files %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      {% for lf in files %}
+        <div class="bg-surface-1 rounded-lg p-4 flex flex-col gap-3">
+          <div class="flex items-start gap-3">
+            {% if lf.cover %}
+              <img src="{{ lf.cover.url }}"
+                   alt="Cover of {{ lf.title|default:lf.canonical_filename }}"
+                   class="shrink-0 w-16 h-24 object-cover rounded-sm bg-surface-2"
+                   loading="lazy">
+            {% else %}
+              <div class="shrink-0 w-16 h-24 rounded-sm bg-surface-2 flex items-center justify-center text-fg-faint">
+                {% include "app/icons/book-open.svg" with classes="w-6 h-6" %}
+              </div>
+            {% endif %}
+            <div class="min-w-0 flex-1">
+              <div class="font-medium text-fg truncate" title="{{ lf.title }}">{{ lf.title|default:lf.canonical_filename }}</div>
+              {% if lf.author %}<div class="text-sm text-fg-muted truncate" title="{{ lf.author }}">{{ lf.author }}</div>{% endif %}
+              <div class="text-xs text-fg-faint mt-1 flex flex-wrap gap-x-2">
+                <span>{{ lf.size_bytes|filesizeformat }}</span>
+                {% if lf.language %}<span>· {{ lf.language }}</span>{% endif %}
+              </div>
+              <div class="text-xs mt-1">
+                {% if lf.item %}
+                  <span class="text-emerald-300">Tracked: <a class="hover:underline"
+    href="{% url 'media_details' media_type='book' media_id=lf.item.media_id source=lf.item.source title=lf.item.title %}">{{ lf.item.title }}</a></span>
+                {% else %}
+                  <span class="text-amber-300">Unmatched</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <div class="border-t border-surface-2 pt-3 space-y-2">
+            <details class="text-xs">
+              <summary class="cursor-pointer text-fg-muted hover:text-fg">Link to a tracked book</summary>
+              <form method="post"
+                    action="{% url 'library_link' pk=lf.pk %}"
+                    class="mt-2 flex items-center gap-2">
+                {% csrf_token %}
+                <select name="item_id"
+                        class="flex-1 min-w-0 py-1.5 pr-8 pl-2 bg-surface-2 rounded-md text-fg text-sm border-0 focus:ring-1 focus:ring-indigo-500 outline-none">
+                  <option value="">— Unlink —</option>
+                  {% for book in library_books %}
+                    <option value="{{ book.item_id }}"
+                            {% if lf.item_id == book.item_id %}selected{% endif %}>{{ book.item.title }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit"
+                        class="shrink-0 px-2 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors cursor-pointer">
+                  Save
+                </button>
+              </form>
+            </details>
+
+            <details class="text-xs">
+              <summary class="cursor-pointer text-fg-muted hover:text-fg">Rename file</summary>
+              <form method="post"
+                    action="{% url 'library_rename' pk=lf.pk %}"
+                    class="mt-2 flex items-center gap-2">
+                {% csrf_token %}
+                <input name="canonical_filename"
+                       type="text"
+                       value="{{ lf.canonical_filename }}"
+                       class="flex-1 min-w-0 py-1.5 px-2 bg-surface-2 rounded-md text-fg text-sm border-0 focus:ring-1 focus:ring-indigo-500 outline-none font-mono">
+                <button type="submit"
+                        class="shrink-0 px-2 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors cursor-pointer">
+                  Save
+                </button>
+              </form>
+              <p class="text-fg-faint mt-1">
+                Renaming rotates the kosync auto-bind hash. Make sure KOReader hasn't downloaded the file yet — or re-download after renaming.
+              </p>
+            </details>
+
+            <form method="post"
+                  action="{% url 'library_delete' pk=lf.pk %}"
+                  class="text-right">
+              {% csrf_token %}
+              <button type="submit"
+                      class="text-xs text-red-400 hover:text-red-300 cursor-pointer"
+                      onclick="return confirm('Delete {{ lf.canonical_filename|escapejs }}? This cannot be undone.')">
+                Delete
+              </button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="bg-surface-1 rounded-lg p-8 text-center">
+      <p class="text-fg-muted mb-3">No files yet.</p>
+      <a href="{% url 'library_upload' %}"
+         class="inline-block px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer">
+        Upload your first epub
+      </a>
+    </div>
+  {% endif %}
+{% endblock content %}

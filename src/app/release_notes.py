@@ -10,10 +10,23 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh130"
+CURRENT_FORK_VERSION = "0.25.2~ynh131"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh131",
+        "date": "2026-05-27",
+        "title": "OPDS server + library uploads for friction-free KOReader auto-bind",
+        "highlights": [
+            'New <strong>/library</strong> page: upload your <span class="font-mono">.epub</span> files (one at a time, or as a <span class="font-mono">.zip</span> archive that Yamtrack walks recursively for epubs inside) and Yamtrack hosts them for your KOReader devices. Each upload extracts title/author/language/cover/ISBN from the OPF, and when exactly one tracked Book in your library has the same title the file is auto-linked to it — no manual binding required.',
+            'New <strong>OPDS catalog</strong> at <span class="font-mono">/library/opds/</span>, exposed via the existing Yamtrack integration token (HTTP Basic; same username + API token as kosync). Add it to KOReader (<span class="font-mono">File browser → Search → OPDS catalog → +</span>) and your uploaded books appear alongside the rest of your KOReader library. Downloads land on the device under a canonical filename Yamtrack pre-computed at upload time.',
+            '<strong>100% kosync auto-bind</strong> for OPDS-side-loaded books. Because Yamtrack chose the filename, it already knows <span class="font-mono">md5(&lt;canonical-filename&gt;)</span> at upload — the next kosync push for that hash binds directly to the matched Book without ever passing through <strong>/koreader/unmatched</strong>. Works when KOReader is in filename-hash mode (the OPDS download is a fresh copy KOReader will hash by its basename).',
+            "Per-file actions in the library browser: rename the canonical filename (which rotates the kosync auto-bind hash — be sure to re-download on KOReader after renaming), manually link to a tracked Book when title-match was ambiguous, or delete. Cover images are extracted from the epub OPF and rendered inline so the browser doubles as a small bookshelf.",
+            "Non-epub files (PDF, CBZ, CBR, MOBI, etc.) are silently skipped from bulk uploads for this ship — adding more formats means writing per-format metadata extractors and reasoning about how KOReader hashes them, which is queued as a follow-up. Single uploads in non-epub formats are rejected.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh130",
         "date": "2026-05-27",

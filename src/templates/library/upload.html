@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}
+  Upload to library — Yamtrack
+{% endblock title %}
+
+{% block content %}
+  <div class="mb-6">
+    <a href="{% url 'library_index' %}"
+       class="text-fg-muted hover:text-fg text-sm inline-flex items-center gap-1 mb-3">← Back to library</a>
+    <h1 class="text-2xl font-bold mb-1">Upload to library</h1>
+    <p class="text-fg-muted text-sm max-w-3xl">
+      Drop in one or more <span class="font-mono">.epub</span> files, or a <span class="font-mono">.zip</span> archive that contains them. Subdirectories inside the zip are walked. Files in any other format are ignored for now.
+    </p>
+  </div>
+
+  <form method="post"
+        enctype="multipart/form-data"
+        class="bg-surface-1 rounded-lg p-6 max-w-2xl space-y-4">
+    {% csrf_token %}
+
+    <label for="id_files" class="block text-sm font-medium">EPUB or ZIP files</label>
+    <input type="file"
+           name="files"
+           id="id_files"
+           multiple
+           accept=".epub,.zip,application/epub+zip,application/zip"
+           class="block w-full text-sm text-fg file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-indigo-600 file:text-white file:hover:bg-indigo-700 file:cursor-pointer">
+
+    {% if form.errors %}
+      <ul class="text-sm text-red-400">
+        {% for field, errors in form.errors.items %}
+          {% for error in errors %}<li>{{ field }}: {{ error }}</li>{% endfor %}
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <div class="text-xs text-fg-faint">
+      Yamtrack reads each epub's metadata (title, author, language, cover) at upload time and, when there's exactly one matching tracked book, auto-links it. Manually linked files override auto-bind.
+    </div>
+
+    <div class="pt-2 flex justify-end">
+      <button type="submit"
+              class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer">
+        Upload
+      </button>
+    </div>
+  </form>
+{% endblock content %}

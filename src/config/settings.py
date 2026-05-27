@@ -117,6 +117,7 @@ INSTALLED_APPS = [
     "app",
     "events",
     "integrations",
+    "library",
     "lists",
     "users",
     "debug_toolbar",
@@ -309,6 +310,30 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 
 if BASE_URL:
     STATIC_URL = f"{BASE_URL}/static/"
+
+# User-uploaded media (library app: epub/cbz/pdf files + extracted covers).
+# Defaults to BASE_DIR/media so dev installs work without any config; on
+# YunoHost the install/upgrade scripts pin MEDIA_ROOT to $data_dir/media so
+# uploads survive --full_replace runs. MEDIA_URL is only used internally for
+# admin previews; library files are served through authenticated views.
+MEDIA_ROOT = Path(config("MEDIA_ROOT", default=str(BASE_DIR / "media")))
+MEDIA_URL = "media/"
+if BASE_URL:
+    MEDIA_URL = f"{BASE_URL}/media/"
+
+# Cap a single library upload — KOReader epubs are typically <30MB but CBR
+# scans go much larger. Bigger than this and we ask the user to upload from
+# the shell rather than push it through Gunicorn.
+DATA_UPLOAD_MAX_MEMORY_SIZE = config(
+    "DATA_UPLOAD_MAX_MEMORY_SIZE",
+    default=200 * 1024 * 1024,
+    cast=int,
+)
+FILE_UPLOAD_MAX_MEMORY_SIZE = config(
+    "FILE_UPLOAD_MAX_MEMORY_SIZE",
+    default=10 * 1024 * 1024,
+    cast=int,
+)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/stable/ref/settings/#default-auto-field

@@ -699,6 +699,41 @@
         </p>
       {% endif %}
     </div>
+
+    {% absolute_app_url '/library/opds/' as opds_url %}
+    <div class="bg-surface-2 p-5 rounded-lg mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center">
+          {% include "app/icons/book-open.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
+          <h3 class="text-base font-medium">Library + OPDS catalog</h3>
+        </div>
+        <a href="{% url 'library_index' %}"
+           class="text-indigo-400 hover:text-indigo-300 transition-colors text-xs whitespace-nowrap">Manage library →</a>
+      </div>
+      <p class="text-fg-muted mb-4 text-sm">
+        Upload .epub files (or a .zip of them) to Yamtrack and serve them over OPDS so KOReader can browse and download from your account. Each download lands on the device under a canonical filename Yamtrack pre-computed at upload — the next KOReader sync for that file auto-binds straight to the matching tracked book.
+      </p>
+      <div class="bg-surface-1 p-3 rounded-md space-y-3">
+        <div>
+          <label class="block text-xs text-fg-muted mb-1" for="opds-url">OPDS catalog URL</label>
+          <div class="flex items-center gap-2">
+            <input readonly
+                   id="opds-url"
+                   class="flex-1 py-2 pr-2 pl-3 bg-surface-1 rounded-md text-fg-muted text-sm border-0 focus:ring-0 outline-none font-mono"
+                   type="text"
+                   value="{{ opds_url }}">
+            <span class="flex items-center cursor-pointer group pr-1"
+                  title="Copy"
+                  data-copy-target="#opds-url">
+              {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-indigo-400 transition-colors" %}
+            </span>
+          </div>
+        </div>
+        <p class="text-xs text-fg-faint">
+          KOReader: <span class="font-mono">File browser → Search → OPDS catalog → +</span>. Username + password (your Yamtrack username + API token, same as kosync). Downloads land in your KOReader library and the next progress push auto-binds.
+        </p>
+      </div>
+    </div>
   {% endblock settings_content %}
 
   {% block js %}
