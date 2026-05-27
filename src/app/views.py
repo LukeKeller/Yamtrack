@@ -786,7 +786,7 @@ def browse(request):
 
 
 @require_GET
-def media_details(request, source, media_type, media_id, title):  # noqa: ARG001 title for URL
+def media_details(request, source, media_type, media_id, title):  # noqa: ARG001, C901 title for URL; complexity is acceptable here
     """Return the details page for a media item."""
     media_metadata = services.get_media_metadata(media_type, media_id, source)
     user_medias = BasicMedia.objects.filter_media_prefetch(
@@ -835,6 +835,19 @@ def media_details(request, source, media_type, media_id, title):  # noqa: ARG001
             current_instance,
         ),
     }
+
+    # Books: surface a "Reading history" link when this user has at least
+    # one KOReader sync event for the book. Cheap exists() — no payload.
+    if media_type == MediaTypes.BOOK.value and current_instance is not None:
+        koreader_event_model = apps.get_model(
+            "integrations",
+            "KOReaderProgressEvent",
+        )
+        if koreader_event_model.objects.filter(
+            user=request.user,
+            mapping__item=current_instance.item,
+        ).exists():
+            context["koreader_history_book_pk"] = current_instance.pk
     # Last-spin indicator on the Record detail page (only meaningful for records).
     if media_type == MediaTypes.RECORD.value:
         spin_qs = Play.objects.filter(

@@ -97,4 +97,14 @@ urlpatterns = [
     ),
     path("koreader/link", views.koreader_link, name="koreader_link"),
     path("koreader/unlink", views.koreader_unlink, name="koreader_unlink"),
+    path(
+        "koreader/history/<int:book_pk>",
+        views.koreader_book_history,
+        name="koreader_book_history",
+    ),
+    path(
+        "koreader/devices",
+        views.koreader_devices,
+        name="koreader_devices",
+    ),
 ]

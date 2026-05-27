@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load app_tags %}
+
+{% block title %}
+  KOReader devices — Yamtrack
+{% endblock title %}
+
+{% block content %}
+  <div class="mb-6">
+    <a href="{% url 'integrations' %}"
+       class="text-fg-muted hover:text-fg text-sm inline-flex items-center gap-1 mb-3">← Back to integrations</a>
+    <h1 class="text-2xl font-bold mb-1">KOReader devices</h1>
+    <p class="text-fg-muted">Every device that has pushed reading progress to your account via the kosync plugin.</p>
+  </div>
+
+  {% if devices %}
+    <div class="overflow-x-auto bg-surface-1 rounded-lg">
+      <table class="w-full text-sm">
+        <thead class="text-fg-muted text-left text-xs uppercase tracking-wide">
+          <tr class="border-b border-surface-2">
+            <th class="px-4 py-3 font-medium">Device</th>
+            <th class="px-4 py-3 font-medium">Last seen</th>
+            <th class="px-4 py-3 font-medium text-right">Books</th>
+            <th class="px-4 py-3 font-medium text-right">Syncs</th>
+            <th class="px-4 py-3 font-medium">Last book</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for device in devices %}
+            <tr class="border-b border-surface-2/40 last:border-b-0 hover:bg-surface-2/30">
+              <td class="px-4 py-3">
+                <div class="font-medium">{{ device.device|default:"Unknown device" }}</div>
+                {% if device.device_id %}<div class="text-xs text-fg-muted font-mono">{{ device.device_id }}</div>{% endif %}
+              </td>
+              <td class="px-4 py-3 text-fg-muted">{{ device.last_seen|date:"M j, Y H:i" }}</td>
+              <td class="px-4 py-3 text-right">{{ device.book_count }}</td>
+              <td class="px-4 py-3 text-right">{{ device.event_count }}</td>
+              <td class="px-4 py-3">
+                {% if device.last_item %}
+                  <a href="{% url 'media_details' source=device.last_item.source media_type='book' media_id=device.last_item.media_id title=device.last_item.title|slugify %}"
+                     class="text-indigo-400 hover:text-indigo-300">{{ device.last_item.title }}</a>
+                {% else %}
+                  <span class="text-fg-muted">—</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="bg-surface-1 rounded-lg p-8 text-center">
+      <p class="text-fg-muted">
+        No KOReader devices have synced yet. Once your e-reader pushes its first progress update, it'll appear here.
+      </p>
+    </div>
+  {% endif %}
+{% endblock content %}

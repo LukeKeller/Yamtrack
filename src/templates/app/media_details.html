@@ -341,6 +341,15 @@
               </button>
             </div>
           {% endif %}
+
+          {% if koreader_history_book_pk %}
+            <div class="my-3 border-t border-gray-700"></div>
+            <a href="{% url 'koreader_book_history' book_pk=koreader_history_book_pk %}"
+               class="inline-flex items-center gap-1.5 text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
+              {% include "app/icons/calendar.svg" with classes="w-4 h-4" %}
+              KOReader reading history →
+            </a>
+          {% endif %}
         </div>
 
         {# Ratings row — provider score, OMDb ratings, user score #}

@@ -45,7 +45,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 import users
 from app import providers
 from app.models import MediaTypes, Status
-from integrations.models import KOReaderBookMapping
+from integrations.models import KOReaderBookMapping, KOReaderProgressEvent
 
 logger = logging.getLogger(__name__)
 
@@ -214,6 +214,14 @@ def progress_put(request):
             "last_device_id": device_id,
             "last_progress_at": now,
         },
+    )
+    KOReaderProgressEvent.objects.create(
+        mapping=mapping,
+        user=user,
+        percentage=percentage,
+        progress=progress_str,
+        device=device,
+        device_id=device_id,
     )
 
     if mapping.item_id is not None:

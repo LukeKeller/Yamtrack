@@ -16,7 +16,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from app.models import Book, Item, MediaTypes, Sources, Status
-from integrations.models import KOReaderBookMapping
+from integrations.models import KOReaderBookMapping, KOReaderProgressEvent
 
 
 def _md5(value):
@@ -333,3 +333,229 @@ class LinkUnlinkTests(TestCase):
         self.assertFalse(
             KOReaderBookMapping.objects.filter(document_hash=self.DOCUMENT).exists()
         )
+
+
+class ProgressEventLogTests(TestCase):
+    """Event log writes — exercised on the kosync PUT hot path."""
+
+    DOCUMENT = "b" * 32
+
+    def setUp(self):
+        self.user = _make_user()
+
+    def _put(self, payload):
+        return self.client.put(
+            reverse("koreader_progress_put"),
+            data=json.dumps(payload),
+            content_type="application/json",
+            **_auth_headers(self.user),
+        )
+
+    def test_each_put_appends_one_event(self):
+        for pct in (0.1, 0.25, 0.5, 0.75):
+            response = self._put(
+                {
+                    "document": self.DOCUMENT,
+                    "percentage": pct,
+                    "device": "kindle",
+                    "device_id": "kindle-1",
+                    "progress": f"page-{int(pct * 400)}",
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(KOReaderProgressEvent.objects.count(), 4)
+        events = list(
+            KOReaderProgressEvent.objects.order_by("created_at").values(
+                "percentage",
+                "device",
+                "device_id",
+                "progress",
+            ),
+        )
+        self.assertEqual([e["percentage"] for e in events], [0.1, 0.25, 0.5, 0.75])
+        self.assertTrue(all(e["device"] == "kindle" for e in events))
+        self.assertTrue(all(e["device_id"] == "kindle-1" for e in events))
+
+    def test_event_preserves_device_per_push(self):
+        """Mapping row only keeps the latest device; the event log keeps all."""
+        self._put(
+            {
+                "document": self.DOCUMENT,
+                "percentage": 0.1,
+                "device": "kindle",
+                "device_id": "k1",
+            }
+        )
+        self._put(
+            {
+                "document": self.DOCUMENT,
+                "percentage": 0.2,
+                "device": "kobo",
+                "device_id": "k2",
+            }
+        )
+
+        devices_in_events = list(
+            KOReaderProgressEvent.objects.order_by("created_at").values_list(
+                "device_id",
+                flat=True,
+            ),
+        )
+        self.assertEqual(devices_in_events, ["k1", "k2"])
+        # Mapping row reflects the latest only.
+        mapping = KOReaderBookMapping.objects.get()
+        self.assertEqual(mapping.last_device_id, "k2")
+
+
+class BookHistoryViewTests(TestCase):
+    """/koreader/history/<book_pk> renders the per-book timeline."""
+
+    DOCUMENT = "c" * 32
+
+    def setUp(self):
+        self.user = _make_user()
+        self.client.force_login(self.user)
+        self.item = _make_book_item()
+        # PLANNING avoids the progress-save path that fetches metadata
+        # from OpenLibrary — the view doesn't care about Book.status.
+        self.book = Book.objects.create(
+            user=self.user,
+            item=self.item,
+            status=Status.PLANNING.value,
+            progress=0,
+        )
+        self.mapping = KOReaderBookMapping.objects.create(
+            user=self.user,
+            document_hash=self.DOCUMENT,
+            item=self.item,
+        )
+
+    def _event(self, percentage, device="kindle", device_id="kindle-1"):
+        return KOReaderProgressEvent.objects.create(
+            mapping=self.mapping,
+            user=self.user,
+            percentage=percentage,
+            device=device,
+            device_id=device_id,
+        )
+
+    def test_renders_empty_state_with_no_events(self):
+        response = self.client.get(
+            reverse("koreader_book_history", args=[self.book.pk]),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "No KOReader sync events yet")
+        self.assertNotContains(response, "koreader-history-data")
+
+    def test_renders_chart_with_events(self):
+        for pct in (0.2, 0.45, 0.7):
+            self._event(pct)
+        response = self.client.get(
+            reverse("koreader_book_history", args=[self.book.pk]),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "koreader-history-data")
+        # The dataset payload is rendered inside a json_script tag, so the
+        # label and the percentage values should both round-trip.
+        self.assertContains(response, "kindle")
+        self.assertIn("event_count", response.context)
+        self.assertEqual(response.context["event_count"], 3)
+        self.assertEqual(response.context["device_count"], 1)
+
+    def test_groups_by_device(self):
+        self._event(0.1, device="kindle", device_id="k1")
+        self._event(0.2, device="kobo", device_id="k2")
+        self._event(0.3, device="kindle", device_id="k1")
+        response = self.client.get(
+            reverse("koreader_book_history", args=[self.book.pk]),
+        )
+        self.assertEqual(response.context["device_count"], 2)
+        self.assertEqual(response.context["event_count"], 3)
+
+    def test_404_when_book_belongs_to_another_user(self):
+        other = _make_user(username="other")
+        other_book = Book.objects.create(
+            user=other,
+            item=self.item,
+            status=Status.PLANNING.value,
+        )
+        response = self.client.get(
+            reverse("koreader_book_history", args=[other_book.pk]),
+        )
+        self.assertEqual(response.status_code, 404)
+
+
+class DevicesDashboardTests(TestCase):
+    """/koreader/devices aggregates events across all books per user."""
+
+    def setUp(self):
+        self.user = _make_user()
+        self.client.force_login(self.user)
+        self.item_a = _make_book_item(media_id="OLA")
+        self.item_b = _make_book_item(media_id="OLB")
+        self.map_a = KOReaderBookMapping.objects.create(
+            user=self.user,
+            document_hash="a" * 32,
+            item=self.item_a,
+        )
+        self.map_b = KOReaderBookMapping.objects.create(
+            user=self.user,
+            document_hash="b" * 32,
+            item=self.item_b,
+        )
+
+    def _event(self, mapping, device, device_id, percentage=0.1):
+        return KOReaderProgressEvent.objects.create(
+            mapping=mapping,
+            user=self.user,
+            percentage=percentage,
+            device=device,
+            device_id=device_id,
+        )
+
+    def test_renders_empty_state_with_no_events(self):
+        response = self.client.get(reverse("koreader_devices"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "No KOReader devices have synced yet")
+
+    def test_aggregates_per_device(self):
+        # kindle-1: 3 events across 2 books
+        self._event(self.map_a, "kindle", "kindle-1")
+        self._event(self.map_a, "kindle", "kindle-1", percentage=0.2)
+        self._event(self.map_b, "kindle", "kindle-1")
+        # kobo-2: 1 event, 1 book
+        self._event(self.map_b, "kobo", "kobo-2")
+
+        response = self.client.get(reverse("koreader_devices"))
+        self.assertEqual(response.status_code, 200)
+        devices = {
+            (d["device"], d["device_id"]): d for d in response.context["devices"]
+        }
+
+        kindle = devices[("kindle", "kindle-1")]
+        self.assertEqual(kindle["event_count"], 3)
+        self.assertEqual(kindle["book_count"], 2)
+
+        kobo = devices[("kobo", "kobo-2")]
+        self.assertEqual(kobo["event_count"], 1)
+        self.assertEqual(kobo["book_count"], 1)
+
+    def test_other_user_events_are_excluded(self):
+        other = _make_user(username="other")
+        other_mapping = KOReaderBookMapping.objects.create(
+            user=other,
+            document_hash="d" * 32,
+            item=self.item_a,
+        )
+        KOReaderProgressEvent.objects.create(
+            mapping=other_mapping,
+            user=other,
+            percentage=0.5,
+            device="someone-else",
+            device_id="x",
+        )
+
+        response = self.client.get(reverse("koreader_devices"))
+        device_ids = [d["device_id"] for d in response.context["devices"]]
+        self.assertNotIn("x", device_ids)

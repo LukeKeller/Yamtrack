@@ -554,9 +554,13 @@
     {% url 'koreader_users_create' as koreader_create_path %}
     {% absolute_app_url '/api/koreader' as koreader_base_url %}
     <div class="bg-surface-2 p-5 rounded-lg mb-6">
-      <div class="flex items-center mb-3">
-        {% include "app/icons/book-open.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
-        <h3 class="text-base font-medium">KOReader Progress Sync</h3>
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center">
+          {% include "app/icons/book-open.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
+          <h3 class="text-base font-medium">KOReader Progress Sync</h3>
+        </div>
+        <a href="{% url 'koreader_devices' %}"
+           class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors whitespace-nowrap">Devices →</a>
       </div>
       <p class="text-fg-muted mb-4 text-sm">
         Configure KOReader's <span class="font-mono text-xs">Progress sync</span> plugin to push reading progress into Yamtrack. Each ebook is identified by KOReader's file hash; the first PUT for a new hash shows up below for you to link to a book in your library.
@@ -629,14 +633,14 @@
                        alt=""
                        class="w-12 h-18 object-cover rounded-sm bg-surface-2"
                        loading="lazy"
-                       style="width:48px;height:72px">
+                       style="width:48px;
+                              height:72px">
                 </a>
               {% else %}
                 <div class="shrink-0 w-12 h-18 rounded-sm bg-surface-2 flex items-center justify-center text-fg-faint"
-                     style="width:48px;height:72px"
-                     aria-hidden="true">
-                  {% include "app/icons/book-open.svg" with classes="w-5 h-5" %}
-                </div>
+                     style="width:48px;
+                            height:72px"
+                     aria-hidden="true">{% include "app/icons/book-open.svg" with classes="w-5 h-5" %}</div>
               {% endif %}
               <div class="min-w-0 flex-1">
                 <div class="flex items-start gap-2 flex-wrap">
@@ -665,7 +669,8 @@
                   {% if mapping.book %}<span>page {{ mapping.book.progress }}</span>{% endif %}
                   {% if mapping.last_device %}
                     <span title="{{ mapping.last_device_id|default:'no device id' }}">
-                      on {{ mapping.last_device }}{% if mapping.last_device_id %} · {{ mapping.last_device_id }}{% endif %}
+                      on {{ mapping.last_device }}
+                      {% if mapping.last_device_id %}· {{ mapping.last_device_id }}{% endif %}
                     </span>
                   {% endif %}
                   {% if mapping.last_progress_at %}
@@ -683,14 +688,14 @@
                         action="{% url 'koreader_link' %}"
                         class="flex items-center gap-2">
                     {% csrf_token %}
-                    <input type="hidden" name="document_hash" value="{{ mapping.document_hash }}">
+                    <input type="hidden"
+                           name="document_hash"
+                           value="{{ mapping.document_hash }}">
                     <select name="item_id"
                             required
                             class="py-1.5 pr-8 pl-2 bg-surface-2 rounded-md text-fg text-sm border-0 focus:ring-1 focus:ring-indigo-500 outline-none">
                       <option value="">Select a book…</option>
-                      {% for book in koreader_book_choices %}
-                        <option value="{{ book.id }}">{{ book.title }}</option>
-                      {% endfor %}
+                      {% for book in koreader_book_choices %}<option value="{{ book.id }}">{{ book.title }}</option>{% endfor %}
                     </select>
                     <button type="submit"
                             class="px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer">
@@ -700,19 +705,21 @@
                 {% endif %}
                 <form method="post" action="{% url 'koreader_unlink' %}">
                   {% csrf_token %}
-                  <input type="hidden" name="document_hash" value="{{ mapping.document_hash }}">
+                  <input type="hidden"
+                         name="document_hash"
+                         value="{{ mapping.document_hash }}">
                   <button type="submit"
                           class="px-3 py-1.5 bg-red-600/80 text-white rounded-md hover:bg-red-700 transition-colors text-sm cursor-pointer"
-                          title="Forget this document hash">
-                    Remove
-                  </button>
+                          title="Forget this document hash">Remove</button>
                 </form>
               </div>
             </div>
           {% endfor %}
         </div>
       {% else %}
-        <p class="text-xs text-fg-faint">No KOReader documents synced yet. Once a device pushes progress, hashes will appear here for linking.</p>
+        <p class="text-xs text-fg-faint">
+          No KOReader documents synced yet. Once a device pushes progress, hashes will appear here for linking.
+        </p>
       {% endif %}
     </div>
   {% endblock settings_content %}

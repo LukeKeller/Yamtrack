@@ -10,10 +10,22 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh124"
+CURRENT_FORK_VERSION = "0.25.2~ynh125"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh125",
+        "date": "2026-05-26",
+        "title": "KOReader visibility: per-book reading timeline + devices dashboard",
+        "highlights": [
+            "Each KOReader sync now appends to an append-only event log (``KOReaderProgressEvent``) alongside the existing mapping-row upsert, so the full per-push history (timestamp, percentage, device, page) is preserved instead of being overwritten. No change to the kosync wire protocol — your KOReader plugin keeps pushing exactly as before.",
+            "New page: <strong>KOReader reading history</strong> on each book's detail page (when there's at least one sync event), showing a percentage-over-time chart with one line per device — hover for the exact page/time/percentage. Surfaced as a small ``KOReader reading history →`` link on the book detail page, right below your notes section.",
+            "New page: <strong>KOReader devices</strong> at ``/koreader/devices`` (linked from the Integrations settings page next to the KOReader Progress Sync header). Lists each device that has ever synced for your account with last-seen, sync count, distinct books touched, and the most-recent book — useful when you switch between, say, a Kindle and a Kobo and want to see which one has the latest progress.",
+            "Both views are user-scoped: the timeline 404s if you try to load another user's book, and the devices view only aggregates your own events.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh124",
         "date": "2026-05-26",

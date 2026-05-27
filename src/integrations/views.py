@@ -10,8 +10,9 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_not_required
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Count, Max
 from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -25,7 +26,12 @@ from integrations.hardcover_client import HardcoverAPIError, HardcoverAuthError
 from integrations.imports import anilist, discogs, hardcover, helpers, simkl, trakt
 from integrations.imports.helpers import MediaImportError
 from integrations.koreader import _apply_progress_to_book
-from integrations.models import HardcoverIntegration, KOReaderBookMapping, WebhookEvent
+from integrations.models import (
+    HardcoverIntegration,
+    KOReaderBookMapping,
+    KOReaderProgressEvent,
+    WebhookEvent,
+)
 from integrations.webhooks import emby, jellyfin, plex
 
 logger = logging.getLogger(__name__)
@@ -1141,6 +1147,105 @@ def koreader_unlink(request):
     if deleted:
         messages.info(request, "KOReader mapping removed.")
     return redirect("integrations")
+
+
+@require_GET
+def koreader_book_history(request, book_pk):
+    """Per-book reading-history view, sourced from the kosync event log.
+
+    The ``KOReaderBookMapping`` row only carries the latest state, so the
+    actual timeline lives in ``KOReaderProgressEvent``. We group events
+    by device for Chart.js so each device renders as its own dataset
+    (own colour, own legend entry, hover tooltips per point). If the
+    user has more than one mapping bound to the same Item (e.g. they
+    re-downloaded a different epub edition), events from all of them
+    appear on the same chart in chronological order.
+    """
+    book_model = apps.get_model("app", "book")
+    book = get_object_or_404(book_model, pk=book_pk, user=request.user)
+
+    events = list(
+        KOReaderProgressEvent.objects.filter(
+            user=request.user,
+            mapping__item=book.item,
+        )
+        .order_by("created_at")
+        .values("created_at", "percentage", "progress", "device", "device_id"),
+    )
+
+    by_device = {}
+    for ev in events:
+        key = ev["device_id"] or ev["device"] or "unknown"
+        label = ev["device"] or ev["device_id"] or "Unknown device"
+        bucket = by_device.setdefault(key, {"label": label, "points": []})
+        bucket["points"].append(
+            {
+                # Epoch ms keeps Chart.js on the linear axis (no
+                # chartjs-adapter-date-fns dependency to ship).
+                "x": int(ev["created_at"].timestamp() * 1000),
+                "y": round(ev["percentage"] * 100, 2),
+                "page": ev["progress"],
+            },
+        )
+
+    datasets = list(by_device.values())
+
+    return render(
+        request,
+        "integrations/koreader_book_history.html",
+        {
+            "book": book,
+            "datasets_json": json.dumps(datasets),
+            "event_count": len(events),
+            "device_count": len(datasets),
+        },
+    )
+
+
+@require_GET
+def koreader_devices(request):
+    """Cross-book device summary: every KOReader device this user has used.
+
+    Aggregates the event log per ``(device, device_id)`` pair so the
+    template can show one row per physical device — last seen, total
+    sync count, distinct books touched, and the most-recently-synced
+    book (resolved via a per-row follow-up query, N is tiny - most
+    users have 1-3 devices).
+    """
+    devices = list(
+        KOReaderProgressEvent.objects.filter(user=request.user)
+        .values("device", "device_id")
+        .annotate(
+            last_seen=Max("created_at"),
+            event_count=Count("id"),
+            book_count=Count("mapping__item", distinct=True),
+        )
+        .order_by("-last_seen"),
+    )
+
+    for device in devices:
+        last_event = (
+            KOReaderProgressEvent.objects.filter(
+                user=request.user,
+                device=device["device"],
+                device_id=device["device_id"],
+            )
+            .select_related("mapping__item")
+            .order_by("-created_at")
+            .first()
+        )
+        last_item = (
+            last_event.mapping.item
+            if last_event and last_event.mapping_id and last_event.mapping.item_id
+            else None
+        )
+        device["last_item"] = last_item
+
+    return render(
+        request,
+        "integrations/koreader_devices.html",
+        {"devices": devices},
+    )
 
 
 @require_POST

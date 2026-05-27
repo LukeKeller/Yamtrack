@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load static %}
+{% load app_tags %}
+
+{% block title %}
+  Reading history — {{ book.item.title }}
+{% endblock title %}
+
+{% block content %}
+  <div class="mb-6">
+    <a href="{% url 'media_details' source=book.item.source media_type='book' media_id=book.item.media_id title=book.item.title|slugify %}"
+       class="text-fg-muted hover:text-fg text-sm inline-flex items-center gap-1 mb-3">
+      ← Back to {{ book.item.title }}
+    </a>
+    <h1 class="text-2xl font-bold mb-1">Reading history</h1>
+    <p class="text-fg-muted">
+      KOReader sync events for <span class="text-fg">{{ book.item.title }}</span>.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+    <div class="bg-surface-1 rounded-lg p-4">
+      <p class="text-fg-muted text-xs uppercase tracking-wide">Sync events</p>
+      <p class="text-2xl font-bold mt-1">{{ event_count }}</p>
+    </div>
+    <div class="bg-surface-1 rounded-lg p-4">
+      <p class="text-fg-muted text-xs uppercase tracking-wide">Devices</p>
+      <p class="text-2xl font-bold mt-1">{{ device_count }}</p>
+    </div>
+    <div class="bg-surface-1 rounded-lg p-4">
+      <p class="text-fg-muted text-xs uppercase tracking-wide">Current progress</p>
+      <p class="text-2xl font-bold mt-1">{{ book.progress|default:0 }}%</p>
+    </div>
+    <div class="bg-surface-1 rounded-lg p-4">
+      <p class="text-fg-muted text-xs uppercase tracking-wide">Status</p>
+      <p class="text-2xl font-bold mt-1">{{ book.status }}</p>
+    </div>
+  </div>
+
+  {% if event_count %}
+    <div class="bg-surface-1 rounded-lg p-5 mb-6">
+      <div class="relative h-[420px]">
+        <canvas id="koreader-history-chart"></canvas>
+      </div>
+    </div>
+    {{ datasets_json|json_script:"koreader-history-data" }}
+    <script src="{% static 'js/libraries/chartjs-4.4.9.min.js' %}"></script>
+    <script src="{% static 'js/koreader-history-chart.js' %}{% get_static_file_mtime 'js/koreader-history-chart.js' %}"></script>
+  {% else %}
+    <div class="bg-surface-1 rounded-lg p-8 text-center">
+      <p class="text-fg-muted">
+        No KOReader sync events yet for this book. Once your e-reader pushes progress to this title, the timeline will appear here.
+      </p>
+    </div>
+  {% endif %}
+{% endblock content %}

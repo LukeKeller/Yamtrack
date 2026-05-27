@@ -26,6 +26,13 @@ Yamtrack ``Item``. Rows are created on first PUT from a device; until
 the user links a hash to a book in the integrations UI, the row sits
 unmapped and only stores the raw progress / percentage so a future bind
 can backfill the Book.
+
+``KOReaderProgressEvent`` is the append-only log of every KOReader push,
+keyed off the mapping row. The mapping stores only the latest state
+(one row per (user, document)), but the per-book reading-history view
+and the devices dashboard both need the full sequence — per-event
+timestamps, per-event device attribution, and event ordering. Both are
+written together inside the kosync PUT handler.
 """
 
 from django.conf import settings
@@ -264,4 +271,64 @@ class KOReaderBookMapping(models.Model):
         return (
             f"KOReader {self.document_hash[:8]}… → "
             f"{self.item_id or 'unbound'} (user {self.user_id})"
+        )
+
+
+class KOReaderProgressEvent(models.Model):
+    """Append-only log of one KOReader progress push.
+
+    ``KOReaderBookMapping`` is upsert-style — its ``last_*`` columns get
+    overwritten on every PUT, so it can't answer "when did device X
+    sync this book to 47%" or "what's the user's reading cadence?".
+    This table preserves each push as its own row, written alongside
+    the mapping upsert inside ``koreader.progress_put``. Reads stay
+    cheap because the indexes cover the two access patterns we care
+    about: per-user timeline (devices dashboard) and per-mapping
+    timeline (per-book reading-history page).
+
+    Volume isn't a concern — KOReader pushes once per page-turn for an
+    active reader, so ~50-100k rows/yr per heavy user. PostgreSQL is
+    fine with that. If we ever need pruning, add a Celery beat task;
+    don't truncate on the kosync hot path.
+    """
+
+    mapping = models.ForeignKey(
+        KOReaderBookMapping,
+        on_delete=models.CASCADE,
+        related_name="events",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="koreader_events",
+        help_text=(
+            "Denormalised from mapping.user so per-user history queries "
+            "skip the mapping join (most common read pattern)."
+        ),
+    )
+    percentage = models.FloatField()
+    progress = models.TextField(
+        blank=True,
+        default="",
+        help_text="Opaque KOReader position string at the moment of this push.",
+    )
+    device = models.CharField(max_length=255, blank=True, default="")
+    device_id = models.CharField(max_length=64, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        """Newest first; covers per-user and per-mapping time-ordered reads."""
+
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["user", "-created_at"]),
+            models.Index(fields=["mapping", "-created_at"]),
+        ]
+
+    def __str__(self):
+        """Short label for admin / shell."""
+        return (
+            f"KOReader event {self.created_at:%Y-%m-%d %H:%M} "
+            f"({self.percentage:.1%}) mapping={self.mapping_id} "
+            f"user={self.user_id}"
         )
