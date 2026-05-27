@@ -17,6 +17,9 @@ These were the original short list (2026-05-23) and are the next things to build
 - [ ] **Smarter duplicate/merge detection** — when adding from `mal`, check if same canonical work is already tracked via `openlibrary`/`hardcover`/`tmdb` (fuzzy title+year), offer merge. Heavier follow-up: management command that ranks suspected duplicates across the library.
 - [ ] **Hardcover inbound sync** — push side already shipped (ynh82). Plan in `HARDCOVER_SYNC_PLAN.md`. Still TODO: `me { user_books }` poll, identity map (`HardcoverBookMapping`), echo suppression via `last_hardcover_sync_at`.
 - [x] **List Import (paste-and-match)** — shipped ynh111 as `/list/import`. Picks one media type, searches each pasted title, takes the top hit, batch-adds to a new CustomList. The per-row "pick from candidates" review for ambiguous matches is a future polish.
+- [ ] **KOReader visibility A+B** (2026-05-26): per-book reading timeline on the book detail page + a devices dashboard at `/users/koreader/devices`. Both reuse `KOReaderBookMapping` + `Book.history`; no new model fields. See "KOReader sync data visibility" entry below for the full cut list.
+- [ ] **KOReader visibility D** (next-up): reading-cadence stats — pages/percent per day, weekly contribution-grid style — folded into `/wrapped/`.
+- [ ] **KOReader visibility F** (after D): inferred reading sessions — group sync events within a 30-min window into start/end/duration sessions.
 
 ---
 
@@ -44,7 +47,9 @@ User picks from this list once the queue above is shipping. Grouped by theme. No
 ### Integrations
 - ~~**TMDB "Where to watch"**~~ — promoted into the Queue 2026-05-24.
 - **OpenLibrary "next in series" link** — surface series-next book on detail page with "Add to planning."
-- **OPDS feed** — `/opds/books.xml` listing user's Planning books with OL cover + download links. Native Koreader/Moon+ Reader subscribe.
+- **OPDS feed (read-only catalog of tracked books)** — `/opds/books.xml` listing user's Planning books with OL cover + upstream download links. Native Koreader/Moon+ Reader subscribe. No server-side file storage — links point at OpenLibrary / Standard Ebooks / Project Gutenberg / etc. when available.
+- **OPDS *server* with uploaded epubs** — separate from the feed above: a real file host. Upload epub/cbz/pdf via Yamtrack (UI + maybe `/api/library/upload` for scripted bulk-imports), store under `MEDIA_ROOT/library/<user_id>/<sha256>.epub`, generate metadata from epub OPF (title, author, language, cover) and reconcile against tracked `Book` entries by ISBN / title-author match. Serve `/opds/library.xml` (browseable catalog) + `/opds/library/<work_id>` (acquisition feed with the download link) so KOReader's "Add OPDS catalog" flow points at one URL and the e-reader can browse + pull files. Auth via the existing API token (Basic / x-auth headers). Storage budget needs thought — epubs are small (~1 MB) but PDFs aren't; add per-user quota + admin storage-cap setting. Plays well with `Book.progress` / KOReader sync: download from Yamtrack → read with KOReader → KOReader pushes progress back via existing kosync.
+- **KOReader sync data visibility** — today's UI only surfaces the integrations page's "recent syncs" list. Build a richer view: per-book reading timeline (percentage vs. time, derived from `simple_history` on `Book` + `KOReaderBookMapping` updates), per-device summary (which device synced what / last seen / page-count), reading-cadence stats (pages or percent/day) reusing the `_recent_activity` pattern. Also worth: a "stuck books" rail using progress + stale `progressed_at` (mirrors the queue's "Did you finish?" nudge, but specific to KOReader-synced books which tend to creep). All derivable from existing data — no new model fields, just views and templatetags.
 - **Letterboxd CSV import + export** — already have GoodReads-style CSVs; mirror Letterboxd format both ways.
 
 ### Lists & social
