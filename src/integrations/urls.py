@@ -107,4 +107,9 @@ urlpatterns = [
         views.koreader_devices,
         name="koreader_devices",
     ),
+    path(
+        "koreader/unmatched",
+        views.koreader_unmatched,
+        name="koreader_unmatched",
+    ),
 ]

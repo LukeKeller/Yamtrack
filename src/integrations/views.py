@@ -1150,6 +1150,44 @@ def koreader_unlink(request):
 
 
 @require_GET
+def koreader_unmatched(request):
+    """Dedicated page for unbound KOReader document hashes.
+
+    These are pushed by KOReader before the user has linked the file's
+    md5 hash to a tracked Book. We host the linking form on its own
+    page so the per-row select widget doesn't squeeze the layout on
+    the main integrations card (a previous version rendered hashes
+    one-char-per-line because the wide ``Select a book…`` dropdown
+    forced its flex sibling to ~16px wide).
+    """
+    mappings = list(
+        KOReaderBookMapping.objects.filter(
+            user=request.user,
+            item__isnull=True,
+        ).order_by("-last_progress_at"),
+    )
+    item_model = apps.get_model("app", "Item")
+    book_choices = list(
+        item_model.objects.filter(
+            book__user=request.user,
+            media_type="book",
+        )
+        .order_by("title")
+        .values("id", "title")
+        .distinct(),
+    )
+
+    return render(
+        request,
+        "integrations/koreader_unmatched.html",
+        {
+            "mappings": mappings,
+            "book_choices": book_choices,
+        },
+    )
+
+
+@require_GET
 def koreader_book_history(request, book_pk):
     """Per-book reading-history view, sourced from the kosync event log.
 

@@ -559,3 +559,56 @@ class DevicesDashboardTests(TestCase):
         response = self.client.get(reverse("koreader_devices"))
         device_ids = [d["device_id"] for d in response.context["devices"]]
         self.assertNotIn("x", device_ids)
+
+
+class UnmatchedPageTests(TestCase):
+    """/koreader/unmatched lists only unbound mappings + the linking form."""
+
+    def setUp(self):
+        self.user = _make_user()
+        self.client.force_login(self.user)
+        self.item = _make_book_item()
+
+    def test_lists_unbound_mappings_only(self):
+        unbound = KOReaderBookMapping.objects.create(
+            user=self.user,
+            document_hash="e" * 32,
+            last_percentage=0.25,
+        )
+        KOReaderBookMapping.objects.create(
+            user=self.user,
+            document_hash="f" * 32,
+            item=self.item,
+        )
+
+        response = self.client.get(reverse("koreader_unmatched"))
+        self.assertEqual(response.status_code, 200)
+        hashes = [m.document_hash for m in response.context["mappings"]]
+        self.assertEqual(hashes, [unbound.document_hash])
+
+    def test_other_user_unbound_excluded(self):
+        other = _make_user(username="other")
+        KOReaderBookMapping.objects.create(
+            user=other,
+            document_hash="d" * 32,
+        )
+        response = self.client.get(reverse("koreader_unmatched"))
+        self.assertEqual(response.context["mappings"], [])
+
+    def test_book_choices_scoped_to_user_books(self):
+        Book.objects.create(
+            user=self.user,
+            item=self.item,
+            status=Status.PLANNING.value,
+        )
+        other = _make_user(username="other")
+        other_item = _make_book_item(media_id="OL456W")
+        Book.objects.create(
+            user=other,
+            item=other_item,
+            status=Status.PLANNING.value,
+        )
+        response = self.client.get(reverse("koreader_unmatched"))
+        choice_ids = [c["id"] for c in response.context["book_choices"]]
+        self.assertIn(self.item.pk, choice_ids)
+        self.assertNotIn(other_item.pk, choice_ids)

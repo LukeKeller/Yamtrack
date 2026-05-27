@@ -615,41 +615,32 @@
         </p>
       </div>
 
+      {% if koreader_unbound_count %}
+        <a href="{% url 'koreader_unmatched' %}"
+           class="block bg-amber-500/10 hover:bg-amber-500/20 transition-colors border border-amber-500/30 rounded-md px-3 py-2 mb-3 text-sm text-amber-300">
+          {{ koreader_unbound_count }} unmatched document{{ koreader_unbound_count|pluralize }} waiting to be linked →
+        </a>
+      {% endif %}
+
       {% if koreader_mappings %}
-        <div class="text-sm font-medium mb-2">
-          Synced books
-          {% if koreader_unbound_count %}
-            <span class="text-xs text-amber-400 ml-2">{{ koreader_unbound_count }} waiting to be linked</span>
-          {% endif %}
-        </div>
+        <div class="text-sm font-medium mb-2">Synced books</div>
         <div class="space-y-2">
           {% for mapping in koreader_mappings %}
             <div class="bg-surface-1 rounded-md p-3 flex gap-3">
-              {% if mapping.item %}
-                <a href="{% url 'media_details' source=mapping.item.source media_type=mapping.item.media_type media_id=mapping.item.media_id title=mapping.item.title|slug %}"
-                   class="shrink-0 block"
-                   title="Open {{ mapping.item.title }}">
-                  <img src="{{ mapping.item.image }}"
-                       alt=""
-                       class="w-12 h-18 object-cover rounded-sm bg-surface-2"
-                       loading="lazy"
-                       style="width:48px;
-                              height:72px">
-                </a>
-              {% else %}
-                <div class="shrink-0 w-12 h-18 rounded-sm bg-surface-2 flex items-center justify-center text-fg-faint"
+              <a href="{% url 'media_details' source=mapping.item.source media_type=mapping.item.media_type media_id=mapping.item.media_id title=mapping.item.title|slug %}"
+                 class="shrink-0 block"
+                 title="Open {{ mapping.item.title }}">
+                <img src="{{ mapping.item.image }}"
+                     alt=""
+                     class="w-12 h-18 object-cover rounded-sm bg-surface-2"
+                     loading="lazy"
                      style="width:48px;
-                            height:72px"
-                     aria-hidden="true">{% include "app/icons/book-open.svg" with classes="w-5 h-5" %}</div>
-              {% endif %}
+                            height:72px">
+              </a>
               <div class="min-w-0 flex-1">
                 <div class="flex items-start gap-2 flex-wrap">
-                  {% if mapping.item %}
-                    <a href="{% url 'media_details' source=mapping.item.source media_type=mapping.item.media_type media_id=mapping.item.media_id title=mapping.item.title|slug %}"
-                       class="text-sm text-fg truncate hover:text-indigo-400 transition-colors">{{ mapping.item.title }}</a>
-                  {% else %}
-                    <div class="text-sm text-amber-400">Unlinked — pick a book below</div>
-                  {% endif %}
+                  <a href="{% url 'media_details' source=mapping.item.source media_type=mapping.item.media_type media_id=mapping.item.media_id title=mapping.item.title|slug %}"
+                     class="text-sm text-fg truncate hover:text-indigo-400 transition-colors">{{ mapping.item.title }}</a>
                   {% if mapping.book %}
                     {% if mapping.book.status == "Completed" %}
                       {% include "app/components/ui/pill.html" with variant="status-completed" label="Completed" %}
@@ -682,27 +673,7 @@
                 <div class="text-xs text-fg-faint font-mono mt-1 break-all"
                      title="KOReader document hash">{{ mapping.document_hash }}</div>
               </div>
-              <div class="flex flex-col md:flex-row items-end md:items-center gap-2 shrink-0">
-                {% if not mapping.item %}
-                  <form method="post"
-                        action="{% url 'koreader_link' %}"
-                        class="flex items-center gap-2">
-                    {% csrf_token %}
-                    <input type="hidden"
-                           name="document_hash"
-                           value="{{ mapping.document_hash }}">
-                    <select name="item_id"
-                            required
-                            class="py-1.5 pr-8 pl-2 bg-surface-2 rounded-md text-fg text-sm border-0 focus:ring-1 focus:ring-indigo-500 outline-none">
-                      <option value="">Select a book…</option>
-                      {% for book in koreader_book_choices %}<option value="{{ book.id }}">{{ book.title }}</option>{% endfor %}
-                    </select>
-                    <button type="submit"
-                            class="px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer">
-                      Link
-                    </button>
-                  </form>
-                {% endif %}
+              <div class="shrink-0">
                 <form method="post" action="{% url 'koreader_unlink' %}">
                   {% csrf_token %}
                   <input type="hidden"
@@ -716,7 +687,7 @@
             </div>
           {% endfor %}
         </div>
-      {% else %}
+      {% elif not koreader_unbound_count %}
         <p class="text-xs text-fg-faint">
           No KOReader documents synced yet. Once a device pushes progress, hashes will appear here for linking.
         </p>

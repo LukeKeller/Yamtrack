@@ -446,28 +446,24 @@ def integrations(request):
         user=request.user,
     ).first()
 
+    # Integrations page shows BOUND mappings only — unbound (orphan
+    # document hashes) live on the dedicated /koreader/unmatched page
+    # so the link-picker form doesn't blow out this card's flex layout.
     koreader_mappings = list(
-        KOReaderBookMapping.objects.filter(user=request.user)
+        KOReaderBookMapping.objects.filter(user=request.user, item__isnull=False)
         .select_related("item")
         .order_by("item__title", "-last_progress_at"),
     )
-    koreader_unbound_count = sum(1 for m in koreader_mappings if m.item_id is None)
-    item_model = apps.get_model("app", "Item")
-    koreader_book_choices = list(
-        item_model.objects.filter(
-            book__user=request.user,
-            media_type="book",
-        )
-        .order_by("title")
-        .values("id", "title")
-        .distinct(),
-    )
+    koreader_unbound_count = KOReaderBookMapping.objects.filter(
+        user=request.user,
+        item__isnull=True,
+    ).count()
 
     # Attach the linked Book row to each mapping so the template can show
     # live status / page count without a per-row query. One query keyed on
     # the set of bound item ids covers the whole list.
     book_model = apps.get_model("app", "Book")
-    bound_item_ids = [m.item_id for m in koreader_mappings if m.item_id]
+    bound_item_ids = [m.item_id for m in koreader_mappings]
     if bound_item_ids:
         books_by_item = {
             book.item_id: book
@@ -490,7 +486,6 @@ def integrations(request):
             "hardcover_integration": hardcover_integration,
             "koreader_mappings": koreader_mappings,
             "koreader_unbound_count": koreader_unbound_count,
-            "koreader_book_choices": koreader_book_choices,
         },
     )
 

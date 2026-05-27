@@ -10,10 +10,20 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh125"
+CURRENT_FORK_VERSION = "0.25.2~ynh126"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh126",
+        "date": "2026-05-26",
+        "title": "KOReader: dedicated page for unmatched documents",
+        "highlights": [
+            "Unbound KOReader documents (file hashes that haven't been linked to a tracked book yet) now live on a dedicated <strong>/koreader/unmatched</strong> page instead of mixing into the Synced-books list on the integrations settings card. Fixes a layout bug where the inline ``Select a book…`` dropdown's width was squeezing the flex sibling to ~16px wide, causing the 32-character document hash to render one character per line. The integrations card surfaces a clickable ``N unmatched documents waiting to be linked →`` badge when there's anything outstanding.",
+            "Note on auto-matching: the kosync protocol only sends the file's md5 hash, not title/author/ISBN, so Yamtrack genuinely can't auto-bind hashes to books without seeing the file itself. The proper fix for that is the planned OPDS-server feature (host the epub, parse OPF metadata at upload, know the hash→book mapping before any sync arrives). Until then, the linking flow stays manual but now in a layout that actually fits on screen.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh125",
         "date": "2026-05-26",
