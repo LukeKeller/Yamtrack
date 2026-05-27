@@ -10,10 +10,19 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh132"
+CURRENT_FORK_VERSION = "0.25.2~ynh133"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh133",
+        "date": "2026-05-27",
+        "title": "OPDS endpoints accept HEAD so KOReader's auth handshake completes",
+        "highlights": [
+            'Hotfix for KOReader on the ynh131/ynh132 OPDS feature: KOReader\'s catalog browser issues a <span class="font-mono">HEAD</span> request before sending Basic auth (to discover the <span class="font-mono">WWW-Authenticate</span> realm), but the OPDS endpoints were decorated with <span class="font-mono">@require_GET</span> and rejected HEAD with a 405. Some clients fall through to an unauthenticated GET on a 405 and report "authentication required" without ever trying credentials. ~ynh133 widens the OPDS endpoints to <span class="font-mono">["GET", "HEAD"]</span>; Django strips the body from HEAD automatically so the headers (including WWW-Authenticate on 401) still go through unchanged.',
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh132",
         "date": "2026-05-27",

@@ -39,7 +39,7 @@ from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils import timezone
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_http_methods
 
 import users
 from library.helpers import stream_iter
@@ -185,7 +185,7 @@ def _image_mime_for(filename):
 
 
 @login_not_required
-@require_GET
+@require_http_methods(["GET", "HEAD"])
 def opds_root(request):
     """Single acquisition feed listing every LibraryFile the user owns."""
     user = _basic_auth_user(request)
@@ -202,7 +202,7 @@ def opds_root(request):
 
 
 @login_not_required
-@require_GET
+@require_http_methods(["GET", "HEAD"])
 def opds_download(request, pk):
     """Stream a LibraryFile back to the OPDS client with the canonical name."""
     user = _basic_auth_user(request)

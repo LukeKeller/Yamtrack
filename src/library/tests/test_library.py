@@ -296,6 +296,16 @@ class OPDSTests(TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertIn("Basic", response["WWW-Authenticate"])
 
+    def test_root_accepts_head_so_koreader_can_discover_realm(self):
+        # KOReader's OPDS catalog browser issues a HEAD before Basic auth
+        # to learn the WWW-Authenticate realm. If HEAD returns 405 it
+        # bails without ever sending credentials and reports
+        # "authentication required" to the user (ynh131/ynh132 had this
+        # via @require_GET — fixed in ynh133).
+        response = self.client.head(reverse("opds_root"))
+        self.assertEqual(response.status_code, 401)
+        self.assertIn("Basic", response["WWW-Authenticate"])
+
     def test_root_returns_401_with_wrong_token(self):
         response = self.client.get(
             reverse("opds_root"),
