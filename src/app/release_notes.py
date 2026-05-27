@@ -10,10 +10,20 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh136"
+CURRENT_FORK_VERSION = "0.25.2~ynh137"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh137",
+        "date": "2026-05-27",
+        "title": "OPDS catalog: six-shelf navigation root for KOReader",
+        "highlights": [
+            'The OPDS feed at <span class="font-mono">/library/opds/</span> used to hand KOReader a single flat acquisition list of every uploaded book, newest-first. Once the library grew past ~30 titles that was unbrowseable on the device. ~ynh137 switches the root to a navigation feed with six shelves: <strong>Up Next</strong> (linked Books currently In Progress), <strong>Want to Read</strong> (Planning status), <strong>Recently Added</strong> (newest 50 uploads), <strong>By Author</strong> (nav feed → per-author acquisition feed), <strong>Unmatched</strong> (files not yet linked to a tracked Book), and <strong>All Books</strong> (the original flat list, kept as a fallback).',
+            "KOReader caches OPDS pages aggressively, so the next time you open the catalog after upgrading it should re-pick the feed and render with the new nested layout. All shelf links carry an <span class=\"font-mono\">rel=\"up\"</span> back-reference so KOReader's back button works on older firmware that doesn't auto-derive it. Auth, the HEAD-handshake, telemetry logging, and the <span class=\"font-mono\">/library/opds/file/&lt;pk&gt;</span> download path are unchanged.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh136",
         "date": "2026-05-27",
