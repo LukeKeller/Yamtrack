@@ -313,13 +313,43 @@ class OPDSTests(TestCase):
         )
         self.assertEqual(response.status_code, 401)
 
-    def test_root_returns_acquisition_feed_with_entry(self):
+    def test_root_returns_navigation_feed_with_shelves(self):
         response = self.client.get(
             reverse("opds_root"),
             HTTP_AUTHORIZATION=self._basic(self.user.username, self.user.token),
         )
         self.assertEqual(response.status_code, 200)
-        self.assertIn("application/atom+xml", response["Content-Type"])
+        self.assertIn("kind=navigation", response["Content-Type"])
+        root = ET.fromstring(response.content)
+        ns = "{http://www.w3.org/2005/Atom}"
+        titles = [e.findtext(f"{ns}title") for e in root.findall(f"{ns}entry")]
+        self.assertEqual(
+            titles,
+            [
+                "Up Next",
+                "Want to Read",
+                "Recently Added",
+                "By Author",
+                "Unmatched",
+                "All Books",
+            ],
+        )
+        # Every shelf entry must carry a subsection link with an OPDS type.
+        for entry in root.findall(f"{ns}entry"):
+            link = next(
+                link
+                for link in entry.findall(f"{ns}link")
+                if link.get("rel") == "subsection"
+            )
+            self.assertIn("opds-catalog", link.get("type", ""))
+
+    def test_all_shelf_returns_acquisition_feed_with_entry(self):
+        response = self.client.get(
+            reverse("opds_all"),
+            HTTP_AUTHORIZATION=self._basic(self.user.username, self.user.token),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("kind=acquisition", response["Content-Type"])
         root = ET.fromstring(response.content)
         ns = "{http://www.w3.org/2005/Atom}"
         entries = root.findall(f"{ns}entry")
@@ -331,6 +361,70 @@ class OPDSTests(TestCase):
             if link.get("rel") == "http://opds-spec.org/acquisition"
         )
         self.assertIn("application/epub+zip", acquisition_link.get("type", ""))
+
+    def test_up_next_shelf_lists_only_in_progress_books(self):
+        # Create the Book at default Planning, then bypass Media.save() to
+        # flip status — saving with IN_PROGRESS triggers a live
+        # provider.get_media_metadata() call which is exactly what we don't
+        # want in unit tests.
+        item = _make_book_item(title="Dune", media_id="OL-DUNE")
+        Book.objects.create(user=self.user, item=item, status=Status.PLANNING.value)
+        Book.objects.filter(user=self.user, item=item).update(
+            status=Status.IN_PROGRESS.value,
+        )
+        self.lf.item = item
+        self.lf.save(update_fields=["item"])
+        ns = "{http://www.w3.org/2005/Atom}"
+        response = self.client.get(
+            reverse("opds_up_next"),
+            HTTP_AUTHORIZATION=self._basic(self.user.username, self.user.token),
+        )
+        root = ET.fromstring(response.content)
+        titles = [e.findtext(f"{ns}title") for e in root.findall(f"{ns}entry")]
+        self.assertEqual(titles, ["Dune"])
+        # Flip status to Planning and the file should drop out of Up Next.
+        Book.objects.filter(user=self.user, item=item).update(
+            status=Status.PLANNING.value,
+        )
+        response = self.client.get(
+            reverse("opds_up_next"),
+            HTTP_AUTHORIZATION=self._basic(self.user.username, self.user.token),
+        )
+        root = ET.fromstring(response.content)
+        self.assertEqual(root.findall(f"{ns}entry"), [])
+
+    def test_unmatched_shelf_lists_files_with_no_item(self):
+        # The fixture file uploads without a matching Book, so item stays None.
+        response = self.client.get(
+            reverse("opds_unmatched"),
+            HTTP_AUTHORIZATION=self._basic(self.user.username, self.user.token),
+        )
+        ns = "{http://www.w3.org/2005/Atom}"
+        root = ET.fromstring(response.content)
+        titles = [e.findtext(f"{ns}title") for e in root.findall(f"{ns}entry")]
+        self.assertEqual(titles, ["Dune"])
+
+    def test_authors_shelf_links_to_per_author_acquisition(self):
+        response = self.client.get(
+            reverse("opds_authors"),
+            HTTP_AUTHORIZATION=self._basic(self.user.username, self.user.token),
+        )
+        ns = "{http://www.w3.org/2005/Atom}"
+        root = ET.fromstring(response.content)
+        entries = root.findall(f"{ns}entry")
+        self.assertEqual(
+            [e.findtext(f"{ns}title") for e in entries],
+            ["Frank Herbert"],
+        )
+        href = entries[0].find(f"{ns}link").get("href")
+        # Per-author feed should list the file.
+        response = self.client.get(
+            href.replace("http://testserver", ""),
+            HTTP_AUTHORIZATION=self._basic(self.user.username, self.user.token),
+        )
+        root = ET.fromstring(response.content)
+        titles = [e.findtext(f"{ns}title") for e in root.findall(f"{ns}entry")]
+        self.assertEqual(titles, ["Dune"])
 
     def test_download_streams_with_canonical_content_disposition(self):
         response = self.client.get(

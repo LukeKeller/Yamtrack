@@ -1,4 +1,4 @@
-"""OPDS 1.2 catalog + acquisition feed for the library.
+"""OPDS 1.2 catalog + acquisition feeds for the library.
 
 KOReader's "Add OPDS catalog" form sends HTTP Basic credentials; we map
 the username to the Yamtrack username and the password to the user's
@@ -8,18 +8,16 @@ paths. Using the existing token means OPDS access tracks the rest of
 the per-user API surface — regenerating the token revokes everything in
 one shot.
 
-Two endpoints:
-
-* ``GET /library/opds/`` — single acquisition feed listing every
-  LibraryFile the user owns, newest first. KOReader treats acquisition
-  feeds as browseable lists; download links carry a typed
-  ``application/epub+zip`` rel.
-* ``GET /library/opds/file/<pk>`` — streams the epub with
-  ``Content-Disposition: attachment; filename="<canonical>.epub"`` so
-  KOReader saves the file under the basename we md5'd at upload time.
-  That basename's md5 equals the kosync ``document`` hash KOReader will
-  push on first open → auto-bind on next sync without ever passing
-  through ``/koreader/unmatched``.
+Layout: the root at ``/library/opds/`` is a navigation feed listing six
+shelves (Up Next / Want to Read / Recently Added / By Author /
+Unmatched / All Books), each rendered as its own acquisition feed.
+KOReader treats acquisition feeds as browseable lists; download links
+carry a typed ``application/epub+zip`` rel. ``/library/opds/file/<pk>``
+streams the epub with ``Content-Disposition: attachment;
+filename="<canonical>.epub"`` so KOReader saves the file under the
+basename we md5'd at upload time. That basename's md5 equals the kosync
+``document`` hash KOReader will push on first open → auto-bind on next
+sync without ever passing through ``/koreader/unmatched``.
 
 OPDS feeds are XML; we build them by hand with the stdlib's
 ElementTree rather than pulling a dedicated library — the schema is
@@ -42,6 +40,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
 import users
+from app.models import Book, Status
 from library.helpers import stream_iter
 from library.models import LibraryFile
 
@@ -50,6 +49,11 @@ logger = logging.getLogger(__name__)
 OPDS_NAMESPACE = "http://www.w3.org/2005/Atom"
 OPDS_OPDS_NAMESPACE = "http://opds-spec.org/2010/catalog"
 DC_NAMESPACE = "http://purl.org/dc/terms/"
+
+NAV_TYPE = "application/atom+xml;profile=opds-catalog;kind=navigation"
+ACQ_TYPE = "application/atom+xml;profile=opds-catalog;kind=acquisition"
+
+RECENTLY_ADDED_LIMIT = 50
 
 ET.register_namespace("", OPDS_NAMESPACE)
 ET.register_namespace("opds", OPDS_OPDS_NAMESPACE)
@@ -152,45 +156,58 @@ def _require_basic_auth(_request):
     return response
 
 
-def _opds_self_url(request):
-    """Absolute URL to the catalog root for the OPDS self link."""
-    return request.build_absolute_uri(reverse("opds_root"))
+def _shelf_url(request, url_name):
+    """Absolute URL for a named shelf endpoint."""
+    return request.build_absolute_uri(reverse(url_name))
 
 
-def _build_acquisition_feed(request, user, files):
-    """Return the OPDS acquisition feed XML for ``files``."""
-    feed = ET.Element(f"{{{OPDS_NAMESPACE}}}feed")
+def _author_url(request, author_name):
+    """Absolute URL for the per-author acquisition feed."""
+    return _shelf_url(request, "opds_author") + "?a=" + quote(author_name)
 
-    def _sub(parent, tag, text=None, *, ns=OPDS_NAMESPACE, **attrs):
-        """Append a child element. ``tag`` is local, namespace via kwarg."""
-        el = ET.SubElement(parent, f"{{{ns}}}{tag}", attrs)
-        if text is not None:
-            el.text = text
-        return el
 
-    self_url = _opds_self_url(request)
-    _sub(feed, "id", f"yamtrack:library:{user.pk}")
-    _sub(feed, "title", f"{user.username}'s Yamtrack library")
+def _sub(parent, tag, text=None, *, ns=OPDS_NAMESPACE, **attrs):
+    """Append a child element. ``tag`` is local, namespace via kwarg."""
+    el = ET.SubElement(parent, f"{{{ns}}}{tag}", attrs)
+    if text is not None:
+        el.text = text
+    return el
+
+
+def _feed_header(feed, request, user, *, title, self_url, kind):
+    """Common id/title/updated/author/self+start links for any feed."""
+    root_url = _shelf_url(request, "opds_root")
+    self_type = NAV_TYPE if kind == "navigation" else ACQ_TYPE
+    _sub(feed, "id", f"yamtrack:library:{user.pk}:{kind}:{title}")
+    _sub(feed, "title", title)
     _sub(feed, "updated", timezone.now().isoformat())
-
     author = _sub(feed, "author")
     _sub(author, "name", "Yamtrack")
+    _sub(feed, "link", rel="self", href=self_url, type=self_type)
+    _sub(feed, "link", rel="start", href=root_url, type=NAV_TYPE)
+    if self_url != root_url:
+        _sub(feed, "link", rel="up", href=root_url, type=NAV_TYPE)
 
-    _sub(
-        feed,
-        "link",
-        rel="self",
-        href=self_url,
-        type="application/atom+xml;profile=opds-catalog;kind=acquisition",
-    )
-    _sub(
-        feed,
-        "link",
-        rel="start",
-        href=self_url,
-        type="application/atom+xml;profile=opds-catalog;kind=acquisition",
-    )
 
+def _build_navigation_feed(request, user, *, title, self_url, sections):
+    """sections: iterable of (id_slug, label, summary, href, kind)."""
+    feed = ET.Element(f"{{{OPDS_NAMESPACE}}}feed")
+    _feed_header(feed, request, user, title=title, self_url=self_url, kind="navigation")
+    for id_slug, label, summary, href, kind in sections:
+        entry = _sub(feed, "entry")
+        _sub(entry, "id", f"yamtrack:library:{user.pk}:nav:{id_slug}")
+        _sub(entry, "title", label)
+        _sub(entry, "updated", timezone.now().isoformat())
+        _sub(entry, "content", summary, type="text")
+        entry_type = NAV_TYPE if kind == "navigation" else ACQ_TYPE
+        _sub(entry, "link", rel="subsection", href=href, type=entry_type)
+    return ET.tostring(feed, encoding="utf-8", xml_declaration=True)
+
+
+def _build_acquisition_feed(request, user, files, *, title, self_url):
+    """Return the OPDS acquisition feed XML for ``files``."""
+    feed = ET.Element(f"{{{OPDS_NAMESPACE}}}feed")
+    _feed_header(feed, request, user, title=title, self_url=self_url, kind="acquisition")
     for lf in files:
         entry = _sub(feed, "entry")
         _sub(entry, "id", f"yamtrack:library:{user.pk}:file:{lf.pk}")
@@ -203,7 +220,6 @@ def _build_acquisition_feed(request, user, files):
             _sub(entry, "language", lf.language, ns=DC_NAMESPACE)
         if lf.isbn_13:
             _sub(entry, "identifier", f"urn:isbn:{lf.isbn_13}", ns=DC_NAMESPACE)
-
         download_url = request.build_absolute_uri(
             reverse("opds_download", args=[lf.pk]),
         )
@@ -224,7 +240,6 @@ def _build_acquisition_feed(request, user, files):
                 href=cover_url,
                 type=_image_mime_for(lf.cover.name),
             )
-
     return ET.tostring(feed, encoding="utf-8", xml_declaration=True)
 
 
@@ -240,20 +255,283 @@ def _image_mime_for(filename):
     return "image/jpeg"
 
 
+# ---- Shelf querysets ------------------------------------------------------
+#
+# Each helper takes a user and returns a LibraryFile queryset. Kept separate
+# from the views so the root catalog can call them just to get counts for the
+# nav-feed summaries without duplicating the filter logic.
+
+
+def _files_in_progress(user):
+    """LibraryFiles whose linked Book is currently In Progress for this user."""
+    item_ids = Book.objects.filter(
+        user=user,
+        status=Status.IN_PROGRESS.value,
+    ).values("item_id")
+    return LibraryFile.objects.filter(user=user, item_id__in=item_ids).select_related(
+        "item",
+    )
+
+
+def _files_planning(user):
+    """LibraryFiles whose linked Book status is Planning for this user."""
+    item_ids = Book.objects.filter(
+        user=user,
+        status=Status.PLANNING.value,
+    ).values("item_id")
+    return LibraryFile.objects.filter(user=user, item_id__in=item_ids).select_related(
+        "item",
+    )
+
+
+def _files_recently_added(user):
+    return (
+        LibraryFile.objects.filter(user=user)
+        .select_related("item")
+        .order_by("-created_at")[:RECENTLY_ADDED_LIMIT]
+    )
+
+
+def _files_unmatched(user):
+    return LibraryFile.objects.filter(user=user, item__isnull=True).select_related(
+        "item",
+    )
+
+
+def _files_all(user):
+    return (
+        LibraryFile.objects.filter(user=user)
+        .select_related("item")
+        .order_by("-created_at")
+    )
+
+
+def _files_by_author(user, author):
+    return (
+        LibraryFile.objects.filter(user=user, author=author)
+        .select_related("item")
+        .order_by("title")
+    )
+
+
+def _distinct_authors(user):
+    return (
+        LibraryFile.objects.filter(user=user)
+        .exclude(author="")
+        .values_list("author", flat=True)
+        .distinct()
+        .order_by("author")
+    )
+
+
+# ---- Views ----------------------------------------------------------------
+
+
+def _acquisition_response(request, user, files, *, title, self_url):
+    body = _build_acquisition_feed(
+        request,
+        user,
+        files,
+        title=title,
+        self_url=self_url,
+    )
+    return HttpResponse(body, content_type=ACQ_TYPE)
+
+
 @login_not_required
 @require_http_methods(["GET", "HEAD"])
 def opds_root(request):
-    """Single acquisition feed listing every LibraryFile the user owns."""
+    """Navigation feed listing the six library shelves."""
     user = _basic_auth_user(request)
     if user is None:
         return _require_basic_auth(request)
-    files = list(
-        LibraryFile.objects.filter(user=user).order_by("-created_at").select_related(),
+
+    in_progress = _files_in_progress(user).count()
+    planning = _files_planning(user).count()
+    total = LibraryFile.objects.filter(user=user).count()
+    unmatched = LibraryFile.objects.filter(user=user, item__isnull=True).count()
+    author_count = _distinct_authors(user).count()
+    recently_added = min(total, RECENTLY_ADDED_LIMIT)
+
+    sections = [
+        (
+            "up-next",
+            "Up Next",
+            f"{in_progress} book(s) currently in progress",
+            _shelf_url(request, "opds_up_next"),
+            "acquisition",
+        ),
+        (
+            "want-to-read",
+            "Want to Read",
+            f"{planning} book(s) planned",
+            _shelf_url(request, "opds_want_to_read"),
+            "acquisition",
+        ),
+        (
+            "recently-added",
+            "Recently Added",
+            f"{recently_added} most recent upload(s)",
+            _shelf_url(request, "opds_recently_added"),
+            "acquisition",
+        ),
+        (
+            "by-author",
+            "By Author",
+            f"{author_count} author(s)",
+            _shelf_url(request, "opds_authors"),
+            "navigation",
+        ),
+        (
+            "unmatched",
+            "Unmatched",
+            f"{unmatched} file(s) not linked to a tracked book",
+            _shelf_url(request, "opds_unmatched"),
+            "acquisition",
+        ),
+        (
+            "all",
+            "All Books",
+            f"{total} total book(s)",
+            _shelf_url(request, "opds_all"),
+            "acquisition",
+        ),
+    ]
+
+    body = _build_navigation_feed(
+        request,
+        user,
+        title=f"{user.username}'s Yamtrack library",
+        self_url=_shelf_url(request, "opds_root"),
+        sections=sections,
     )
-    body = _build_acquisition_feed(request, user, files)
-    return HttpResponse(
-        body,
-        content_type="application/atom+xml;profile=opds-catalog;kind=acquisition",
+    return HttpResponse(body, content_type=NAV_TYPE)
+
+
+@login_not_required
+@require_http_methods(["GET", "HEAD"])
+def opds_up_next(request):
+    user = _basic_auth_user(request)
+    if user is None:
+        return _require_basic_auth(request)
+    return _acquisition_response(
+        request,
+        user,
+        list(_files_in_progress(user)),
+        title="Up Next",
+        self_url=_shelf_url(request, "opds_up_next"),
+    )
+
+
+@login_not_required
+@require_http_methods(["GET", "HEAD"])
+def opds_want_to_read(request):
+    user = _basic_auth_user(request)
+    if user is None:
+        return _require_basic_auth(request)
+    return _acquisition_response(
+        request,
+        user,
+        list(_files_planning(user)),
+        title="Want to Read",
+        self_url=_shelf_url(request, "opds_want_to_read"),
+    )
+
+
+@login_not_required
+@require_http_methods(["GET", "HEAD"])
+def opds_recently_added(request):
+    user = _basic_auth_user(request)
+    if user is None:
+        return _require_basic_auth(request)
+    return _acquisition_response(
+        request,
+        user,
+        list(_files_recently_added(user)),
+        title="Recently Added",
+        self_url=_shelf_url(request, "opds_recently_added"),
+    )
+
+
+@login_not_required
+@require_http_methods(["GET", "HEAD"])
+def opds_unmatched(request):
+    user = _basic_auth_user(request)
+    if user is None:
+        return _require_basic_auth(request)
+    return _acquisition_response(
+        request,
+        user,
+        list(_files_unmatched(user)),
+        title="Unmatched",
+        self_url=_shelf_url(request, "opds_unmatched"),
+    )
+
+
+@login_not_required
+@require_http_methods(["GET", "HEAD"])
+def opds_all(request):
+    user = _basic_auth_user(request)
+    if user is None:
+        return _require_basic_auth(request)
+    return _acquisition_response(
+        request,
+        user,
+        list(_files_all(user)),
+        title="All Books",
+        self_url=_shelf_url(request, "opds_all"),
+    )
+
+
+@login_not_required
+@require_http_methods(["GET", "HEAD"])
+def opds_authors(request):
+    """Navigation feed: one entry per distinct author in the user's library."""
+    user = _basic_auth_user(request)
+    if user is None:
+        return _require_basic_auth(request)
+    authors = list(_distinct_authors(user))
+    # Slug-id needs to be ASCII-safe and stable per author; the URL-encoded
+    # name is good enough since it's deterministic and matches what shows up
+    # in the href.
+    sections = [
+        (
+            f"author:{quote(name)}",
+            name,
+            "",
+            _author_url(request, name),
+            "acquisition",
+        )
+        for name in authors
+    ]
+    body = _build_navigation_feed(
+        request,
+        user,
+        title="By Author",
+        self_url=_shelf_url(request, "opds_authors"),
+        sections=sections,
+    )
+    return HttpResponse(body, content_type=NAV_TYPE)
+
+
+@login_not_required
+@require_http_methods(["GET", "HEAD"])
+def opds_author(request):
+    """Acquisition feed for files by a single author (``?a=<name>``)."""
+    user = _basic_auth_user(request)
+    if user is None:
+        return _require_basic_auth(request)
+    author = request.GET.get("a", "")
+    if not author:
+        return HttpResponse(status=400, content_type="application/xml")
+    files = list(_files_by_author(user, author))
+    self_url = _author_url(request, author)
+    return _acquisition_response(
+        request,
+        user,
+        files,
+        title=author,
+        self_url=self_url,
     )
 
 
