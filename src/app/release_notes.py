@@ -10,10 +10,20 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh135"
+CURRENT_FORK_VERSION = "0.25.2~ynh136"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh136",
+        "date": "2026-05-27",
+        "title": "KOReader OPDS finally works: SSOWAT was stripping the Basic header",
+        "highlights": [
+            'The real root cause behind ynh132-ynh135: <strong>YunoHost\'s SSOWAT layer clears incoming <span class="font-mono">Basic</span> Authorization headers</strong> by default on every app permission, as a "spoofing protection" — apps are assumed to trust only YNH-validated identity. The OPDS catalog endpoint explicitly <em>wants</em> the Basic header (KOReader\'s API token), and Yamtrack validates it itself, so we need to opt out via <span class="font-mono">protect_against_basic_auth_spoofing = false</span> on the api permission. Without that, KOReader was sending the Authorization header on every request and SSOWAT was clearing it before nginx even forwarded the request to gunicorn — explaining why the server\'s telemetry kept logging "no Authorization header" no matter what we tried client-side.',
+            "Same root cause as why Audiobookshelf / Kavita / Nextcloud's OPDS catalogs work on YunoHost — their packages disable this protection on their respective api permissions. ~ynh136 declares it in manifest.toml (clean path) and also writes the override into <span class=\"font-mono\">/etc/ssowat/conf.json.persistent</span> from the install / upgrade scripts as a runtime safety net for older YunoHost versions that ignore unknown manifest keys. Telemetry from ynh135 stays in place for now; it'll be cleaned up in a follow-up ship once the fix is confirmed in real KOReader usage.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh135",
         "date": "2026-05-27",
