@@ -10,10 +10,19 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh122"
+CURRENT_FORK_VERSION = "0.25.2~ynh123"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh123",
+        "date": "2026-05-26",
+        "title": "KOReader sync: case-insensitive username matching",
+        "highlights": [
+            "Fixed KOReader sync silently failing on accounts whose Yamtrack username has any uppercase letters. KOReader's kosync plugin lowercases the configured username before sending it in the ``x-auth-user`` header, but Yamtrack was doing a case-sensitive ``User.objects.get(username=...)`` lookup — so a user typed as ``Luke`` in KOReader arrived as ``luke`` on the server, missed the actual ``Luke`` account, and returned ``Unauthorized user`` (which KOReader surfaces as ``Unknown server error`` on the Register flow and ``Unauthorized user`` on the Login flow). ~ynh123 enumerates candidate users case-insensitively and uses ``md5(user.token)`` as the tie-breaker, so installs with multiple users whose names differ only by case still resolve unambiguously to the correct account. Both ``/api/koreader/users/auth`` and ``/api/koreader/users/create`` got the fix; any users whose Yamtrack name was already all-lowercase weren't affected.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh122",
         "date": "2026-05-26",
