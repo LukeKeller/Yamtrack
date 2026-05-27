@@ -9,13 +9,14 @@ patch ``timezone.now`` for every row.
 """
 
 import datetime
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from app.models import Item, MediaTypes, Sources
+from app.models import Book, Item, MediaTypes, Sources, Status
 from integrations.koreader_stats import (
     compute_daily_cadence,
     compute_sessions,
@@ -348,3 +349,77 @@ class SessionsViewTests(TestCase):
 
         response = self.client.get(reverse("koreader_sessions"))
         self.assertEqual(response.context["rows"], [])
+
+
+class BookDetailKOReaderCardTests(TestCase):
+    """The book detail page surfaces the KOReader summary card when bound."""
+
+    def setUp(self):
+        self.user = _make_user()
+        self.client.force_login(self.user)
+        self.item = _make_book_item()
+        self.book = Book.objects.create(
+            user=self.user,
+            item=self.item,
+            status=Status.PLANNING.value,
+            progress=0,
+        )
+        self.mapping = _make_mapping(self.user, self.item, "a" * 32)
+
+    def _details_url(self):
+        return reverse(
+            "media_details",
+            kwargs={
+                "source": self.item.source,
+                "media_type": MediaTypes.BOOK.value,
+                "media_id": self.item.media_id,
+                "title": "test-book",
+            },
+        )
+
+    @patch("app.providers.services.get_media_metadata")
+    def test_no_card_without_events(self, mock_metadata):
+        mock_metadata.return_value = {
+            "media_id": self.item.media_id,
+            "title": "Test Book",
+            "media_type": MediaTypes.BOOK.value,
+            "source": self.item.source,
+            "image": "http://example.com/image.jpg",
+        }
+        response = self.client.get(self._details_url())
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("koreader_summary", response.context)
+
+    @patch("app.providers.services.get_media_metadata")
+    def test_card_present_with_events(self, mock_metadata):
+        mock_metadata.return_value = {
+            "media_id": self.item.media_id,
+            "title": "Test Book",
+            "media_type": MediaTypes.BOOK.value,
+            "source": self.item.source,
+            "image": "http://example.com/image.jpg",
+        }
+        # Two events close together so a session forms.
+        now = timezone.now()
+        _add_event(
+            self.mapping,
+            percentage=0.10,
+            at=now - datetime.timedelta(minutes=15),
+        )
+        _add_event(
+            self.mapping,
+            percentage=0.30,
+            at=now - datetime.timedelta(minutes=10),
+        )
+        self.mapping.last_percentage = 0.30
+        self.mapping.last_progress_at = now - datetime.timedelta(minutes=10)
+        self.mapping.last_device = "kindle"
+        self.mapping.last_device_id = "k1"
+        self.mapping.save()
+
+        response = self.client.get(self._details_url())
+        self.assertEqual(response.status_code, 200)
+        summary = response.context["koreader_summary"]
+        self.assertEqual(summary["event_count"], 2)
+        self.assertEqual(summary["mapping"].pk, self.mapping.pk)
+        self.assertEqual(len(summary["sessions"]), 1)

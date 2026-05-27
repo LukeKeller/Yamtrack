@@ -342,13 +342,50 @@
             </div>
           {% endif %}
 
-          {% if koreader_history_book_pk %}
+          {% if koreader_summary %}
             <div class="my-3 border-t border-gray-700"></div>
-            <a href="{% url 'koreader_book_history' book_pk=koreader_history_book_pk %}"
-               class="inline-flex items-center gap-1.5 text-sm text-indigo-400 hover:text-indigo-300 transition-colors">
-              {% include "app/icons/calendar.svg" with classes="w-4 h-4" %}
-              KOReader reading history →
-            </a>
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2 text-fg-muted">
+                {% include "app/icons/book-open.svg" with classes="w-4 h-4 text-indigo-400" %}
+                <span class="font-medium text-xs uppercase tracking-wide">KOReader</span>
+              </div>
+              <a href="{% url 'koreader_book_history' book_pk=koreader_history_book_pk %}"
+                 class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">Full history →</a>
+            </div>
+            <div class="bg-surface-1 rounded-md p-3 space-y-2">
+              <div class="text-xs text-fg-muted flex flex-wrap gap-x-3 gap-y-0.5">
+                <span class="text-fg">{{ koreader_summary.mapping.last_percentage|floatformat:1 }}%</span>
+                {% if koreader_summary.mapping.last_device %}
+                  <span title="{{ koreader_summary.mapping.last_device_id|default:'no device id' }}">on {{ koreader_summary.mapping.last_device }}</span>
+                {% endif %}
+                {% if koreader_summary.mapping.last_progress_at %}
+                  <span title="{{ koreader_summary.mapping.last_progress_at|date:'Y-m-d H:i:s' }}">{{ koreader_summary.mapping.last_progress_at|timesince }} ago</span>
+                {% endif %}
+                <span class="text-fg-faint">{{ koreader_summary.event_count }} sync{{ koreader_summary.event_count|pluralize }}</span>
+              </div>
+              {% if koreader_summary.sessions %}
+                <div class="text-xs text-fg-faint uppercase tracking-wide pt-1">Recent sessions</div>
+                <ul class="text-xs text-fg-muted space-y-1">
+                  {% for session in koreader_summary.sessions %}
+                    <li class="flex flex-wrap gap-x-2">
+                      <span class="text-fg">{{ session.start|date:"M j, H:i" }}</span>
+                      <span>·</span>
+                      <span>
+                        {% if session.duration_minutes %}
+                          {{ session.duration_minutes }} min
+                        {% else %}
+                          &lt; 1 min
+                        {% endif %}
+                      </span>
+                      {% if session.percent_traversed %}
+                        <span>·</span>
+                        <span>+{{ session.percent_traversed_pct|floatformat:1 }}%</span>
+                      {% endif %}
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% endif %}
+            </div>
           {% endif %}
         </div>
 

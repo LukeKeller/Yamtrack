@@ -785,6 +785,59 @@ def browse(request):
     return render(request, "app/browse.html", context)
 
 
+def _koreader_book_summary(user, book):
+    """Return a compact KOReader summary for ``book`` or ``None``.
+
+    Used by the book detail view to render a card with last-sync info
+    plus the three most recent inferred sessions. Returns ``None``
+    when the user has no KOReader mappings for the book, or has
+    mappings but no events yet. Imports the stats helper lazily so the
+    media_details path doesn't pay the import cost for non-book
+    requests.
+    """
+    from integrations.koreader_stats import compute_sessions  # noqa: PLC0415
+
+    koreader_event_model = apps.get_model("integrations", "KOReaderProgressEvent")
+    koreader_mapping_model = apps.get_model("integrations", "KOReaderBookMapping")
+
+    mappings = list(
+        koreader_mapping_model.objects.filter(user=user, item=book.item),
+    )
+    if not mappings:
+        return None
+
+    event_count = koreader_event_model.objects.filter(
+        user=user,
+        mapping__in=mappings,
+    ).count()
+    if not event_count:
+        return None
+
+    # Single-mapping common case: filter at the query layer. Rare
+    # multi-mapping case (multiple epub editions for the same book):
+    # post-filter the per-user session list, since the session helper
+    # splits on mapping change and we want sessions for any of the
+    # book's mappings.
+    if len(mappings) == 1:
+        sessions = compute_sessions(user, mapping=mappings[0], limit=3)
+    else:
+        mapping_ids = {m.id for m in mappings}
+        sessions = [s for s in compute_sessions(user) if s.mapping_id in mapping_ids][
+            :3
+        ]
+
+    latest_mapping = max(
+        (m for m in mappings if m.last_progress_at is not None),
+        key=lambda m: m.last_progress_at,
+        default=mappings[0],
+    )
+    return {
+        "mapping": latest_mapping,
+        "sessions": sessions,
+        "event_count": event_count,
+    }
+
+
 @require_GET
 def media_details(request, source, media_type, media_id, title):  # noqa: ARG001, C901 title for URL; complexity is acceptable here
     """Return the details page for a media item."""
@@ -836,18 +889,15 @@ def media_details(request, source, media_type, media_id, title):  # noqa: ARG001
         ),
     }
 
-    # Books: surface a "Reading history" link when this user has at least
-    # one KOReader sync event for the book. Cheap exists() — no payload.
+    # Books: surface a compact KOReader summary card on the book
+    # detail page when the user has at least one sync event for this
+    # book. Pulled into ``_koreader_book_summary`` to keep
+    # ``media_details``' branch count under the ruff cap.
     if media_type == MediaTypes.BOOK.value and current_instance is not None:
-        koreader_event_model = apps.get_model(
-            "integrations",
-            "KOReaderProgressEvent",
-        )
-        if koreader_event_model.objects.filter(
-            user=request.user,
-            mapping__item=current_instance.item,
-        ).exists():
+        summary = _koreader_book_summary(request.user, current_instance)
+        if summary is not None:
             context["koreader_history_book_pk"] = current_instance.pk
+            context["koreader_summary"] = summary
     # Last-spin indicator on the Record detail page (only meaningful for records).
     if media_type == MediaTypes.RECORD.value:
         spin_qs = Play.objects.filter(

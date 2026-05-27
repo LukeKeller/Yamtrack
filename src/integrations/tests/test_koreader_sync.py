@@ -612,3 +612,124 @@ class UnmatchedPageTests(TestCase):
         choice_ids = [c["id"] for c in response.context["book_choices"]]
         self.assertIn(self.item.pk, choice_ids)
         self.assertNotIn(other_item.pk, choice_ids)
+
+    @patch("app.providers.services.get_media_metadata")
+    def test_in_progress_unbound_books_rank_first(self, mock_meta):
+        """In-progress books without a KOReader mapping float to the top."""
+        mock_meta.return_value = {"max_progress": 400}
+        in_progress = _make_book_item(media_id="A")
+        Book.objects.create(
+            user=self.user,
+            item=in_progress,
+            status=Status.IN_PROGRESS.value,
+        )
+        planning = _make_book_item(media_id="B")
+        Book.objects.create(
+            user=self.user,
+            item=planning,
+            status=Status.PLANNING.value,
+        )
+        completed = _make_book_item(media_id="C")
+        Book.objects.create(
+            user=self.user,
+            item=completed,
+            status=Status.COMPLETED.value,
+        )
+        # Need an unbound mapping to make the page render.
+        KOReaderBookMapping.objects.create(
+            user=self.user,
+            document_hash="e" * 32,
+        )
+
+        response = self.client.get(reverse("koreader_unmatched"))
+        ids = [c["id"] for c in response.context["book_choices"]]
+        self.assertEqual(ids[0], in_progress.pk)
+
+    @patch("app.providers.services.get_media_metadata")
+    def test_already_bound_in_progress_is_de_ranked(self, mock_meta):
+        """In-progress books already bound to a hash don't float to the top."""
+        mock_meta.return_value = {"max_progress": 400}
+        in_progress_bound = _make_book_item(media_id="A")
+        Book.objects.create(
+            user=self.user,
+            item=in_progress_bound,
+            status=Status.IN_PROGRESS.value,
+        )
+        KOReaderBookMapping.objects.create(
+            user=self.user,
+            document_hash="b" * 32,
+            item=in_progress_bound,  # already bound to a different hash
+        )
+
+        in_progress_free = _make_book_item(media_id="B")
+        Book.objects.create(
+            user=self.user,
+            item=in_progress_free,
+            status=Status.IN_PROGRESS.value,
+        )
+        KOReaderBookMapping.objects.create(
+            user=self.user,
+            document_hash="e" * 32,  # unbound, triggers page render
+        )
+
+        response = self.client.get(reverse("koreader_unmatched"))
+        ids = [c["id"] for c in response.context["book_choices"]]
+        self.assertEqual(ids[0], in_progress_free.pk)
+
+    @patch("app.providers.services.get_media_metadata")
+    def test_likely_match_when_exactly_one_candidate(self, mock_meta):
+        mock_meta.return_value = {"max_progress": 400}
+        in_progress = _make_book_item(media_id="A")
+        Book.objects.create(
+            user=self.user,
+            item=in_progress,
+            status=Status.IN_PROGRESS.value,
+        )
+        # Adding a non-in-progress book doesn't disrupt the likely-match.
+        other = _make_book_item(media_id="B")
+        Book.objects.create(
+            user=self.user,
+            item=other,
+            status=Status.PLANNING.value,
+        )
+        KOReaderBookMapping.objects.create(
+            user=self.user,
+            document_hash="e" * 32,
+        )
+
+        response = self.client.get(reverse("koreader_unmatched"))
+        self.assertEqual(response.context["likely_match_id"], in_progress.pk)
+        self.assertEqual(response.context["likely_match_title"], in_progress.title)
+
+    @patch("app.providers.services.get_media_metadata")
+    def test_no_likely_match_when_multiple_in_progress(self, mock_meta):
+        mock_meta.return_value = {"max_progress": 400}
+        for media_id in ("A", "B"):
+            item = _make_book_item(media_id=media_id)
+            Book.objects.create(
+                user=self.user,
+                item=item,
+                status=Status.IN_PROGRESS.value,
+            )
+        KOReaderBookMapping.objects.create(
+            user=self.user,
+            document_hash="e" * 32,
+        )
+
+        response = self.client.get(reverse("koreader_unmatched"))
+        self.assertIsNone(response.context["likely_match_id"])
+
+    def test_no_likely_match_when_zero_in_progress(self):
+        item = _make_book_item(media_id="A")
+        Book.objects.create(
+            user=self.user,
+            item=item,
+            status=Status.PLANNING.value,
+        )
+        KOReaderBookMapping.objects.create(
+            user=self.user,
+            document_hash="e" * 32,
+        )
+
+        response = self.client.get(reverse("koreader_unmatched"))
+        self.assertIsNone(response.context["likely_match_id"])

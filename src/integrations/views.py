@@ -1165,6 +1165,16 @@ def koreader_unmatched(request):
     the main integrations card (a previous version rendered hashes
     one-char-per-line because the wide ``Select a book…`` dropdown
     forced its flex sibling to ~16px wide).
+
+    Picker ranking: surface **In progress** books without an existing
+    KOReader mapping first, then other In-progress books, then
+    everything else alphabetical. The kosync protocol only sends the
+    file md5 (no title/author/ISBN), so the user has to recognise the
+    book by context — but most KOReader pushes are for the book the
+    user is actively reading, so floating that candidate to the top
+    of the dropdown turns "scroll the alphabet" into "first option".
+    When exactly one strong candidate exists we also expose it as a
+    ``likely_match`` so the template can pre-select it.
     """
     mappings = list(
         KOReaderBookMapping.objects.filter(
@@ -1172,15 +1182,74 @@ def koreader_unmatched(request):
             item__isnull=True,
         ).order_by("-last_progress_at"),
     )
-    item_model = apps.get_model("app", "Item")
-    book_choices = list(
-        item_model.objects.filter(
-            book__user=request.user,
-            media_type="book",
+    book_model = apps.get_model("app", "book")
+
+    # Pull every Book the user owns with the columns we need to rank.
+    book_rows = list(
+        book_model.objects.filter(user=request.user)
+        .select_related("item")
+        .values(
+            "item_id",
+            "item__title",
+            "status",
+            "progressed_at",
+        ),
+    )
+    # Items already bound to one of *this user's* KOReader mappings
+    # are excluded from the "no mapping yet" rank — picking them again
+    # would force the user to manually unlink first.
+    bound_item_ids = set(
+        KOReaderBookMapping.objects.filter(
+            user=request.user,
+            item__isnull=False,
+        ).values_list("item_id", flat=True),
+    )
+
+    def _rank(row):
+        # 0: in-progress without mapping (likely match)
+        # 1: in-progress already-bound (rare; secondary hash for same book)
+        # 2: other statuses
+        in_progress = row["status"] == Status.IN_PROGRESS.value
+        already_bound = row["item_id"] in bound_item_ids
+        if in_progress and not already_bound:
+            tier = 0
+        elif in_progress:
+            tier = 1
+        else:
+            tier = 2
+        # Within a tier, most-recently-progressed first; fall back to
+        # title for stable ordering.
+        progressed = row["progressed_at"] or datetime.datetime.min.replace(
+            tzinfo=datetime.UTC,
         )
-        .order_by("title")
-        .values("id", "title")
-        .distinct(),
+        return (tier, -progressed.timestamp(), row["item__title"].lower())
+
+    book_rows.sort(key=_rank)
+    book_choices = [
+        {"id": row["item_id"], "title": row["item__title"]} for row in book_rows
+    ]
+    # De-duplicate by item id while preserving ranked order (a user
+    # can have a Book and an unrelated tracking entry for the same
+    # Item under another media_type — unlikely here, but the .values
+    # join can return duplicates if a future schema change adds them).
+    seen = set()
+    book_choices = [
+        choice
+        for choice in book_choices
+        if not (choice["id"] in seen or seen.add(choice["id"]))
+    ]
+
+    likely_candidates = [
+        row
+        for row in book_rows
+        if row["status"] == Status.IN_PROGRESS.value
+        and row["item_id"] not in bound_item_ids
+    ]
+    likely_match_id = (
+        likely_candidates[0]["item_id"] if len(likely_candidates) == 1 else None
+    )
+    likely_match_title = (
+        likely_candidates[0]["item__title"] if len(likely_candidates) == 1 else None
     )
 
     return render(
@@ -1189,6 +1258,8 @@ def koreader_unmatched(request):
         {
             "mappings": mappings,
             "book_choices": book_choices,
+            "likely_match_id": likely_match_id,
+            "likely_match_title": likely_match_title,
         },
     )
 

@@ -10,10 +10,21 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh127"
+CURRENT_FORK_VERSION = "0.25.2~ynh128"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh128",
+        "date": "2026-05-26",
+        "title": "KOReader: book-detail summary card + smarter unmatched picker",
+        "highlights": [
+            "Book detail pages now show a compact <strong>KOReader</strong> card when a KOReader sync is bound to the book — last percentage, last device, time since last sync, total event count, and the three most recent inferred reading sessions inline. The full per-book timeline is still one click away via the ``Full history →`` link on the card (same destination as the previous standalone link, which the card replaces).",
+            "<strong>Unmatched documents picker</strong> at ``/koreader/unmatched`` now ranks your library books smartly: In-progress books without a KOReader mapping float to the top, then other In-progress books, then everything else alphabetical. When there's exactly one strong candidate, the dropdown is pre-selected to that book and a ``Likely match: <title>`` chip appears above the form — so the common case (\"this hash is the book I'm reading right now\") becomes one click instead of scrolling the alphabet.",
+            "The kosync wire protocol still only sends the file md5 (no title/author/ISBN), so a perfect auto-match needs the OPDS-server feature; until then, this ranking eliminates 80% of the friction with a single sort change.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh127",
         "date": "2026-05-26",

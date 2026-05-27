@@ -44,6 +44,11 @@
             </div>
           </div>
 
+          {% if likely_match_id %}
+            <div class="mb-2 text-xs text-indigo-300 bg-indigo-500/10 border border-indigo-500/30 rounded-md px-3 py-1.5 inline-block">
+              Likely match: <span class="font-medium">{{ likely_match_title }}</span> (your only In-progress book without a sync mapping)
+            </div>
+          {% endif %}
           <div class="flex flex-col sm:flex-row sm:items-center gap-2">
             <form method="post"
                   action="{% url 'koreader_link' %}"
@@ -56,7 +61,10 @@
                       required
                       class="flex-1 min-w-0 py-1.5 pr-8 pl-2 bg-surface-2 rounded-md text-fg text-sm border-0 focus:ring-1 focus:ring-indigo-500 outline-none">
                 <option value="">Select a book…</option>
-                {% for book in book_choices %}<option value="{{ book.id }}">{{ book.title }}</option>{% endfor %}
+                {% for book in book_choices %}
+                  <option value="{{ book.id }}"
+                          {% if book.id == likely_match_id %}selected{% endif %}>{{ book.title }}</option>
+                {% endfor %}
               </select>
               <button type="submit"
                       class="shrink-0 px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer">

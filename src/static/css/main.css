@@ -1554,6 +1554,12 @@
   .border-indigo-500 {
     border-color: var(--color-indigo-500);
   }
+  .border-indigo-500\/30 {
+    border-color: color-mix(in srgb, oklch(58.5% 0.233 277.117) 30%, transparent);
+    @supports (color: color-mix(in lab, red, red)) {
+      border-color: color-mix(in oklab, var(--color-indigo-500) 30%, transparent);
+    }
+  }
   .border-indigo-600 {
     border-color: var(--color-indigo-600);
   }
