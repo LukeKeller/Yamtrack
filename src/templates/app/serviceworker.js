@@ -18,7 +18,7 @@
 // waiting worker, shows a toast, and posts {type: 'SKIP_WAITING'} when
 // the user accepts the update.
 
-const VERSION = 'v3';
+const VERSION = 'v4';
 const CACHE_SHELL = 'yamtrack-shell-' + VERSION;
 const CACHE_PAGES = 'yamtrack-pages-' + VERSION;
 const CACHE_STATIC = 'yamtrack-static-' + VERSION;
