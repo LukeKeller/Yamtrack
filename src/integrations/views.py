@@ -1177,6 +1177,11 @@ def koreader_unmatched(request):
     When exactly one strong candidate exists we also expose it as a
     ``likely_match`` so the template can pre-select it.
     """
+    from integrations.koreader_filename import (  # noqa: PLC0415
+        find_match_for_hash,
+        primary_expected_filename,
+    )
+
     mappings = list(
         KOReaderBookMapping.objects.filter(
             user=request.user,
@@ -1253,14 +1258,43 @@ def koreader_unmatched(request):
         likely_candidates[0]["item__title"] if len(likely_candidates) == 1 else None
     )
 
+    # Per-row filename-hash match: if md5(<title>.epub) for any of the
+    # user's books equals this row's document hash, we can pre-select
+    # that book in the dropdown — a stronger signal than the global
+    # ``likely_match`` (which only kicks in when exactly one
+    # in-progress book is unbound). When no filename match exists but
+    # there *is* a likely_match, expose the expected filename so the
+    # user can rename their KOReader file to make next sync auto-bind.
+    item_model = apps.get_model("app", "Item")
+    likely_item = (
+        item_model.objects.filter(pk=likely_match_id).first()
+        if likely_match_id is not None
+        else None
+    )
+    likely_expected_filename = (
+        primary_expected_filename(likely_item) if likely_item is not None else None
+    )
+
+    mapping_rows = []
+    for mapping in mappings:
+        matched_item = find_match_for_hash(request.user, mapping.document_hash)
+        mapping_rows.append(
+            {
+                "mapping": mapping,
+                "filename_match_item": matched_item,
+            },
+        )
+
     return render(
         request,
         "integrations/koreader_unmatched.html",
         {
             "mappings": mappings,
+            "mapping_rows": mapping_rows,
             "book_choices": book_choices,
             "likely_match_id": likely_match_id,
             "likely_match_title": likely_match_title,
+            "likely_expected_filename": likely_expected_filename,
         },
     )
 

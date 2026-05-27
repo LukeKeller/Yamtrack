@@ -45,6 +45,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 import users
 from app import providers
 from app.models import MediaTypes, Status
+from integrations.koreader_filename import find_match_for_hash
 from integrations.models import KOReaderBookMapping, KOReaderProgressEvent
 
 logger = logging.getLogger(__name__)
@@ -215,6 +216,23 @@ def progress_put(request):
             "last_progress_at": now,
         },
     )
+    # Filename-mode auto-bind: if this is a fresh mapping (or an
+    # existing-but-unbound row, e.g. someone hit a hash before but
+    # we couldn't match it pre-feature), see if md5(<title>.epub)
+    # for any of the user's library books matches the incoming hash.
+    # Skips the lookup once an item is already bound — manual links
+    # win over our guess.
+    if mapping.item_id is None:
+        matched_item = find_match_for_hash(user, document)
+        if matched_item is not None:
+            mapping.item = matched_item
+            mapping.save(update_fields=["item"])
+            logger.info(
+                "KOReader filename-mode auto-bound %s → item %s (user %s)",
+                document,
+                matched_item.pk,
+                user.pk,
+            )
     KOReaderProgressEvent.objects.create(
         mapping=mapping,
         user=user,

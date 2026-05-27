@@ -10,10 +10,21 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh129"
+CURRENT_FORK_VERSION = "0.25.2~ynh130"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh130",
+        "date": "2026-05-27",
+        "title": "KOReader: auto-bind by filename when KOReader is in filename-hash mode",
+        "highlights": [
+            "If you've set KOReader's kosync plugin to <strong>filename-mode</strong> document hashing (the alternative to the default binary-mode), Yamtrack now auto-binds incoming sync hashes to your tracked books with zero manual linking. On every kosync PUT we check whether <span class=\"font-mono\">md5(&lt;title&gt;.epub)</span> for any book in your library equals the incoming hash — if it does, the mapping is bound silently and the percentage replays onto the book exactly as if you'd linked it by hand.",
+            'Works retroactively too: any pre-existing unmatched mappings on your account will get auto-bound on the next sync from KOReader. The <strong>/koreader/unmatched</strong> page also surfaces per-row filename matches in green when found, alongside the existing "only In-progress book" suggestion in indigo. When neither match exists but you have one In-progress book without a mapping, the page now also tells you the exact filename to rename to (<span class="font-mono">&lt;title&gt;.epub</span>) so the next sync auto-binds.',
+            'Match algorithm tries a small set of filename variants per book: the title with .epub / .pdf / .cbz / .cbr / .mobi / .azw3 / .fb2 extensions, plus a lowercased variant. Match is exact (KOReader sends the basename verbatim, no case-folding) so files with author or series in the filename still won\'t auto-match — for those, rename in KOReader to the canonical <span class="font-mono">&lt;title&gt;.&lt;ext&gt;</span> form. Manual links are never overridden by an auto-bind guess.',
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh129",
         "date": "2026-05-26",
