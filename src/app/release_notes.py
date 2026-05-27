@@ -10,10 +10,19 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh134"
+CURRENT_FORK_VERSION = "0.25.2~ynh135"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh135",
+        "date": "2026-05-27",
+        "title": "OPDS auth telemetry for KOReader debugging",
+        "highlights": [
+            'Diagnostic ship: the OPDS basic-auth handler now logs structured "OPDS-AUTH:" lines to the journal recording header presence, length, scheme, decoded username, and password length — never the password itself. Lets us see exactly what KOReader is (or is not) sending without resorting to packet capture. Safe to ship on a single-user fork; on a multi-user instance we\'d want to gate this behind DEBUG since the username is logged.',
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh134",
         "date": "2026-05-27",

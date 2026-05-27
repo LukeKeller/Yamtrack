@@ -56,32 +56,88 @@ ET.register_namespace("opds", OPDS_OPDS_NAMESPACE)
 ET.register_namespace("dcterms", DC_NAMESPACE)
 
 
-def _basic_auth_user(request):
+def _basic_auth_user(request):  # noqa: PLR0911 — telemetry-style early returns
     """Decode HTTP Basic; return the Yamtrack user matching token=password.
 
     Returns ``None`` on any failure — bad header, bad encoding, no user,
     wrong token. The 401 response (with WWW-Authenticate) is the
     caller's responsibility so we don't accidentally swallow real
     errors as auth failures.
+
+    ~ynh135 added telemetry so OPDS auth failures from external clients
+    (KOReader's catalog browser specifically) are debuggable without
+    leaking the token: we log header presence / length / scheme, and on
+    decode-success we log the username + password length, never the
+    password itself. The lines are tagged ``OPDS-AUTH:`` so they're easy
+    to grep out of the journal once a debug session is over.
     """
     header = request.headers.get("Authorization", "")
+    if not header:
+        logger.info("OPDS-AUTH: method=%s no Authorization header", request.method)
+        return None
+    scheme = header.split(" ", 1)[0] if " " in header else header
     if not header.lower().startswith("basic "):
+        logger.info(
+            "OPDS-AUTH: method=%s non-Basic scheme=%r hdr_len=%d",
+            request.method,
+            scheme,
+            len(header),
+        )
         return None
     try:
         decoded = base64.b64decode(header[6:].strip()).decode("utf-8")
-    except (ValueError, UnicodeDecodeError):
+    except (ValueError, UnicodeDecodeError) as exc:
+        logger.info(
+            "OPDS-AUTH: method=%s base64-decode failed: %s (hdr_len=%d)",
+            request.method,
+            exc,
+            len(header),
+        )
         return None
     if ":" not in decoded:
+        logger.info(
+            "OPDS-AUTH: method=%s no colon in decoded creds (decoded_len=%d)",
+            request.method,
+            len(decoded),
+        )
         return None
     username, _, token = decoded.partition(":")
     if not username or not token:
+        logger.info(
+            "OPDS-AUTH: method=%s empty username_or_token (u_len=%d t_len=%d)",
+            request.method,
+            len(username),
+            len(token),
+        )
         return None
     # Case-insensitive username (matches the kosync convention; KOReader
     # lowercases the OPDS username field for some users too — easier to
     # be permissive than to debug "why does my casing matter only here").
-    for candidate in users.models.User.objects.filter(username__iexact=username):
+    candidates = list(users.models.User.objects.filter(username__iexact=username))
+    if not candidates:
+        logger.info(
+            "OPDS-AUTH: method=%s username=%r not found (t_len=%d)",
+            request.method,
+            username,
+            len(token),
+        )
+        return None
+    for candidate in candidates:
         if candidate.token == token:
+            logger.info(
+                "OPDS-AUTH: method=%s username=%r OK user_id=%d",
+                request.method,
+                username,
+                candidate.pk,
+            )
             return candidate
+    logger.info(
+        "OPDS-AUTH: method=%s username=%r token MISMATCH (t_len=%d, expected_len=%d)",
+        request.method,
+        username,
+        len(token),
+        len(candidates[0].token or ""),
+    )
     return None
 
 
