@@ -10,10 +10,19 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh123"
+CURRENT_FORK_VERSION = "0.25.2~ynh124"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh124",
+        "date": "2026-05-26",
+        "title": "Integrations page shows the correct kosync server URL",
+        "highlights": [
+            "Fixed the ``URLS`` env var being templated without the app's path prefix on YunoHost installs at a non-root path (e.g. ``/yamtrack``). Symptom: the integrations page's auto-generated KOReader server URL was missing the path, so anyone who copy-pasted it into KOReader got SSO-302'd at ``/api/koreader/...`` instead of the working ``/yamtrack/api/koreader/...``. Same template builds OAuth redirect_uri values for Trakt / Simkl / AniList, so this also unblocks the public-mode OAuth flows on sub-path installs. ~ynh124 fixes the template (``URLS=https://__DOMAIN____PATH__``) and adds a one-time migration in the upgrade script that rewrites the line on existing installs whose ``.env`` still has the old shape.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh123",
         "date": "2026-05-26",
