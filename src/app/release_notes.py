@@ -10,10 +10,20 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh138"
+CURRENT_FORK_VERSION = "0.25.2~ynh139"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh139",
+        "date": "2026-05-27",
+        "title": "Book Journey chart: hardened render + service-worker cache bump",
+        "highlights": [
+            'The ~ynh138 ship landed the Current Progress % fix but the Book Journey bar chart wasn\'t drawing on the deployed instance. Two fixes ship together in ~ynh139: the chart JS gets a more defensive Chart.js config (flat <span class="font-mono">borderRadius</span> on the delta segment, drop <span class="font-mono">borderSkipped: false</span>, clamp <span class="font-mono">delta_pct &gt;= 0</span>, run-on-DOMReady wrapper that also handles late-script loads), plus diagnostic <span class="font-mono">console.log</span> lines so future "chart didn\'t draw" reports are debuggable from a browser console alone.',
+            'The service-worker cache <span class="font-mono">VERSION</span> bumps from <span class="font-mono">v3</span> → <span class="font-mono">v4</span>, which invalidates every <span class="font-mono">yamtrack-*-v3</span> cache on the next page load and forces a fresh fetch of all static assets. Heavy hammer, but reliable when the per-file mtime cache-buster doesn\'t bust an existing SW cache entry. After upgrading, the first page load may take a beat longer while the SW repopulates; subsequent loads are normal.',
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh138",
         "date": "2026-05-27",
