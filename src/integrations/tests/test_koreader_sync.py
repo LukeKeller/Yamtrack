@@ -92,6 +92,31 @@ class AuthTests(TestCase):
         )
         self.assertEqual(response.status_code, 401)
 
+    def test_users_auth_accepts_lowercased_username(self):
+        """KOReader's kosync plugin lowercases usernames before sending."""
+        self.user.username = "Reader"
+        self.user.save()
+        response = self.client.get(
+            reverse("koreader_users_auth"),
+            HTTP_X_AUTH_USER="reader",
+            HTTP_X_AUTH_KEY=_md5(self.user.token),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"authorized": "OK"})
+
+    def test_users_auth_resolves_case_collision_by_token(self):
+        """When two users differ only by case, the token md5 picks one."""
+        self.user.username = "Reader"
+        self.user.save()
+        other = _make_user(username="reader")
+        response = self.client.get(
+            reverse("koreader_users_auth"),
+            HTTP_X_AUTH_USER="reader",
+            HTTP_X_AUTH_KEY=_md5(other.token),
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"authorized": "OK"})
+
 
 class ProgressPutTests(TestCase):
     """The PUT endpoint owns the write path; cover bound and unbound."""

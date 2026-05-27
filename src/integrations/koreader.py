@@ -37,7 +37,6 @@ import time
 
 from django.apps import apps
 from django.contrib.auth.decorators import login_not_required
-from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -65,6 +64,25 @@ def _md5_hex(value):
     return hashlib.md5(value, usedforsecurity=False).hexdigest()
 
 
+def _user_for_credentials(username, key_md5):
+    """Find the Yamtrack user matching kosync credentials, or None.
+
+    KOReader's kosync plugin lowercases the configured username before
+    sending it as ``x-auth-user``, so a case-sensitive ``User.objects.get``
+    misses anyone with uppercase letters in their Yamtrack username.
+    We enumerate candidates case-insensitively and use the inbound token
+    md5 as the tie-breaker — even on installs where two users differ
+    only by case (Django's default User model treats those as distinct),
+    only one of them can produce a given valid ``md5(user.token)``.
+    """
+    if not username or not key_md5:
+        return None
+    for candidate in users.models.User.objects.filter(username__iexact=username):
+        if _md5_hex(candidate.token) == key_md5:
+            return candidate
+    return None
+
+
 def _authenticate(request):
     """Resolve (User, error_response) from kosync auth headers.
 
@@ -81,15 +99,8 @@ def _authenticate(request):
             status=401,
         )
 
-    try:
-        user = users.models.User.objects.get(username=username)
-    except ObjectDoesNotExist:
-        return None, JsonResponse(
-            {"code": 2001, "message": "Unauthorized user."},
-            status=401,
-        )
-
-    if _md5_hex(user.token) != auth_key:
+    user = _user_for_credentials(username, auth_key)
+    if user is None:
         return None, JsonResponse(
             {"code": 2001, "message": "Unauthorized user."},
             status=401,
@@ -130,15 +141,8 @@ def users_create(request):
             status=400,
         )
 
-    try:
-        user = users.models.User.objects.get(username=username)
-    except ObjectDoesNotExist:
-        return JsonResponse(
-            {"code": 2001, "message": "Unauthorized user."},
-            status=401,
-        )
-
-    if _md5_hex(user.token) != password:
+    user = _user_for_credentials(username, password)
+    if user is None:
         return JsonResponse(
             {"code": 2001, "message": "Unauthorized user."},
             status=401,
