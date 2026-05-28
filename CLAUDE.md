@@ -216,6 +216,19 @@ CI (`app-tests.yml`) runs `ruff check src` and the test suite. **The PR check fa
 
 This fork ships through the `yamtrack_ynh` companion repo (`LukeKeller/yamtrack_ynh`), which pins a YunoHost manifest to a specific commit on this repo. The end-to-end flow when you finish a feature:
 
+> **Pre-flight — do these two commands before anything else, every time.** They take five seconds and prevent the two mistakes that have happened in real sessions: pushing the bump to the wrong branch, and inventing a bump number from stale context. Don't trust earlier conversation memory or grep results from other branches — re-derive from the live remote.
+>
+> ```bash
+> # 1. Confirm the integration branch — answer must be "main" for this fork.
+> #    If you find yourself about to push to "dev", STOP. That's upstream's
+> #    branch name and an older revision of this file used to say so.
+> git fetch origin main && git log --oneline -1 origin/main
+>
+> # 2. Find the last bump marker ON main (not on a feature branch, not in
+> #    your context, not on dev). The next NN is exactly that + 1.
+> git log --oneline origin/main --grep="Bump fork package" -1
+> ```
+
 1. **Merge feature branch into `main`** here. Prefer fast-forward / linear history (rebase the feature branch first if needed). Example:
    ```bash
    git checkout main && git pull --ff-only
@@ -226,12 +239,18 @@ This fork ships through the `yamtrack_ynh` companion repo (`LukeKeller/yamtrack_
    ```bash
    git commit --allow-empty -m "Bump fork package to 0.25.2~ynhNN (<short feature description>)"
    ```
-   Increment `NN` by one over the previous marker. Find the previous one with `git log --oneline --grep="Bump fork package" -1`.
+   `NN` is exactly one more than the previous marker on `main` — use the pre-flight command above; never guess from a number you remember.
 3. **Push `main`**: `git push origin main`. Record the new HEAD SHA — you'll need it next.
-4. **Switch to the `yamtrack_ynh` checkout** and bump the package against that SHA (see that repo's `README.md`).
+4. **Switch to the `yamtrack_ynh` checkout** and bump the package against that SHA (see that repo's `README.md`). The `NN` you use there MUST match the one you used in step 2 — the two repos stay aligned by convention.
 5. After the YunoHost upgrade succeeds, the feature branch is safe to delete locally and on the remote.
 
 If a feature spans multiple commits, you can use a non-fast-forward merge with `--no-ff` to keep them as a logical group — but still land it on `main` and add the bump marker on top.
+
+### Common failure modes (learn from past mistakes)
+
+- **Pushed to `dev` instead of `main`.** This fork used `dev` for a while; an older revision of this file documented that. If your context says "dev is the integration branch," it's stale — re-read the Branching section above and run the pre-flight commands. `origin/dev` exists but is dormant; pushing to it now creates a misleading stray history.
+- **Picked the wrong `NN`.** The bump-marker for a feature branch you branched off three days ago is not the latest — `main` has advanced since. Always grep `origin/main` (not local, not your feature branch, not a remembered SHA) for the previous marker.
+- **Stale local `main` or `dev`.** Containers come up with whatever was cloned at session start. Always `git fetch origin main && git reset --hard origin/main` (or `git pull --ff-only` after a fresh checkout) before computing the next bump.
 
 ## Hardcover sync project (in flight)
 
