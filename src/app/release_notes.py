@@ -10,10 +10,20 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh141"
+CURRENT_FORK_VERSION = "0.25.2~ynh142"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh142",
+        "date": "2026-05-28",
+        "title": "Library uploads no longer 413 at 50MB — nginx cap raised to 200MB",
+        "highlights": [
+            'The YunoHost nginx vhost capped library uploads at <span class="font-mono">client_max_body_size 50M</span>, so a single fixed-layout or illustrated epub above ~50MB was rejected with <span class="font-mono">413 Request Entity Too Large</span> before Django saw it. The cap now matches Django\'s <span class="font-mono">DATA_UPLOAD_MAX_MEMORY_SIZE</span> (200MB), which is the actual hard ceiling Yamtrack enforces. The SSO-bypass carve-out for <span class="font-mono">/webhook</span>, <span class="font-mono">/api/koreader</span>, and <span class="font-mono">/library/opds</span> stays at 50MB — those endpoints don\'t accept large bodies.',
+            'Small <span class="font-mono">settings.py</span> cleanup along for the ride: <span class="font-mono">FILE_UPLOAD_MAX_MEMORY_SIZE</span> was being set twice (once env-configurable, once hardcoded 10MB further down silently overriding the first), so the env var had no effect. The duplicate is gone. The setting only governs the in-memory-vs-tempfile threshold and never affected upload size limits, but it was dead code that read like working knobs.',
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh141",
         "date": "2026-05-28",
