@@ -22,6 +22,7 @@ urlpatterns = [
     path("", include("lists.urls")),
     path("", include("events.urls")),
     path("library/", include("library.urls")),
+    path("reading/", include("reading.urls")),
     path("select2/", include("django_select2.urls")),
     path(
         "health/",

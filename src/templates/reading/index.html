@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+{% load static %}
+{% load app_tags %}
+{% load humanize %}
+
+{% block title %}
+  Reading - Yamtrack
+{% endblock title %}
+
+{% block content %}
+  {% absolute_app_url '/library/opds/' as opds_url %}
+
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold mb-1">Reading</h1>
+    <p class="text-fg-muted text-sm">
+      Library uploads, OPDS catalog, KOReader progress, and Hardcover sync — all in one place.
+    </p>
+  </div>
+
+  {% comment %}
+    OPDS catalog URL — first-class, copy-on-click. KOReader points at
+    this exact URL via its OPDS browser; surfacing it up top is the
+    main reason the hub exists.
+  {% endcomment %}
+  <div class="bg-surface-1 rounded-lg p-5 mb-6">
+    <div class="flex items-center justify-between mb-2">
+      <div class="flex items-center gap-2">
+        {% include "app/icons/book-open.svg" with classes="w-5 h-5 text-indigo-400" %}
+        <h2 class="text-base font-medium">OPDS catalog</h2>
+      </div>
+      <a href="{% url 'library_index' %}"
+         class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors whitespace-nowrap">Manage library →</a>
+    </div>
+    <div class="bg-surface-0 p-3 rounded-md flex items-center gap-2">
+      <input readonly
+             id="reading-opds-url"
+             class="flex-1 py-2 pr-2 pl-3 bg-surface-0 rounded-md text-fg text-sm border-0 focus:ring-0 outline-none font-mono"
+             type="text"
+             value="{{ opds_url }}">
+      <button type="button"
+              class="flex items-center cursor-pointer group pr-1 text-fg-muted hover:text-indigo-400 transition-colors"
+              title="Copy"
+              data-copy-target="#reading-opds-url">{% include "app/icons/copy.svg" with classes="w-5 h-5" %}</button>
+    </div>
+    <p class="text-xs text-fg-faint mt-2">
+      In KOReader: <span class="font-mono">File browser → Search → OPDS catalog → +</span>. Username + password = your Yamtrack username + API token (same as kosync). Downloads land in your KOReader library and the next progress push auto-binds.
+    </p>
+  </div>
+
+  {% comment %} Summary tiles — Music-page shape. {% endcomment %}
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+    <a href="{% url 'library_index' %}"
+       class="bg-surface-1 rounded-lg p-5 hover:bg-surface-2 transition-colors block">
+      <p class="text-fg-muted text-sm">Library files</p>
+      <p class="text-3xl font-bold mt-1">{{ library_total }}</p>
+      <p class="text-xs text-fg-faint mt-2">Upload .epub or .zip → served over OPDS.</p>
+    </a>
+    <a href="{% url 'koreader_devices' %}"
+       class="bg-surface-1 rounded-lg p-5 hover:bg-surface-2 transition-colors block">
+      <p class="text-fg-muted text-sm">KOReader</p>
+      <p class="text-3xl font-bold mt-1">{{ koreader_synced_count }} book{{ koreader_synced_count|pluralize }}</p>
+      <p class="text-xs text-fg-faint mt-2">
+        {{ koreader_device_count }} device{{ koreader_device_count|pluralize }} pushing kosync progress.
+      </p>
+    </a>
+    {% if hardcover_integration %}
+      <a href="{% url 'integrations' %}"
+         class="bg-surface-1 rounded-lg p-5 hover:bg-surface-2 transition-colors block">
+        <p class="text-fg-muted text-sm">Hardcover</p>
+        <p class="text-3xl font-bold mt-1 text-emerald-400">@{{ hardcover_integration.hardcover_username }}</p>
+        <p class="text-xs text-fg-faint mt-2">
+          {% if hardcover_integration.last_pushed_at %}
+            Last push {{ hardcover_integration.last_pushed_at|timesince }} ago.
+          {% else %}
+            Connected — no pushes yet.
+          {% endif %}
+        </p>
+      </a>
+    {% else %}
+      <a href="{% url 'integrations' %}"
+         class="bg-surface-1 rounded-lg p-5 hover:bg-surface-2 transition-colors block">
+        <p class="text-fg-muted text-sm">Hardcover</p>
+        <p class="text-3xl font-bold mt-1 text-fg-faint">Not connected</p>
+        <p class="text-xs text-fg-faint mt-2">Push book progress to hardcover.app — connect in Settings.</p>
+      </a>
+    {% endif %}
+  </div>
+
+  {% comment %} Amber CTAs — only when there's actually something to fix. {% endcomment %}
+  {% if library_unmatched or koreader_unmatched_count %}
+    <div class="space-y-2 mb-6">
+      {% if library_unmatched %}
+        <a href="{% url 'reading_unmatched' %}?source=library"
+           class="block bg-amber-500/10 hover:bg-amber-500/20 transition-colors border border-amber-500/30 rounded-md px-3 py-2 text-sm text-amber-300">
+          <span class="font-medium">{{ library_unmatched }}</span> unmatched library file{{ library_unmatched|pluralize }} waiting to be linked
+          <span class="float-right">→</span>
+        </a>
+      {% endif %}
+      {% if koreader_unmatched_count %}
+        <a href="{% url 'reading_unmatched' %}?source=koreader"
+           class="block bg-amber-500/10 hover:bg-amber-500/20 transition-colors border border-amber-500/30 rounded-md px-3 py-2 text-sm text-amber-300">
+          <span class="font-medium">{{ koreader_unmatched_count }}</span> unmatched KOReader document{{ koreader_unmatched_count|pluralize }} waiting to be linked
+          <span class="float-right">→</span>
+        </a>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  {% comment %} Currently reading rail. {% endcomment %}
+  {% if currently_reading %}
+    <div class="bg-surface-1 rounded-lg p-5 mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-base font-medium">Currently reading</h2>
+        <a href="{% url 'medialist' media_type='book' %}"
+           class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">All books →</a>
+      </div>
+      <div class="space-y-2">
+        {% for book in currently_reading %}
+          <div class="bg-surface-0 rounded-md p-3 flex gap-3">
+            <a href="{% url 'media_details' source=book.item.source media_type=book.item.media_type media_id=book.item.media_id title=book.item.title|slug %}"
+               class="shrink-0">
+              <img src="{{ book.item.image }}"
+                   alt=""
+                   class="w-12 h-18 object-cover rounded-sm bg-surface-2"
+                   loading="lazy"
+                   style="width:48px;
+                          height:72px">
+            </a>
+            <div class="min-w-0 flex-1">
+              <a href="{% url 'media_details' source=book.item.source media_type=book.item.media_type media_id=book.item.media_id title=book.item.title|slug %}"
+                 class="text-sm text-fg hover:text-indigo-400 transition-colors truncate block">{{ book.item.title }}</a>
+              <div class="text-xs text-fg-muted mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
+                {% if book.progress %}<span>page {{ book.progress }}</span>{% endif %}
+                {% if book.koreader_mapping and book.koreader_mapping.last_percentage %}
+                  <span>{{ book.koreader_mapping.last_percentage|floatformat:1 }}%</span>
+                {% endif %}
+                {% if book.koreader_mapping and book.koreader_mapping.last_device %}
+                  <span title="{{ book.koreader_mapping.last_device_id|default:'no device id' }}">on {{ book.koreader_mapping.last_device }}</span>
+                {% endif %}
+                {% if book.koreader_mapping and book.koreader_mapping.last_progress_at %}
+                  <span title="{{ book.koreader_mapping.last_progress_at|date:'Y-m-d H:i:s' }}">{{ book.koreader_mapping.last_progress_at|timesince }} ago</span>
+                {% elif book.progressed_at %}
+                  <span title="{{ book.progressed_at|date:'Y-m-d H:i:s' }}">{{ book.progressed_at|timesince }} ago</span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  {% comment %}
+    Reading cadence sparkline — last 7 days. The full GitHub-style
+    heatmap lives at /reading/koreader/cadence; this is the at-a-glance
+    version for the hub.
+  {% endcomment %}
+  {% if week_minutes or koreader_synced_count %}
+    <div class="bg-surface-1 rounded-lg p-5 mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-baseline gap-3">
+          <h2 class="text-base font-medium">Reading cadence</h2>
+          <span class="text-xs text-fg-faint">last {{ hub_cadence_days }} days</span>
+        </div>
+        <a href="{% url 'koreader_cadence' %}"
+           class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">Full heatmap →</a>
+      </div>
+      <div class="flex items-end gap-3 mb-3">
+        <div class="text-3xl font-bold">{{ week_hours|floatformat:1 }}h</div>
+        <div class="text-xs text-fg-muted pb-1">across {{ week_session_count }} session{{ week_session_count|pluralize }}</div>
+      </div>
+      <div class="flex items-end gap-1 h-12">
+        {% for row in week_cadence %}
+          <div class="flex-1 flex flex-col items-center gap-1">
+            <div class="w-full rounded-sm {% if row.bar_height_pct > 0 %}bg-indigo-500/70{% else %}bg-surface-0{% endif %}"
+                 style="height: {{ row.bar_height_pct|default:4 }}%;
+                        min-height: 4px"
+                 title="{{ row.date|date:'M j' }} — {{ row.percent_read|floatformat:1 }} book-units"></div>
+            <div class="text-[10px] text-fg-faint">{{ row.date|date:"D"|slice:":2" }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  {% comment %} Stuck books — In progress but progressed_at > STUCK_DAYS old. {% endcomment %}
+  {% if stuck_books %}
+    <div class="bg-surface-1 rounded-lg p-5 mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-base font-medium">Stuck books</h2>
+        <span class="text-xs text-fg-faint">no progress in 30+ days</span>
+      </div>
+      <div class="space-y-1.5">
+        {% for book in stuck_books %}
+          <a href="{% url 'media_details' source=book.item.source media_type=book.item.media_type media_id=book.item.media_id title=book.item.title|slug %}"
+             class="flex items-center gap-3 px-3 py-2 bg-surface-0 hover:bg-surface-2 transition-colors rounded-md text-sm">
+            <span class="flex-1 truncate text-fg">{{ book.item.title }}</span>
+            <span class="text-xs text-fg-faint shrink-0">
+              {% if book.progressed_at %}
+                {{ book.progressed_at|timesince }} ago
+              {% else %}
+                never
+              {% endif %}
+            </span>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+  {% comment %} Recent sessions table. {% endcomment %}
+  {% if recent_rows %}
+    <div class="bg-surface-1 rounded-lg p-5 mb-6">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-base font-medium">Recent sessions</h2>
+        <a href="{% url 'koreader_sessions' %}"
+           class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">All sessions →</a>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="text-fg-muted text-xs uppercase tracking-wider">
+            <tr>
+              <th class="text-left py-1.5 pr-3">Book</th>
+              <th class="text-left py-1.5 pr-3">Started</th>
+              <th class="text-right py-1.5 pr-3">Duration</th>
+              <th class="text-right py-1.5">Progress</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y" style="border-color: var(--color-border-subtle)">
+            {% for row in recent_rows %}
+              <tr>
+                <td class="py-2 pr-3">
+                  {% if row.item %}
+                    <a href="{% url 'media_details' source=row.item.source media_type=row.item.media_type media_id=row.item.media_id title=row.item.title|slug %}"
+                       class="hover:text-indigo-400 transition-colors">{{ row.item.title }}</a>
+                  {% else %}
+                    <span class="text-fg-faint">(unbound)</span>
+                  {% endif %}
+                </td>
+                <td class="py-2 pr-3 text-fg-muted whitespace-nowrap"
+                    title="{{ row.session.start|date:'Y-m-d H:i' }}">{{ row.session.start|date:"M j, H:i" }}</td>
+                <td class="py-2 pr-3 text-right text-fg-muted whitespace-nowrap">
+                  {% if row.session.duration_minutes %}
+                    {{ row.session.duration_minutes }} min
+                  {% else %}
+                    &lt; 1 min
+                  {% endif %}
+                </td>
+                <td class="py-2 text-right text-fg-muted whitespace-nowrap">
+                  {% if row.session.percent_traversed %}
+                    +{{ row.session.percent_traversed_pct|floatformat:1 }}%
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+
+  {% comment %} Empty-state hint when the user has none of: library files, KOReader sync, Hardcover. {% endcomment %}
+  {% if not library_total and not koreader_synced_count and not hardcover_integration %}
+    <div class="bg-surface-1 rounded-lg p-8 text-center">
+      <p class="text-fg-muted mb-3">
+        No reading data yet. Upload an epub to the library, point KOReader's kosync at this server, or connect Hardcover in Settings to get started.
+      </p>
+      <div class="flex justify-center gap-2 flex-wrap">
+        <a href="{% url 'library_upload' %}"
+           class="px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm">
+          Upload an epub
+        </a>
+        <a href="{% url 'integrations' %}"
+           class="px-3 py-1.5 bg-surface-2 text-fg rounded-md hover:bg-surface-3 transition-colors text-sm">
+          Configure sync
+        </a>
+      </div>
+    </div>
+  {% endif %}
+{% endblock content %}
+
+{% block js %}
+  <script src="{% static 'js/copy-item.js' %}{% get_static_file_mtime 'js/copy-item.js' %}"></script>
+{% endblock js %}

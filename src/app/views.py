@@ -915,7 +915,7 @@ def _koreader_book_summary(user, book):
 
 
 @require_GET
-def media_details(request, source, media_type, media_id, title):  # noqa: ARG001, C901 title for URL; complexity is acceptable here
+def media_details(request, source, media_type, media_id, title):  # noqa: ARG001, C901, PLR0912 title for URL; complexity is acceptable here
     """Return the details page for a media item."""
     media_metadata = services.get_media_metadata(media_type, media_id, source)
     user_medias = BasicMedia.objects.filter_media_prefetch(
@@ -974,6 +974,21 @@ def media_details(request, source, media_type, media_id, title):  # noqa: ARG001
         if summary is not None:
             context["koreader_history_book_pk"] = current_instance.pk
             context["koreader_summary"] = summary
+        # Hardcover push status — small chip below the KOReader summary
+        # so the user can tell at a glance whether this book is also
+        # being mirrored to hardcover.app. Only loaded when the user
+        # has actually connected an integration, so unauthenticated
+        # users / non-Hardcover users see nothing extra.
+        from integrations.models import HardcoverIntegration  # noqa: PLC0415
+
+        hc = HardcoverIntegration.objects.filter(user=request.user).first()
+        if hc is not None and hc.enabled:
+            context["hardcover_status"] = {
+                "username": hc.hardcover_username,
+                "last_pushed_at": hc.last_pushed_at,
+                "last_error": hc.last_error,
+                "last_error_at": hc.last_error_at,
+            }
     # Last-spin indicator on the Record detail page (only meaningful for records).
     if media_type == MediaTypes.RECORD.value:
         spin_qs = Play.objects.filter(

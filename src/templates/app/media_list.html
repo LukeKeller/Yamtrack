@@ -7,7 +7,23 @@
 {% endblock title %}
 
 {% block content %}
-  <h1 class="text-3xl font-bold mb-6">{{ media_type|media_type_readable_plural }}</h1>
+  <h1 class="text-3xl font-bold {% if media_type == 'book' %}mb-2{% else %}mb-6{% endif %}">
+    {{ media_type|media_type_readable_plural }}
+  </h1>
+
+  {% if media_type == 'book' %}
+    <div class="mb-6 flex flex-wrap gap-2 text-xs items-center text-fg-muted">
+      <a href="{% url 'reading_index' %}"
+         class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-1 hover:bg-surface-2 transition-colors">
+        {% include "app/icons/book-open.svg" with classes="w-3.5 h-3.5" %}
+        <span>Reading hub</span>
+      </a>
+      <a href="{% url 'library_index' %}"
+         class="px-2.5 py-1 rounded-full bg-surface-1 hover:bg-surface-2 transition-colors">Library</a>
+      <a href="{% url 'koreader_unmatched' %}"
+         class="px-2.5 py-1 rounded-full bg-surface-1 hover:bg-surface-2 transition-colors">KOReader matching</a>
+    </div>
+  {% endif %}
 
   {% if record_stats %}
     <div x-data="{ open: true }" class="mb-6">

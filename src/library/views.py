@@ -49,7 +49,16 @@ EPUB_MIME = "application/epub+zip"
 @require_GET
 @login_required
 def library_index(request):
-    """Grid of the user's uploads with filter chips + per-row actions."""
+    """Grid of the user's uploads with filter chips + per-row actions.
+
+    The "Link to a tracked book" dropdown uses the shared
+    ``ranked_book_choices`` helper so in-progress books float to the top
+    — same ordering as the KOReader unmatched page. Previously this
+    template just sorted alphabetically, which buried the current read
+    behind hundreds of completed ones.
+    """
+    from reading.helpers import ranked_book_choices  # noqa: PLC0415
+
     filter_mode = request.GET.get("filter", "all")
     qs = LibraryFile.objects.filter(user=request.user).select_related("item")
     if filter_mode == "unmatched":
@@ -57,12 +66,7 @@ def library_index(request):
     elif filter_mode == "matched":
         qs = qs.filter(item__isnull=False)
 
-    book_model = apps.get_model("app", "book")
-    library_books = list(
-        book_model.objects.filter(user=request.user)
-        .select_related("item")
-        .order_by("item__title"),
-    )
+    book_choices = ranked_book_choices(request.user)
 
     return render(
         request,
@@ -75,7 +79,7 @@ def library_index(request):
                 user=request.user,
                 item__isnull=True,
             ).count(),
-            "library_books": library_books,
+            "book_choices": book_choices,
         },
     )
 
@@ -96,10 +100,28 @@ def library_upload(request):
     return render(request, "library/upload.html", {"form": form})
 
 
+def _library_post_redirect(request):
+    """Resolve a safe redirect target after a library link/rename/delete POST.
+
+    Honours an opt-in ``next`` form field whose value must be a same-host
+    path under ``/reading/`` — so the unified inbox at
+    ``/reading/unmatched`` can keep the user pinned to their filter
+    after a bind. Falls back to the library browser.
+    """
+    next_url = (request.POST.get("next") or "").strip()
+    if next_url.startswith("/reading/"):
+        return redirect(next_url)
+    return redirect("library_index")
+
+
 @require_POST
 @login_required
 def library_link(request, pk):
-    """Manually bind a LibraryFile to a Book ``Item``."""
+    """Manually bind a LibraryFile to a Book ``Item``.
+
+    Redirect target honours an opt-in ``next`` form field so binds from
+    the unified /reading/unmatched inbox return there.
+    """
     library_file = get_object_or_404(LibraryFile, pk=pk, user=request.user)
     item_id = (request.POST.get("item_id") or "").strip()
 
@@ -107,14 +129,14 @@ def library_link(request, pk):
         library_file.item = None
         library_file.save(update_fields=["item", "updated_at"])
         messages.info(request, f"Unlinked {library_file.canonical_filename}.")
-        return redirect("library_index")
+        return _library_post_redirect(request)
 
     item_model = apps.get_model("app", "Item")
     try:
         item = item_model.objects.get(pk=item_id, media_type="book")
     except (ObjectDoesNotExist, ValueError):
         messages.error(request, "Book not found in your library.")
-        return redirect("library_index")
+        return _library_post_redirect(request)
 
     library_file.item = item
     library_file.save(update_fields=["item", "updated_at"])
@@ -122,7 +144,7 @@ def library_link(request, pk):
         request,
         f"Linked {library_file.canonical_filename} to {item.title}.",
     )
-    return redirect("library_index")
+    return _library_post_redirect(request)
 
 
 @require_POST

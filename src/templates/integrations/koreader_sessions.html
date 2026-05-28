@@ -6,14 +6,17 @@
 {% endblock title %}
 
 {% block content %}
-  <div class="mb-6">
-    <a href="{% url 'integrations' %}"
-       class="text-fg-muted hover:text-fg text-sm inline-flex items-center gap-1 mb-3">← Back to integrations</a>
+  <div class="mb-3">
+    <a href="{% url 'reading_index' %}"
+       class="text-fg-muted hover:text-fg text-sm inline-flex items-center gap-1">← Reading</a>
+  </div>
+  <div class="mb-3">
     <h1 class="text-2xl font-bold mb-1">Reading sessions</h1>
     <p class="text-fg-muted">
       Consecutive KOReader syncs grouped into sessions — a 30-minute idle gap or switching to a different book starts a new one. Sessions that are both shorter than a minute and only one event (typical "I opened the book and put it away" pings) are dropped.
     </p>
   </div>
+  {% include "reading/_koreader_tabs.html" with active="sessions" %}
 
   <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
     <div class="bg-surface-1 rounded-lg p-4">

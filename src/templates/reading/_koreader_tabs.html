@@ -1,0 +1,21 @@
+{% comment %}
+  Sibling tab strip for the KOReader workspace pages
+  (cadence / sessions / devices / unmatched). Lets the user jump
+  between sister views without bouncing through the Reading hub.
+
+  Required: ``active`` is one of "cadence", "sessions", "devices",
+  "unmatched". The chip matching ``active`` gets the indigo accent;
+  the others render in the surface-2 muted style.
+{% endcomment %}
+<div class="mb-6 flex flex-wrap gap-2 text-xs">
+  {% with active_cls="px-3 py-1 rounded-md bg-indigo-600 text-white" idle_cls="px-3 py-1 rounded-md bg-surface-1 text-fg-muted hover:text-fg hover:bg-surface-2 transition-colors" %}
+    <a href="{% url 'koreader_cadence' %}"
+       class="{% if active == 'cadence' %}{{ active_cls }}{% else %}{{ idle_cls }}{% endif %}">Cadence</a>
+    <a href="{% url 'koreader_sessions' %}"
+       class="{% if active == 'sessions' %}{{ active_cls }}{% else %}{{ idle_cls }}{% endif %}">Sessions</a>
+    <a href="{% url 'koreader_devices' %}"
+       class="{% if active == 'devices' %}{{ active_cls }}{% else %}{{ idle_cls }}{% endif %}">Devices</a>
+    <a href="{% url 'koreader_unmatched' %}"
+       class="{% if active == 'unmatched' %}{{ active_cls }}{% else %}{{ idle_cls }}{% endif %}">Unmatched</a>
+  {% endwith %}
+</div>

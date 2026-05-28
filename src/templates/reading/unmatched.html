@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% load app_tags %}
+
+{% block title %}
+  Unmatched — Yamtrack
+{% endblock title %}
+
+{% block content %}
+  <div class="mb-3">
+    <a href="{% url 'reading_index' %}"
+       class="text-fg-muted hover:text-fg text-sm inline-flex items-center gap-1">← Reading</a>
+  </div>
+
+  <div class="mb-4">
+    <h1 class="text-2xl font-bold mb-1">Unmatched</h1>
+    <p class="text-fg-muted">
+      Things that look like they belong to a book but haven't been bound yet — library files awaiting a manual link and KOReader document hashes awaiting their first bind. Pick a book in each row and the sync state catches up immediately.
+    </p>
+  </div>
+
+  {% comment %} Source filter chips. {% endcomment %}
+  <div class="mb-6 flex flex-wrap gap-2 text-sm">
+    {% with active="px-3 py-1 rounded-md bg-indigo-600 text-white" idle="px-3 py-1 rounded-md bg-surface-1 text-fg-muted hover:text-fg hover:bg-surface-2 transition-colors" %}
+      <a href="?source=all"
+         class="{% if source_filter == 'all' %}{{ active }}{% else %}{{ idle }}{% endif %}">
+        All <span class="text-fg-faint">({{ library_total|add:koreader_total }})</span>
+      </a>
+      <a href="?source=library"
+         class="{% if source_filter == 'library' %}{{ active }}{% else %}{{ idle }}{% endif %}">
+        Library <span class="text-fg-faint">({{ library_total }})</span>
+      </a>
+      <a href="?source=koreader"
+         class="{% if source_filter == 'koreader' %}{{ active }}{% else %}{{ idle }}{% endif %}">
+        KOReader <span class="text-fg-faint">({{ koreader_total }})</span>
+      </a>
+    {% endwith %}
+  </div>
+
+  {% if library_rows %}
+    <h2 class="text-base font-medium text-fg-muted uppercase tracking-wide mt-6 mb-2">Library files</h2>
+    <div class="space-y-3 mb-8">
+      {% for row in library_rows %}
+        {% with lf=row.library_file %}
+          <div class="bg-surface-1 rounded-lg p-4">
+            <div class="flex items-start gap-3 mb-3">
+              {% if lf.cover %}
+                <img src="{{ lf.cover.url }}"
+                     alt="Cover of {{ lf.title|default:lf.canonical_filename }}"
+                     class="shrink-0 w-12 h-18 object-cover rounded-sm bg-surface-2"
+                     loading="lazy"
+                     style="width:48px;
+                            height:72px">
+              {% else %}
+                <div class="shrink-0 w-12 h-18 rounded-sm bg-surface-2 flex items-center justify-center text-fg-faint"
+                     style="width:48px;
+                            height:72px"
+                     aria-hidden="true">{% include "app/icons/book-open.svg" with classes="w-5 h-5" %}</div>
+              {% endif %}
+              <div class="min-w-0 flex-1">
+                <div class="font-medium text-fg truncate" title="{{ lf.title }}">{{ lf.title|default:lf.canonical_filename }}</div>
+                {% if lf.author %}<div class="text-sm text-fg-muted truncate">{{ lf.author }}</div>{% endif %}
+                <div class="text-xs text-fg-faint mt-1">{{ lf.size_bytes|filesizeformat }}</div>
+              </div>
+            </div>
+
+            {% url 'library_link' pk=lf.pk as library_link_url %}
+            {% include "app/components/match_book_form.html" with form_action=library_link_url hidden_fields=row.hidden_fields book_choices=book_choices selected_id=lf.item_id blank_label="Select a book…" submit_label="Link" %}
+          </div>
+        {% endwith %}
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if koreader_rows %}
+    <h2 class="text-base font-medium text-fg-muted uppercase tracking-wide mt-6 mb-2">KOReader documents</h2>
+    <div class="space-y-3 mb-8">
+      {% for row in koreader_rows %}
+        {% with mapping=row.mapping match=row.filename_match_item %}
+          <div class="bg-surface-1 rounded-lg p-4">
+            <div class="flex items-start gap-3 mb-3">
+              <div class="shrink-0 w-12 h-18 rounded-sm bg-surface-2 flex items-center justify-center text-fg-faint"
+                   style="width:48px;
+                          height:72px"
+                   aria-hidden="true">{% include "app/icons/book-open.svg" with classes="w-5 h-5" %}</div>
+              <div class="min-w-0 flex-1">
+                <div class="text-sm text-amber-400 font-medium mb-1">Awaiting link</div>
+                <div class="text-xs text-fg-muted flex flex-wrap gap-x-3 gap-y-0.5">
+                  <span>{{ mapping.last_percentage|floatformat:1 }}%</span>
+                  {% if mapping.last_device %}<span>on {{ mapping.last_device }}</span>{% endif %}
+                  {% if mapping.last_progress_at %}
+                    <span title="{{ mapping.last_progress_at|date:'Y-m-d H:i:s' }}">{{ mapping.last_progress_at|timesince }} ago</span>
+                  {% else %}
+                    <span class="text-fg-faint">no progress yet</span>
+                  {% endif %}
+                </div>
+                <div class="text-xs text-fg-faint font-mono mt-1 break-all"
+                     title="KOReader document hash">{{ mapping.document_hash }}</div>
+              </div>
+            </div>
+
+            {% if match %}
+              <div class="mb-2 text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-md px-3 py-1.5 inline-block">
+                Filename match: <span class="font-medium">{{ match.title }}</span>
+              </div>
+            {% endif %}
+
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+              {% url 'koreader_link' as koreader_link_url %}
+              {% include "app/components/match_book_form.html" with form_action=koreader_link_url hidden_fields=row.hidden_fields book_choices=book_choices selected_id=match.id %}
+              <form method="post" action="{% url 'koreader_unlink' %}" class="shrink-0">
+                {% csrf_token %}
+                <input type="hidden"
+                       name="document_hash"
+                       value="{{ mapping.document_hash }}">
+                <input type="hidden" name="next" value="{{ row.hidden_fields.next }}">
+                <button type="submit"
+                        class="px-3 py-1.5 bg-red-600/80 text-white rounded-md hover:bg-red-700 transition-colors text-sm cursor-pointer"
+                        title="Forget this document hash">Remove</button>
+              </form>
+            </div>
+          </div>
+        {% endwith %}
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if not library_rows and not koreader_rows %}
+    <div class="bg-surface-1 rounded-lg p-8 text-center">
+      <p class="text-fg-muted">
+        {% if source_filter == 'library' %}
+          No unmatched library files — every upload is bound to a tracked book.
+        {% elif source_filter == 'koreader' %}
+          No unmatched KOReader documents — every kosync hash is bound to a tracked book.
+        {% else %}
+          Nothing waiting — every library file and KOReader document hash is bound to a tracked book.
+        {% endif %}
+      </p>
+    </div>
+  {% endif %}
+{% endblock content %}

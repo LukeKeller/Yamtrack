@@ -1093,20 +1093,38 @@ def hardcover_connect(request):
     return redirect("integrations")
 
 
+def _koreader_post_redirect(request, default_name: str):
+    """Resolve a safe redirect target after a koreader link/unlink POST.
+
+    Honours an opt-in ``next`` form field whose value must be a same-host
+    path under ``/reading/`` — so the unified inbox at
+    ``/reading/unmatched`` can keep the user in place after a bind. Falls
+    back to ``default_name`` (a URL name) when ``next`` is missing or
+    unsafe.
+    """
+    next_url = (request.POST.get("next") or "").strip()
+    if next_url.startswith("/reading/"):
+        return redirect(next_url)
+    return redirect(default_name)
+
+
 @require_POST
 def koreader_link(request):
     """Bind an unmapped KOReader document hash to a Book ``Item``.
 
-    Reached from the integrations settings page. After binding, the
-    last-known percentage stored on the mapping row is replayed onto
-    the Book so the user doesn't have to wait for the next KOReader
-    sync to see the catch-up.
+    Reached from the /reading/koreader/unmatched workspace or the
+    unified /reading/unmatched inbox. After binding, the last-known
+    percentage stored on the mapping row is replayed onto the Book so
+    the user doesn't have to wait for the next KOReader sync to see
+    the catch-up. The redirect target honours an opt-in ``next`` form
+    field (see ``_koreader_post_redirect``) so submissions from the
+    inbox return to the inbox.
     """
     document = (request.POST.get("document_hash") or "").strip().lower()
     item_id = (request.POST.get("item_id") or "").strip()
     if not document or not item_id:
         messages.error(request, "Pick a book to link.")
-        return redirect("integrations")
+        return _koreader_post_redirect(request, "koreader_unmatched")
 
     mapping = KOReaderBookMapping.objects.filter(
         user=request.user,
@@ -1114,14 +1132,14 @@ def koreader_link(request):
     ).first()
     if mapping is None:
         messages.error(request, "Unknown KOReader document hash.")
-        return redirect("integrations")
+        return _koreader_post_redirect(request, "koreader_unmatched")
 
     item_model = apps.get_model("app", "Item")
     try:
         item = item_model.objects.get(pk=item_id, media_type="book")
     except ObjectDoesNotExist:
         messages.error(request, "Book not found in your library.")
-        return redirect("integrations")
+        return _koreader_post_redirect(request, "koreader_unmatched")
 
     mapping.item = item
     mapping.save(update_fields=["item"])
@@ -1137,15 +1155,20 @@ def koreader_link(request):
             )
         else:
             messages.success(request, f"Linked KOReader sync to {item.title}.")
-            return redirect("integrations")
+            return _koreader_post_redirect(request, "koreader_unmatched")
 
     messages.success(request, f"Linked KOReader sync to {item.title}.")
-    return redirect("integrations")
+    return _koreader_post_redirect(request, "koreader_unmatched")
 
 
 @require_POST
 def koreader_unlink(request):
-    """Drop a KOReader document mapping for the current user."""
+    """Drop a KOReader document mapping for the current user.
+
+    Default land-spot is the reading hub — the user usually unlinks
+    from there. An opt-in ``next`` form field can override (see
+    ``_koreader_post_redirect``).
+    """
     document = (request.POST.get("document_hash") or "").strip().lower()
     deleted, _ = KOReaderBookMapping.objects.filter(
         user=request.user,
@@ -1153,7 +1176,7 @@ def koreader_unlink(request):
     ).delete()
     if deleted:
         messages.info(request, "KOReader mapping removed.")
-    return redirect("integrations")
+    return _koreader_post_redirect(request, "reading_index")
 
 
 @require_GET
@@ -1181,6 +1204,7 @@ def koreader_unmatched(request):
         find_match_for_hash,
         primary_expected_filename,
     )
+    from reading.helpers import ranked_book_choices  # noqa: PLC0415
 
     mappings = list(
         KOReaderBookMapping.objects.filter(
@@ -1190,66 +1214,34 @@ def koreader_unmatched(request):
     )
     book_model = apps.get_model("app", "book")
 
-    # Pull every Book the user owns with the columns we need to rank.
-    book_rows = list(
-        book_model.objects.filter(user=request.user)
-        .select_related("item")
-        .values(
-            "item_id",
-            "item__title",
-            "status",
-            "progressed_at",
-        ),
-    )
     # Items already bound to one of *this user's* KOReader mappings
-    # are excluded from the "no mapping yet" rank — picking them again
-    # would force the user to manually unlink first.
+    # are pushed down the ranking — picking them again would force
+    # the user to manually unlink first.
     bound_item_ids = set(
         KOReaderBookMapping.objects.filter(
             user=request.user,
             item__isnull=False,
         ).values_list("item_id", flat=True),
     )
+    book_choices = ranked_book_choices(
+        request.user,
+        deprioritize_item_ids=bound_item_ids,
+    )
 
-    def _rank(row):
-        # 0: in-progress without mapping (likely match)
-        # 1: in-progress already-bound (rare; secondary hash for same book)
-        # 2: other statuses
-        in_progress = row["status"] == Status.IN_PROGRESS.value
-        already_bound = row["item_id"] in bound_item_ids
-        if in_progress and not already_bound:
-            tier = 0
-        elif in_progress:
-            tier = 1
-        else:
-            tier = 2
-        # Within a tier, most-recently-progressed first; fall back to
-        # title for stable ordering.
-        progressed = row["progressed_at"] or datetime.datetime.min.replace(
-            tzinfo=datetime.UTC,
+    # "Likely match" — exactly one in-progress book that isn't already
+    # bound to a mapping. Pulled raw because we need the underlying Book
+    # rows (status + progressed_at) and the helper returns just id+title.
+    likely_book_rows = list(
+        book_model.objects.filter(
+            user=request.user,
+            status=Status.IN_PROGRESS.value,
         )
-        return (tier, -progressed.timestamp(), row["item__title"].lower())
-
-    book_rows.sort(key=_rank)
-    book_choices = [
-        {"id": row["item_id"], "title": row["item__title"]} for row in book_rows
-    ]
-    # De-duplicate by item id while preserving ranked order (a user
-    # can have a Book and an unrelated tracking entry for the same
-    # Item under another media_type — unlikely here, but the .values
-    # join can return duplicates if a future schema change adds them).
-    seen = set()
-    book_choices = [
-        choice
-        for choice in book_choices
-        if not (choice["id"] in seen or seen.add(choice["id"]))
-    ]
-
+        .exclude(item_id__in=bound_item_ids)
+        .values("item_id", "item__title"),
+    )
     likely_candidates = [
-        row
-        for row in book_rows
-        if row["status"] == Status.IN_PROGRESS.value
-        and row["item_id"] not in bound_item_ids
+        {"item_id": r["item_id"], "item__title": r["item__title"]}
+        for r in likely_book_rows
     ]
     likely_match_id = (
         likely_candidates[0]["item_id"] if len(likely_candidates) == 1 else None
@@ -1282,6 +1274,10 @@ def koreader_unmatched(request):
             {
                 "mapping": mapping,
                 "filename_match_item": matched_item,
+                # Hidden fields passed to the shared match_book_form
+                # partial so it doesn't have to know about KOReader's
+                # document-hash identifier.
+                "hidden_fields": {"document_hash": mapping.document_hash},
             },
         )
 
@@ -1387,9 +1383,9 @@ def koreader_book_history(request, book_pk):
             "book": book,
             "journey_json": json.dumps(journey_data),
             "event_count": len(events),
-            "device_count": len({
-                (ev["device_id"] or ev["device"] or "unknown") for ev in events
-            }),
+            "device_count": len(
+                {(ev["device_id"] or ev["device"] or "unknown") for ev in events}
+            ),
             "current_percentage": current_percentage,
             "sessions": sessions,
             "total_minutes": total_minutes,

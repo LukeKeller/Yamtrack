@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic.base import RedirectView
 
 from integrations import koreader, views
 
@@ -95,31 +96,36 @@ urlpatterns = [
         koreader.progress_get,
         name="koreader_progress_get",
     ),
+    # POST endpoints — kept under /koreader/ since they're invoked by
+    # forms that read the action via {% url 'koreader_link' %} and so on,
+    # which is path-agnostic. No need to migrate them under /reading/.
     path("koreader/link", views.koreader_link, name="koreader_link"),
     path("koreader/unlink", views.koreader_unlink, name="koreader_unlink"),
+    # Legacy redirects: GET sub-pages moved to /reading/koreader/...
+    # The new path() entries live in reading/urls.py so URL names resolve
+    # to the new location for the rest of the app; these redirects only
+    # handle direct hits on the old paths (existing bookmarks, etc.).
     path(
         "koreader/history/<int:book_pk>",
-        views.koreader_book_history,
-        name="koreader_book_history",
+        RedirectView.as_view(
+            pattern_name="koreader_book_history",
+            permanent=False,
+        ),
     ),
     path(
         "koreader/devices",
-        views.koreader_devices,
-        name="koreader_devices",
+        RedirectView.as_view(pattern_name="koreader_devices", permanent=False),
     ),
     path(
         "koreader/unmatched",
-        views.koreader_unmatched,
-        name="koreader_unmatched",
+        RedirectView.as_view(pattern_name="koreader_unmatched", permanent=False),
     ),
     path(
         "koreader/cadence",
-        views.koreader_cadence,
-        name="koreader_cadence",
+        RedirectView.as_view(pattern_name="koreader_cadence", permanent=False),
     ),
     path(
         "koreader/sessions",
-        views.koreader_sessions,
-        name="koreader_sessions",
+        RedirectView.as_view(pattern_name="koreader_sessions", permanent=False),
     ),
 ]

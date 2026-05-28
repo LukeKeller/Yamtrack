@@ -6,14 +6,17 @@
 {% endblock title %}
 
 {% block content %}
-  <div class="mb-6">
-    <a href="{% url 'integrations' %}"
-       class="text-fg-muted hover:text-fg text-sm inline-flex items-center gap-1 mb-3">← Back to integrations</a>
+  <div class="mb-3">
+    <a href="{% url 'reading_index' %}"
+       class="text-fg-muted hover:text-fg text-sm inline-flex items-center gap-1">← Reading</a>
+  </div>
+  <div class="mb-3">
     <h1 class="text-2xl font-bold mb-1">Unmatched KOReader documents</h1>
     <p class="text-fg-muted">
       These KOReader file hashes have pushed progress to Yamtrack but haven't been linked to a tracked book yet. Pick a book to link each one — the last-known percentage replays onto the book immediately.
     </p>
   </div>
+  {% include "reading/_koreader_tabs.html" with active="unmatched" %}
 
   {% if mapping_rows %}
     <div class="space-y-3">
@@ -58,29 +61,12 @@
               </div>
             {% endif %}
             <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-              <form method="post"
-                    action="{% url 'koreader_link' %}"
-                    class="flex flex-1 items-center gap-2 min-w-0">
-                {% csrf_token %}
-                <input type="hidden"
-                       name="document_hash"
-                       value="{{ mapping.document_hash }}">
-                <select name="item_id"
-                        required
-                        class="flex-1 min-w-0 py-1.5 pr-8 pl-2 bg-surface-2 rounded-md text-fg text-sm border-0 focus:ring-1 focus:ring-indigo-500 outline-none">
-                  <option value="">Select a book…</option>
-                  {% for book in book_choices %}
-                    <option value="{{ book.id }}"
-                            {% if match and book.id == match.id %}selected{% elif not match and book.id == likely_match_id %}selected{% endif %}>
-                      {{ book.title }}
-                    </option>
-                  {% endfor %}
-                </select>
-                <button type="submit"
-                        class="shrink-0 px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer">
-                  Link
-                </button>
-              </form>
+              {% url 'koreader_link' as koreader_link_url %}
+              {% if match %}
+                {% include "app/components/match_book_form.html" with form_action=koreader_link_url hidden_fields=row.hidden_fields book_choices=book_choices selected_id=match.id %}
+              {% else %}
+                {% include "app/components/match_book_form.html" with form_action=koreader_link_url hidden_fields=row.hidden_fields book_choices=book_choices selected_id=likely_match_id %}
+              {% endif %}
               <form method="post" action="{% url 'koreader_unlink' %}" class="shrink-0">
                 {% csrf_token %}
                 <input type="hidden"

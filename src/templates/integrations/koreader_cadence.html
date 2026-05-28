@@ -6,14 +6,17 @@
 {% endblock title %}
 
 {% block content %}
-  <div class="mb-6">
-    <a href="{% url 'integrations' %}"
-       class="text-fg-muted hover:text-fg text-sm inline-flex items-center gap-1 mb-3">← Back to integrations</a>
+  <div class="mb-3">
+    <a href="{% url 'reading_index' %}"
+       class="text-fg-muted hover:text-fg text-sm inline-flex items-center gap-1">← Reading</a>
+  </div>
+  <div class="mb-3">
     <h1 class="text-2xl font-bold mb-1">Reading cadence</h1>
     <p class="text-fg-muted">
       How much you've read on each day in the last {{ window_days }} days, sourced from KOReader's progress syncs. One full "book unit" per day is the heaviest shade.
     </p>
   </div>
+  {% include "reading/_koreader_tabs.html" with active="cadence" %}
 
   <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
     <div class="bg-surface-1 rounded-lg p-4">

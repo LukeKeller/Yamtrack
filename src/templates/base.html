@@ -141,6 +141,8 @@
               {% include "app/components/_nav_link.html" with url=lists_url label="Lists" icon_template="app/icons/folder-plus.svg" %}
               {% url 'statistics' as statistics_url %}
               {% include "app/components/_nav_link.html" with url=statistics_url label="Statistics" icon_template="app/icons/bars-pyramid.svg" %}
+              {% url 'reading_index' as reading_url %}
+              {% include "app/components/_nav_link.html" with url=reading_url label="Reading" icon_template="app/icons/book-open.svg" %}
               {% url 'music_history' as music_history_url %}
               {% include "app/components/_nav_link.html" with url=music_history_url label="Music" icon_template="app/icons/music-note.svg" %}
               {% url 'music_stats' as music_stats_url %}

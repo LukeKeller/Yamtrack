@@ -1,27 +1,33 @@
-"""Library + OPDS URL routes.
+"""Library URL routes — OPDS feed plus legacy redirects.
 
-``/library/`` is the in-app browser; ``/library/opds/`` is the public OPDS
-catalog KOReader hits. Both live under the user-Login middleware *except*
-the OPDS endpoints, which use HTTP Basic against ``User.token`` so the
-KOReader OPDS form can authenticate without going through allauth.
+The browser-facing pages (uploads, link, rename, delete) moved to
+``/reading/library/...`` in ynh-reading-hub. They keep their URL *names*
+(``library_index``, ``library_upload``, ...) so ``{% url %}`` references
+across the codebase keep resolving; only the resolved path changes. The
+actual ``path()`` registrations are in ``reading/urls.py``.
+
+The OPDS endpoints stay mounted at ``/library/opds/...`` exactly as
+before — KOReader devices already subscribe to that URL and re-pinning
+every device would be hostile. They authenticate via HTTP Basic against
+``User.token``, not via session middleware.
 
 The OPDS catalog is a navigation feed at the root with six shelves
 (Up Next / Want to Read / Recently Added / By Author / Unmatched /
-All Books). Each shelf is its own acquisition feed; "By Author" is itself
-a navigation feed whose entries are per-author acquisition feeds keyed by
-``?a=<encoded author>``.
+All Books). Each shelf is its own acquisition feed; "By Author" is
+itself a navigation feed whose entries are per-author acquisition
+feeds keyed by ``?a=<encoded author>``.
+
+Anything that hits the old ``/library/...`` browser URLs gets a 302 to
+the new ``/reading/library/...`` location so existing bookmarks survive.
 """
 
 from django.urls import path
+from django.views.generic.base import RedirectView
 
-from library import opds, views
+from library import opds
 
 urlpatterns = [
-    path("", views.library_index, name="library_index"),
-    path("upload", views.library_upload, name="library_upload"),
-    path("file/<int:pk>/link", views.library_link, name="library_link"),
-    path("file/<int:pk>/delete", views.library_delete, name="library_delete"),
-    path("file/<int:pk>/rename", views.library_rename, name="library_rename"),
+    # OPDS catalog — load-bearing; KOReader subscription URL.
     path("opds/", opds.opds_root, name="opds_root"),
     path("opds/up-next", opds.opds_up_next, name="opds_up_next"),
     path("opds/want-to-read", opds.opds_want_to_read, name="opds_want_to_read"),
@@ -31,4 +37,25 @@ urlpatterns = [
     path("opds/unmatched", opds.opds_unmatched, name="opds_unmatched"),
     path("opds/all", opds.opds_all, name="opds_all"),
     path("opds/file/<int:pk>", opds.opds_download, name="opds_download"),
+    # Legacy redirects: /library/* browser URLs moved under /reading/library/.
+    path(
+        "",
+        RedirectView.as_view(pattern_name="library_index", permanent=False),
+    ),
+    path(
+        "upload",
+        RedirectView.as_view(pattern_name="library_upload", permanent=False),
+    ),
+    path(
+        "file/<int:pk>/link",
+        RedirectView.as_view(pattern_name="library_link", permanent=False),
+    ),
+    path(
+        "file/<int:pk>/delete",
+        RedirectView.as_view(pattern_name="library_delete", permanent=False),
+    ),
+    path(
+        "file/<int:pk>/rename",
+        RedirectView.as_view(pattern_name="library_rename", permanent=False),
+    ),
 ]

@@ -6,12 +6,15 @@
 {% endblock title %}
 
 {% block content %}
-  <div class="mb-6">
-    <a href="{% url 'integrations' %}"
-       class="text-fg-muted hover:text-fg text-sm inline-flex items-center gap-1 mb-3">← Back to integrations</a>
+  <div class="mb-3">
+    <a href="{% url 'reading_index' %}"
+       class="text-fg-muted hover:text-fg text-sm inline-flex items-center gap-1">← Reading</a>
+  </div>
+  <div class="mb-3">
     <h1 class="text-2xl font-bold mb-1">KOReader devices</h1>
     <p class="text-fg-muted">Every device that has pushed reading progress to your account via the kosync plugin.</p>
   </div>
+  {% include "reading/_koreader_tabs.html" with active="devices" %}
 
   {% if devices %}
     <div class="overflow-x-auto bg-surface-1 rounded-lg">

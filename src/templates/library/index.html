@@ -1,21 +1,43 @@
 {% extends "base.html" %}
+{% load static %}
+{% load app_tags %}
 
 {% block title %}
   Library — Yamtrack
 {% endblock title %}
 
 {% block content %}
+  {% absolute_app_url '/library/opds/' as opds_url %}
+
+  <div class="mb-3">
+    <a href="{% url 'reading_index' %}"
+       class="text-fg-muted hover:text-fg text-sm inline-flex items-center gap-1">← Reading</a>
+  </div>
+
   <div class="mb-6 flex flex-wrap items-end justify-between gap-3">
     <div>
       <h1 class="text-2xl font-bold mb-1">Library</h1>
       <p class="text-fg-muted text-sm max-w-3xl">
-        Files you've uploaded to Yamtrack. Books here are served over OPDS for KOReader (settings → Integrations → OPDS catalog URL) and auto-bind to your tracked books on the next kosync push.
+        Files you've uploaded to Yamtrack. KOReader can browse and download them via the OPDS catalog URL below; downloads auto-bind to your tracked books on the next kosync push.
       </p>
     </div>
     <a href="{% url 'library_upload' %}"
        class="shrink-0 px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer">
       Upload
     </a>
+  </div>
+
+  <div class="bg-surface-1 p-3 rounded-md mb-6 flex items-center gap-2">
+    <span class="text-xs text-fg-muted shrink-0 pl-2">OPDS</span>
+    <input readonly
+           id="library-opds-url"
+           class="flex-1 py-1.5 pr-2 pl-2 bg-surface-1 rounded-md text-fg-muted text-sm border-0 focus:ring-0 outline-none font-mono"
+           type="text"
+           value="{{ opds_url }}">
+    <button type="button"
+            class="flex items-center cursor-pointer group pr-2 text-fg-muted hover:text-indigo-400 transition-colors"
+            title="Copy"
+            data-copy-target="#library-opds-url">{% include "app/icons/copy.svg" with classes="w-5 h-5" %}</button>
   </div>
 
   <div class="mb-4 flex flex-wrap gap-2 text-sm">
@@ -69,23 +91,10 @@
           <div class="border-t border-surface-2 pt-3 space-y-2">
             <details class="text-xs">
               <summary class="cursor-pointer text-fg-muted hover:text-fg">Link to a tracked book</summary>
-              <form method="post"
-                    action="{% url 'library_link' pk=lf.pk %}"
-                    class="mt-2 flex items-center gap-2">
-                {% csrf_token %}
-                <select name="item_id"
-                        class="flex-1 min-w-0 py-1.5 pr-8 pl-2 bg-surface-2 rounded-md text-fg text-sm border-0 focus:ring-1 focus:ring-indigo-500 outline-none">
-                  <option value="">— Unlink —</option>
-                  {% for book in library_books %}
-                    <option value="{{ book.item_id }}"
-                            {% if lf.item_id == book.item_id %}selected{% endif %}>{{ book.item.title }}</option>
-                  {% endfor %}
-                </select>
-                <button type="submit"
-                        class="shrink-0 px-2 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors cursor-pointer">
-                  Save
-                </button>
-              </form>
+              {% url 'library_link' pk=lf.pk as library_link_url %}
+              <div class="mt-2">
+                {% include "app/components/match_book_form.html" with form_action=library_link_url book_choices=book_choices selected_id=lf.item_id blank_label="— Unlink —" submit_label="Save" %}
+              </div>
             </details>
 
             <details class="text-xs">
@@ -132,3 +141,7 @@
     </div>
   {% endif %}
 {% endblock content %}
+
+{% block js %}
+  <script src="{% static 'js/copy-item.js' %}{% get_static_file_mtime 'js/copy-item.js' %}"></script>
+{% endblock js %}

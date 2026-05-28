@@ -467,15 +467,18 @@
     </div>
 
     {% comment %}
-      Hardcover Sync — outbound push of book progress / status / score on
-      save. Reuses the import token shape (Bearer-prefixed personal access
-      token from hardcover.app/account/api); validated on connect via
-      ``me { id username }`` and Fernet-encrypted at rest.
+      Hardcover Sync — credentials only. Synced-book state, last push,
+      and unmatched-mapping queue live on /reading/. Token form stays
+      here because tokens belong with the other secrets in Settings.
     {% endcomment %}
     <div class="bg-surface-2 p-5 rounded-lg mb-6">
-      <div class="flex items-center mb-3">
-        {% include "app/icons/book-open.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
-        <h3 class="text-base font-medium">Hardcover Sync</h3>
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center">
+          {% include "app/icons/book-open.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
+          <h3 class="text-base font-medium">Hardcover Sync</h3>
+        </div>
+        <a href="{% url 'reading_index' %}"
+           class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors whitespace-nowrap">Sync status →</a>
       </div>
       {% if hardcover_integration %}
         <p class="text-fg-muted mb-4 text-sm">
@@ -491,14 +494,7 @@
             {% endif %}
           </div>
         {% endif %}
-        <div class="flex justify-between items-center">
-          <p class="text-xs text-fg-faint">
-            {% if hardcover_integration.last_pushed_at %}
-              Last push: {{ hardcover_integration.last_pushed_at|date:"Y-m-d H:i" }}
-            {% else %}
-              No pushes yet — save a book to trigger one.
-            {% endif %}
-          </p>
+        <div class="flex justify-end">
           <form method="post" action="{% url 'hardcover_disconnect' %}">
             {% csrf_token %}
             <button type="submit"
@@ -551,6 +547,11 @@
       {% endif %}
     </div>
 
+    {% comment %}
+      KOReader — credentials only. Synced books, sub-page navigation
+      (cadence / sessions / devices / unmatched), and the unmatched-CTA
+      banner all moved to /reading/.
+    {% endcomment %}
     {% url 'koreader_users_create' as koreader_create_path %}
     {% absolute_app_url '/api/koreader' as koreader_base_url %}
     <div class="bg-surface-2 p-5 rounded-lg mb-6">
@@ -559,17 +560,11 @@
           {% include "app/icons/book-open.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
           <h3 class="text-base font-medium">KOReader Progress Sync</h3>
         </div>
-        <div class="flex items-center gap-3 text-xs whitespace-nowrap">
-          <a href="{% url 'koreader_cadence' %}"
-             class="text-indigo-400 hover:text-indigo-300 transition-colors">Cadence →</a>
-          <a href="{% url 'koreader_sessions' %}"
-             class="text-indigo-400 hover:text-indigo-300 transition-colors">Sessions →</a>
-          <a href="{% url 'koreader_devices' %}"
-             class="text-indigo-400 hover:text-indigo-300 transition-colors">Devices →</a>
-        </div>
+        <a href="{% url 'reading_index' %}"
+           class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors whitespace-nowrap">Synced books →</a>
       </div>
       <p class="text-fg-muted mb-4 text-sm">
-        Configure KOReader's <span class="font-mono text-xs">Progress sync</span> plugin to push reading progress into Yamtrack. Each ebook is identified by KOReader's file hash; the first PUT for a new hash shows up below for you to link to a book in your library.
+        Configure KOReader's <span class="font-mono text-xs">Progress sync</span> plugin to push reading progress into Yamtrack. Synced books, reading cadence, devices, and unmatched documents live on the Reading page.
       </p>
       <div class="bg-surface-1 p-3 rounded-md mb-4 space-y-3">
         <div>
@@ -620,119 +615,26 @@
           In KOReader: <span class="font-mono">Tools → Progress sync → Custom sync server</span>, paste the URL above, then <span class="font-mono">Register / Login</span> with the username and token shown.
         </p>
       </div>
-
-      {% if koreader_unbound_count %}
-        <a href="{% url 'koreader_unmatched' %}"
-           class="block bg-amber-500/10 hover:bg-amber-500/20 transition-colors border border-amber-500/30 rounded-md px-3 py-2 mb-3 text-sm text-amber-300">
-          {{ koreader_unbound_count }} unmatched document{{ koreader_unbound_count|pluralize }} waiting to be linked →
-        </a>
-      {% endif %}
-
-      {% if koreader_mappings %}
-        <div class="text-sm font-medium mb-2">Synced books</div>
-        <div class="space-y-2">
-          {% for mapping in koreader_mappings %}
-            <div class="bg-surface-1 rounded-md p-3 flex gap-3">
-              <a href="{% url 'media_details' source=mapping.item.source media_type=mapping.item.media_type media_id=mapping.item.media_id title=mapping.item.title|slug %}"
-                 class="shrink-0 block"
-                 title="Open {{ mapping.item.title }}">
-                <img src="{{ mapping.item.image }}"
-                     alt=""
-                     class="w-12 h-18 object-cover rounded-sm bg-surface-2"
-                     loading="lazy"
-                     style="width:48px;
-                            height:72px">
-              </a>
-              <div class="min-w-0 flex-1">
-                <div class="flex items-start gap-2 flex-wrap">
-                  <a href="{% url 'media_details' source=mapping.item.source media_type=mapping.item.media_type media_id=mapping.item.media_id title=mapping.item.title|slug %}"
-                     class="text-sm text-fg truncate hover:text-indigo-400 transition-colors">{{ mapping.item.title }}</a>
-                  {% if mapping.book %}
-                    {% if mapping.book.status == "Completed" %}
-                      {% include "app/components/ui/pill.html" with variant="status-completed" label="Completed" %}
-                    {% elif mapping.book.status == "In progress" %}
-                      {% include "app/components/ui/pill.html" with variant="status-in-progress" label="In progress" %}
-                    {% elif mapping.book.status == "Planning" %}
-                      {% include "app/components/ui/pill.html" with variant="status-planning" label="Planning" %}
-                    {% elif mapping.book.status == "Paused" %}
-                      {% include "app/components/ui/pill.html" with variant="status-paused" label="Paused" %}
-                    {% elif mapping.book.status == "Dropped" %}
-                      {% include "app/components/ui/pill.html" with variant="status-dropped" label="Dropped" %}
-                    {% endif %}
-                  {% endif %}
-                </div>
-                <div class="text-xs text-fg-muted mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
-                  <span>{{ mapping.last_percentage|floatformat:1 }}%</span>
-                  {% if mapping.book %}<span>page {{ mapping.book.progress }}</span>{% endif %}
-                  {% if mapping.last_device %}
-                    <span title="{{ mapping.last_device_id|default:'no device id' }}">
-                      on {{ mapping.last_device }}
-                      {% if mapping.last_device_id %}· {{ mapping.last_device_id }}{% endif %}
-                    </span>
-                  {% endif %}
-                  {% if mapping.last_progress_at %}
-                    <span title="{{ mapping.last_progress_at|date:'Y-m-d H:i:s' }}">{{ mapping.last_progress_at|timesince }} ago</span>
-                  {% else %}
-                    <span class="text-fg-faint">no progress yet</span>
-                  {% endif %}
-                </div>
-                <div class="text-xs text-fg-faint font-mono mt-1 break-all"
-                     title="KOReader document hash">{{ mapping.document_hash }}</div>
-              </div>
-              <div class="shrink-0">
-                <form method="post" action="{% url 'koreader_unlink' %}">
-                  {% csrf_token %}
-                  <input type="hidden"
-                         name="document_hash"
-                         value="{{ mapping.document_hash }}">
-                  <button type="submit"
-                          class="px-3 py-1.5 bg-red-600/80 text-white rounded-md hover:bg-red-700 transition-colors text-sm cursor-pointer"
-                          title="Forget this document hash">Remove</button>
-                </form>
-              </div>
-            </div>
-          {% endfor %}
-        </div>
-      {% elif not koreader_unbound_count %}
-        <p class="text-xs text-fg-faint">
-          No KOReader documents synced yet. Once a device pushes progress, hashes will appear here for linking.
-        </p>
-      {% endif %}
     </div>
 
-    {% absolute_app_url '/library/opds/' as opds_url %}
+    {% comment %}
+      Library + OPDS — one-line pointer to /reading/. The catalog URL,
+      upload UI, file list, and per-file actions all live there now.
+    {% endcomment %}
     <div class="bg-surface-2 p-5 rounded-lg mb-6">
-      <div class="flex items-center justify-between mb-3">
+      <div class="flex items-center justify-between">
         <div class="flex items-center">
           {% include "app/icons/book-open.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
           <h3 class="text-base font-medium">Library + OPDS catalog</h3>
         </div>
-        <a href="{% url 'library_index' %}"
-           class="text-indigo-400 hover:text-indigo-300 transition-colors text-xs whitespace-nowrap">Manage library →</a>
+        <a href="{% url 'reading_index' %}"
+           class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors whitespace-nowrap">Open Reading →</a>
       </div>
-      <p class="text-fg-muted mb-4 text-sm">
-        Upload .epub files (or a .zip of them) to Yamtrack and serve them over OPDS so KOReader can browse and download from your account. Each download lands on the device under a canonical filename Yamtrack pre-computed at upload — the next KOReader sync for that file auto-binds straight to the matching tracked book.
+      <p class="text-fg-muted mt-2 text-sm">
+        Upload .epub files, browse the OPDS catalog URL, and review unmatched library files on the
+        <a href="{% url 'reading_index' %}"
+           class="text-indigo-400 hover:underline">Reading</a> page.
       </p>
-      <div class="bg-surface-1 p-3 rounded-md space-y-3">
-        <div>
-          <label class="block text-xs text-fg-muted mb-1" for="opds-url">OPDS catalog URL</label>
-          <div class="flex items-center gap-2">
-            <input readonly
-                   id="opds-url"
-                   class="flex-1 py-2 pr-2 pl-3 bg-surface-1 rounded-md text-fg-muted text-sm border-0 focus:ring-0 outline-none font-mono"
-                   type="text"
-                   value="{{ opds_url }}">
-            <span class="flex items-center cursor-pointer group pr-1"
-                  title="Copy"
-                  data-copy-target="#opds-url">
-              {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-indigo-400 transition-colors" %}
-            </span>
-          </div>
-        </div>
-        <p class="text-xs text-fg-faint">
-          KOReader: <span class="font-mono">File browser → Search → OPDS catalog → +</span>. Username + password (your Yamtrack username + API token, same as kosync). Downloads land in your KOReader library and the next progress push auto-binds.
-        </p>
-      </div>
     </div>
   {% endblock settings_content %}
 

@@ -1,0 +1,47 @@
+{% comment %}
+  Match-book form — shared component for "this thing → tracked Book".
+
+  Used by the library uploader (an unmatched epub picks the Book it
+  represents) and the KOReader unmatched page (an orphan document hash
+  picks the Book whose progress it should bind to). Hardcover's
+  unmatched-mapping queue will use the same form once that lands.
+
+  Required context:
+    form_action       — URL the form POSTs to
+    hidden_fields     — dict of additional hidden input name → value
+                        (e.g. {"document_hash": "abc...", "next": "..."})
+    book_choices      — iterable of {"id": int, "title": str}
+    csrf_token        — passed through from the caller's context
+
+  Optional:
+    selected_id       — pre-selected book id, or None
+    blank_label       — placeholder option label
+                        (default: "Select a book…")
+    submit_label      — button text (default: "Link")
+    submit_classes    — extra Tailwind classes on the submit button
+
+  Layout assumption: caller provides the surrounding card; this partial
+  is just the <form> body so the same component reads cleanly inside an
+  accordion (<details>) or a flat row.
+{% endcomment %}
+<form method="post"
+      action="{{ form_action }}"
+      class="flex items-center gap-2 min-w-0">
+  {% csrf_token %}
+  {% if hidden_fields %}
+    {% for name, value in hidden_fields.items %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
+  {% endif %}
+  <select name="item_id"
+          required
+          class="flex-1 min-w-0 py-1.5 pr-8 pl-2 bg-surface-2 rounded-md text-fg text-sm border-0 focus:ring-1 focus:ring-indigo-500 outline-none">
+    <option value="">{{ blank_label|default:"Select a book…" }}</option>
+    {% for book in book_choices %}
+      <option value="{{ book.id }}"
+              {% if selected_id and book.id == selected_id %}selected{% endif %}>{{ book.title }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit"
+          class="shrink-0 px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer {{ submit_classes }}">
+    {{ submit_label|default:"Link" }}
+  </button>
+</form>

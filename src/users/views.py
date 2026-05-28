@@ -431,13 +431,13 @@ def preferences(request):
 
 @require_GET
 def integrations(request):
-    """Render the integrations settings page."""
-    from django.apps import apps  # noqa: PLC0415
+    """Render the integrations settings page.
 
-    from integrations.models import (  # noqa: PLC0415
-        HardcoverIntegration,
-        KOReaderBookMapping,
-    )
+    The book sections (Hardcover, KOReader, Library+OPDS) keep only their
+    credentials / connection state here. Synced books, mappings, sub-page
+    navigation, and the OPDS catalog URL live on /reading/.
+    """
+    from integrations.models import HardcoverIntegration  # noqa: PLC0415
 
     recent_webhook_events = list(
         WebhookEvent.objects.filter(user=request.user).order_by("-created_at")[:20],
@@ -446,46 +446,12 @@ def integrations(request):
         user=request.user,
     ).first()
 
-    # Integrations page shows BOUND mappings only — unbound (orphan
-    # document hashes) live on the dedicated /koreader/unmatched page
-    # so the link-picker form doesn't blow out this card's flex layout.
-    koreader_mappings = list(
-        KOReaderBookMapping.objects.filter(user=request.user, item__isnull=False)
-        .select_related("item")
-        .order_by("item__title", "-last_progress_at"),
-    )
-    koreader_unbound_count = KOReaderBookMapping.objects.filter(
-        user=request.user,
-        item__isnull=True,
-    ).count()
-
-    # Attach the linked Book row to each mapping so the template can show
-    # live status / page count without a per-row query. One query keyed on
-    # the set of bound item ids covers the whole list.
-    book_model = apps.get_model("app", "Book")
-    bound_item_ids = [m.item_id for m in koreader_mappings]
-    if bound_item_ids:
-        books_by_item = {
-            book.item_id: book
-            for book in book_model.objects.filter(
-                user=request.user,
-                item_id__in=bound_item_ids,
-            )
-        }
-        for mapping in koreader_mappings:
-            mapping.book = books_by_item.get(mapping.item_id)
-    else:
-        for mapping in koreader_mappings:
-            mapping.book = None
-
     return render(
         request,
         "users/integrations.html",
         {
             "recent_webhook_events": recent_webhook_events,
             "hardcover_integration": hardcover_integration,
-            "koreader_mappings": koreader_mappings,
-            "koreader_unbound_count": koreader_unbound_count,
         },
     )
 

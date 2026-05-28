@@ -10,10 +10,22 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh139"
+CURRENT_FORK_VERSION = "0.25.2~ynh141"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh141",
+        "date": "2026-05-28",
+        "title": "Reading hub: OPDS, library, KOReader, and Hardcover in one place",
+        "highlights": [
+            'Everything book-shaped — library uploads, the OPDS catalog URL, KOReader reading cadence / sessions / devices, and Hardcover sync state — now lives at <span class="font-mono">/reading/</span> under a new <strong>Reading</strong> entry in the sidebar Tools group (next to Music). The OPDS catalog URL is the first thing on the hub with a copy button, instead of being buried four screens down inside <span class="font-mono">Settings → Integrations</span>. The hub also renders a currently-reading rail, last-7-days cadence sparkline, "Stuck books" rail (in-progress with no activity for 30+ days), and recent reading sessions.',
+            'The library browser at <span class="font-mono">/reading/library/</span> shows the OPDS URL inline (the old "settings → Integrations → OPDS catalog URL" pointer text is gone) and the four KOReader workspace pages (cadence / sessions / devices / unmatched) share a sibling tab strip so jumping between them no longer requires a bounce through the hub. The book list page at <span class="font-mono">/medialist/book</span> gets a small <span class="font-mono">Reading hub · Library · KOReader matching</span> chip strip — one click from tracking into any of the three flows.',
+            'A new unified inbox at <span class="font-mono">/reading/unmatched</span> combines unmatched library files and unmatched KOReader document hashes onto one page behind <span class="font-mono">All · Library · KOReader</span> filter chips, so a user with both kinds of unmatched items can clear them out without page-bouncing. The link picker dropdowns are now ranked — in-progress books float to the top — same heuristic across all matching flows.',
+            '<span class="font-mono">Settings → Integrations</span> kept only the credentials for Hardcover and KOReader (and a one-line pointer for Library + OPDS). The synced-books list, sub-page link strip, and unmatched-CTA banner all moved out. Book detail pages also pick up a small Hardcover push-status chip next to the existing KOReader summary when the user has connected Hardcover. <strong>Load-bearing URLs unchanged:</strong> <span class="font-mono">/library/opds/</span> (KOReader subscriptions) and <span class="font-mono">/api/koreader/...</span> (kosync wire protocol) keep their existing paths; legacy <span class="font-mono">/library/...</span> and <span class="font-mono">/koreader/...</span> browser paths 302-redirect to <span class="font-mono">/reading/...</span> so existing bookmarks still resolve.',
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh139",
         "date": "2026-05-27",
@@ -30,7 +42,7 @@ RELEASE_NOTES = [
         "title": "KOReader book history: real Current Progress %, Book Journey chart",
         "highlights": [
             'The <strong>Current progress</strong> headline on <span class="font-mono">/koreader/book/&lt;id&gt;/</span> was rendering <span class="font-mono">book.progress</span> (a page count) with a <span class="font-mono">%</span> suffix. A reader 71 pages into any book saw "71%" regardless of the book\'s length — coincidentally plausible at 100 pages, nonsense otherwise. The headline now comes from the actual kosync percentage the device last pushed (<span class="font-mono">mapping.last_percentage</span>, 0.0-1.0), with the page count surfaced as a small subtitle.',
-            'The per-event scatter/line chart is replaced with a <strong>Book Journey</strong> stacked bar chart: one bar per inferred reading session (clustered from kosync events on a 30-minute idle gap), height = cumulative % at end of session, with a brighter top segment showing the % gained in that sitting. Tooltip carries the full date, start→end %, and session duration. Bars stay readable on phone-width canvases by spacing evenly rather than time-positioning — real-world gaps surface in the date labels instead.',
+            "The per-event scatter/line chart is replaced with a <strong>Book Journey</strong> stacked bar chart: one bar per inferred reading session (clustered from kosync events on a 30-minute idle gap), height = cumulative % at end of session, with a brighter top segment showing the % gained in that sitting. Tooltip carries the full date, start→end %, and session duration. Bars stay readable on phone-width canvases by spacing evenly rather than time-positioning — real-world gaps surface in the date labels instead.",
         ],
         "fixes": [],
     },
@@ -40,7 +52,7 @@ RELEASE_NOTES = [
         "title": "OPDS catalog: six-shelf navigation root for KOReader",
         "highlights": [
             'The OPDS feed at <span class="font-mono">/library/opds/</span> used to hand KOReader a single flat acquisition list of every uploaded book, newest-first. Once the library grew past ~30 titles that was unbrowseable on the device. ~ynh137 switches the root to a navigation feed with six shelves: <strong>Up Next</strong> (linked Books currently In Progress), <strong>Want to Read</strong> (Planning status), <strong>Recently Added</strong> (newest 50 uploads), <strong>By Author</strong> (nav feed → per-author acquisition feed), <strong>Unmatched</strong> (files not yet linked to a tracked Book), and <strong>All Books</strong> (the original flat list, kept as a fallback).',
-            "KOReader caches OPDS pages aggressively, so the next time you open the catalog after upgrading it should re-pick the feed and render with the new nested layout. All shelf links carry an <span class=\"font-mono\">rel=\"up\"</span> back-reference so KOReader's back button works on older firmware that doesn't auto-derive it. Auth, the HEAD-handshake, telemetry logging, and the <span class=\"font-mono\">/library/opds/file/&lt;pk&gt;</span> download path are unchanged.",
+            'KOReader caches OPDS pages aggressively, so the next time you open the catalog after upgrading it should re-pick the feed and render with the new nested layout. All shelf links carry an <span class="font-mono">rel="up"</span> back-reference so KOReader\'s back button works on older firmware that doesn\'t auto-derive it. Auth, the HEAD-handshake, telemetry logging, and the <span class="font-mono">/library/opds/file/&lt;pk&gt;</span> download path are unchanged.',
         ],
         "fixes": [],
     },
