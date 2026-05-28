@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% load app_tags %}
 {% load humanize %}
+{% load static %}
 
 {% block title %}
   {{ media.title }}
@@ -373,8 +374,8 @@
                 {% include "app/icons/book-open.svg" with classes="w-4 h-4 text-indigo-400" %}
                 <span class="font-medium text-xs uppercase tracking-wide">KOReader</span>
               </div>
-              <a href="{% url 'koreader_book_history' book_pk=koreader_history_book_pk %}"
-                 class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">Full history →</a>
+              <a href="#koreader-history"
+                 class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">Full history ↓</a>
             </div>
             <div class="bg-surface-1 rounded-md p-3 space-y-2">
               <div class="text-xs text-fg-muted flex flex-wrap gap-x-3 gap-y-0.5">
@@ -889,6 +890,99 @@
           </a>
         {% endfor %}
       </div>
+    </section>
+  {% endif %}
+
+  {# KOReader reading history — inlined from the former /reading/koreader/history/<book_pk> sub-page. #}
+  {% if koreader_summary %}
+    <section class="mb-12" id="koreader-history" style="scroll-margin-top: 7rem">
+      <h2 class="text-2xl font-bold mb-4">Reading history</h2>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div class="bg-surface-1 rounded-lg p-4">
+          <p class="text-fg-muted text-xs uppercase tracking-wide">Sync events</p>
+          <p class="text-2xl font-bold mt-1">{{ koreader_summary.event_count }}</p>
+        </div>
+        <div class="bg-surface-1 rounded-lg p-4">
+          <p class="text-fg-muted text-xs uppercase tracking-wide">Devices</p>
+          <p class="text-2xl font-bold mt-1">{{ koreader_summary.device_count }}</p>
+        </div>
+        <div class="bg-surface-1 rounded-lg p-4">
+          <p class="text-fg-muted text-xs uppercase tracking-wide">Current progress</p>
+          {% if koreader_summary.current_percentage is not None %}
+            <p class="text-2xl font-bold mt-1">{{ koreader_summary.current_percentage|floatformat:0 }}%</p>
+            {% if current_instance.progress %}
+              <p class="text-xs text-fg-faint mt-1">{{ current_instance.progress }} pages</p>
+            {% endif %}
+          {% else %}
+            <p class="text-2xl font-bold mt-1">—</p>
+          {% endif %}
+        </div>
+        <div class="bg-surface-1 rounded-lg p-4">
+          <p class="text-fg-muted text-xs uppercase tracking-wide">Total time</p>
+          {% if koreader_summary.total_minutes %}
+            <p class="text-2xl font-bold mt-1">{{ koreader_summary.total_hours|floatformat:1 }}h</p>
+            <p class="text-xs text-fg-faint mt-1">{{ koreader_summary.total_minutes|floatformat:0 }} min</p>
+          {% else %}
+            <p class="text-2xl font-bold mt-1">—</p>
+            <p class="text-xs text-fg-faint mt-1">no sessions</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="bg-surface-1 rounded-lg p-5 mb-6">
+        <div class="relative h-[420px]">
+          <canvas id="koreader-history-chart"></canvas>
+        </div>
+      </div>
+      {{ koreader_summary.journey_json|json_script:"koreader-history-data" }}
+      <script src="{% static 'js/libraries/chartjs-4.4.9.min.js' %}"></script>
+      <script src="{% static 'js/koreader-history-chart.js' %}{% get_static_file_mtime 'js/koreader-history-chart.js' %}"></script>
+
+      {% if koreader_summary.all_sessions %}
+        <div class="bg-surface-1 rounded-lg p-5">
+          <div class="flex items-baseline justify-between mb-3">
+            <h3 class="text-lg font-medium">Inferred reading sessions</h3>
+            <span class="text-xs text-fg-faint">grouped by 30-min idle gaps</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="text-fg-muted text-left text-xs uppercase tracking-wide">
+                <tr class="border-b border-surface-2">
+                  <th class="px-3 py-2 font-medium">Started</th>
+                  <th class="px-3 py-2 font-medium">Ended</th>
+                  <th class="px-3 py-2 font-medium text-right">Duration</th>
+                  <th class="px-3 py-2 font-medium text-right">Progress</th>
+                  <th class="px-3 py-2 font-medium text-right">Events</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for session in koreader_summary.all_sessions %}
+                  <tr class="border-b border-surface-2/40 last:border-b-0 hover:bg-surface-2/30">
+                    <td class="px-3 py-2 text-fg-muted">{{ session.start|date:"M j, Y H:i" }}</td>
+                    <td class="px-3 py-2 text-fg-muted">{{ session.end|date:"M j, Y H:i" }}</td>
+                    <td class="px-3 py-2 text-right">
+                      {% if session.duration_minutes %}
+                        {{ session.duration_minutes }} min
+                      {% else %}
+                        &lt; 1 min
+                      {% endif %}
+                    </td>
+                    <td class="px-3 py-2 text-right">
+                      {% if session.percent_traversed %}
+                        +{{ session.percent_traversed_pct|floatformat:1 }}%
+                      {% else %}
+                        —
+                      {% endif %}
+                    </td>
+                    <td class="px-3 py-2 text-right text-fg-muted">{{ session.event_count }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      {% endif %}
     </section>
   {% endif %}
 

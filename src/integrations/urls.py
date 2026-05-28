@@ -105,13 +105,10 @@ urlpatterns = [
     # The new path() entries live in reading/urls.py so URL names resolve
     # to the new location for the rest of the app; these redirects only
     # handle direct hits on the old paths (existing bookmarks, etc.).
-    path(
-        "koreader/history/<int:book_pk>",
-        RedirectView.as_view(
-            pattern_name="koreader_book_history",
-            permanent=False,
-        ),
-    ),
+    # /koreader/history/<book_pk> is intentionally not redirected — the
+    # per-book history is now inlined on the book detail page, and the
+    # source/media_type/media_id triple needed to build that URL isn't
+    # encoded in the legacy path.
     path(
         "koreader/devices",
         RedirectView.as_view(pattern_name="koreader_devices", permanent=False),

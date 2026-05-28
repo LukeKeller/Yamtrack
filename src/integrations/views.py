@@ -13,7 +13,7 @@ from django.contrib.auth.decorators import login_not_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Count, Max
 from django.http import HttpResponse, JsonResponse, StreamingHttpResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -1291,105 +1291,6 @@ def koreader_unmatched(request):
             "likely_match_id": likely_match_id,
             "likely_match_title": likely_match_title,
             "likely_expected_filename": likely_expected_filename,
-        },
-    )
-
-
-@require_GET
-def koreader_book_history(request, book_pk):
-    """Per-book reading-history view, sourced from the kosync event log.
-
-    The ``KOReaderBookMapping`` row only carries the latest state, so the
-    actual timeline lives in ``KOReaderProgressEvent``. Sessions
-    (clustered from events with <30min idle gaps) feed a "Book Journey"
-    bar chart — one bar per session, height = cumulative % at end of
-    session, stacked so the brighter tip shows the gain made in that
-    sitting. If the user has more than one mapping bound to the same
-    Item (e.g. they re-downloaded a different epub edition), sessions
-    from all of them appear on the same chart in chronological order.
-    """
-    book_model = apps.get_model("app", "book")
-    book = get_object_or_404(book_model, pk=book_pk, user=request.user)
-
-    events = list(
-        KOReaderProgressEvent.objects.filter(
-            user=request.user,
-            mapping__item=book.item,
-        )
-        .order_by("created_at")
-        .values("created_at", "percentage", "device", "device_id"),
-    )
-
-    # Most users have one KOReaderBookMapping per tracked Book — pass
-    # it through directly so the helper restricts at the query layer.
-    # The rare case (multiple hashes for the same Item, e.g. two epub
-    # editions) falls back to a Python filter across the user's full
-    # session list, since mapping changes split sessions in the helper.
-    mappings = list(
-        KOReaderBookMapping.objects.filter(
-            user=request.user,
-            item=book.item,
-        ),
-    )
-    if len(mappings) == 1:
-        sessions = compute_sessions(request.user, mapping=mappings[0])
-    elif mappings:
-        mapping_ids = {m.id for m in mappings}
-        sessions = [
-            s for s in compute_sessions(request.user) if s.mapping_id in mapping_ids
-        ]
-    else:
-        sessions = []
-
-    total_minutes, _session_count, _avg = aggregate_reading_time(sessions)
-
-    # Latest kosync percentage. ``book.progress`` for a Book is a page
-    # count, not a percentage — rendering it with a % suffix has been
-    # confusing users who happened to be at "N pages" where N looked
-    # plausible as a percentage. Use the actual fraction KOReader
-    # pushed (mapping.last_percentage, 0.0-1.0) for the headline stat.
-    current_percentage = None
-    if events:
-        current_percentage = round(events[-1]["percentage"] * 100, 1)
-    elif mappings:
-        latest_mapping = max(
-            (m for m in mappings if m.last_progress_at is not None),
-            key=lambda m: m.last_progress_at,
-            default=None,
-        )
-        if latest_mapping is not None:
-            current_percentage = round(latest_mapping.last_percentage * 100, 1)
-
-    # Sessions come back newest-first; the chart wants oldest-first so
-    # the bars read left-to-right chronologically.
-    journey_sessions = list(reversed(sessions))
-    journey_data = [
-        {
-            "label": s.start.strftime("%b %-d"),
-            "started": s.start.isoformat(),
-            "ended": s.end.isoformat(),
-            "duration_min": s.duration_minutes,
-            "start_pct": round(s.percent_start * 100, 1),
-            "end_pct": round(s.percent_end * 100, 1),
-            "delta_pct": round(s.percent_traversed_pct, 1),
-        }
-        for s in journey_sessions
-    ]
-
-    return render(
-        request,
-        "integrations/koreader_book_history.html",
-        {
-            "book": book,
-            "journey_json": json.dumps(journey_data),
-            "event_count": len(events),
-            "device_count": len(
-                {(ev["device_id"] or ev["device"] or "unknown") for ev in events}
-            ),
-            "current_percentage": current_percentage,
-            "sessions": sessions,
-            "total_minutes": total_minutes,
-            "total_hours": total_minutes / 60,
         },
     )
 

@@ -46,7 +46,9 @@ urlpatterns = [
         library_views.library_rename,
         name="library_rename",
     ),
-    # KOReader workspace — was /koreader/{cadence,sessions,devices,unmatched,history/N}
+    # KOReader workspace — was /koreader/{cadence,sessions,devices,unmatched}.
+    # Per-book history used to live at koreader/history/<book_pk> but is now
+    # inlined on the book detail page.
     path(
         "koreader/cadence",
         integrations_views.koreader_cadence,
@@ -66,10 +68,5 @@ urlpatterns = [
         "koreader/unmatched",
         integrations_views.koreader_unmatched,
         name="koreader_unmatched",
-    ),
-    path(
-        "koreader/history/<int:book_pk>",
-        integrations_views.koreader_book_history,
-        name="koreader_book_history",
     ),
 ]

@@ -855,14 +855,15 @@ def browse(request):
 
 
 def _koreader_book_summary(user, book):
-    """Return a compact KOReader summary for ``book`` or ``None``.
+    """Return KOReader reading-history data for ``book`` or ``None``.
 
-    Used by the book detail view to render a card with last-sync info,
-    total reading time, and the three most recent inferred sessions.
-    Returns ``None`` when the user has no KOReader mappings for the
-    book, or has mappings but no events yet. Imports the stats helper
-    lazily so the media_details path doesn't pay the import cost for
-    non-book requests.
+    Pulls everything the book detail page needs to render both the
+    right-rail summary chip and the full inline reading-history section
+    (stats grid, journey chart payload, full session list). Returns
+    ``None`` when the user has no KOReader mappings for the book, or
+    has mappings but no events yet. Imports the stats helper lazily so
+    the media_details path doesn't pay the import cost for non-book
+    requests.
     """
     from integrations.koreader_stats import (  # noqa: PLC0415
         aggregate_reading_time,
@@ -878,10 +879,11 @@ def _koreader_book_summary(user, book):
     if not mappings:
         return None
 
-    event_count = koreader_event_model.objects.filter(
+    events_qs = koreader_event_model.objects.filter(
         user=user,
         mapping__in=mappings,
-    ).count()
+    )
+    event_count = events_qs.count()
     if not event_count:
         return None
 
@@ -898,19 +900,61 @@ def _koreader_book_summary(user, book):
             s for s in compute_sessions(user) if s.mapping_id in mapping_ids
         ]
     total_minutes, _session_count, _avg = aggregate_reading_time(all_sessions)
-    sessions = all_sessions[:3]
 
     latest_mapping = max(
         (m for m in mappings if m.last_progress_at is not None),
         key=lambda m: m.last_progress_at,
         default=mappings[0],
     )
+
+    # Distinct device count (matches the standalone view's tally:
+    # device_id wins when present, otherwise device name, otherwise
+    # the literal "unknown" bucket).
+    device_count = len(
+        {
+            (device_id or device_name or "unknown")
+            for device_id, device_name in events_qs.values_list(
+                "device_id",
+                "device",
+            ).distinct()
+        },
+    )
+
+    # Latest sync percentage. ``book.progress`` is page count, not a
+    # percentage — use the actual 0.0-1.0 fraction KOReader pushed.
+    last_event = events_qs.order_by("-created_at").values("percentage").first()
+    if last_event is not None:
+        current_percentage = round(last_event["percentage"] * 100, 1)
+    elif latest_mapping.last_progress_at is not None:
+        current_percentage = round(latest_mapping.last_percentage * 100, 1)
+    else:
+        current_percentage = None
+
+    # Sessions come back newest-first; the chart wants oldest-first so
+    # the bars read left-to-right chronologically.
+    journey_data = [
+        {
+            "label": s.start.strftime("%b %-d"),
+            "started": s.start.isoformat(),
+            "ended": s.end.isoformat(),
+            "duration_min": s.duration_minutes,
+            "start_pct": round(s.percent_start * 100, 1),
+            "end_pct": round(s.percent_end * 100, 1),
+            "delta_pct": round(s.percent_traversed_pct, 1),
+        }
+        for s in reversed(all_sessions)
+    ]
+
     return {
         "mapping": latest_mapping,
-        "sessions": sessions,
+        "sessions": all_sessions[:3],
+        "all_sessions": all_sessions,
         "event_count": event_count,
+        "device_count": device_count,
+        "current_percentage": current_percentage,
         "total_minutes": total_minutes,
         "total_hours": total_minutes / 60,
+        "journey_json": json.dumps(journey_data),
     }
 
 

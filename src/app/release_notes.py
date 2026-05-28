@@ -10,10 +10,20 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh142"
+CURRENT_FORK_VERSION = "0.25.2~ynh143"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh143",
+        "date": "2026-05-28",
+        "title": "Reading history is no longer a sub-page — chart and sessions inline on the book details page",
+        "highlights": [
+            'KOReader reading history used to live on its own page (<span class="font-mono">/reading/koreader/history/&lt;book&gt;</span>) — one extra click away from the book you were already looking at. The full history (stats grid, journey chart, sessions table) now renders inline on the book details page itself, right above the right-rail "Your History" column. The compact "KOReader" summary chip in the rail still shows the at-a-glance numbers; its "Full history" link is now a same-page anchor instead of bouncing you to a sub-page.',
+            "Identical content to before, just stitched into the page you already opened: sync-event count, distinct devices, latest kosync percentage, total reading time, the journey bar chart, and the inferred-sessions table. Books with no KOReader events render nothing — same as the chip behaviour.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh142",
         "date": "2026-05-28",

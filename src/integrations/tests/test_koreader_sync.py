@@ -408,8 +408,14 @@ class ProgressEventLogTests(TestCase):
         self.assertEqual(mapping.last_device_id, "k2")
 
 
-class BookHistoryViewTests(TestCase):
-    """/koreader/history/<book_pk> renders the per-book timeline."""
+class BookHistoryInlineTests(TestCase):
+    """Per-book KOReader history renders inline on the book detail page.
+
+    The standalone ``/reading/koreader/history/<book_pk>`` sub-page was
+    folded into ``media_details`` so users don't have to bounce out of
+    the book detail flow to see the chart and session table. These tests
+    exercise the inlined section via the media_details URL.
+    """
 
     DOCUMENT = "c" * 32
 
@@ -440,47 +446,77 @@ class BookHistoryViewTests(TestCase):
             device_id=device_id,
         )
 
-    def test_renders_empty_state_with_no_events(self):
-        response = self.client.get(
-            reverse("koreader_book_history", args=[self.book.pk]),
+    def _details_url(self):
+        return reverse(
+            "media_details",
+            kwargs={
+                "source": self.item.source,
+                "media_type": MediaTypes.BOOK.value,
+                "media_id": self.item.media_id,
+                "title": "test-book",
+            },
         )
+
+    def _book_metadata(self):
+        return {
+            "media_id": self.item.media_id,
+            "title": self.item.title,
+            "media_type": MediaTypes.BOOK.value,
+            "source": self.item.source,
+            "image": "http://example.com/cover.jpg",
+        }
+
+    def test_section_hidden_with_no_events(self):
+        with patch(
+            "app.providers.services.get_media_metadata",
+            return_value=self._book_metadata(),
+        ):
+            response = self.client.get(self._details_url())
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "No KOReader sync events yet")
+        self.assertIsNone(response.context.get("koreader_summary"))
         self.assertNotContains(response, "koreader-history-data")
+        # The reading-history section's anchor id only appears in the
+        # inline section we just added — checking for the heading text
+        # would false-positive against the "What's New" release notes
+        # modal whose title also contains "Reading history".
+        self.assertNotContains(response, 'id="koreader-history"')
 
     def test_renders_chart_with_events(self):
         for pct in (0.2, 0.45, 0.7):
             self._event(pct)
-        response = self.client.get(
-            reverse("koreader_book_history", args=[self.book.pk]),
-        )
+        with patch(
+            "app.providers.services.get_media_metadata",
+            return_value=self._book_metadata(),
+        ):
+            response = self.client.get(self._details_url())
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "koreader-history-data")
-        self.assertIn("event_count", response.context)
-        self.assertEqual(response.context["event_count"], 3)
-        self.assertEqual(response.context["device_count"], 1)
+        self.assertContains(response, "Reading history")
+        summary = response.context["koreader_summary"]
+        self.assertEqual(summary["event_count"], 3)
+        self.assertEqual(summary["device_count"], 1)
         # Latest event was 0.7 → 70% headline stat.
-        self.assertEqual(response.context["current_percentage"], 70.0)
+        self.assertEqual(summary["current_percentage"], 70.0)
 
     def test_current_percentage_uses_kosync_fraction_not_pages(self):
         """Regression: don't render book.progress (pages) with a % suffix.
 
-        Before this fix, ``Current progress`` displayed
-        ``{{ book.progress }}%`` — but ``book.progress`` for Books is
-        the page count. So a reader 71 pages into any book saw "71%",
-        regardless of book length. The headline stat must come from
-        ``mapping.last_percentage`` (the actual 0.0-1.0 fraction
-        KOReader pushed), independent of the page count.
+        ``book.progress`` for Books is page count, not a percentage.
+        The headline stat must come from the most recent KOReader event
+        (a true 0.0-1.0 fraction), independent of page count.
         """
         self.book.progress = 71
         self.book.save(update_fields=["progress"])
         # Latest sync was at 12% — even though book.progress=71, the
         # headline must reflect the kosync percentage.
         self._event(0.12)
-        response = self.client.get(
-            reverse("koreader_book_history", args=[self.book.pk]),
-        )
-        self.assertEqual(response.context["current_percentage"], 12.0)
+        with patch(
+            "app.providers.services.get_media_metadata",
+            return_value=self._book_metadata(),
+        ):
+            response = self.client.get(self._details_url())
+        summary = response.context["koreader_summary"]
+        self.assertEqual(summary["current_percentage"], 12.0)
         # And the pages number is surfaced separately, without a %.
         self.assertContains(response, "71 pages")
 
@@ -488,23 +524,41 @@ class BookHistoryViewTests(TestCase):
         self._event(0.1, device="kindle", device_id="k1")
         self._event(0.2, device="kobo", device_id="k2")
         self._event(0.3, device="kindle", device_id="k1")
-        response = self.client.get(
-            reverse("koreader_book_history", args=[self.book.pk]),
-        )
-        self.assertEqual(response.context["device_count"], 2)
-        self.assertEqual(response.context["event_count"], 3)
+        with patch(
+            "app.providers.services.get_media_metadata",
+            return_value=self._book_metadata(),
+        ):
+            response = self.client.get(self._details_url())
+        summary = response.context["koreader_summary"]
+        self.assertEqual(summary["device_count"], 2)
+        self.assertEqual(summary["event_count"], 3)
 
-    def test_404_when_book_belongs_to_another_user(self):
+    def test_history_isolated_per_user(self):
+        """Another user's KOReader events must never leak into this book's section."""
+        self._event(0.3)  # current user's event
         other = _make_user(username="other")
-        other_book = Book.objects.create(
+        other_mapping = KOReaderBookMapping.objects.create(
             user=other,
+            document_hash="d" * 32,
             item=self.item,
-            status=Status.PLANNING.value,
         )
-        response = self.client.get(
-            reverse("koreader_book_history", args=[other_book.pk]),
+        KOReaderProgressEvent.objects.create(
+            mapping=other_mapping,
+            user=other,
+            percentage=0.9,
+            device="other-device",
+            device_id="other-1",
         )
-        self.assertEqual(response.status_code, 404)
+        with patch(
+            "app.providers.services.get_media_metadata",
+            return_value=self._book_metadata(),
+        ):
+            response = self.client.get(self._details_url())
+        summary = response.context["koreader_summary"]
+        # Only the current user's single event should be tallied.
+        self.assertEqual(summary["event_count"], 1)
+        self.assertEqual(summary["device_count"], 1)
+        self.assertEqual(summary["current_percentage"], 30.0)
 
 
 class DevicesDashboardTests(TestCase):
