@@ -8,6 +8,7 @@ from app import statistics
 from app.models import (
     TV,
     Anime,
+    Book,
     Episode,
     Item,
     MediaTypes,
@@ -16,6 +17,7 @@ from app.models import (
     Sources,
     Status,
 )
+from integrations.models import KOReaderBookMapping, KOReaderProgressEvent
 
 User = get_user_model()
 
@@ -956,3 +958,91 @@ class StatisticsTests(TestCase):
         )
         self.assertEqual(current_streak, 0)
         self.assertEqual(longest_streak, 0)
+
+
+class YearInReviewReadingTests(TestCase):
+    """``get_year_in_review`` surfaces pages read and KOReader reading time."""
+
+    def setUp(self):
+        """Create a completed book plus a KOReader mapping to read from."""
+        # Completing a Book triggers a provider metadata fetch in
+        # Media.save(); stub it so the test stays offline and the page
+        # count is deterministic.
+        metadata_patcher = patch(
+            "app.providers.services.get_media_metadata",
+            return_value={"max_progress": 300},
+        )
+        metadata_patcher.start()
+        self.addCleanup(metadata_patcher.stop)
+
+        self.user = User.objects.create_user(
+            username="reader",
+            password="pw",  # noqa: S106
+        )
+        self.book_item = Item.objects.create(
+            media_id="OL1W",
+            source=Sources.OPENLIBRARY.value,
+            media_type=MediaTypes.BOOK.value,
+            title="Test Book",
+        )
+        # A book finished in 2025 with a 300-page final progress.
+        self.book = Book.objects.create(
+            user=self.user,
+            item=self.book_item,
+            status=Status.COMPLETED.value,
+            progress=300,
+            start_date=datetime.datetime(2025, 6, 1, tzinfo=datetime.UTC),
+            end_date=datetime.datetime(2025, 6, 20, tzinfo=datetime.UTC),
+        )
+        self.mapping = KOReaderBookMapping.objects.create(
+            user=self.user,
+            document_hash="a" * 32,
+            item=self.book_item,
+        )
+
+    def _add_event(self, percentage, *, year, hour, minute):
+        """Append a KOReader event at a fixed timestamp."""
+        when = datetime.datetime(year, 6, 10, hour, minute, tzinfo=datetime.UTC)
+        event = KOReaderProgressEvent.objects.create(
+            mapping=self.mapping,
+            user=self.user,
+            percentage=percentage,
+        )
+        KOReaderProgressEvent.objects.filter(pk=event.pk).update(created_at=when)
+
+    def test_pages_and_reading_time_are_reported(self):
+        """Pages from the finished book and minutes from the year's sessions."""
+        # A 20-minute reading session inside the year (two events so it
+        # clears the noise filter and carries a real duration).
+        self._add_event(0.40, year=2025, hour=9, minute=0)
+        self._add_event(0.55, year=2025, hour=9, minute=20)
+
+        recap = statistics.get_year_in_review(self.user, 2025)
+
+        self.assertEqual(recap["pages_read"], 300)
+        self.assertEqual(recap["reading_minutes"], 20)
+        self.assertEqual(recap["reading_session_count"], 1)
+        self.assertTrue(recap["has_reading_stats"])
+
+    def test_sessions_outside_the_year_are_excluded(self):
+        """Reading in another year must not leak into this year's recap."""
+        self._add_event(0.10, year=2024, hour=9, minute=0)
+        self._add_event(0.30, year=2024, hour=9, minute=30)
+
+        recap = statistics.get_year_in_review(self.user, 2025)
+
+        self.assertEqual(recap["reading_minutes"], 0)
+        self.assertEqual(recap["reading_session_count"], 0)
+        # Pages still count — the book was completed in 2025.
+        self.assertEqual(recap["pages_read"], 300)
+
+    def test_no_reading_data_hides_section(self):
+        """A user with no books or events gets no reading section."""
+        empty_user = User.objects.create_user(
+            username="empty",
+            password="pw",  # noqa: S106
+        )
+        recap = statistics.get_year_in_review(empty_user, 2025)
+        self.assertEqual(recap["pages_read"], 0)
+        self.assertEqual(recap["reading_minutes"], 0)
+        self.assertFalse(recap["has_reading_stats"])

@@ -80,6 +80,43 @@
         </div>
       </section>
 
+      {% if recap.has_reading_stats %}
+        {% comment %}
+          Reading depth — pages read (completed books) and KOReader
+          reading time. Only renders when there's something to show, so
+          non-readers never see an empty section. Each card is gated on
+          its own metric since a user might have one without the other
+          (pages without KOReader, or KOReader time without finishing a
+          book inside the year).
+        {% endcomment %}
+        <section>
+          <div class="flex items-baseline justify-between mb-3 gap-3">
+            <h2 class="text-lg font-semibold flex items-center gap-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+              Reading
+            </h2>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            {% if recap.pages_read %}
+              <div class="bg-surface-1 rounded-lg p-4">
+                <div class="text-[11px] uppercase tracking-wider text-fg-muted mb-1">Pages read</div>
+                <div class="text-3xl font-bold text-accent">{{ recap.pages_read|intcomma }}</div>
+                <div class="text-xs text-fg-faint mt-1">Across books you finished this year</div>
+              </div>
+            {% endif %}
+            {% if recap.reading_minutes %}
+              <div class="bg-surface-1 rounded-lg p-4">
+                <div class="text-[11px] uppercase tracking-wider text-fg-muted mb-1">Reading time</div>
+                <div class="text-3xl font-bold text-fg">{{ recap.reading_hours|floatformat:"-1" }}h</div>
+                <div class="text-xs text-fg-faint mt-1">
+                  From {{ recap.reading_session_count|intcomma }} KOReader session{{ recap.reading_session_count|pluralize }}
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        </section>
+      {% endif %}
+
       {% if recap.completed_by_type %}
         <section>
           <div class="flex items-baseline justify-between mb-3 gap-3">

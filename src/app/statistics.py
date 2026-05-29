@@ -949,10 +949,12 @@ def get_aligned_monday(datetime_obj):
 def get_year_in_review(user, year):  # noqa: C901, PLR0912 — sequential composition of well-named blocks reads cleaner than 3 micro-helpers
     """Compose a year-end recap dataset for one user and one year.
 
-    Builds count-based metrics only (no runtime/pages — those would need a
-    metadata-derived field on Item that doesn't exist yet). Designed to be
-    cheap: one user_media fetch + one activity_data fetch, both already
-    optimized by the existing helpers.
+    Mostly count-based metrics. Video/game runtime is still omitted (it
+    would need a metadata-derived field on Item we don't store), but
+    reading depth is included — pages read (a Book's progress field is
+    its page count) and KOReader reading time. Designed to be cheap: one
+    user_media fetch, one compute_sessions scan, and one activity_data
+    fetch, all already optimized by the existing helpers.
     """
     tz = timezone.get_current_timezone()
     start_date = datetime.datetime(year, 1, 1, 0, 0, 0, tzinfo=tz)
@@ -1034,6 +1036,31 @@ def get_year_in_review(user, year):  # noqa: C901, PLR0912 — sequential compos
     peak = max(monthly_completions, key=lambda m: m["total"])
     peak_month = peak if peak["total"] > 0 else None
 
+    # Reading depth. Unlike video/game runtime (which needs metadata we
+    # don't store), these are derivable today: a Book's progress field
+    # *is* its page count, and KOReader sync events give real reading
+    # time. Pages = final page count of books completed in the window;
+    # time = inferred KOReader session minutes whose session start lands
+    # in the window.
+    pages_read = 0
+    book_queryset = user_media.get(MediaTypes.BOOK.value)
+    if book_queryset is not None:
+        for book in book_queryset.filter(status=Status.COMPLETED.value):
+            if book.end_date and timezone.localtime(book.end_date).year == year:
+                pages_read += book.progress or 0
+
+    from integrations.koreader_stats import (  # noqa: PLC0415
+        aggregate_reading_time,
+        compute_sessions,
+    )
+
+    year_sessions = [
+        session
+        for session in compute_sessions(user)
+        if timezone.localtime(session.start).year == year
+    ]
+    reading_minutes, reading_session_count, _avg = aggregate_reading_time(year_sessions)
+
     activity = get_activity_data(user, start_date, end_date)
     activity_stats = activity.get("stats", {})
 
@@ -1050,6 +1077,11 @@ def get_year_in_review(user, year):  # noqa: C901, PLR0912 — sequential compos
         "top_rated": top_rated,
         "monthly_completions": monthly_completions,
         "peak_month": peak_month,
+        "pages_read": pages_read,
+        "reading_minutes": reading_minutes,
+        "reading_hours": round(reading_minutes / 60, 1),
+        "reading_session_count": reading_session_count,
+        "has_reading_stats": bool(pages_read or reading_minutes),
         "current_streak": activity_stats.get("current_streak", 0),
         "longest_streak": activity_stats.get("longest_streak", 0),
         "most_active_day": activity_stats.get("most_active_day"),

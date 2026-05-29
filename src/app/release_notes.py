@@ -10,10 +10,19 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh146"
+CURRENT_FORK_VERSION = "0.25.2~ynh147"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh147",
+        "date": "2026-05-29",
+        "title": "Year in review now counts pages read and reading time",
+        "highlights": [
+            'The <span class="font-mono">/wrapped/</span> year-in-review recap gained a <strong>Reading</strong> section. <strong>Pages read</strong> sums the page count of every book you finished that year (a book\'s progress <em>is</em> its page count, so no new tracking was needed), and <strong>Reading time</strong> totals the hours from your KOReader sync sessions whose start falls in the year, with the session count alongside. Each card only appears when it has something to show, so the section stays hidden for non-readers and shows just the half that applies if you have one without the other (pages without KOReader, or KOReader time without finishing a book that year). Video and game runtime are still left out — those need duration metadata Yamtrack doesn\'t store — but reading was always derivable and is no longer skipped.',
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh146",
         "date": "2026-05-29",
