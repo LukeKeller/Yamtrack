@@ -25,7 +25,7 @@
             <a href="{{ artist.source_url }}"
                target="_blank"
                rel="noopener"
-               class="px-3 py-2 rounded-md bg-surface-2 hover:bg-surface-3 text-white text-sm flex items-center gap-2"
+               class="px-3 py-2 rounded-md bg-surface-2 hover:bg-surface-3 text-fg text-sm flex items-center gap-2"
                title="Open Discogs page for {{ artist.name }}">
               {% include "app/icons/external-link.svg" with classes="w-4 h-4" %}
               Discogs
@@ -55,7 +55,7 @@
                class="text-fg text-pretty">{{ artist.profile|linebreaksbr }}</p>
             <button x-show="isClamped"
                     @click="isExpanded = !isExpanded"
-                    class="text-indigo-400 hover:text-indigo-300 text-sm mt-2 focus:outline-none transition-colors cursor-pointer">
+                    class="text-accent hover:text-accent text-sm mt-2 focus:outline-none transition-colors cursor-pointer">
               <span x-text="isExpanded ? 'Show less' : 'Read more'"></span>
             </button>
           </div>
@@ -102,7 +102,7 @@
       <div class="flex items-center gap-x-3 flex-wrap">
         <label class="text-sm text-fg-muted">Sort</label>
         <select onchange="window.location.search = new URLSearchParams({...Object.fromEntries(new URLSearchParams(window.location.search)), sort: this.value}).toString()"
-                class="bg-surface-2 text-white text-sm rounded-md px-3 py-1.5 border border-transparent focus:border-indigo-500 outline-none cursor-pointer">
+                class="bg-surface-2 text-fg text-sm rounded-md px-3 py-1.5 border border-transparent focus:border-accent-strong outline-none cursor-pointer">
           {% for value, label in sort_choices %}
             <option value="{{ value }}" {% if value == sort_by %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
@@ -114,7 +114,7 @@
       <span class="text-sm text-fg-muted self-center mr-1">Filter:</span>
       {% for value, label in filter_choices %}
         <a href="?filter={{ value }}&sort={{ sort_by }}"
-           class="px-3 py-1.5 text-sm rounded-md transition-colors duration-200 cursor-pointer {% if filter_by == value %}bg-indigo-600 text-white{% else %}bg-gray-700 text-fg hover:bg-gray-600{% endif %}">
+           class="px-3 py-1.5 text-sm rounded-md transition-colors duration-200 cursor-pointer {% if filter_by == value %}bg-accent-strong text-fg{% else %}bg-surface-2 text-fg hover:bg-surface-3{% endif %}">
           {{ label }}
         </a>
       {% endfor %}
@@ -126,7 +126,7 @@
     <div class="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-4">
       {% for entry in releases %}
         <div class="flex flex-col gap-1">
-          <div class="bg-surface-1 rounded-lg overflow-hidden shadow-lg relative {% if entry.media %}ring-[1.5px] ring-emerald-500{% endif %}">
+          <div class="bg-surface-1 rounded-lg overflow-hidden shadow-lg relative {% if entry.media %}ring-[1.5px] ring-success{% endif %}">
             <a href="{% url 'media_details' source='discogs' media_type='record' media_id=entry.release.media_id title=entry.release.title|slug %}"
                aria-label="{{ entry.release.title }}">
               {% if entry.release.image == IMG_NONE %}
@@ -153,13 +153,13 @@
 
             {% if entry.media.score|show_media_score:user %}
               <div class="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-white bg-black/60 backdrop-blur-sm shadow-md">
-                {% include "app/icons/star.svg" with classes="w-3.5 h-3.5 text-amber-400 fill-current" %}
+                {% include "app/icons/star.svg" with classes="w-3.5 h-3.5 text-warning fill-current" %}
                 <span>{{ entry.media.formatted_score }}</span>
               </div>
             {% endif %}
           </div>
           <a href="{% url 'media_details' source='discogs' media_type='record' media_id=entry.release.media_id title=entry.release.title|slug %}"
-             class="text-sm font-medium text-fg hover:text-indigo-400 line-clamp-1 px-1 transition-colors"
+             class="text-sm font-medium text-fg hover:text-accent line-clamp-1 px-1 transition-colors"
              title="{{ entry.release.title }}">{{ entry.release.title }}</a>
           {% if entry.release.year %}<div class="text-xs text-fg-faint px-1">{{ entry.release.year }}</div>{% endif %}
         </div>

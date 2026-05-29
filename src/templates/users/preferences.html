@@ -9,7 +9,7 @@
 {% block settings_content %}
   <div class="bg-surface-1 rounded-lg p-6">
     <div class="flex items-center mb-4">
-      {% include "app/icons/vertical-sliders.svg" with classes="w-6 h-6 text-indigo-400 mr-3" %}
+      {% include "app/icons/vertical-sliders.svg" with classes="w-6 h-6 text-accent mr-3" %}
       <h2 class="text-xl font-semibold">Preferences</h2>
     </div>
     <p class="text-fg-muted mb-5 text-sm">Customize the look and behavior of the application.</p>
@@ -34,7 +34,7 @@
                    type="checkbox"
                    name="clickable_media_cards"
                    {% if user.clickable_media_cards %}checked{% endif %}>
-            <div class="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-px after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-indigo-600">
+            <div class="w-9 h-5 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-px after:left-0.5 after:bg-white after:border-strong after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-accent-strong">
             </div>
           </label>
         </div>
@@ -55,7 +55,7 @@
                    type="checkbox"
                    name="obfuscate_unseen_episodes"
                    {% if user.obfuscate_unseen_episodes %}checked{% endif %}>
-            <div class="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-px after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-indigo-600">
+            <div class="w-9 h-5 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-px after:left-0.5 after:bg-white after:border-strong after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-accent-strong">
             </div>
           </label>
         </div>
@@ -78,7 +78,7 @@
                    type="checkbox"
                    name="auto_mark_prior_episodes"
                    {% if user.auto_mark_prior_episodes %}checked{% endif %}>
-            <div class="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-px after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-indigo-600">
+            <div class="w-9 h-5 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-px after:left-0.5 after:bg-white after:border-strong after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-accent-strong">
             </div>
           </label>
         </div>
@@ -97,7 +97,7 @@
             </p>
           </div>
           <select name="quick_watch_date"
-                  class="ml-4 p-2 bg-surface-2 rounded-md text-white text-sm border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                  class="ml-4 p-2 bg-surface-2 rounded-md text-fg text-sm border border-strong focus:outline-none focus:ring-2 focus:ring-accent">
             {% for choice in quick_watch_date_choices %}
               <option value="{{ choice.0 }}"
                       {% if user.quick_watch_date == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
@@ -123,7 +123,7 @@
                    type="checkbox"
                    name="progress_bar"
                    {% if user.progress_bar %}checked{% endif %}>
-            <div class="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-px after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-indigo-600">
+            <div class="w-9 h-5 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-px after:left-0.5 after:bg-white after:border-strong after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-accent-strong">
             </div>
           </label>
         </div>
@@ -146,7 +146,7 @@
                    type="checkbox"
                    name="hide_completed_recommendations"
                    {% if user.hide_completed_recommendations %}checked{% endif %}>
-            <div class="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-px after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-indigo-600">
+            <div class="w-9 h-5 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-px after:left-0.5 after:bg-white after:border-strong after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-accent-strong">
             </div>
           </label>
         </div>
@@ -167,7 +167,7 @@
                    type="checkbox"
                    name="hide_zero_rating"
                    {% if user.hide_zero_rating %}checked{% endif %}>
-            <div class="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-px after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-indigo-600">
+            <div class="w-9 h-5 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-px after:left-0.5 after:bg-white after:border-strong after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-accent-strong">
             </div>
           </label>
         </div>
@@ -184,7 +184,7 @@
             <p class="text-xs text-fg-muted ml-7">Choose how dates are displayed throughout the application.</p>
           </div>
           <select name="date_format"
-                  class="ml-4 p-2 bg-surface-2 rounded-md text-white text-sm border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                  class="ml-4 p-2 bg-surface-2 rounded-md text-fg text-sm border border-strong focus:outline-none focus:ring-2 focus:ring-accent">
             {% for choice in date_format_choices %}
               <option value="{{ choice.0 }}"
                       {% if user.date_format == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
@@ -204,7 +204,7 @@
             <p class="text-xs text-fg-muted ml-7">Choose between 12-hour or 24-hour clock display.</p>
           </div>
           <select name="time_format"
-                  class="ml-4 p-2 bg-surface-2 rounded-md text-white text-sm border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                  class="ml-4 p-2 bg-surface-2 rounded-md text-fg text-sm border border-strong focus:outline-none focus:ring-2 focus:ring-accent">
             {% for choice in time_format_choices %}
               <option value="{{ choice.0 }}"
                       {% if user.time_format == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
@@ -224,7 +224,7 @@
             </p>
           </div>
           <select name="timezone"
-                  class="ml-4 p-2 bg-surface-2 rounded-md text-white text-sm border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-400 max-w-[16rem]">
+                  class="ml-4 p-2 bg-surface-2 rounded-md text-fg text-sm border border-strong focus:outline-none focus:ring-2 focus:ring-accent max-w-[16rem]">
             <option value="" {% if not user.timezone %}selected{% endif %}>Server default</option>
             {% for tz in timezone_choices %}
               <option value="{{ tz }}" {% if user.timezone == tz %}selected{% endif %}>{{ tz }}</option>
@@ -313,6 +313,26 @@
                     <span class="w-3.5 h-5 rounded-sm" style="background: #403e41"></span>
                     <span class="w-3.5 h-5 rounded-sm" style="background: #ff6188"></span>
                     <span class="w-3.5 h-5 rounded-sm" style="background: #ffd866"></span>
+                  {% elif choice.0 == "one-dark" %}
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #21252b"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #2c313a"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #61afef"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #98c379"></span>
+                  {% elif choice.0 == "everforest" %}
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #272e33"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #343f44"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #a7c080"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #e67e80"></span>
+                  {% elif choice.0 == "ayu-mirage" %}
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #191e2a"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #232834"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #ffcc66"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #87d96c"></span>
+                  {% elif choice.0 == "kanagawa" %}
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #16161d"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #2a2a37"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #7e9cd8"></span>
+                    <span class="w-3.5 h-5 rounded-sm" style="background: #98bb6c"></span>
                   {% elif choice.0 == "solarized-dark" %}
                     <span class="w-3.5 h-5 rounded-sm" style="background: #002b36"></span>
                     <span class="w-3.5 h-5 rounded-sm" style="background: #073642"></span>
@@ -433,6 +453,42 @@
         </div>
       </div>
 
+      {% comment %}
+        E-ink mode — drives [data-eink] on <html>, layered on top of the
+        color theme. Live-previews via Alpine (the same attribute the header
+        quick-toggle writes) and persists on POST. "Auto" only takes visible
+        effect on e-ink hardware (see themes.css); on a normal screen the
+        preview won't change, which is expected.
+      {% endcomment %}
+      <div class="mb-5"
+           x-data="{ eink: '{{ user.eink_mode|default:'auto' }}' }"
+           x-init="$watch('eink', v => document.documentElement.dataset.eink = v)">
+        <div class="p-3 bg-surface-2 rounded-md">
+          <div class="flex items-center text-fg mb-1">
+            {% include "app/icons/contrast.svg" with classes="w-5 h-5 mr-2" %}
+            <span class="text-sm font-medium">E-ink mode</span>
+          </div>
+          <p class="text-xs text-fg-muted ml-7 mb-3">
+            High-contrast monochrome look with flattened shadows and no
+            animations, for e-readers and e-paper displays. "Auto" detects
+            e-ink screens automatically and leaves normal screens untouched.
+          </p>
+          <div class="grid grid-cols-3 gap-2">
+            {% for choice in eink_choices %}
+              <label class="cursor-pointer rounded-md p-2 text-center transition-colors hover:bg-surface-3"
+                     :class="eink === '{{ choice.0 }}' ? 'ring-2 ring-accent bg-surface-3' : ''">
+                <input type="radio"
+                       name="eink_mode"
+                       value="{{ choice.0 }}"
+                       x-model="eink"
+                       class="sr-only">
+                <span class="text-sm font-medium">{{ choice.1 }}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
       {# Watch Provider Region #}
       <div class="mb-5">
         <div class="flex items-center justify-between p-3 bg-surface-2 rounded-md">
@@ -446,7 +502,7 @@
             </p>
           </div>
           <select name="watch_provider_region"
-                  class="ml-4 p-2 bg-surface-2 rounded-md text-white text-sm border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+                  class="ml-4 p-2 bg-surface-2 rounded-md text-fg text-sm border border-strong focus:outline-none focus:ring-2 focus:ring-accent">
             {% for choice in watch_provider_choices %}
               <option value="{{ choice.0 }}"
                       {% if user.watch_provider_region == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
@@ -472,11 +528,11 @@
           </p>
           <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
             {% for provider in streaming_provider_choices %}
-              <label class="flex items-center gap-2 px-3 py-2 bg-surface-3 rounded-md cursor-pointer hover:bg-surface-3/80 has-[:checked]:ring-2 has-[:checked]:ring-indigo-400 transition">
+              <label class="flex items-center gap-2 px-3 py-2 bg-surface-3 rounded-md cursor-pointer hover:bg-surface-3/80 has-[:checked]:ring-2 has-[:checked]:ring-accent transition">
                 <input type="checkbox"
                        name="streaming_providers"
                        value="{{ provider.id }}"
-                       class="w-4 h-4 accent-indigo-500"
+                       class="w-4 h-4 accent-accent-strong"
                        {% if provider.id in subscribed_provider_ids %}checked{% endif %}>
                 <span class="text-sm text-fg truncate">{{ provider.name }}</span>
               </label>
@@ -485,12 +541,12 @@
         </div>
       </div>
 
-      <div class="border-t border-gray-600 my-5"></div>
+      <div class="border-t border-strong my-5"></div>
 
       {# Media Types Settings #}
       <div class="mb-5">
         <div class="flex items-center mb-4">
-          {% include "app/icons/four-square.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
+          {% include "app/icons/four-square.svg" with classes="w-5 h-5 text-accent mr-2" %}
           <h3 class="text-lg font-semibold">Media Types</h3>
         </div>
         <p class="text-fg-muted mb-4 text-sm">
@@ -512,7 +568,7 @@
                          value="{{ media_type }}"
                          {% if user|get_attr:enabled_field %}checked{% endif %}>
                 {% endwith %}
-                <div class="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-px after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-indigo-600">
+                <div class="w-9 h-5 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-px after:left-0.5 after:bg-white after:border-strong after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-accent-strong">
                 </div>
               </label>
             </div>
@@ -520,9 +576,9 @@
         </div>
       </div>
 
-      <div class="mt-5 pt-4 border-gray-600">
+      <div class="mt-5 pt-4 border-strong">
         <button type="submit"
-                class="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer">
+                class="flex items-center px-4 py-2 bg-accent-strong text-white rounded-md hover:bg-accent-hover transition-colors text-sm cursor-pointer">
           {% include "app/icons/save.svg" with classes="w-4 h-4 mr-2" %}
           Save Preferences
         </button>

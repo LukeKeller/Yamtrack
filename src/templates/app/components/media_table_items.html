@@ -9,7 +9,7 @@
            class="lazyload min-w-10 w-10 h-10 object-cover rounded-md parent-hover-tap:hidden"
            data-src="{{ media.item.image }}"
            src="{{ IMG_NONE }}">
-      <button class="w-10 h-10 bg-indigo-600 hover:bg-indigo-500 text-white rounded-md transition-colors items-center justify-center hidden cursor-pointer parent-hover-tap:flex"
+      <button class="w-10 h-10 bg-accent-strong hover:bg-accent-strong text-white rounded-md transition-colors items-center justify-center hidden cursor-pointer parent-hover-tap:flex"
               hx-get="{% media_view_url 'track_modal' media.item %}"
               hx-vals='{"return_url": "{{ request.get_full_path|urlencode }}", "instance_id": "{{ media.id }}"}'
               hx-target="#{% component_id 'track' media.item media.id %}"
@@ -32,7 +32,7 @@
     <td class="p-2 pe-8 font-medium">
       <div class=" flex justify-between items-center">
         <a href="{{ media.item|media_url }}"
-           class="hover:text-indigo-400 transition-colors line-clamp-1">{{ media.item }}</a>
+           class="hover:text-accent transition-colors line-clamp-1">{{ media.item }}</a>
 
         {% if media.repeats > 1 %}
           <div class="flex items-center">
@@ -45,7 +45,7 @@
     {% if media.score is not None %}
       <td class="p-2 text-center">
         <div class="inline-flex items-center gap-1">
-          {% include "app/icons/star.svg" with classes="w-3.5 h-3.5 text-amber-400 fill-current" %}
+          {% include "app/icons/star.svg" with classes="w-3.5 h-3.5 text-warning fill-current" %}
           <span class="text-fg">{{ media.formatted_score }}</span>
         </div>
       </td>

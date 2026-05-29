@@ -14,7 +14,7 @@
   <div class="space-y-6">
     <div class="bg-surface-1 rounded-lg p-6">
       <div class="flex items-center mb-5">
-        {% include "app/icons/vertical-sliders.svg" with classes="w-6 h-6 text-indigo-400 mr-3" %}
+        {% include "app/icons/vertical-sliders.svg" with classes="w-6 h-6 text-accent mr-3" %}
         <h2 class="text-xl font-semibold">Advanced</h2>
       </div>
 
@@ -25,7 +25,7 @@
       {% endcomment %}
       <div class="bg-surface-2 p-5 rounded-lg mb-6" id="stale-panel">
         <div class="flex items-center mb-3">
-          {% include "app/icons/alarm-clock.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
+          {% include "app/icons/alarm-clock.svg" with classes="w-5 h-5 text-accent mr-2" %}
           <h3 class="text-base font-medium">Stale In-Progress Items</h3>
           {% if stale_items %}
             <span class="ml-auto pill pill-meta text-[10px]">{{ stale_items|length }}</span>
@@ -85,7 +85,7 @@
 
       <div class="bg-surface-2 p-5 rounded-lg mb-6">
         <div class="flex items-center mb-3">
-          {% include "app/icons/trashcan.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
+          {% include "app/icons/trashcan.svg" with classes="w-5 h-5 text-accent mr-2" %}
           <h3 class="text-base font-medium">Clear Search Cache</h3>
         </div>
         <p class="text-fg-muted mb-4 text-sm">

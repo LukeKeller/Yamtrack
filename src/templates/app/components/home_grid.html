@@ -14,9 +14,9 @@
       {% if media.next_event and not media.next_event.is_max_datetime %}
         <div class="absolute top-2 left-1/2 flex max-w-[98%] -translate-x-1/2 items-center gap-1.5 rounded-md bg-black/80 px-2 py-1.5 shadow-md whitespace-nowrap">
           {% if home_status == Status.PLANNING.value %}
-            {% include "app/icons/clock.svg" with classes="w-3.5 h-3.5 text-sky-400" %}
+            {% include "app/icons/clock.svg" with classes="w-3.5 h-3.5 text-info" %}
           {% else %}
-            {% include "app/icons/clock.svg" with classes="w-3.5 h-3.5 text-indigo-400" %}
+            {% include "app/icons/clock.svg" with classes="w-3.5 h-3.5 text-accent" %}
           {% endif %}
           <span class="text-xs font-medium text-white drop-shadow-sm truncate">
             {% if media.next_event.content_number %}
@@ -33,7 +33,7 @@
            class="absolute inset-0"></a>
 
         <div class="relative flex items-center justify-center space-x-2.5">
-          <button class="cursor-pointer rounded-full bg-indigo-600 p-2.5 text-white transition-all duration-200 hover:scale-110 hover:bg-indigo-500 hover:shadow-[0_0_15px_rgba(99,102,241,0.5)]"
+          <button class="cursor-pointer rounded-full bg-accent-strong p-2.5 text-white transition-all duration-200 hover:scale-110 hover:bg-accent-strong hover:shadow-[0_0_15px_rgba(99,102,241,0.5)]"
                   title="Add to tracker"
                   hx-get="{% media_view_url 'track_modal' media.item %}"
                   hx-vals='{"return_url": "{{ request.get_full_path|urlencode }}", "instance_id": "{{ media.id }}"}'
@@ -49,7 +49,7 @@
                   hx-trigger="click once"
                   @click="listsOpen = true">{% include "app/icons/list-add.svg" with classes="w-4 h-4" %}</button>
 
-          <button class="cursor-pointer rounded-full bg-amber-600 p-2.5 text-white transition-all duration-200 hover:scale-110 hover:bg-amber-500 hover:shadow-[0_0_15px_rgba(245,158,11,0.5)]"
+          <button class="cursor-pointer rounded-full bg-amber-600 p-2.5 text-white transition-all duration-200 hover:scale-110 hover:bg-warning hover:shadow-[0_0_15px_rgba(245,158,11,0.5)]"
                   title="View your activity history"
                   hx-get="{% media_view_url 'history_modal' media.item %}"
                   hx-vals='{"return_url": "{{ request.get_full_path|urlencode }}"}'
@@ -62,7 +62,7 @@
 
     <div class="p-3">
       <a href="{{ media.item|media_url }}"
-         class="line-clamp-1 text-center text-sm font-semibold text-white transition duration-300 {% if home_status == Status.PLANNING.value %}hover:text-sky-400{% else %}hover:text-indigo-400{% endif %}"
+         class="line-clamp-1 text-center text-sm font-semibold text-white transition duration-300 {% if home_status == Status.PLANNING.value %}hover:text-info{% else %}hover:text-accent{% endif %}"
          title="{{ media }}">{{ media }}</a>
     </div>
 

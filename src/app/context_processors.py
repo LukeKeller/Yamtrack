@@ -8,12 +8,16 @@ from app.release_notes import CURRENT_FORK_VERSION, entries_since
 
 def export_vars(request):  # noqa: ARG001
     """Export variables to templates."""
+    from users.models import EinkChoices  # noqa: PLC0415 — avoid import cycle
+
     return {
         "REGISTRATION": settings.REGISTRATION,
         "REDIRECT_LOGIN_TO_SSO": settings.REDIRECT_LOGIN_TO_SSO,
         "IMG_NONE": settings.IMG_NONE,
         "TRACK_TIME": settings.TRACK_TIME,
         "FORK_VERSION": CURRENT_FORK_VERSION,
+        # Drives the header quick-toggle in base.html (off / auto / on).
+        "eink_choices": EinkChoices.choices,
     }
 
 

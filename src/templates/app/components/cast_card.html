@@ -9,7 +9,7 @@
          src="{{ IMG_NONE }}"
          data-src="{{ cast.image }}">
     <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-      <div class="p-2.5 bg-indigo-600 text-white rounded-full hover:bg-indigo-500 hover:scale-110 transition-all duration-200"
+      <div class="p-2.5 bg-accent-strong text-white rounded-full hover:bg-accent-strong hover:scale-110 transition-all duration-200"
            title="View filmography for {{ cast.name }}">
         {% include "app/icons/person.svg" with classes="w-5 h-5" %}
       </div>
@@ -19,7 +19,7 @@
   <a href="https://www.themoviedb.org/person/{{ cast.id }}"
      target="_blank"
      rel="noopener"
-     class="absolute top-2 right-2 p-1.5 bg-gray-900/80 text-white rounded-full hover:bg-indigo-600 transition-colors duration-200 opacity-0 group-hover:opacity-100"
+     class="absolute top-2 right-2 p-1.5 bg-surface-0/80 text-fg rounded-full hover:bg-accent-strong transition-colors duration-200 opacity-0 group-hover:opacity-100"
      title="Open TMDB page for {{ cast.name }}">
     {% include "app/icons/external-link.svg" with classes="w-3.5 h-3.5" %}
   </a>

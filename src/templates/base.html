@@ -6,7 +6,8 @@
       class="scheme-dark bg-canvas"
       data-theme="{% if request.user.is_authenticated %}{{ request.user.theme|default:'default' }}{% else %}default{% endif %}"
       data-density="{% if request.user.is_authenticated %}{{ request.user.density|default:'comfortable' }}{% else %}comfortable{% endif %}"
-      data-font="{% if request.user.is_authenticated %}{{ request.user.font|default:'system' }}{% else %}system{% endif %}">
+      data-font="{% if request.user.is_authenticated %}{{ request.user.font|default:'system' }}{% else %}system{% endif %}"
+      data-eink="{% if request.user.is_authenticated %}{{ request.user.eink_mode|default:'auto' }}{% else %}auto{% endif %}">
   <head>
     {# Required meta tags #}
     <meta charset="UTF-8">
@@ -284,6 +285,56 @@
                       aria-label="Install Yamtrack as an app">
                 {% include "app/icons/download.svg" with classes="w-4 h-4" %}
               </button>
+              {% comment %}
+                Quick e-ink toggle. Mirrors [data-eink] on <html> live via
+                Alpine so the page flips instantly, and persists the choice
+                with an HTMX POST (the {% csrf_token %} hidden input is
+                serialized automatically on the form submit). "Auto" only
+                takes visible effect on e-ink hardware — see themes.css.
+                Full theme/font/density controls live in Preferences.
+              {% endcomment %}
+              {% if request.user.is_authenticated %}
+                <div class="relative"
+                     x-data="{ open: false }"
+                     @keydown.escape="open = false">
+                  <button type="button"
+                          class="btn btn-icon btn-ghost"
+                          @click="open = !open"
+                          :aria-expanded="open"
+                          aria-haspopup="true"
+                          title="E-ink mode">{% include "app/icons/contrast.svg" with classes="w-4 h-4" %}</button>
+                  <div x-show="open"
+                       x-cloak
+                       x-transition
+                       @click.outside="open = false"
+                       class="absolute right-0 mt-2 w-52 z-50 rounded-lg border border-border-default bg-surface-1 shadow-[var(--shadow-elev-2)] p-2"
+                       role="menu">
+                    <p class="px-2 pt-1 pb-2 text-[11px] font-medium uppercase tracking-wide text-fg-faint">E-ink mode</p>
+                    <form hx-post="{% url 'set_eink_mode' %}"
+                          hx-trigger="change"
+                          hx-swap="none"
+                          x-data="{ eink: document.documentElement.dataset.eink || 'auto' }"
+                          x-init="$watch('eink', v => document.documentElement.dataset.eink = v)">
+                      {% csrf_token %}
+                      {% for value, label in eink_choices %}
+                        <label class="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer text-sm transition-colors hover:bg-surface-2"
+                               :class="eink === '{{ value }}' ? 'text-fg' : 'text-fg-muted'">
+                          <input type="radio"
+                                 name="eink_mode"
+                                 value="{{ value }}"
+                                 x-model="eink"
+                                 class="accent-accent">
+                          <span>{{ label }}</span>
+                        </label>
+                      {% endfor %}
+                    </form>
+                    <a href="{% url 'preferences' %}"
+                       class="block mt-1 px-2 py-1.5 rounded-md text-sm text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors">
+                      More appearance settings…
+                    </a>
+                  </div>
+                </div>
+              {% endif %}
               <a href="{% url 'preferences' %}"
                  class="btn btn-icon btn-ghost"
                  title="Theme &amp; appearance">
@@ -299,7 +350,7 @@
               {% endcomment %}
               <span id="yt-offline-queue-indicator"
                     hidden
-                    class="hidden lg:inline-flex items-center gap-1 px-2 py-1 ml-1 text-[11px] font-medium rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                    class="hidden lg:inline-flex items-center gap-1 px-2 py-1 ml-1 text-[11px] font-medium rounded-md bg-warning/15 text-warning border border-warning/30"
                     title="Pending changes will sync when the network returns"></span>
             </div>
           </header>

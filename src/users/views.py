@@ -26,6 +26,7 @@ from users.forms import NotificationSettingsForm, PasswordChangeForm, UserUpdate
 from users.models import (
     DateFormatChoices,
     DensityChoices,
+    EinkChoices,
     FontChoices,
     QuickWatchDateChoices,
     ThemeChoices,
@@ -357,6 +358,7 @@ def preferences(request):
                 "theme_choices": ThemeChoices.choices,
                 "density_choices": DensityChoices.choices,
                 "font_choices": FontChoices.choices,
+                "eink_choices": EinkChoices.choices,
                 "watch_provider_choices": watch_provider_regions,
                 "timezone_choices": sorted(zoneinfo.available_timezones()),
                 "streaming_provider_choices": app_config.STREAMING_PROVIDERS,
@@ -399,6 +401,9 @@ def preferences(request):
     font_value = request.POST.get("font", FontChoices.SYSTEM)
     if font_value in FontChoices.values:
         request.user.font = font_value
+    eink_value = request.POST.get("eink_mode", EinkChoices.AUTO)
+    if eink_value in EinkChoices.values:
+        request.user.eink_mode = eink_value
     tz_value = (request.POST.get("timezone") or "").strip()
     if tz_value == "" or tz_value in zoneinfo.available_timezones():
         request.user.timezone = tz_value
@@ -701,6 +706,22 @@ def dismiss_whats_new(request):
     if request.user.last_seen_version != CURRENT_FORK_VERSION:
         request.user.last_seen_version = CURRENT_FORK_VERSION
         request.user.save(update_fields=["last_seen_version"])
+    return HttpResponse(status=204)
+
+
+@require_POST
+def set_eink_mode(request):
+    """Persist the e-ink display mode from the header quick-toggle.
+
+    The toggle already flips [data-eink] on <html> client-side for an
+    instant preview; this just saves the choice so it survives reloads.
+    """
+    if request.user.is_demo:
+        return HttpResponse(status=204)
+    eink_value = request.POST.get("eink_mode", "")
+    if eink_value in EinkChoices.values and request.user.eink_mode != eink_value:
+        request.user.eink_mode = eink_value
+        request.user.save(update_fields=["eink_mode"])
     return HttpResponse(status=204)
 
 

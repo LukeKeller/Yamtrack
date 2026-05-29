@@ -18,13 +18,13 @@
   {% absolute_app_url '/api/scrobble/listenbrainz' as lb_base_url %}
   <div class="bg-surface-1 rounded-lg p-6">
     <div class="flex items-center mb-4">
-      {% include "app/icons/database.svg" with classes="w-6 h-6 text-indigo-400 mr-3" %}
+      {% include "app/icons/database.svg" with classes="w-6 h-6 text-accent mr-3" %}
       <h2 class="text-xl font-semibold">Integrations</h2>
     </div>
     <p class="text-fg-muted mb-5 text-sm">Connect your media servers to automatically track your watching progress.</p>
     <div class="bg-surface-2 p-5 rounded-lg mb-6">
       <div class="flex items-center mb-3">
-        {% include "app/icons/padlock.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
+        {% include "app/icons/padlock.svg" with classes="w-5 h-5 text-accent mr-2" %}
         <h3 class="text-base font-medium">API Token</h3>
       </div>
       <p class="text-fg-muted mb-4 text-sm">This token is used to authenticate webhook requests from your media servers.</p>
@@ -39,7 +39,7 @@
                  value="{{ user.token|default_if_none:"" }}">
           <button type="button"
                   @click="revealed = !revealed"
-                  class="flex items-center cursor-pointer group pr-1 text-fg-muted hover:text-indigo-400 transition-colors"
+                  class="flex items-center cursor-pointer group pr-1 text-fg-muted hover:text-accent transition-colors"
                   :aria-label="revealed ? 'Hide token' : 'Reveal token'"
                   :title="revealed ? 'Hide token' : 'Reveal token'">
             <span x-show="!revealed">{% include "app/icons/eye.svg" with classes="w-5 h-5" %}</span>
@@ -50,12 +50,12 @@
                   aria-label="Copy token"
                   title="Copy"
                   data-copy-target="#token">
-            {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-indigo-400 transition-colors" %}
+            {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-accent transition-colors" %}
           </button>
         </div>
       </div>
       <div class="flex justify-between items-center">
-        <div class="flex items-center text-amber-400 text-sm">
+        <div class="flex items-center text-warning text-sm">
           {% include "app/icons/error.svg" with classes="w-4 h-4 mr-2 shrink-0" %}
           <p>Regenerating will invalidate the previous token</p>
         </div>
@@ -63,7 +63,7 @@
           <form method="post" action="{% url 'regenerate_token' %}">
             {% csrf_token %}
             <button type="submit"
-                    class="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer">
+                    class="flex items-center px-4 py-2 bg-accent-strong text-white rounded-md hover:bg-accent-hover transition-colors text-sm cursor-pointer">
               {% include "app/icons/circle-spinning-counter-clockwise.svg" with classes="w-4 h-4 mr-2" %}
               Regenerate
             </button>
@@ -79,7 +79,7 @@
     {% endcomment %}
     <div class="bg-surface-2 p-5 rounded-lg mb-6" x-data="{ expanded: null }">
       <div class="flex items-center mb-3">
-        {% include "app/icons/pulse.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
+        {% include "app/icons/pulse.svg" with classes="w-5 h-5 text-accent mr-2" %}
         <h3 class="text-base font-medium">Webhook Activity</h3>
       </div>
       <p class="text-fg-muted mb-4 text-sm">
@@ -145,7 +145,7 @@
 
     <div class="bg-surface-2 p-5 rounded-lg mb-6">
       <div class="flex items-center mb-3">
-        {% include "app/icons/server.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
+        {% include "app/icons/server.svg" with classes="w-5 h-5 text-accent mr-2" %}
         <h3 class="text-base font-medium">Jellyfin Integration (Official Repo)</h3>
       </div>
       <p class="text-fg-muted mb-4 text-sm">Connect Jellyfin to automatically track your watching progress.</p>
@@ -164,7 +164,7 @@
                   <div class="inline-flex items-center gap-2 w-[calc(100%-30px)]">URL:
                     <input readonly id="jellyfin-webhook-url-official" class="w-full bg-surface-1 rounded-md text-fg-muted text-sm border-0 focus:ring-0 outline-none font-mono" type="text" value="{{ jellyfin_webhook_url }}">
                     <span class="flex items-center cursor-pointer group" title="Copy" data-copy-target="#jellyfin-webhook-url-official">
-                      {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-indigo-400 transition-colors" %}
+                      {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-accent transition-colors" %}
                     </span>
                   </div>
                 </li>
@@ -195,7 +195,7 @@
                 <span class="absolute top-3 right-3 flex items-center cursor-pointer group"
                   title="Copy"
                   data-copy-target="#jellyfin-json-template">
-                  {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-indigo-400 transition-colors" %}
+                  {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-accent transition-colors" %}
                 </span>
               </div>
             </ul>
@@ -205,7 +205,7 @@
     </div>
     <div class="bg-surface-2 p-5 rounded-lg mb-6">
       <div class="flex items-center mb-3">
-        {% include "app/icons/server.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
+        {% include "app/icons/server.svg" with classes="w-5 h-5 text-accent mr-2" %}
         <h3 class="text-base font-medium">Jellyfin Integration (Unofficial Repo)</h3>
       </div>
       <p class="text-fg-muted mb-4 text-sm">Connect Jellyfin to automatically track your watching progress.</p>
@@ -218,7 +218,7 @@
             <a href="https://raw.githubusercontent.com/shemanaev/jellyfin-plugin-repo/master/manifest.json"
               target="_blank"
               rel="noopener noreferrer"
-            class="text-indigo-400 hover:underline">link</a>
+            class="text-accent hover:underline">link</a>
             to your "Plugins Catalog" in Jellyfin settings.
           </li>
           <li>
@@ -226,7 +226,7 @@
             <a href="https://github.com/shemanaev/jellyfin-plugin-webhooks"
               target="_blank"
               rel="noopener noreferrer"
-              class="text-indigo-400 hover:underline">Unofficial Webhooks plugin</a>.
+              class="text-accent hover:underline">Unofficial Webhooks plugin</a>.
             </li>
             <li>
               Restart your server, then configure the plugin:
@@ -236,7 +236,7 @@
                   <div class="inline-flex items-center gap-2 w-[calc(100%-30px)]">URL:
                     <input readonly id="jellyfin-webhook-url-unofficial" class="w-full bg-surface-1 rounded-md text-fg-muted text-sm border-0 focus:ring-0 outline-none font-mono" type="text" value="{{ jellyfin_webhook_url }}">
                     <span class="flex items-center cursor-pointer group" title="Copy" data-copy-target="#jellyfin-webhook-url-unofficial">
-                      {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-indigo-400 transition-colors" %}
+                      {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-accent transition-colors" %}
                     </span>
                   </div>
                 </li>
@@ -252,7 +252,7 @@
 
       <div class="bg-surface-2 p-5 rounded-lg mb-6">
         <div class="flex items-center mb-3">
-          {% include "app/icons/server.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
+          {% include "app/icons/server.svg" with classes="w-5 h-5 text-accent mr-2" %}
           <h3 class="text-base font-medium">Plex Integration</h3>
         </div>
         <p class="text-fg-muted mb-4 text-sm">Connect Plex to automatically track your watching progress.</p>
@@ -268,14 +268,14 @@
                 This username (or several, comma separated) will be used to filter which events are sent to your webhook.
               </p>
               <input name="plex_usernames"
-                     class="w-full py-2 px-3 bg-surface-2 rounded-md text-white text-sm border {% if user.plex_usernames.errors %}border-red-500{% else %}border-gray-600{% endif %} focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                     class="w-full py-2 px-3 bg-surface-2 rounded-md text-fg text-sm border {% if user.plex_usernames.errors %}border-danger{% else %}border-strong{% endif %} focus:border-accent-strong focus:ring focus:ring-accent focus:ring-opacity-50"
                      type="text"
                      placeholder="username1, username2, username3"
                      value="{{ request.user.plex_usernames }}">
             </div>
             <div class="pt-2">
               <button type="submit"
-                      class="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer">
+                      class="flex items-center px-4 py-2 bg-accent-strong text-white rounded-md hover:bg-accent-hover transition-colors text-sm cursor-pointer">
                 {% include "app/icons/save.svg" with classes="w-4 h-4 mr-2" %}
                 Save Changes
               </button>
@@ -291,7 +291,7 @@
               In Plex settings, go to <a href="https://app.plex.tv/desktop/#!/settings/webhooks"
     target="_blank"
     rel="noopener noreferrer"
-    class="text-indigo-400 hover:underline">Webhooks</a>.
+    class="text-accent hover:underline">Webhooks</a>.
             </li>
             <li>
               In the Webhooks section, click on "Add Webhook" and enter the following URL:
@@ -306,7 +306,7 @@
                     <span class="flex items-center cursor-pointer group"
                           title="Copy"
                           data-copy-target="#plex-webhook-url">
-                      {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-indigo-400 transition-colors" %}
+                      {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-accent transition-colors" %}
                     </span>
                   </div>
                 </li>
@@ -318,14 +318,14 @@
 
       <div class="bg-surface-2 p-5 rounded-lg mb-6">
         <div class="flex items-center mb-3">
-          {% include "app/icons/book-open.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
+          {% include "app/icons/book-open.svg" with classes="w-5 h-5 text-accent mr-2" %}
           <h3 class="text-base font-medium">Suwayomi Manga Reader</h3>
         </div>
         <p class="text-fg-muted mb-4 text-sm">
           Link your <a href="https://github.com/Suwayomi/Suwayomi-Server"
     target="_blank"
     rel="noopener noreferrer"
-    class="text-indigo-400 hover:underline">Suwayomi-Server</a>
+    class="text-accent hover:underline">Suwayomi-Server</a>
           so manga detail pages get a "Read on Suwayomi" button that jumps to a global search for the title.
           Suwayomi already syncs progress to AniList/MAL/MangaUpdates, which Yamtrack can import.
         </p>
@@ -338,7 +338,7 @@
               <label for="suwayomi_url" class="block text-sm font-medium text-fg mb-2">Suwayomi base URL</label>
               <input id="suwayomi_url"
                      name="suwayomi_url"
-                     class="w-full py-2 px-3 bg-surface-2 rounded-md text-white text-sm border border-gray-600 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                     class="w-full py-2 px-3 bg-surface-2 rounded-md text-fg text-sm border border-strong focus:border-accent-strong focus:ring focus:ring-accent focus:ring-opacity-50"
                      type="url"
                      placeholder="https://manga.example.com"
                      value="{{ request.user.suwayomi_url }}">
@@ -348,7 +348,7 @@
             </div>
             <div class="pt-2">
               <button type="submit"
-                      class="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer">
+                      class="flex items-center px-4 py-2 bg-accent-strong text-white rounded-md hover:bg-accent-hover transition-colors text-sm cursor-pointer">
                 {% include "app/icons/save.svg" with classes="w-4 h-4 mr-2" %}
                 Save Changes
               </button>
@@ -359,7 +359,7 @@
 
       <div class="bg-surface-2 p-5 rounded-lg mb-6">
         <div class="flex items-center mb-3">
-          {% include "app/icons/server.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
+          {% include "app/icons/server.svg" with classes="w-5 h-5 text-accent mr-2" %}
           <h3 class="text-base font-medium">Emby Integration</h3>
         </div>
         <p class="text-fg-muted mb-4 text-sm">Connect Emby to automatically track your watching progress.</p>
@@ -382,7 +382,7 @@
                   <span class="flex items-center cursor-pointer group"
                         title="Copy"
                         data-copy-target="#emby-webhook-url">
-                    {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-indigo-400 transition-colors" %}
+                    {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-accent transition-colors" %}
                   </span>
                 </div>
               </li>
@@ -398,18 +398,18 @@
       </div>
       <div class="bg-surface-2 p-5 rounded-lg mb-6">
         <div class="flex items-center mb-3">
-          {% include "app/icons/music-note.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
+          {% include "app/icons/music-note.svg" with classes="w-5 h-5 text-accent mr-2" %}
           <h3 class="text-base font-medium">ListenBrainz / Multi-Scrobbler</h3>
         </div>
         <p class="text-fg-muted mb-4 text-sm">
           Forward listens from <a href="https://github.com/foxxmd/multi-scrobbler"
     target="_blank"
     rel="noopener noreferrer"
-    class="text-indigo-400 hover:underline">multi-scrobbler</a>
+    class="text-accent hover:underline">multi-scrobbler</a>
           (or any client speaking the ListenBrainz <code class="text-xs">submit-listens</code> protocol) into Yamtrack. Each listen becomes a Play row,
           matched to a tracked record by <code class="text-xs">(artist, title)</code>; unmatched listens are still saved and shown on the
           <a href="{% url 'music_history' %}"
-             class="text-indigo-400 hover:underline">Music</a> page.
+             class="text-accent hover:underline">Music</a> page.
         </p>
         <div class="bg-surface-1 p-4 rounded-md mb-4">
           <h4 class="text-sm font-medium mb-3">Multi-Scrobbler client config</h4>
@@ -420,7 +420,7 @@
             <div class="inline-flex items-center gap-2 w-[calc(100%-30px)] mt-2">
               <input readonly id="lb-base-url" class="w-full bg-surface-1 rounded-md text-fg-muted text-sm border-0 focus:ring-0 outline-none font-mono" type="text" value="{{ lb_base_url }}">
               <span class="flex items-center cursor-pointer group" title="Copy" data-copy-target="#lb-base-url">
-                {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-indigo-400 transition-colors" %}
+                {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-accent transition-colors" %}
               </span>
             </div>
               {# djlint:on #}
@@ -435,7 +435,7 @@
             <div class="inline-flex items-center gap-2 w-[calc(100%-30px)] mt-2">
               <input readonly id="lb-validate-url" class="w-full bg-surface-1 rounded-md text-fg-muted text-sm border-0 focus:ring-0 outline-none font-mono" type="text" value="{{ lb_base_url }}/1/validate-token">
               <span class="flex items-center cursor-pointer group" title="Copy" data-copy-target="#lb-validate-url">
-                {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-indigo-400 transition-colors" %}
+                {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-accent transition-colors" %}
               </span>
             </div>
               {# djlint:on #}
@@ -459,7 +459,7 @@
             <span class="absolute top-3 right-3 flex items-center cursor-pointer group"
                   title="Copy"
                   data-copy-target="#lb-ms-snippet">
-              {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-indigo-400 transition-colors" %}
+              {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-accent transition-colors" %}
             </span>
           </div>
         </details>
@@ -474,7 +474,7 @@
     {% endcomment %}
     <div class="bg-surface-2 p-5 rounded-lg mb-6">
       <div class="flex items-center mb-3">
-        {% include "app/icons/book-open.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
+        {% include "app/icons/book-open.svg" with classes="w-5 h-5 text-accent mr-2" %}
         <h3 class="text-base font-medium">Hardcover Sync</h3>
       </div>
       {% if hardcover_integration %}
@@ -483,9 +483,9 @@
           Book progress, status, score, and reading dates push to Hardcover automatically when you save a change in Yamtrack.
         </p>
         {% if hardcover_integration.last_error %}
-          <div class="bg-surface-1 border border-amber-400/40 rounded-md p-3 mb-4 text-sm text-amber-300">
+          <div class="bg-surface-1 border border-warning/40 rounded-md p-3 mb-4 text-sm text-warning">
             <div class="font-medium mb-1">Last error</div>
-            <div class="text-amber-200/90 font-mono text-xs break-all">{{ hardcover_integration.last_error }}</div>
+            <div class="text-warning/90 font-mono text-xs break-all">{{ hardcover_integration.last_error }}</div>
             {% if hardcover_integration.last_error_at %}
               <div class="text-fg-faint text-xs mt-1">at {{ hardcover_integration.last_error_at|date:"Y-m-d H:i" }}</div>
             {% endif %}
@@ -510,10 +510,10 @@
       {% else %}
         <p class="text-fg-muted mb-4 text-sm">
           Push your book progress (page number), status, score, and dates to your <a href="https://hardcover.app"
-    class="text-indigo-400 hover:underline"
+    class="text-accent hover:underline"
     target="_blank"
     rel="noopener">Hardcover.app</a> account on save. Paste a personal access token from <a href="https://hardcover.app/account/api"
-    class="text-indigo-400 hover:underline"
+    class="text-accent hover:underline"
     target="_blank"
     rel="noopener">hardcover.app/account/api</a>; the token grants full account access, so treat it like a password.
         </p>
@@ -533,7 +533,7 @@
                      required>
               <button type="button"
                       @click="revealed = !revealed"
-                      class="flex items-center cursor-pointer group pr-1 text-fg-muted hover:text-indigo-400 transition-colors"
+                      class="flex items-center cursor-pointer group pr-1 text-fg-muted hover:text-accent transition-colors"
                       :aria-label="revealed ? 'Hide token' : 'Reveal token'"
                       :title="revealed ? 'Hide token' : 'Reveal token'">
                 <span x-show="!revealed">{% include "app/icons/eye.svg" with classes="w-5 h-5" %}</span>
@@ -543,7 +543,7 @@
           </div>
           <div class="flex justify-end">
             <button type="submit"
-                    class="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer">
+                    class="flex items-center px-4 py-2 bg-accent-strong text-white rounded-md hover:bg-accent-hover transition-colors text-sm cursor-pointer">
               Connect
             </button>
           </div>
@@ -555,7 +555,7 @@
     {% absolute_app_url '/api/koreader' as koreader_base_url %}
     <div class="bg-surface-2 p-5 rounded-lg mb-6">
       <div class="flex items-center mb-3">
-        {% include "app/icons/book-open.svg" with classes="w-5 h-5 text-indigo-400 mr-2" %}
+        {% include "app/icons/book-open.svg" with classes="w-5 h-5 text-accent mr-2" %}
         <h3 class="text-base font-medium">KOReader Progress Sync</h3>
       </div>
       <p class="text-fg-muted mb-4 text-sm">
@@ -573,7 +573,7 @@
             <span class="flex items-center cursor-pointer group pr-1"
                   title="Copy"
                   data-copy-target="#koreader-url">
-              {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-indigo-400 transition-colors" %}
+              {% include "app/icons/copy.svg" with classes="w-5 h-5 text-fg-muted group-hover:text-accent transition-colors" %}
             </span>
           </div>
         </div>
@@ -597,7 +597,7 @@
                      value="{{ user.token|default_if_none:'' }}">
               <button type="button"
                       @click="revealed = !revealed"
-                      class="flex items-center cursor-pointer group pr-1 text-fg-muted hover:text-indigo-400 transition-colors"
+                      class="flex items-center cursor-pointer group pr-1 text-fg-muted hover:text-accent transition-colors"
                       :aria-label="revealed ? 'Hide token' : 'Reveal token'"
                       :title="revealed ? 'Hide token' : 'Reveal token'">
                 <span x-show="!revealed">{% include "app/icons/eye.svg" with classes="w-5 h-5" %}</span>
@@ -615,7 +615,7 @@
         <div class="text-sm font-medium mb-2">
           Synced books
           {% if koreader_unbound_count %}
-            <span class="text-xs text-amber-400 ml-2">{{ koreader_unbound_count }} waiting to be linked</span>
+            <span class="text-xs text-warning ml-2">{{ koreader_unbound_count }} waiting to be linked</span>
           {% endif %}
         </div>
         <div class="space-y-2">
@@ -642,9 +642,9 @@
                 <div class="flex items-start gap-2 flex-wrap">
                   {% if mapping.item %}
                     <a href="{% url 'media_details' source=mapping.item.source media_type=mapping.item.media_type media_id=mapping.item.media_id title=mapping.item.title|slug %}"
-                       class="text-sm text-fg truncate hover:text-indigo-400 transition-colors">{{ mapping.item.title }}</a>
+                       class="text-sm text-fg truncate hover:text-accent transition-colors">{{ mapping.item.title }}</a>
                   {% else %}
-                    <div class="text-sm text-amber-400">Unlinked — pick a book below</div>
+                    <div class="text-sm text-warning">Unlinked — pick a book below</div>
                   {% endif %}
                   {% if mapping.book %}
                     {% if mapping.book.status == "Completed" %}
@@ -686,14 +686,14 @@
                     <input type="hidden" name="document_hash" value="{{ mapping.document_hash }}">
                     <select name="item_id"
                             required
-                            class="py-1.5 pr-8 pl-2 bg-surface-2 rounded-md text-fg text-sm border-0 focus:ring-1 focus:ring-indigo-500 outline-none">
+                            class="py-1.5 pr-8 pl-2 bg-surface-2 rounded-md text-fg text-sm border-0 focus:ring-1 focus:ring-accent-strong outline-none">
                       <option value="">Select a book…</option>
                       {% for book in koreader_book_choices %}
                         <option value="{{ book.id }}">{{ book.title }}</option>
                       {% endfor %}
                     </select>
                     <button type="submit"
-                            class="px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer">
+                            class="px-3 py-1.5 bg-accent-strong text-white rounded-md hover:bg-accent-hover transition-colors text-sm cursor-pointer">
                       Link
                     </button>
                   </form>

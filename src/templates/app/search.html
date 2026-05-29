@@ -26,7 +26,7 @@
         {% with source_options=media_type|sources %}
           {% for source_option in source_options %}
             <a href="{% url 'search' %}?q={{ request.GET.q|urlencode }}&media_type={{ media_type }}&source={{ source_option.value }}&layout={{ layout }}"
-               class="px-2.5 py-1 text-xs rounded-full border transition-colors {% if source == source_option.value %}bg-accent text-white border-accent{% else %}bg-surface-1 text-fg-muted hover:bg-surface-2 border-border-default{% endif %}">
+               class="px-2.5 py-1 text-xs rounded-full border transition-colors {% if source == source_option.value %}bg-accent text-fg border-accent{% else %}bg-surface-1 text-fg-muted hover:bg-surface-2 border-border-default{% endif %}">
               {{ source_option.label }}
             </a>
           {% endfor %}
@@ -87,7 +87,7 @@
       {# Previous button #}
       {% if data.page > 1 %}
         <a href="?q={{ request.GET.q|urlencode }}&media_type={{ media_type }}{% if source %}&source={{ source }}{% endif %}&page={{ data.page|add:'-1' }}&layout={{ layout }}"
-           class="p-2 rounded-md bg-surface-1 text-white hover:bg-surface-2">
+           class="p-2 rounded-md bg-surface-1 text-fg hover:bg-surface-2">
           {% include "app/icons/chevron-left.svg" with classes="w-5 h-5" %}
         </a>
       {% else %}
@@ -100,7 +100,7 @@
       {% for page_num in pages %}
         {% if page_num %}
           <a href="?q={{ request.GET.q|urlencode }}&media_type={{ media_type }}{% if source %}&source={{ source }}{% endif %}&page={{ page_num }}&layout={{ layout }}"
-             class="w-10 h-10 rounded-md {% if data.page == page_num %}bg-accent{% else %}bg-surface-1 hover:bg-surface-2{% endif %} text-white flex items-center justify-center">
+             class="w-10 h-10 rounded-md {% if data.page == page_num %}bg-accent{% else %}bg-surface-1 hover:bg-surface-2{% endif %} text-fg flex items-center justify-center">
             {{ page_num }}
           </a>
         {% else %}
@@ -114,7 +114,7 @@
       {# Next button #}
       {% if data.page < data.total_pages %}
         <a href="?q={{ request.GET.q|urlencode }}&media_type={{ media_type }}{% if source %}&source={{ source }}{% endif %}&page={{ data.page|add:'1' }}&layout={{ layout }}"
-           class="p-2 rounded-md bg-surface-1 text-white hover:bg-surface-2">
+           class="p-2 rounded-md bg-surface-1 text-fg hover:bg-surface-2">
           {% include "app/icons/chevron-right.svg" with classes="w-5 h-5" %}
         </a>
       {% else %}

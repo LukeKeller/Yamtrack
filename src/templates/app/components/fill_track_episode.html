@@ -44,7 +44,7 @@
           <label class="block text-sm font-medium text-fg mb-3">Previous Watches</label>
           <div class="max-h-[200px] overflow-y-auto space-y-2">
             {% for entry in episode.history %}
-              <div class="flex items-center justify-between bg-surface-3 rounded-md p-3 border border-gray-600">
+              <div class="flex items-center justify-between bg-surface-3 rounded-md p-3 border border-strong">
                 <div class="text-sm text-white">
                   {% if entry.end_date %}
                     {{ entry.end_date|datetime_format:request.user }}
@@ -58,7 +58,7 @@
                   <input type="hidden" name="instance_id" value="{{ entry.id }}">
                   <input type="hidden" name="media_type" value="episode">
                   <button type="submit"
-                          class="text-red-400 hover:text-red-300 transition-colors text-sm px-2 py-1 hover:bg-red-600/20 rounded-md cursor-pointer">
+                          class="text-danger hover:text-danger transition-colors text-sm px-2 py-1 hover:bg-danger/20 rounded-md cursor-pointer">
                     Delete
                   </button>
                 </form>
@@ -66,7 +66,7 @@
             {% endfor %}
           </div>
         </div>
-        <div class="border-t border-gray-600 mb-6"></div>
+        <div class="border-t border-strong mb-6"></div>
       {% endif %}
 
       {# Episode track form #}
@@ -93,7 +93,7 @@
 
         {# Watch Date Input with Inline Clear Button #}
         <div class="relative">
-          <input class="w-full p-3 bg-surface-3 rounded-md text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-[#4a9eff] appearance-none"
+          <input class="w-full p-3 bg-surface-3 rounded-md text-fg border border-strong focus:outline-none focus:ring-2 focus:ring-accent appearance-none"
                  x-bind:type="inputType"
                  name="end_date"
                  @pointerdown="pointerOnPickerIcon = $event.clientX >= $el.getBoundingClientRect().right - 40"
@@ -127,7 +127,7 @@
         {# Submit Area #}
         <div class="mt-6 flex items-center justify-end">
           <button type="submit"
-                  class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md transition duration-300 cursor-pointer font-medium"
+                  class="px-4 py-2 bg-accent-strong hover:bg-accent-hover text-white rounded-md transition duration-300 cursor-pointer font-medium"
                   title="Add watched entry with current settings">Add watch</button>
         </div>
       </form>

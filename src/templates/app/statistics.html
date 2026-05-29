@@ -21,7 +21,7 @@
     <!-- Trigger Button -->
     <button @click="toggleDropdown()"
             class="flex items-center gap-2 px-4 py-2.5 bg-surface-1 hover:bg-surface-3 rounded-lg transition-all duration-200 border border-border-default shadow-sm cursor-pointer">
-      {% include "app/icons/calendar.svg" with classes="w-5 h-5 text-indigo-400" %}
+      {% include "app/icons/calendar.svg" with classes="w-5 h-5 text-accent" %}
       <span class="font-medium" x-text="selectedRange"></span>
       <div class="w-4 h-4 ml-1 transition-transform duration-200"
            :class="{'rotate-180': isOpen}">{% include "app/icons/chevron-down.svg" %}</div>
@@ -37,10 +37,10 @@
       <!-- Tabs -->
       <div class="flex border-b border-border-default">
         <button @click="activeTab = 'predefined'"
-                :class="{'text-white border-b-2 border-indigo-500': activeTab === 'predefined', 'text-fg-muted hover:text-fg': activeTab !== 'predefined'}"
+                :class="{'text-white border-b-2 border-accent-strong': activeTab === 'predefined', 'text-fg-muted hover:text-fg': activeTab !== 'predefined'}"
                 class="flex-1 py-3 text-sm font-medium transition-colors cursor-pointer">Predefined Ranges</button>
         <button @click="activeTab = 'custom'"
-                :class="{'text-white border-b-2 border-indigo-500': activeTab === 'custom', 'text-fg-muted hover:text-fg': activeTab !== 'custom'}"
+                :class="{'text-white border-b-2 border-accent-strong': activeTab === 'custom', 'text-fg-muted hover:text-fg': activeTab !== 'custom'}"
                 class="flex-1 py-3 text-sm font-medium transition-colors cursor-pointer">Custom Range</button>
       </div>
 
@@ -50,7 +50,7 @@
         <div class="grid grid-cols-2 gap-2">
           <template x-for="range in predefinedRanges" :key="range.name">
             <button @click="selectPredefinedRange(range.name)"
-                    :class="{'bg-indigo-600 text-white': selectedRange === range.name, 'hover:bg-surface-2 text-fg': selectedRange !== range.name}"
+                    :class="{'bg-accent-strong text-white': selectedRange === range.name, 'hover:bg-surface-2 text-fg': selectedRange !== range.name}"
                     class="flex items-center justify-between p-3 rounded-md text-left text-sm transition-all cursor-pointer">
               <span x-text="range.name"></span>
               <div x-show="selectedRange === range.name">{% include "app/icons/checkmark.svg" with classes="w-4 h-4" %}</div>
@@ -69,7 +69,7 @@
                      name="start_date"
                      x-model="startDate"
                      @change="updateDateRange()"
-                     class="w-full p-2.5 bg-surface-2 rounded-md text-white border border-border-default focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm scheme-dark"
+                     class="w-full p-2.5 bg-surface-2 rounded-md text-fg border border-border-default focus:border-accent-strong focus:ring-1 focus:ring-accent-strong text-sm scheme-dark"
                      type="date">
             </div>
             <div>
@@ -78,7 +78,7 @@
                      name="end_date"
                      x-model="endDate"
                      @change="updateDateRange()"
-                     class="w-full p-2.5 bg-surface-2 rounded-md text-white border border-border-default focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 text-sm scheme-dark"
+                     class="w-full p-2.5 bg-surface-2 rounded-md text-fg border border-border-default focus:border-accent-strong focus:ring-1 focus:ring-accent-strong text-sm scheme-dark"
                      type="date">
             </div>
           </div>
@@ -89,7 +89,7 @@
               Cancel
             </button>
             <button @click="applyCustomRange()"
-                    class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm rounded-md transition-colors cursor-pointer flex items-center gap-2">
+                    class="px-4 py-2 bg-accent-strong hover:bg-accent-strong text-white text-sm rounded-md transition-colors cursor-pointer flex items-center gap-2">
               {% include "app/icons/checkmark.svg" with classes="w-4 h-4" %}
               Apply Range
             </button>
@@ -103,8 +103,8 @@
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       <div class="bg-surface-1 rounded-lg p-6 flex items-center">
-        <div class="bg-indigo-600/20 p-4 rounded-full mr-4">
-          {% include "app/icons/states/completed.svg" with classes="w-8 h-8 text-indigo-400" %}
+        <div class="bg-accent-strong/20 p-4 rounded-full mr-4">
+          {% include "app/icons/states/completed.svg" with classes="w-8 h-8 text-accent" %}
         </div>
         <div>
           <h3 class="text-sm font-medium text-fg-muted">Completed Items</h3>
@@ -118,8 +118,8 @@
         </div>
       </div>
       <div class="bg-surface-1 rounded-lg p-6 flex items-center">
-        <div class="bg-yellow-600/20 p-4 rounded-full mr-4">
-          {% include "app/icons/ribbon.svg" with classes="w-8 h-8 text-yellow-400" %}
+        <div class="bg-warning/20 p-4 rounded-full mr-4">
+          {% include "app/icons/ribbon.svg" with classes="w-8 h-8 text-warning" %}
         </div>
         <div>
           <h3 class="text-sm font-medium text-fg-muted">Average Rating</h3>
@@ -133,8 +133,8 @@
         </div>
       </div>
       <div class="bg-surface-1 rounded-lg p-6 flex items-center">
-        <div class="bg-emerald-600/20 p-4 rounded-full mr-4">
-          {% include "app/icons/calendar.svg" with classes="w-8 h-8 text-emerald-400" %}
+        <div class="bg-success/20 p-4 rounded-full mr-4">
+          {% include "app/icons/calendar.svg" with classes="w-8 h-8 text-success" %}
         </div>
         <div>
           <h3 class="text-sm font-medium text-fg-muted">Most Active Day</h3>
@@ -147,8 +147,8 @@
         </div>
       </div>
       <div class="bg-surface-1 rounded-lg p-6 flex items-center">
-        <div class="bg-red-600/20 p-4 rounded-full mr-4">
-          {% include "app/icons/flame.svg" with classes="w-8 h-8 text-red-400" %}
+        <div class="bg-danger/20 p-4 rounded-full mr-4">
+          {% include "app/icons/flame.svg" with classes="w-8 h-8 text-danger" %}
         </div>
         <div>
           <h3 class="text-sm font-medium text-fg-muted">Current Streak</h3>
@@ -201,7 +201,7 @@
               {% for week in activity_data.calendar_weeks %}
                 <div class="flex flex-col gap-1">
                   {% for day in week %}
-                    <div class="w-4 h-4 rounded-sm transition-colors duration-200 hover:ring-2 hover:ring-white {% if day.level == 0 %}bg-surface-2{% elif day.level == 1 %}bg-indigo-700{% elif day.level == 2 %}bg-indigo-600{% elif day.level == 3 %}bg-indigo-500{% elif day.level == 4 %}bg-indigo-400{% endif %}"
+                    <div class="w-4 h-4 rounded-sm transition-colors duration-200 hover:ring-2 hover:ring-white {% if day.level == 0 %}bg-surface-2{% elif day.level == 1 %}bg-accent-hover{% elif day.level == 2 %}bg-accent-strong{% elif day.level == 3 %}bg-accent-strong{% elif day.level == 4 %}bg-accent{% endif %}"
                          title="{{ day.date }}: {{ day.count }} activit{{ day.count|pluralize:"y,ies" }}"></div>
                   {% endfor %}
                 </div>
@@ -215,10 +215,10 @@
              :class="graphTooWide ? 'mb-5 mt-2' : 'mt-4'">
           <span>Less</span>
           <div class="w-4 h-4 rounded-sm bg-surface-2"></div>
-          <div class="w-4 h-4 rounded-sm bg-indigo-700"></div>
-          <div class="w-4 h-4 rounded-sm bg-indigo-600"></div>
-          <div class="w-4 h-4 rounded-sm bg-indigo-500"></div>
-          <div class="w-4 h-4 rounded-sm bg-indigo-400"></div>
+          <div class="w-4 h-4 rounded-sm bg-accent-hover"></div>
+          <div class="w-4 h-4 rounded-sm bg-accent-strong"></div>
+          <div class="w-4 h-4 rounded-sm bg-accent-strong"></div>
+          <div class="w-4 h-4 rounded-sm bg-accent"></div>
           <span>More</span>
         </div>
       </div>
@@ -331,7 +331,7 @@
 
       {% if timeline %}
         <div class="relative flex justify-center">
-          <div class="absolute top-0 bottom-0 w-px bg-indigo-500/50 hidden md:block"></div>
+          <div class="absolute top-0 bottom-0 w-px bg-accent-strong/50 hidden md:block"></div>
 
           <div class="w-full space-y-10 md:space-y-20">
             {% for month_year, media_list in timeline.items %}
@@ -342,17 +342,17 @@
                 </h3>
 
                 <div class="absolute -top-6 left-1/2 transform -translate-x-1/2 z-10 hidden md:block">
-                  <div class="w-3 h-3 rounded-full bg-indigo-500 mx-auto mb-2"></div>
+                  <div class="w-3 h-3 rounded-full bg-accent-strong mx-auto mb-2"></div>
                   <div class="absolute top-1.5 left-1/2 flex -translate-y-1/2">
                     {% if forloop.counter|divisibleby:2 %}
                       {# to the left #}
-                      <div class="h-px w-40 bg-indigo-500/50 transform -translate-x-full"></div>
+                      <div class="h-px w-40 bg-accent-strong/50 transform -translate-x-full"></div>
                       <div class="absolute -top-7 right-46 whitespace-nowrap">
                         <h3 class="text-lg font-medium">{{ month_year }}</h3>
                       </div>
                     {% else %}
                       {# to the right #}
-                      <div class="h-px w-40 bg-indigo-500/50"></div>
+                      <div class="h-px w-40 bg-accent-strong/50"></div>
                       <div class="absolute -top-7 left-4 whitespace-nowrap">
                         <h3 class="text-lg font-medium">{{ month_year }}</h3>
                       </div>
@@ -361,7 +361,7 @@
                 </div>
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4 md:w-[calc(50%-2rem)] lg:w-[calc(50%-1rem)] {% if forloop.counter|divisibleby:2 %}md:mr-auto md:ml-0{% else %}md:ml-auto md:mr-0{% endif %}">
                   {% for media in media_list %}
-                    <div class="bg-surface-2 p-4 rounded-lg hover:ring-2 hover:ring-indigo-500 transition-all duration-200">
+                    <div class="bg-surface-2 p-4 rounded-lg hover:ring-2 hover:ring-accent-strong transition-all duration-200">
                       <div class="flex items-start gap-4">
                         <div class="shrink-0 order-0">
                           <a href="{{ media.item|media_url }}">
@@ -374,7 +374,7 @@
                         <div class="flex-1 min-w-0">
                           <h4 class="font-medium">
                             <a href="{{ media.item|media_url }}"
-                               class="hover:text-indigo-400 transition-colors line-clamp-2">{{ media.item }}</a>
+                               class="hover:text-accent transition-colors line-clamp-2">{{ media.item }}</a>
                           </h4>
                           <div class="text-sm text-fg-muted mt-1">
                             <p>
@@ -384,7 +384,7 @@
                             </p>
                           </div>
                           {% if media.score|show_media_score:user %}
-                            <div class="flex items-center text-sm text-yellow-400 mt-2">
+                            <div class="flex items-center text-sm text-warning mt-2">
                               {% include "app/icons/star.svg" with classes="w-4 h-4 mr-1 fill-current" %}
                               <span>{{ media.formatted_score }}</span>
                             </div>

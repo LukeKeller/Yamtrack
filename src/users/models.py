@@ -122,10 +122,30 @@ class ThemeChoices(models.TextChoices):
     TOKYO_NIGHT = "tokyo-night", "Tokyo Night"
     ROSE_PINE_MOON = "rose-pine-moon", "Rosé Pine Moon"
     MONOKAI_PRO = "monokai-pro", "Monokai Pro"
+    ONE_DARK = "one-dark", "One Dark"
+    EVERFOREST = "everforest", "Everforest"
+    AYU_MIRAGE = "ayu-mirage", "Ayu Mirage"
+    KANAGAWA = "kanagawa", "Kanagawa"
     SOLARIZED_DARK = "solarized-dark", "Solarized Dark"
     SOLARIZED_LIGHT = "solarized-light", "Solarized Light"
     SYNTHWAVE = "synthwave", "Synthwave"
     NEWSPRINT = "newsprint", "Newsprint (sepia)"
+
+
+class EinkChoices(models.TextChoices):
+    """E-ink display mode — applied via [data-eink] on <html>.
+
+    Layers on top of whichever color theme is active: it flattens shadows,
+    disables animations (which ghost on electronic paper), and forces a
+    high-contrast monochrome palette. "Auto" only kicks in on displays that
+    report `update: slow` or `monochrome` (e-readers, Boox/reMarkable, etc.)
+    via the CSS media query in themes.css, so it is a safe default for
+    everyone else.
+    """
+
+    OFF = "off", "Off"
+    AUTO = "auto", "Auto (detect e-ink screens)"
+    ON = "on", "Always on"
 
 
 class DensityChoices(models.TextChoices):
@@ -518,6 +538,13 @@ class User(AbstractUser):
         default=FontChoices.SYSTEM,
         choices=FontChoices,
         help_text="Font family used throughout the web UI.",
+    )
+
+    eink_mode = models.CharField(
+        max_length=8,
+        default=EinkChoices.AUTO,
+        choices=EinkChoices,
+        help_text="High-contrast e-ink display mode (layers on top of theme).",
     )
 
     last_seen_version = models.CharField(

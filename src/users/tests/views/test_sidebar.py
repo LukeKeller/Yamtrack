@@ -164,3 +164,74 @@ class SidebarViewTests(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertIn("view-only for demo accounts", str(messages[0]))
+
+    def test_eink_mode_default_is_auto(self):
+        """New users default to auto e-ink detection."""
+        self.assertEqual(self.user.eink_mode, "auto")
+
+    def test_preferences_exposes_appearance_choices(self):
+        """Theme/font/eink choices are available to the preferences template."""
+        response = self.client.get(reverse("preferences"))
+        self.assertIn("theme_choices", response.context)
+        self.assertIn("eink_choices", response.context)
+        theme_values = [value for value, _ in response.context["theme_choices"]]
+        self.assertIn("one-dark", theme_values)
+        self.assertIn("kanagawa", theme_values)
+
+    def test_preferences_post_persists_eink_mode(self):
+        """E-ink mode saves through the preferences form."""
+        response = self.client.post(
+            reverse("preferences"),
+            {
+                "eink_mode": "on",
+                "media_types_checkboxes": [MediaTypes.TV.value],
+            },
+        )
+        self.assertRedirects(response, reverse("preferences"))
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.eink_mode, "on")
+
+    def test_preferences_post_rejects_invalid_eink_mode(self):
+        """An out-of-range e-ink value is ignored, keeping the prior choice."""
+        self.user.eink_mode = "on"
+        self.user.save()
+        self.client.post(
+            reverse("preferences"),
+            {
+                "eink_mode": "bogus",
+                "media_types_checkboxes": [MediaTypes.TV.value],
+            },
+        )
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.eink_mode, "on")
+
+    def test_set_eink_mode_endpoint_persists(self):
+        """The header quick-toggle endpoint saves a valid mode and 204s."""
+        response = self.client.post(reverse("set_eink_mode"), {"eink_mode": "on"})
+        self.assertEqual(response.status_code, 204)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.eink_mode, "on")
+
+    def test_set_eink_mode_endpoint_ignores_invalid(self):
+        """An invalid mode leaves the stored value untouched."""
+        self.user.eink_mode = "off"
+        self.user.save()
+        response = self.client.post(reverse("set_eink_mode"), {"eink_mode": "nope"})
+        self.assertEqual(response.status_code, 204)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.eink_mode, "off")
+
+    def test_set_eink_mode_endpoint_rejects_get(self):
+        """The quick-toggle endpoint is POST-only."""
+        response = self.client.get(reverse("set_eink_mode"))
+        self.assertEqual(response.status_code, 405)
+
+    def test_set_eink_mode_endpoint_demo_user_noop(self):
+        """Demo users can't change the e-ink mode."""
+        self.user.is_demo = True
+        self.user.eink_mode = "off"
+        self.user.save()
+        response = self.client.post(reverse("set_eink_mode"), {"eink_mode": "on"})
+        self.assertEqual(response.status_code, 204)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.eink_mode, "off")

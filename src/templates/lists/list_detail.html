@@ -64,7 +64,7 @@
       <div class="relative flex-1">
         <input id="search-input"
                placeholder="Search in collection..."
-               class="w-full py-2 pl-10 pr-4 bg-surface-2 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[#4a9eff] appearance-none"
+               class="w-full py-2 pl-10 pr-4 bg-surface-2 rounded-md text-fg focus:outline-none focus:ring-2 focus:ring-accent appearance-none"
                type="text"
                x-model="query"
                autocomplete="off"
@@ -76,7 +76,7 @@
         {% include "app/icons/magnifying-glass.svg" with classes="absolute left-3 top-1/2 transform -translate-y-1/2 text-fg-muted w-5 h-5" %}
         <div id="search-indicator"
              class="htmx-indicator absolute right-3 top-1/2 transform -translate-y-1/2">
-          <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500"></div>
+          <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-accent-strong"></div>
         </div>
       </div>
 
@@ -113,7 +113,7 @@
             </svg>
           </button>
 
-          <div class="absolute right-0 mt-2 py-1 w-48 bg-surface-2 rounded-md shadow-lg overflow-hidden z-10 border border-gray-700"
+          <div class="absolute right-0 mt-2 py-1 w-48 bg-surface-2 rounded-md shadow-lg overflow-hidden z-10 border border-default"
                x-cloak
                x-show="open"
                @click.outside="open = false"
@@ -129,7 +129,7 @@
                       hx-include="#filter-form"
                       hx-indicator="#loading-indicator"
                       class="block w-full px-4 py-2 text-left text-sm transition-colors cursor-pointer"
-                      :class="status === '{{ value }}' ? 'bg-indigo-600 text-white font-medium' : 'text-fg hover:bg-surface-3 hover:text-white'"
+                      :class="status === '{{ value }}' ? 'bg-accent-strong text-white font-medium' : 'text-fg hover:bg-surface-3 hover:text-white'"
                       @click="status = '{{ value }}'; open = false"
                       type="button">{{ label }}</button>
             {% endfor %}
@@ -146,7 +146,7 @@
             {% include "app/icons/chevron-down.svg" with classes="w-4 h-4" %}
           </button>
 
-          <div class="absolute right-0 mt-2 py-1 w-48 bg-surface-2 rounded-md shadow-lg overflow-hidden z-10 border border-gray-700"
+          <div class="absolute right-0 mt-2 py-1 w-48 bg-surface-2 rounded-md shadow-lg overflow-hidden z-10 border border-default"
                x-cloak
                x-show="open"
                @click.outside="open = false"
@@ -161,7 +161,7 @@
                     hx-include="#filter-form"
                     hx-indicator="#loading-indicator"
                     class="block w-full px-4 py-2 text-left text-sm transition-colors cursor-pointer"
-                    :class="type === 'all' ? 'bg-indigo-600 text-white font-medium' : 'text-fg hover:bg-surface-3 hover:text-white'"
+                    :class="type === 'all' ? 'bg-accent-strong text-white font-medium' : 'text-fg hover:bg-surface-3 hover:text-white'"
                     @click="type = 'all'; open = false"
                     type="button">All</button>
             {% for media_type in media_types %}
@@ -170,7 +170,7 @@
                       hx-include="#filter-form"
                       hx-indicator="#loading-indicator"
                       class="block w-full px-4 py-2 text-left text-sm transition-colors cursor-pointer"
-                      :class="type === '{{ media_type }}' ? 'bg-indigo-600 text-white font-medium' : 'text-fg hover:bg-surface-3 hover:text-white'"
+                      :class="type === '{{ media_type }}' ? 'bg-accent-strong text-white font-medium' : 'text-fg hover:bg-surface-3 hover:text-white'"
                       @click="type = '{{ media_type }}'; open = false"
                       type="button">{{ media_type|media_type_readable_plural }}</button>
             {% endfor %}
@@ -188,7 +188,7 @@
             {% include "app/icons/chevron-down.svg" with classes="w-4 h-4" %}
           </button>
 
-          <div class="absolute right-0 mt-2 py-1 w-48 bg-surface-2 rounded-md shadow-lg overflow-hidden z-10 border border-gray-700"
+          <div class="absolute right-0 mt-2 py-1 w-48 bg-surface-2 rounded-md shadow-lg overflow-hidden z-10 border border-default"
                x-cloak
                x-show="open"
                @click.outside="open = false"
@@ -204,7 +204,7 @@
                       hx-include="#filter-form"
                       hx-indicator="#loading-indicator"
                       class="block w-full px-4 py-2 text-left text-sm transition-colors cursor-pointer"
-                      :class="sort === '{{ value }}' ? 'bg-indigo-600 text-white font-medium' : 'text-fg hover:bg-surface-3 hover:text-white'"
+                      :class="sort === '{{ value }}' ? 'bg-accent-strong text-white font-medium' : 'text-fg hover:bg-surface-3 hover:text-white'"
                       @click="sort = '{{ value }}'; open = false"
                       type="button">{{ label }}</button>
             {% endfor %}
@@ -224,7 +224,7 @@
           <p class="text-fg-muted mb-6">Start adding your favorite media to build your collection</p>
           <div class="pt-4">
             <a href="{{ 'tv'|sample_search }}"
-               class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">Browse Media</a>
+               class="px-4 py-2 bg-accent-strong text-white rounded-md hover:bg-accent-hover transition-colors">Browse Media</a>
           </div>
         </div>
       </div>
@@ -232,7 +232,7 @@
 
     <div id="loading-indicator" class="htmx-indicator text-center pt-8">
       <div class="inline-flex justify-center items-center">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-strong"></div>
       </div>
     </div>
   </div>

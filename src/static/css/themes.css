@@ -225,6 +225,98 @@ html[data-theme="monokai-pro"] {
 html[data-theme="monokai-pro"] { background-color: #2d2a2e; }
 
 /* =========================================================================
+ * One Dark (Atom)
+ * https://github.com/atom/atom/tree/master/packages/one-dark-ui
+ * ========================================================================= */
+
+html[data-theme="one-dark"] {
+  --color-canvas:    #282c34;
+  --color-surface-0: #21252b;
+  --color-surface-1: #2c313a;
+  --color-surface-2: #353b45;
+  --color-surface-3: #3e4451;
+  --color-surface-4: #4b5263;
+  --color-fg:        #d7dae0;
+  --color-fg-muted:  #abb2bf;
+  --color-fg-faint:  #828997;
+  --color-accent:        #61afef;
+  --color-accent-strong: #4d9de6;
+  --color-accent-hover:  #3b8ad9;
+  --color-accent-soft:   rgb(97 175 239 / 0.16);
+}
+
+html[data-theme="one-dark"] { background-color: #282c34; }
+
+/* =========================================================================
+ * Everforest (dark, medium)
+ * https://github.com/sainnhe/everforest
+ * ========================================================================= */
+
+html[data-theme="everforest"] {
+  --color-canvas:    #2d353b;
+  --color-surface-0: #272e33;
+  --color-surface-1: #343f44;
+  --color-surface-2: #3d484d;
+  --color-surface-3: #475258;
+  --color-surface-4: #56635f;
+  --color-fg:        #d3c6aa;
+  --color-fg-muted:  #a6b0a0;
+  --color-fg-faint:  #859289;
+  --color-accent:        #a7c080;
+  --color-accent-strong: #8fb573;
+  --color-accent-hover:  #7a9c61;
+  --color-accent-soft:   rgb(167 192 128 / 0.18);
+}
+
+html[data-theme="everforest"] { background-color: #2d353b; }
+
+/* =========================================================================
+ * Ayu Mirage
+ * https://github.com/ayu-theme/ayu-colors
+ * ========================================================================= */
+
+html[data-theme="ayu-mirage"] {
+  --color-canvas:    #1f2430;
+  --color-surface-0: #191e2a;
+  --color-surface-1: #232834;
+  --color-surface-2: #2d3441;
+  --color-surface-3: #343f4c;
+  --color-surface-4: #3e4b59;
+  --color-fg:        #cccac2;
+  --color-fg-muted:  #a8acb3;
+  --color-fg-faint:  #7e848f;
+  --color-accent:        #ffcc66;
+  --color-accent-strong: #f4b942;
+  --color-accent-hover:  #e0a32e;
+  --color-accent-soft:   rgb(255 204 102 / 0.18);
+}
+
+html[data-theme="ayu-mirage"] { background-color: #1f2430; }
+
+/* =========================================================================
+ * Kanagawa (wave)
+ * https://github.com/rebelot/kanagawa.nvim
+ * ========================================================================= */
+
+html[data-theme="kanagawa"] {
+  --color-canvas:    #1f1f28;
+  --color-surface-0: #16161d;
+  --color-surface-1: #2a2a37;
+  --color-surface-2: #363646;
+  --color-surface-3: #44445a;
+  --color-surface-4: #54546d;
+  --color-fg:        #dcd7ba;
+  --color-fg-muted:  #c8c093;
+  --color-fg-faint:  #938f7d;
+  --color-accent:        #7e9cd8;
+  --color-accent-strong: #6a89c9;
+  --color-accent-hover:  #5874b3;
+  --color-accent-soft:   rgb(126 156 216 / 0.18);
+}
+
+html[data-theme="kanagawa"] { background-color: #1f1f28; }
+
+/* =========================================================================
  * Solarized Dark
  * https://ethanschoonover.com/solarized/
  * ========================================================================= */
@@ -398,4 +490,125 @@ html[data-font="typewriter"] {
   font-family: "Courier Prime", "Courier New", "Lucida Typewriter",
                "Nimbus Mono PS", Courier, monospace;
   letter-spacing: 0.01em;
+}
+
+/* =========================================================================
+ * E-INK MODE
+ *
+ * Driven by [data-eink] on <html> (off / auto / on), independent of the
+ * color theme. It layers a high-contrast monochrome paper palette on top of
+ * whatever theme is set, flattens shadows, and neutralizes motion (which
+ * ghosts badly on electronic paper).
+ *
+ *   - data-eink="on"   → always applied.
+ *   - data-eink="auto" → applied only on displays that report `update: slow`
+ *                        (e-readers paint slowly) or `monochrome`. This is
+ *                        the default, so e-ink hardware gets it out of the
+ *                        box while normal screens are untouched.
+ *   - data-eink="off"  → never applied.
+ *
+ * Two gates are needed because a media query can't be mixed into a normal
+ * selector list, so the palette + flattening rules are duplicated for the
+ * "on" and "auto" entry points. KEEP THE TWO BLOCKS IN SYNC. The shared
+ * declarations are factored into the helper rules below, which target a
+ * common ancestor selector so only the *gates* differ.
+ * ========================================================================= */
+
+/* --- Palette + token overrides (gate: always-on) --- */
+html[data-eink="on"] {
+  color-scheme: light;
+  --color-canvas:    #ffffff;
+  --color-surface-0: #ffffff;
+  --color-surface-1: #ffffff;
+  --color-surface-2: #f4f4f4;
+  --color-surface-3: #e8e8e8;
+  --color-surface-4: #dadada;
+  --color-fg:          #000000;
+  --color-fg-muted:    #1c1c1c;
+  --color-fg-faint:    #404040;
+  --color-fg-disabled: #767676;
+  --color-accent:        #000000;
+  --color-accent-strong: #000000;
+  --color-accent-hover:  #1c1c1c;
+  --color-accent-soft:   rgb(0 0 0 / 0.08);
+  --color-border-subtle:  rgb(0 0 0 / 0.25);
+  --color-border-default: rgb(0 0 0 / 0.45);
+  --color-border-strong:  rgb(0 0 0 / 0.70);
+  --color-status-completed: #000000;   --color-status-completed-soft: rgb(0 0 0 / 0.08);
+  --color-status-in-progress: #000000; --color-status-in-progress-soft: rgb(0 0 0 / 0.08);
+  --color-status-planning: #000000;    --color-status-planning-soft: rgb(0 0 0 / 0.08);
+  --color-status-paused: #000000;      --color-status-paused-soft: rgb(0 0 0 / 0.08);
+  --color-status-dropped: #000000;     --color-status-dropped-soft: rgb(0 0 0 / 0.08);
+  --color-success: #000000; --color-success-soft: rgb(0 0 0 / 0.08);
+  --color-warning: #000000; --color-warning-soft: rgb(0 0 0 / 0.08);
+  --color-danger:  #000000; --color-danger-soft:  rgb(0 0 0 / 0.08);
+  --color-info:    #000000; --color-info-soft:    rgb(0 0 0 / 0.08);
+  --color-type-tv: #000; --color-type-movie: #000; --color-type-anime: #000;
+  --color-type-manga: #000; --color-type-game: #000; --color-type-book: #000;
+  --color-type-comic: #000; --color-type-boardgame: #000; --color-type-record: #000;
+  --shadow-card: none; --shadow-elev-1: none; --shadow-elev-2: none;
+  background-color: #ffffff;
+}
+
+/* --- Palette + token overrides (gate: auto + e-ink media features) --- */
+@media (update: slow), (monochrome) {
+  html[data-eink="auto"] {
+    color-scheme: light;
+    --color-canvas:    #ffffff;
+    --color-surface-0: #ffffff;
+    --color-surface-1: #ffffff;
+    --color-surface-2: #f4f4f4;
+    --color-surface-3: #e8e8e8;
+    --color-surface-4: #dadada;
+    --color-fg:          #000000;
+    --color-fg-muted:    #1c1c1c;
+    --color-fg-faint:    #404040;
+    --color-fg-disabled: #767676;
+    --color-accent:        #000000;
+    --color-accent-strong: #000000;
+    --color-accent-hover:  #1c1c1c;
+    --color-accent-soft:   rgb(0 0 0 / 0.08);
+    --color-border-subtle:  rgb(0 0 0 / 0.25);
+    --color-border-default: rgb(0 0 0 / 0.45);
+    --color-border-strong:  rgb(0 0 0 / 0.70);
+    --color-status-completed: #000000;   --color-status-completed-soft: rgb(0 0 0 / 0.08);
+    --color-status-in-progress: #000000; --color-status-in-progress-soft: rgb(0 0 0 / 0.08);
+    --color-status-planning: #000000;    --color-status-planning-soft: rgb(0 0 0 / 0.08);
+    --color-status-paused: #000000;      --color-status-paused-soft: rgb(0 0 0 / 0.08);
+    --color-status-dropped: #000000;     --color-status-dropped-soft: rgb(0 0 0 / 0.08);
+    --color-success: #000000; --color-success-soft: rgb(0 0 0 / 0.08);
+    --color-warning: #000000; --color-warning-soft: rgb(0 0 0 / 0.08);
+    --color-danger:  #000000; --color-danger-soft:  rgb(0 0 0 / 0.08);
+    --color-info:    #000000; --color-info-soft:    rgb(0 0 0 / 0.08);
+    --color-type-tv: #000; --color-type-movie: #000; --color-type-anime: #000;
+    --color-type-manga: #000; --color-type-game: #000; --color-type-book: #000;
+    --color-type-comic: #000; --color-type-boardgame: #000; --color-type-record: #000;
+    --shadow-card: none; --shadow-elev-1: none; --shadow-elev-2: none;
+    background-color: #ffffff;
+  }
+}
+
+/* --- Flattening: kill motion + glass blur on e-ink (ghosting is severe).
+ * Box-shadows are already neutralized via the --shadow-* vars above; we
+ * deliberately keep `ring`/focus shadows so keyboard focus stays visible. */
+html[data-eink="on"] *,
+html[data-eink="on"] *::before,
+html[data-eink="on"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+@media (update: slow), (monochrome) {
+  html[data-eink="auto"] *,
+  html[data-eink="auto"] *::before,
+  html[data-eink="auto"] *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
 }

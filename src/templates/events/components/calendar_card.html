@@ -33,12 +33,12 @@
       </form>
 
       <div class="bg-surface-2 rounded-md p-1 space-x-0.5 hidden sm:flex">
-        <a class="p-2 rounded-md transition-colors cursor-pointer {% if view_type == 'grid' %}bg-indigo-600 text-white{% else %}hover:bg-surface-3{% endif %}"
+        <a class="p-2 rounded-md transition-colors cursor-pointer {% if view_type == 'grid' %}bg-accent-strong text-fg{% else %}hover:bg-surface-3{% endif %}"
            aria-label="Grid view"
            href="{% url 'calendar' %}?month={{ month }}&year={{ year }}&view=grid">
           {% include "app/icons/grid.svg" with classes="w-4 h-4" %}
         </a>
-        <a class="p-2 rounded-md transition-colors cursor-pointer {% if view_type == 'list' %}bg-indigo-600 text-white{% else %}hover:bg-surface-3{% endif %}"
+        <a class="p-2 rounded-md transition-colors cursor-pointer {% if view_type == 'list' %}bg-accent-strong text-fg{% else %}hover:bg-surface-3{% endif %}"
            aria-label="List view"
            href="{% url 'calendar' %}?month={{ month }}&year={{ year }}&view=list">
           {% include "app/icons/list.svg" with classes="w-4 h-4" %}
