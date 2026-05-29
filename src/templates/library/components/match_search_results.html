@@ -1,0 +1,51 @@
+{% comment %}
+  Provider-search results for the manual book matcher (HTMX target).
+
+  Each result is its own POST form to ``library_match_apply`` — choosing
+  one get-or-creates the provider Item and stamps the file MATCHED.
+
+  Context:
+    library_file   — the file being matched
+    results        — [{source, media_id, title, author, image}, ...]
+    query          — the search string (for the empty state)
+    hidden_fields  — extra hidden inputs (e.g. {"next": "..."})
+{% endcomment %}
+{% if results %}
+  <div class="bg-surface-2 rounded-md divide-y divide-surface-1 max-h-72 overflow-y-auto">
+    {% for r in results %}
+      <form method="post"
+            action="{% url 'library_match_apply' pk=library_file.pk %}"
+            class="flex items-center gap-3 p-2">
+        {% csrf_token %}
+        <input type="hidden" name="source" value="{{ r.source }}">
+        <input type="hidden" name="media_id" value="{{ r.media_id }}">
+        <input type="hidden" name="title" value="{{ r.title }}">
+        <input type="hidden" name="image" value="{{ r.image }}">
+        {% if hidden_fields %}
+          {% for name, value in hidden_fields.items %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
+        {% endif %}
+        {% if r.image %}
+          <img src="{{ r.image }}"
+               alt=""
+               class="shrink-0 w-8 h-12 object-cover rounded-sm bg-surface-1"
+               loading="lazy">
+        {% else %}
+          <div class="shrink-0 w-8 h-12 rounded-sm bg-surface-1"></div>
+        {% endif %}
+        <div class="min-w-0 flex-1">
+          <div class="text-sm text-fg truncate">{{ r.title }}</div>
+          <div class="text-xs text-fg-muted truncate">
+            {% if r.author %}{{ r.author }} ·{% endif %}
+            {{ r.source|capfirst }}
+          </div>
+        </div>
+        <button type="submit"
+                class="shrink-0 px-3 py-1.5 bg-accent-strong text-white rounded-md hover:bg-accent-hover transition-colors text-sm cursor-pointer">
+          Match
+        </button>
+      </form>
+    {% endfor %}
+  </div>
+{% elif query %}
+  <div class="bg-surface-2 rounded-md p-3 text-sm text-fg-muted text-center">No book results for "{{ query }}".</div>
+{% endif %}

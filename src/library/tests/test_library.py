@@ -46,6 +46,7 @@ from library.helpers import (
     compute_koreader_filename_md5,
     find_matching_book,
 )
+from library.matching import provider_search
 from library.models import LibraryFile
 from library.views import _library_reading_history
 
@@ -683,3 +684,192 @@ class LibraryDetailTests(TestCase):
         self.assertEqual(summary["session_count"], 2)
         self.assertEqual(summary["current_percentage"], 50.0)
         self.assertEqual(summary["latest_mapping"], mapping)
+
+
+class ProviderSearchTests(TestCase):
+    """library.matching.provider_search — provider preference + safety."""
+
+    def setUp(self):
+        self.user = _make_user()
+
+    def test_short_query_returns_empty(self):
+        self.assertEqual(provider_search(self.user, "a"), [])
+
+    @patch("library.matching._hardcover_token", return_value=None)
+    @patch("library.matching.openlibrary.search")
+    def test_openlibrary_used_without_token(self, mock_search, _mock_token):
+        mock_search.return_value = {
+            "results": [
+                {"media_id": "OL1M", "title": "Dune", "image": "http://img"},
+            ],
+        }
+        results = provider_search(self.user, "Dune")
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0]["source"], Sources.OPENLIBRARY.value)
+        self.assertEqual(results[0]["media_id"], "OL1M")
+        self.assertEqual(results[0]["image"], "http://img")
+
+    @patch("library.matching._hardcover_token", return_value="tok")
+    @patch("integrations.hardcover_client.search_book")
+    def test_hardcover_used_with_token(self, mock_search, _mock_token):
+        mock_search.return_value = [
+            {
+                "document": {
+                    "id": 42,
+                    "title": "Dune",
+                    "author_names": ["Frank Herbert"],
+                    "image": {"url": "http://h"},
+                },
+            },
+        ]
+        results = provider_search(self.user, "Dune")
+        self.assertEqual(results[0]["source"], Sources.HARDCOVER.value)
+        self.assertEqual(results[0]["media_id"], "42")
+        self.assertEqual(results[0]["author"], "Frank Herbert")
+        self.assertEqual(results[0]["image"], "http://h")
+
+    @patch("library.matching._hardcover_token", return_value=None)
+    @patch("library.matching.openlibrary.search", side_effect=RuntimeError("boom"))
+    def test_provider_error_returns_empty(self, _mock_search, _mock_token):
+        # A provider blowing up must never bubble into the picker view.
+        self.assertEqual(provider_search(self.user, "Dune"), [])
+
+
+@override_settings(MEDIA_ROOT="library_test_media")
+class ProviderMatchViewTests(TestCase):
+    """The provider-search match endpoints (Phase 3)."""
+
+    def setUp(self):
+        self.user = _make_user()
+        self.client.force_login(self.user)
+        self.lf = LibraryFile.objects.create(
+            user=self.user,
+            canonical_filename="Dune.epub",
+            koreader_filename_md5=_md5("Dune.epub"),
+            title="Dune",
+            size_bytes=1,
+        )
+
+    @patch("library.views.matching.provider_search")
+    def test_search_renders_results_partial(self, mock_search):
+        mock_search.return_value = [
+            {
+                "source": Sources.OPENLIBRARY.value,
+                "media_id": "OL1M",
+                "title": "Dune",
+                "author": "",
+                "image": "",
+            },
+        ]
+        response = self.client.get(
+            reverse("library_match_search", args=[self.lf.pk]),
+            {"q": "Dune"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Dune")
+        self.assertContains(response, "Match")
+
+    def test_apply_binds_file_to_provider_work(self):
+        response = self.client.post(
+            reverse("library_match_apply", args=[self.lf.pk]),
+            {
+                "source": Sources.OPENLIBRARY.value,
+                "media_id": "OL9M",
+                "title": "Dune",
+                "image": "",
+            },
+            follow=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.lf.refresh_from_db()
+        self.assertEqual(self.lf.match_status, LibraryFile.MatchStatus.MATCHED)
+        self.assertEqual(self.lf.match_method, LibraryFile.MatchMethod.MANUAL)
+        self.assertIsNotNone(self.lf.item)
+        self.assertEqual(self.lf.item.media_id, "OL9M")
+        self.assertEqual(self.lf.item.source, Sources.OPENLIBRARY.value)
+
+    def test_apply_rejects_non_book_source(self):
+        self.client.post(
+            reverse("library_match_apply", args=[self.lf.pk]),
+            {"source": "tmdb", "media_id": "1", "title": "x"},
+        )
+        self.lf.refresh_from_db()
+        self.assertEqual(self.lf.match_status, LibraryFile.MatchStatus.UNRESOLVED)
+        self.assertIsNone(self.lf.item)
+
+    def test_apply_honours_next_redirect(self):
+        response = self.client.post(
+            reverse("library_match_apply", args=[self.lf.pk]),
+            {
+                "source": Sources.OPENLIBRARY.value,
+                "media_id": "OL1M",
+                "title": "Dune",
+                "next": "/reading/unmatched?source=library",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "/reading/unmatched?source=library")
+
+    def test_other_users_file_is_404(self):
+        self.client.force_login(_make_user("intruder"))
+        response = self.client.post(
+            reverse("library_match_apply", args=[self.lf.pk]),
+            {"source": Sources.OPENLIBRARY.value, "media_id": "OL1M", "title": "x"},
+        )
+        self.assertEqual(response.status_code, 404)
+
+
+@override_settings(MEDIA_ROOT="library_test_media")
+class InboxProviderSemanticsTests(TestCase):
+    """The /reading/unmatched inbox is keyed on provider-match status."""
+
+    def setUp(self):
+        self.user = _make_user()
+        self.client.force_login(self.user)
+
+    def _file(self, name, status, *, item=None):
+        return LibraryFile.objects.create(
+            user=self.user,
+            canonical_filename=name,
+            koreader_filename_md5=_md5(name),
+            title=name,
+            size_bytes=1,
+            item=item,
+            match_status=status,
+        )
+
+    def test_inbox_shows_unresolved_and_no_match_but_not_matched(self):
+        self._file("Unresolved.epub", LibraryFile.MatchStatus.UNRESOLVED)
+        self._file("NoMatch.epub", LibraryFile.MatchStatus.NO_MATCH)
+        matched_item = _make_book_item(title="Matched", media_id="OLM")
+        self._file(
+            "Matched.epub",
+            LibraryFile.MatchStatus.MATCHED,
+            item=matched_item,
+        )
+
+        response = self.client.get(reverse("reading_unmatched"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Unresolved.epub")
+        self.assertContains(response, "NoMatch.epub")
+        self.assertNotContains(response, "Matched.epub")
+        # Two library files sit in the inbox; the matched one drops out.
+        self.assertEqual(response.context["library_total"], 2)
+
+    def test_library_index_counts_and_renders(self):
+        self._file("Unresolved.epub", LibraryFile.MatchStatus.UNRESOLVED)
+        matched_item = _make_book_item(title="Matched", media_id="OLM")
+        self._file(
+            "Matched.epub",
+            LibraryFile.MatchStatus.MATCHED,
+            item=matched_item,
+        )
+        response = self.client.get(reverse("library_index"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["total_count"], 2)
+        self.assertEqual(response.context["matched_count"], 1)
+        self.assertEqual(response.context["unmatched_count"], 1)
+        # Matched filter shows only the matched file.
+        matched_only = self.client.get(reverse("library_index"), {"filter": "matched"})
+        self.assertContains(matched_only, "Matched.epub")
+        self.assertNotContains(matched_only, "Unresolved.epub")

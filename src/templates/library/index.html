@@ -51,7 +51,9 @@
         Unmatched <span class="text-fg-faint">({{ unmatched_count }})</span>
       </a>
       <a href="?filter=matched"
-         class="{% if filter_mode == 'matched' %}{{ active }}{% else %}{{ idle }}{% endif %}">Matched</a>
+         class="{% if filter_mode == 'matched' %}{{ active }}{% else %}{{ idle }}{% endif %}">
+        Matched <span class="text-fg-faint">({{ matched_count }})</span>
+      </a>
     {% endwith %}
   </div>
 
@@ -83,68 +85,74 @@
                 {% if lf.language %}<span>· {{ lf.language }}</span>{% endif %}
               </div>
               <div class="text-xs mt-1">
-                {% if lf.item %}
-                  <span class="text-success">Tracked: <a class="hover:underline"
-    href="{% url 'media_details' media_type='book' media_id=lf.item.media_id source=lf.item.source title=lf.item.title %}">{{ lf.item.title }}</a></span>
-                {% else %}
-                  <span class="text-warning">Unmatched</span>
-                {% endif %}
-              </div>
+                {% if lf.is_matched %}
+                <span class="text-success">Matched: <a class="hover:underline"
+    href="{% url 'media_details' media_type='book' media_id=lf.item.media_id source=lf.item.source title=lf.item.title %}">{{ lf.item.title }}</a>
+                <span class="text-fg-faint">· {{ lf.item.get_source_display|default:lf.item.source }}</span></span>
+              {% elif lf.match_status == 'no_match' %}
+                <span class="text-warning">No provider match</span>
+              {% else %}
+                <span class="text-fg-muted">Matching…</span>
+              {% endif %}
             </div>
           </div>
+        </div>
 
-          <div class="border-t border-surface-2 pt-3 space-y-2">
-            <details class="text-xs">
-              <summary class="cursor-pointer text-fg-muted hover:text-fg">Link to a tracked book</summary>
-              {% url 'library_link' pk=lf.pk as library_link_url %}
-              <div class="mt-2">
-                {% include "app/components/match_book_form.html" with form_action=library_link_url book_choices=book_choices selected_id=lf.item_id blank_label="— Unlink —" submit_label="Save" %}
-              </div>
-            </details>
+        <div class="border-t border-surface-2 pt-3 space-y-2">
+          <details class="text-xs">
+            <summary class="cursor-pointer text-fg-muted hover:text-fg">
+              {% if lf.is_matched %}
+                Re-match to a book
+              {% else %}
+                Match to a book
+              {% endif %}
+            </summary>
+            <div class="mt-2">{% include "library/components/provider_match_picker.html" with library_file=lf next_url="" %}</div>
+          </details>
 
-            <details class="text-xs">
-              <summary class="cursor-pointer text-fg-muted hover:text-fg">Rename file</summary>
-              <form method="post"
-                    action="{% url 'library_rename' pk=lf.pk %}"
-                    class="mt-2 flex items-center gap-2">
-                {% csrf_token %}
-                <input name="canonical_filename"
-                       type="text"
-                       value="{{ lf.canonical_filename }}"
-                       class="flex-1 min-w-0 py-1.5 px-2 bg-surface-2 rounded-md text-fg text-sm border-0 focus:ring-1 focus:ring-accent-strong outline-none font-mono">
-                <button type="submit"
-                        class="shrink-0 px-2 py-1 bg-accent-strong text-white rounded-md hover:bg-accent-hover transition-colors cursor-pointer">
-                  Save
-                </button>
-              </form>
-              <p class="text-fg-faint mt-1">
-                Renaming rotates the kosync auto-bind hash. Make sure KOReader hasn't downloaded the file yet — or re-download after renaming.
-              </p>
-            </details>
-
+          <details class="text-xs">
+            <summary class="cursor-pointer text-fg-muted hover:text-fg">Rename file</summary>
             <form method="post"
-                  action="{% url 'library_delete' pk=lf.pk %}"
-                  class="text-right">
+                  action="{% url 'library_rename' pk=lf.pk %}"
+                  class="mt-2 flex items-center gap-2">
               {% csrf_token %}
+              <input name="canonical_filename"
+                     type="text"
+                     value="{{ lf.canonical_filename }}"
+                     class="flex-1 min-w-0 py-1.5 px-2 bg-surface-2 rounded-md text-fg text-sm border-0 focus:ring-1 focus:ring-accent-strong outline-none font-mono">
               <button type="submit"
-                      class="text-xs text-danger hover:text-danger cursor-pointer"
-                      onclick="return confirm('Delete {{ lf.canonical_filename|escapejs }}? This cannot be undone.')">
-                Delete
+                      class="shrink-0 px-2 py-1 bg-accent-strong text-white rounded-md hover:bg-accent-hover transition-colors cursor-pointer">
+                Save
               </button>
             </form>
-          </div>
+            <p class="text-fg-faint mt-1">
+              Renaming rotates the kosync auto-bind hash. Make sure KOReader hasn't downloaded the file yet — or re-download after renaming.
+            </p>
+          </details>
+
+          <form method="post"
+                action="{% url 'library_delete' pk=lf.pk %}"
+                class="text-right">
+            {% csrf_token %}
+            <button type="submit"
+                    class="text-xs text-danger hover:text-danger cursor-pointer"
+                    onclick="return confirm('Delete {{ lf.canonical_filename|escapejs }}? This cannot be undone.')">
+              Delete
+            </button>
+          </form>
         </div>
-      {% endfor %}
-    </div>
-  {% else %}
-    <div class="bg-surface-1 rounded-lg p-8 text-center">
-      <p class="text-fg-muted mb-3">No files yet.</p>
-      <a href="{% url 'library_upload' %}"
-         class="inline-block px-3 py-1.5 bg-accent-strong text-white rounded-md hover:bg-accent-hover transition-colors text-sm cursor-pointer">
-        Upload your first epub
-      </a>
-    </div>
-  {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="bg-surface-1 rounded-lg p-8 text-center">
+    <p class="text-fg-muted mb-3">No files yet.</p>
+    <a href="{% url 'library_upload' %}"
+       class="inline-block px-3 py-1.5 bg-accent-strong text-white rounded-md hover:bg-accent-hover transition-colors text-sm cursor-pointer">
+      Upload your first epub
+    </a>
+  </div>
+{% endif %}
 {% endblock content %}
 
 {% block js %}

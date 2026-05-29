@@ -69,10 +69,14 @@ def reading_index(request):
     book_model = apps.get_model("app", "book")
 
     library_total = LibraryFile.objects.filter(user=request.user).count()
-    library_unmatched = LibraryFile.objects.filter(
-        user=request.user,
-        item__isnull=True,
-    ).count()
+    # "Unmatched" now means "not resolved to a metadata provider" — an
+    # UNRESOLVED upload still in the auto-match queue or one that came
+    # back NO_MATCH. Manually/auto MATCHED files drop out of the inbox.
+    library_unmatched = (
+        LibraryFile.objects.filter(user=request.user)
+        .exclude(match_status=LibraryFile.MatchStatus.MATCHED)
+        .count()
+    )
 
     koreader_unmatched_count = KOReaderBookMapping.objects.filter(
         user=request.user,
@@ -254,10 +258,9 @@ def reading_unmatched(request):
     if source_filter in {"all", "library"}:
         library_rows = [
             {"library_file": lf, "hidden_fields": {"next": next_url}}
-            for lf in LibraryFile.objects.filter(
-                user=request.user,
-                item__isnull=True,
-            ).order_by("-updated_at")
+            for lf in LibraryFile.objects.filter(user=request.user)
+            .exclude(match_status=LibraryFile.MatchStatus.MATCHED)
+            .order_by("-updated_at")
         ]
 
     koreader_rows: list[dict[str, object]] = []
@@ -287,10 +290,9 @@ def reading_unmatched(request):
             "source_filter": source_filter,
             "library_rows": library_rows,
             "koreader_rows": koreader_rows,
-            "library_total": LibraryFile.objects.filter(
-                user=request.user,
-                item__isnull=True,
-            ).count(),
+            "library_total": LibraryFile.objects.filter(user=request.user)
+            .exclude(match_status=LibraryFile.MatchStatus.MATCHED)
+            .count(),
             "koreader_total": KOReaderBookMapping.objects.filter(
                 user=request.user,
                 item__isnull=True,

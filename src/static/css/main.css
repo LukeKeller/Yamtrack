@@ -1396,6 +1396,11 @@
       border-color: var(--color-border-default);
     }
   }
+  .divide-surface-1 {
+    :where(& > :not(:last-child)) {
+      border-color: var(--color-surface-1);
+    }
+  }
   .self-center {
     align-self: center;
   }

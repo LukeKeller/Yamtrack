@@ -14,7 +14,7 @@
   <div class="mb-4">
     <h1 class="text-2xl font-bold mb-1">Unmatched</h1>
     <p class="text-fg-muted">
-      Things that look like they belong to a book but haven't been bound yet — library files awaiting a manual link and KOReader document hashes awaiting their first bind. Pick a book in each row and the sync state catches up immediately.
+      Things that look like they belong to a book but haven't been resolved yet — uploaded files without a metadata-provider match and KOReader document hashes awaiting their first bind. Search for the right book in each row and the sync state catches up immediately.
     </p>
   </div>
 
@@ -65,8 +65,7 @@
               </div>
             </div>
 
-            {% url 'library_link' pk=lf.pk as library_link_url %}
-            {% include "app/components/match_book_form.html" with form_action=library_link_url hidden_fields=row.hidden_fields book_choices=book_choices selected_id=lf.item_id blank_label="Select a book…" submit_label="Link" %}
+            {% include "library/components/provider_match_picker.html" with library_file=lf next_url=row.hidden_fields.next %}
           </div>
         {% endwith %}
       {% endfor %}
@@ -130,11 +129,11 @@
     <div class="bg-surface-1 rounded-lg p-8 text-center">
       <p class="text-fg-muted">
         {% if source_filter == 'library' %}
-          No unmatched library files — every upload is bound to a tracked book.
+          No unmatched library files — every upload is resolved to a metadata provider.
         {% elif source_filter == 'koreader' %}
           No unmatched KOReader documents — every kosync hash is bound to a tracked book.
         {% else %}
-          Nothing waiting — every library file and KOReader document hash is bound to a tracked book.
+          Nothing waiting — every upload is resolved to a provider and every KOReader hash is bound.
         {% endif %}
       </p>
     </div>

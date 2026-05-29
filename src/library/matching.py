@@ -69,13 +69,13 @@ def _normalised_isbn13(library_file):
     return isbn10_to_isbn13(library_file.isbn_10)
 
 
-def _hardcover_token(library_file):
+def _hardcover_token(user):
     """Return a decrypted, usable Hardcover token for the user, or None."""
     from integrations.imports import helpers as import_helpers  # noqa: PLC0415
     from integrations.models import HardcoverIntegration  # noqa: PLC0415
 
     integration = HardcoverIntegration.objects.filter(
-        user=library_file.user,
+        user=user,
         enabled=True,
     ).first()
     if not integration or not integration.api_token:
@@ -86,7 +86,7 @@ def _hardcover_token(library_file):
         # A bad/garbled token must not raise; treat it as "no token".
         logger.exception(
             "Could not decrypt Hardcover token for user %s",
-            library_file.user_id,
+            user.pk,
         )
         return None
     return token or None
@@ -247,6 +247,90 @@ def _bind(library_file, source, media_id, title, image, method):
     )
 
 
+def bind_to_provider(library_file, source, media_id, title, image, method):
+    """Public entry point for binding a file to a hand-picked provider work.
+
+    Wraps the same get-or-create + stamp that the auto-matcher uses, so a
+    manual match from the provider-search picker lands a file in exactly
+    the same MATCHED state as an automatic one (just with a different
+    ``match_method``).
+    """
+    _bind(library_file, source, media_id, title, image, method)
+
+
+# Result cap for the manual provider-search picker -- a short, scannable
+# list, not a full paginated search.
+_SEARCH_RESULT_LIMIT = 8
+
+
+def _search_hardcover(query, token):
+    """Normalise Hardcover search hits to picker result dicts."""
+    from integrations import hardcover_client  # noqa: PLC0415
+
+    results = []
+    for hit in hardcover_client.search_book(query, token)[:_SEARCH_RESULT_LIMIT]:
+        doc = (hit.get("document") or {}) if isinstance(hit, dict) else {}
+        book_id = doc.get("id")
+        if not book_id:
+            continue
+        image = doc.get("image")
+        if isinstance(image, dict):
+            image = image.get("url", "")
+        results.append(
+            {
+                "source": Sources.HARDCOVER.value,
+                "media_id": str(book_id),
+                "title": doc.get("title") or "",
+                "author": ", ".join(doc.get("author_names") or []),
+                "image": image or "",
+            },
+        )
+    return results
+
+
+def _search_openlibrary(query):
+    """Normalise OpenLibrary search results to picker result dicts."""
+    response = openlibrary.search(query, 1)
+    results = []
+    for doc in (response or {}).get("results", [])[:_SEARCH_RESULT_LIMIT]:
+        media_id = doc.get("media_id")
+        if not media_id:
+            continue
+        results.append(
+            {
+                "source": Sources.OPENLIBRARY.value,
+                "media_id": media_id,
+                "title": doc.get("title") or "",
+                "author": "",
+                "image": doc.get("image") or "",
+            },
+        )
+    return results
+
+
+def provider_search(user, query):
+    """Free-text book search for the manual provider-match picker.
+
+    Uses Hardcover when ``user`` has a usable token, else OpenLibrary —
+    the same provider preference as the auto-matcher, so a manual match
+    resolves against the catalogue the user is already syncing with.
+    Returns a list of ``{source, media_id, title, author, image}`` dicts
+    (capped), or ``[]`` for a too-short query or on any provider error —
+    this never raises out to the view.
+    """
+    query = (query or "").strip()
+    if len(query) <= 1:
+        return []
+    token = _hardcover_token(user)
+    try:
+        if token:
+            return _search_hardcover(query, token)
+        return _search_openlibrary(query)
+    except Exception:
+        logger.exception("Provider search failed for query %r", query)
+        return []
+
+
 def resolve_library_file_to_provider(library_file):
     """Resolve ``library_file`` to a provider work; return True on a match.
 
@@ -258,7 +342,7 @@ def resolve_library_file_to_provider(library_file):
     """
     isbn13 = _normalised_isbn13(library_file)
 
-    token = _hardcover_token(library_file)
+    token = _hardcover_token(library_file.user)
     if token:
         try:
             hit = _resolve_hardcover(library_file, isbn13, token)

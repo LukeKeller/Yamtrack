@@ -192,14 +192,29 @@
     {% endif %}
 
     {% comment %}
-      Manual link — bind this file to a tracked book. Available
-      regardless of provider match so the user can always correct it.
+      Provider match — search Hardcover/OpenLibrary and bind this file to
+      the right work. Available regardless of current state so the user
+      can always correct a bad auto-match.
     {% endcomment %}
     <div class="bg-surface-1 rounded-lg p-4 sm:p-6 mb-6">
-      <h2 class="text-lg font-semibold mb-1">Link to a tracked book</h2>
-      <p class="text-fg-muted text-sm mb-3">Bind this file to a book you track so KOReader progress flows onto it.</p>
-      {% url 'library_link' pk=lf.pk as library_link_url %}
-      {% include "app/components/match_book_form.html" with form_action=library_link_url book_choices=book_choices selected_id=lf.item_id blank_label="— Unlink —" submit_label="Save" %}
+      <h2 class="text-lg font-semibold mb-1">
+        {% if lf.is_matched %}
+          Re-match this book
+        {% else %}
+          Match this book
+        {% endif %}
+      </h2>
+      <p class="text-fg-muted text-sm mb-3">
+        Resolve this file to a metadata provider so its details and KOReader progress have a home.
+      </p>
+      {% include "library/components/provider_match_picker.html" with library_file=lf next_url="" %}
+      {% if lf.is_matched %}
+        <form method="post" action="{% url 'library_link' pk=lf.pk %}" class="mt-3">
+          {% csrf_token %}
+          <button type="submit"
+                  class="text-sm text-fg-muted hover:text-fg cursor-pointer">Clear current match</button>
+        </form>
+      {% endif %}
     </div>
 
     {% comment %} Manage: rename + delete. {% endcomment %}

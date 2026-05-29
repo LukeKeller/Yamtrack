@@ -37,6 +37,16 @@ urlpatterns = [
         name="library_detail",
     ),
     path(
+        "library/file/<int:pk>/match/search",
+        library_views.library_match_search,
+        name="library_match_search",
+    ),
+    path(
+        "library/file/<int:pk>/match",
+        library_views.library_match_apply,
+        name="library_match_apply",
+    ),
+    path(
         "library/file/<int:pk>/link",
         library_views.library_link,
         name="library_link",

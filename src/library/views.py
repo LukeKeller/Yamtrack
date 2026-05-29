@@ -31,8 +31,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
+from app.models import Sources
 from app.providers import services
 from app.providers.services import ProviderAPIError
+from library import matching
 from library.forms import LibraryUploadForm
 from library.helpers import (
     canonical_filename_for,
@@ -55,22 +57,18 @@ EPUB_MIME = "application/epub+zip"
 def library_index(request):
     """Grid of the user's uploads with filter chips + per-row actions.
 
-    The "Link to a tracked book" dropdown uses the shared
-    ``ranked_book_choices`` helper so in-progress books float to the top
-    — same ordering as the KOReader unmatched page. Previously this
-    template just sorted alphabetically, which buried the current read
-    behind hundreds of completed ones.
+    Each card's "Match to a book" accordion hosts the provider-search
+    picker (Hardcover/OpenLibrary) so a file resolves to a metadata
+    provider work rather than to a book the user already tracks.
     """
-    from reading.helpers import ranked_book_choices  # noqa: PLC0415
+    matched = LibraryFile.MatchStatus.MATCHED
 
     filter_mode = request.GET.get("filter", "all")
     qs = LibraryFile.objects.filter(user=request.user).select_related("item")
     if filter_mode == "unmatched":
-        qs = qs.filter(item__isnull=True)
+        qs = qs.exclude(match_status=matched)
     elif filter_mode == "matched":
-        qs = qs.filter(item__isnull=False)
-
-    book_choices = ranked_book_choices(request.user)
+        qs = qs.filter(match_status=matched)
 
     return render(
         request,
@@ -79,11 +77,13 @@ def library_index(request):
             "files": list(qs),
             "filter_mode": filter_mode,
             "total_count": LibraryFile.objects.filter(user=request.user).count(),
-            "unmatched_count": LibraryFile.objects.filter(
+            "matched_count": LibraryFile.objects.filter(
                 user=request.user,
-                item__isnull=True,
+                match_status=matched,
             ).count(),
-            "book_choices": book_choices,
+            "unmatched_count": LibraryFile.objects.filter(user=request.user)
+            .exclude(match_status=matched)
+            .count(),
         },
     )
 
@@ -165,8 +165,6 @@ def library_detail(request, pk):
     "track this" CTA pointing at the canonical media details page
     otherwise.
     """
-    from reading.helpers import ranked_book_choices  # noqa: PLC0415
-
     library_file = get_object_or_404(
         LibraryFile.objects.select_related("item"),
         pk=pk,
@@ -206,9 +204,67 @@ def library_detail(request, pk):
             "provider_metadata": provider_metadata,
             "tracked_instance": tracked_instance,
             "reading_history": _library_reading_history(library_file),
-            "book_choices": ranked_book_choices(request.user),
         },
     )
+
+
+@require_GET
+@login_required
+def library_match_search(request, pk):
+    """HTMX: provider book-search results for the manual matcher.
+
+    Returns the results partial for a ``?q=`` query, searching Hardcover
+    (when connected) or OpenLibrary. ``next`` is threaded through so the
+    chosen result's POST lands back on the page the search ran from.
+    """
+    library_file = get_object_or_404(LibraryFile, pk=pk, user=request.user)
+    query = (request.GET.get("q") or "").strip()
+    next_url = (request.GET.get("next") or "").strip()
+    return render(
+        request,
+        "library/components/match_search_results.html",
+        {
+            "library_file": library_file,
+            "results": matching.provider_search(request.user, query),
+            "query": query,
+            "hidden_fields": {"next": next_url} if next_url else {},
+        },
+    )
+
+
+@require_POST
+@login_required
+def library_match_apply(request, pk):
+    """Bind a file to a hand-picked provider work from the search picker.
+
+    Lands the file in the same MATCHED state the auto-matcher produces,
+    with ``match_method=MANUAL``. Redirect honours the opt-in ``next``
+    field so a match from the unified inbox returns there.
+    """
+    library_file = get_object_or_404(LibraryFile, pk=pk, user=request.user)
+    source = (request.POST.get("source") or "").strip()
+    media_id = (request.POST.get("media_id") or "").strip()
+
+    valid_sources = {Sources.HARDCOVER.value, Sources.OPENLIBRARY.value}
+    if source not in valid_sources or not media_id:
+        messages.error(request, "Couldn't match that result — try another.")
+        return _library_post_redirect(request)
+
+    title = (request.POST.get("title") or "").strip()
+    image = (request.POST.get("image") or "").strip()
+    matching.bind_to_provider(
+        library_file,
+        source,
+        media_id,
+        title,
+        image,
+        LibraryFile.MatchMethod.MANUAL,
+    )
+    messages.success(
+        request,
+        f"Matched {library_file.canonical_filename} to {title or media_id}.",
+    )
+    return _library_post_redirect(request)
 
 
 @login_required

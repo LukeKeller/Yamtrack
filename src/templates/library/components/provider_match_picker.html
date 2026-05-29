@@ -1,0 +1,29 @@
+{% comment %}
+  Provider-search book matcher for a library file.
+
+  A live search box (Hardcover/OpenLibrary) whose results each carry a
+  "Match" button that binds the file to that provider work. Replaces the
+  old tracked-books <select> picker — a file now resolves to a metadata
+  provider, not to a book you already track.
+
+  Context:
+    library_file  — the file being matched
+    next_url      — same-host /reading/ path to return to after a match
+                    (optional; "" for the file's own detail page)
+{% endcomment %}
+{% load static %}
+<div>
+  <div class="relative mb-2">
+    <input placeholder="Search Hardcover / OpenLibrary…"
+           class="w-full py-1.5 pr-2 pl-8 bg-surface-2 rounded-md text-fg text-sm border-0 focus:ring-1 focus:ring-accent-strong outline-none"
+           name="q"
+           type="text"
+           autocomplete="off"
+           hx-get="{% url 'library_match_search' pk=library_file.pk %}"
+           hx-trigger="keyup changed delay:350ms"
+           hx-target="#match-results-{{ library_file.pk }}"
+           hx-vals='{"next": "{{ next_url|default:"" }}"}'>
+    {% include "app/icons/magnifying-glass.svg" with classes="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-fg-muted" %}
+  </div>
+  <div id="match-results-{{ library_file.pk }}"></div>
+</div>
