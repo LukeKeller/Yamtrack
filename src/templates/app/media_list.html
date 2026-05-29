@@ -30,7 +30,7 @@
       <button @click="open = !open"
               class="flex items-center justify-between w-full bg-surface-1 hover:bg-surface-3 rounded-lg px-4 py-3 mb-3 transition-colors cursor-pointer">
         <div class="flex items-center gap-2">
-          {% include "app/icons/bars-increasing.svg" with classes="w-5 h-5 text-amber-400" %}
+          {% include "app/icons/bars-increasing.svg" with classes="w-5 h-5 text-warning" %}
           <span class="text-sm font-semibold">Collection Stats</span>
           <span class="text-xs text-fg-muted">{{ record_stats.total }} record{{ record_stats.total|pluralize }}</span>
         </div>
@@ -100,7 +100,7 @@
       <button @click="open = !open"
               class="flex items-center justify-between w-full bg-surface-1 hover:bg-surface-3 rounded-lg px-4 py-3 mb-3 transition-colors cursor-pointer">
         <div class="flex items-center gap-2">
-          {% include "app/icons/bars-increasing.svg" with classes="w-5 h-5 text-amber-400" %}
+          {% include "app/icons/bars-increasing.svg" with classes="w-5 h-5 text-warning" %}
           <span class="text-sm font-semibold">Playtime Stats</span>
           <span class="text-xs text-fg-muted">{{ game_stats.total }} game{{ game_stats.total|pluralize }}</span>
         </div>
@@ -179,10 +179,10 @@
     <div class="flex flex-wrap items-center gap-1.5 mb-4 -mt-1">
       <span class="text-xs text-fg-faint mr-1">Mood:</span>
       <a href="?{% if request.GET.search %}search={{ request.GET.search|urlencode }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}{% if request.GET.sort %}sort={{ request.GET.sort }}&{% endif %}{% if request.GET.layout %}layout={{ request.GET.layout }}{% endif %}"
-         class="px-2.5 py-1 rounded-full text-xs border transition-colors {% if not current_mood %}bg-accent text-white border-accent{% else %}bg-surface-2 text-fg-muted hover:bg-surface-3 border-border-default{% endif %}">All</a>
+         class="px-2.5 py-1 rounded-full text-xs border transition-colors {% if not current_mood %}bg-accent text-fg border-accent{% else %}bg-surface-2 text-fg-muted hover:bg-surface-3 border-border-default{% endif %}">All</a>
       {% for value, label in mood_choices %}
         <a href="?mood={{ value }}{% if request.GET.search %}&search={{ request.GET.search|urlencode }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.layout %}&layout={{ request.GET.layout }}{% endif %}"
-           class="px-2.5 py-1 rounded-full text-xs border transition-colors {% if current_mood == value %}bg-accent text-white border-accent{% else %}bg-surface-2 text-fg-muted hover:bg-surface-3 border-border-default{% endif %}">{{ label }}</a>
+           class="px-2.5 py-1 rounded-full text-xs border transition-colors {% if current_mood == value %}bg-accent text-fg border-accent{% else %}bg-surface-2 text-fg-muted hover:bg-surface-3 border-border-default{% endif %}">{{ label }}</a>
       {% endfor %}
     </div>
 
@@ -294,7 +294,7 @@
             Start tracking your {{ media_type_plural }} to keep a record of what you've {{ media_type|media_past_verb }}.
           </p>
           <a href="{{ media_type|sample_search }}"
-             class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">
+             class="px-4 py-2 bg-accent-strong text-white rounded-md hover:bg-accent-hover transition-colors">
             Browse {{ media_type|media_type_readable_plural }}
           </a>
         </div>
@@ -325,7 +325,7 @@
 
     <div id="loading-indicator" class="htmx-indicator text-center pt-8">
       <div class="inline-flex justify-center items-center">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-accent-strong"></div>
       </div>
     </div>
   </div>

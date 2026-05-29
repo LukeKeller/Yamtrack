@@ -48,6 +48,20 @@
   --color-status-dropped:        #fb7185;
   --color-status-dropped-soft:   rgb(251 113 133 / 0.14);
 
+  /* Feedback — semantic intents for alerts, validation, and destructive
+   * actions. Kept theme-stable (themes.css doesn't override these) so a
+   * "danger" button reads the same regardless of palette. The e-ink block
+   * in themes.css flattens them to grayscale. Generates bg-/text-/border-/
+   * ring-success|warning|danger|info utilities (+ -soft tints). */
+  --color-success:      #34d399;
+  --color-success-soft: rgb(52 211 153 / 0.14);
+  --color-warning:      #fbbf24;
+  --color-warning-soft: rgb(251 191 36 / 0.14);
+  --color-danger:       #f87171;
+  --color-danger-soft:  rgb(248 113 113 / 0.14);
+  --color-info:         #60a5fa;
+  --color-info-soft:    rgb(96 165 250 / 0.14);
+
   /* Media-type accents — decorative, never a fill */
   --color-type-tv:        #38bdf8;
   --color-type-movie:     #818cf8;

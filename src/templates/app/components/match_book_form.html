@@ -33,7 +33,7 @@
   {% endif %}
   <select name="item_id"
           required
-          class="flex-1 min-w-0 py-1.5 pr-8 pl-2 bg-surface-2 rounded-md text-fg text-sm border-0 focus:ring-1 focus:ring-indigo-500 outline-none">
+          class="flex-1 min-w-0 py-1.5 pr-8 pl-2 bg-surface-2 rounded-md text-fg text-sm border-0 focus:ring-1 focus:ring-accent-strong outline-none">
     <option value="">{{ blank_label|default:"Select a book…" }}</option>
     {% for book in book_choices %}
       <option value="{{ book.id }}"
@@ -41,7 +41,7 @@
     {% endfor %}
   </select>
   <button type="submit"
-          class="shrink-0 px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer {{ submit_classes }}">
+          class="shrink-0 px-3 py-1.5 bg-accent-strong text-white rounded-md hover:bg-accent-hover transition-colors text-sm cursor-pointer {{ submit_classes }}">
     {{ submit_label|default:"Link" }}
   </button>
 </form>

@@ -1,7 +1,7 @@
 {% load allauth %}
 
 {% if attrs.form.non_field_errors %}
-  <div class="mb-4 p-3 bg-red-900/60 border border-red-700 rounded-md text-red-200">
+  <div class="mb-4 p-3 bg-danger-soft border border-danger rounded-md text-danger">
     {% for error in attrs.form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
   </div>
 {% endif %}

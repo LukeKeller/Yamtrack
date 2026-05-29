@@ -22,7 +22,7 @@
       </p>
     </div>
     <a href="{% url 'library_upload' %}"
-       class="shrink-0 px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer">
+       class="shrink-0 px-3 py-1.5 bg-accent-strong text-white rounded-md hover:bg-accent-hover transition-colors text-sm cursor-pointer">
       Upload
     </a>
   </div>
@@ -35,13 +35,13 @@
            type="text"
            value="{{ opds_url }}">
     <button type="button"
-            class="flex items-center cursor-pointer group pr-2 text-fg-muted hover:text-indigo-400 transition-colors"
+            class="flex items-center cursor-pointer group pr-2 text-fg-muted hover:text-accent transition-colors"
             title="Copy"
             data-copy-target="#library-opds-url">{% include "app/icons/copy.svg" with classes="w-5 h-5" %}</button>
   </div>
 
   <div class="mb-4 flex flex-wrap gap-2 text-sm">
-    {% with active="px-3 py-1 rounded-md bg-indigo-600 text-white" idle="px-3 py-1 rounded-md bg-surface-1 text-fg-muted hover:text-fg" %}
+    {% with active="px-3 py-1 rounded-md bg-accent-strong text-white" idle="px-3 py-1 rounded-md bg-surface-1 text-fg-muted hover:text-fg" %}
       <a href="?filter=all"
          class="{% if filter_mode == 'all' %}{{ active }}{% else %}{{ idle }}{% endif %}">
         All <span class="text-fg-faint">({{ total_count }})</span>
@@ -79,10 +79,10 @@
               </div>
               <div class="text-xs mt-1">
                 {% if lf.item %}
-                  <span class="text-emerald-300">Tracked: <a class="hover:underline"
+                  <span class="text-success">Tracked: <a class="hover:underline"
     href="{% url 'media_details' media_type='book' media_id=lf.item.media_id source=lf.item.source title=lf.item.title %}">{{ lf.item.title }}</a></span>
                 {% else %}
-                  <span class="text-amber-300">Unmatched</span>
+                  <span class="text-warning">Unmatched</span>
                 {% endif %}
               </div>
             </div>
@@ -106,9 +106,9 @@
                 <input name="canonical_filename"
                        type="text"
                        value="{{ lf.canonical_filename }}"
-                       class="flex-1 min-w-0 py-1.5 px-2 bg-surface-2 rounded-md text-fg text-sm border-0 focus:ring-1 focus:ring-indigo-500 outline-none font-mono">
+                       class="flex-1 min-w-0 py-1.5 px-2 bg-surface-2 rounded-md text-fg text-sm border-0 focus:ring-1 focus:ring-accent-strong outline-none font-mono">
                 <button type="submit"
-                        class="shrink-0 px-2 py-1 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors cursor-pointer">
+                        class="shrink-0 px-2 py-1 bg-accent-strong text-white rounded-md hover:bg-accent-hover transition-colors cursor-pointer">
                   Save
                 </button>
               </form>
@@ -122,7 +122,7 @@
                   class="text-right">
               {% csrf_token %}
               <button type="submit"
-                      class="text-xs text-red-400 hover:text-red-300 cursor-pointer"
+                      class="text-xs text-danger hover:text-danger cursor-pointer"
                       onclick="return confirm('Delete {{ lf.canonical_filename|escapejs }}? This cannot be undone.')">
                 Delete
               </button>
@@ -135,7 +135,7 @@
     <div class="bg-surface-1 rounded-lg p-8 text-center">
       <p class="text-fg-muted mb-3">No files yet.</p>
       <a href="{% url 'library_upload' %}"
-         class="inline-block px-3 py-1.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer">
+         class="inline-block px-3 py-1.5 bg-accent-strong text-white rounded-md hover:bg-accent-hover transition-colors text-sm cursor-pointer">
         Upload your first epub
       </a>
     </div>

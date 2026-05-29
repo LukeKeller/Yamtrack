@@ -11,7 +11,7 @@
 
     <div class="bg-surface-1 rounded-lg p-6">
       <div class="flex items-center mb-4">
-        {% include "app/icons/bell.svg" with classes="w-6 h-6 text-indigo-400 mr-3" %}
+        {% include "app/icons/bell.svg" with classes="w-6 h-6 text-accent mr-3" %}
         <h2 class="text-xl font-semibold">Notifications</h2>
       </div>
 
@@ -35,11 +35,11 @@
               <a href="https://github.com/caronc/apprise"
                  target="_blank"
                  rel="noopener noreferrer"
-                 class="text-indigo-400 hover:underline">Apprise</a> is a notification service that supports
+                 class="text-accent hover:underline">Apprise</a> is a notification service that supports
               <a href="https://github.com/caronc/apprise/wiki"
                  target="_blank"
                  rel="noopener noreferrer"
-                 class="text-indigo-400 hover:underline">many platforms</a> including:
+                 class="text-accent hover:underline">many platforms</a> including:
             </p>
             <ul class="list-disc pl-5 space-y-1 text-fg-muted">
               <li>Discord</li>
@@ -55,7 +55,7 @@
             </p>
           </div>
 
-          {{ form.notification_urls|add_class:"w-full p-3 bg-surface-2 rounded-md text-white text-sm border border-gray-600 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 min-h-[150px]" }}
+          {{ form.notification_urls|add_class:"w-full p-3 bg-surface-2 rounded-md text-white text-sm border border-strong focus:border-accent-strong focus:ring focus:ring-accent focus:ring-opacity-50 min-h-[150px]" }}
           <p class="mt-1 text-xs text-fg-muted">
             Enter each Apprise URL on a separate line to send notifications to multiple services.
           </p>
@@ -70,7 +70,7 @@
               <div>
                 <label for="id_daily_digest_enabled"
                        class="text-sm font-medium text-fg flex items-center">
-                  {% include "app/icons/alarm-clock.svg" with classes="w-4 h-4 mr-2 text-indigo-400" %}
+                  {% include "app/icons/alarm-clock.svg" with classes="w-4 h-4 mr-2 text-accent" %}
                   Enable Daily Digest
                 </label>
                 <p class="text-xs text-fg-muted mt-1 ml-6">
@@ -83,16 +83,16 @@
                        name="daily_digest_enabled"
                        id="id_daily_digest_enabled"
                        {% if form.daily_digest_enabled.value %}checked{% endif %}>
-                <div class="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-px after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-indigo-600">
+                <div class="w-9 h-5 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-px after:left-0.5 after:bg-white after:border-strong after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-accent-strong">
                 </div>
               </label>
             </div>
 
-            <div class="flex items-center justify-between pt-3 border-t border-gray-600">
+            <div class="flex items-center justify-between pt-3 border-t border-strong">
               <div>
                 <label for="id_release_notifications_enabled"
                        class="text-sm font-medium text-fg flex items-center">
-                  {% include "app/icons/bell-ringing.svg" with classes="w-4 h-4 mr-2 text-indigo-400" %}
+                  {% include "app/icons/bell-ringing.svg" with classes="w-4 h-4 mr-2 text-accent" %}
                   Receive notifications for recently released media
                 </label>
                 <p class="text-xs text-fg-muted mt-1 ml-6">Get notified when new episodes, chapters, or other media are released</p>
@@ -104,21 +104,21 @@
                        name="release_notifications_enabled"
                        id="id_release_notifications_enabled"
                        {% if form.release_notifications_enabled.value %}checked{% endif %}>
-                <div class="w-9 h-5 bg-gray-600 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-px after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-indigo-600">
+                <div class="w-9 h-5 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-px after:left-0.5 after:bg-white after:border-strong after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-accent-strong">
                 </div>
               </label>
             </div>
           </div>
         </div>
 
-        <div class="pt-4 border-t border-gray-700 flex justify-between">
+        <div class="pt-4 border-t border-default flex justify-between">
           <a href="{% url 'test_notification' %}"
-             class="flex items-center px-4 py-2 bg-surface-2 text-white rounded-md hover:bg-surface-3 transition-colors text-sm cursor-pointer">
+             class="flex items-center px-4 py-2 bg-surface-2 text-fg rounded-md hover:bg-surface-3 transition-colors text-sm cursor-pointer">
             {% include "app/icons/bell.svg" with classes="w-4 h-4 mr-2" %}
             Test Notifications
           </a>
           <button type="submit"
-                  class="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer">
+                  class="flex items-center px-4 py-2 bg-accent-strong text-white rounded-md hover:bg-accent-hover transition-colors text-sm cursor-pointer">
             {% include "app/icons/save.svg" with classes="w-4 h-4 mr-2" %}
             Save Settings
           </button>
@@ -129,7 +129,7 @@
     {# Push Notifications (Web Push / VAPID) #}
     <div class="bg-surface-1 rounded-lg p-6">
       <div class="flex items-center mb-4">
-        {% include "app/icons/bell-ringing.svg" with classes="w-6 h-6 text-indigo-400 mr-3" %}
+        {% include "app/icons/bell-ringing.svg" with classes="w-6 h-6 text-accent mr-3" %}
         <h2 class="text-xl font-semibold">Push Notifications</h2>
       </div>
 
@@ -146,14 +146,14 @@
         <button type="button"
                 id="yt-push-enable"
                 hidden
-                class="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer">
+                class="flex items-center px-4 py-2 bg-accent-strong text-white rounded-md hover:bg-accent-hover transition-colors text-sm cursor-pointer">
           {% include "app/icons/bell-ringing.svg" with classes="w-4 h-4 mr-2" %}
           Enable on this device
         </button>
         <button type="button"
                 id="yt-push-disable"
                 hidden
-                class="flex items-center px-4 py-2 bg-surface-2 text-white rounded-md hover:bg-surface-3 transition-colors text-sm cursor-pointer">
+                class="flex items-center px-4 py-2 bg-surface-2 text-fg rounded-md hover:bg-surface-3 transition-colors text-sm cursor-pointer">
           {% include "app/icons/bell.svg" with classes="w-4 h-4 mr-2" %}
           Disable on this device
         </button>
@@ -163,7 +163,7 @@
               hidden>
           {% csrf_token %}
           <button type="submit"
-                  class="flex items-center px-4 py-2 bg-surface-2 text-white rounded-md hover:bg-surface-3 transition-colors text-sm cursor-pointer">
+                  class="flex items-center px-4 py-2 bg-surface-2 text-fg rounded-md hover:bg-surface-3 transition-colors text-sm cursor-pointer">
             {% include "app/icons/bell.svg" with classes="w-4 h-4 mr-2" %}
             Send test push
           </button>
@@ -294,7 +294,7 @@
     {# Excluded Media Items #}
     <div class="bg-surface-1 rounded-lg p-6">
       <div class="flex items-center mb-5">
-        {% include "app/icons/funnel.svg" with classes="lucide lucide-user w-6 h-6 text-indigo-400 mr-3" %}
+        {% include "app/icons/funnel.svg" with classes="lucide lucide-user w-6 h-6 text-accent mr-3" %}
         <h2 class="text-xl font-semibold">Excluded Media Items</h2>
       </div>
 
@@ -302,7 +302,7 @@
 
       <div class="relative mb-4">
         <input placeholder="Search for media to exclude..."
-               class="w-full p-2 pl-8 bg-surface-2 rounded-md text-white border border-gray-600 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 text-sm"
+               class="w-full p-2 pl-8 bg-surface-2 rounded-md text-fg border border-strong focus:border-accent-strong focus:ring focus:ring-accent focus:ring-opacity-50 text-sm"
                name="q"
                type="text"
                autocomplete="off"

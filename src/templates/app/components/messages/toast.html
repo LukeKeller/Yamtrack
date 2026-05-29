@@ -12,13 +12,13 @@
      }">
 
   {% if message.tags == 'success' %}
-    {% include "app/icons/states/completed.svg" with classes="w-4 h-4 text-emerald-300 shrink-0" %}
+    {% include "app/icons/states/completed.svg" with classes="w-4 h-4 text-success shrink-0" %}
   {% elif message.tags == 'warning' %}
-    {% include "app/icons/warning.svg" with classes="w-4 h-4 text-amber-300 shrink-0" %}
+    {% include "app/icons/warning.svg" with classes="w-4 h-4 text-warning shrink-0" %}
   {% elif message.tags == 'error' %}
-    {% include "app/icons/warning.svg" with classes="w-4 h-4 text-red-300 shrink-0" %}
+    {% include "app/icons/warning.svg" with classes="w-4 h-4 text-danger shrink-0" %}
   {% elif message.tags == "info" %}
-    {% include "app/icons/info.svg" with classes="w-4 h-4 text-indigo-300 shrink-0" %}
+    {% include "app/icons/info.svg" with classes="w-4 h-4 text-accent shrink-0" %}
   {% endif %}
 
   <p class="text-sm font-medium flex-1">{{ message }}</p>

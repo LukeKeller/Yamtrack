@@ -20,7 +20,7 @@
 
   {% comment %} Source filter chips. {% endcomment %}
   <div class="mb-6 flex flex-wrap gap-2 text-sm">
-    {% with active="px-3 py-1 rounded-md bg-indigo-600 text-white" idle="px-3 py-1 rounded-md bg-surface-1 text-fg-muted hover:text-fg hover:bg-surface-2 transition-colors" %}
+    {% with active="px-3 py-1 rounded-md bg-accent-strong text-white" idle="px-3 py-1 rounded-md bg-surface-1 text-fg-muted hover:text-fg hover:bg-surface-2 transition-colors" %}
       <a href="?source=all"
          class="{% if source_filter == 'all' %}{{ active }}{% else %}{{ idle }}{% endif %}">
         All <span class="text-fg-faint">({{ library_total|add:koreader_total }})</span>
@@ -83,7 +83,7 @@
                           height:72px"
                    aria-hidden="true">{% include "app/icons/book-open.svg" with classes="w-5 h-5" %}</div>
               <div class="min-w-0 flex-1">
-                <div class="text-sm text-amber-400 font-medium mb-1">Awaiting link</div>
+                <div class="text-sm text-warning font-medium mb-1">Awaiting link</div>
                 <div class="text-xs text-fg-muted flex flex-wrap gap-x-3 gap-y-0.5">
                   <span>{{ mapping.last_percentage|floatformat:1 }}%</span>
                   {% if mapping.last_device %}<span>on {{ mapping.last_device }}</span>{% endif %}
@@ -99,7 +99,7 @@
             </div>
 
             {% if match %}
-              <div class="mb-2 text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-md px-3 py-1.5 inline-block">
+              <div class="mb-2 text-xs text-success bg-emerald-500/10 border border-success/30 rounded-md px-3 py-1.5 inline-block">
                 Filename match: <span class="font-medium">{{ match.title }}</span>
               </div>
             {% endif %}

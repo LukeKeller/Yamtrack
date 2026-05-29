@@ -22,7 +22,7 @@
       <div class="flex flex-wrap items-center gap-2">
         {% for opt in year_options %}
           <a href="{% url 'wrapped_year' opt %}"
-             class="px-3 py-1 rounded-full text-xs border transition-colors {% if opt == year %}bg-accent text-white border-transparent{% else %}bg-surface-1 hover:bg-surface-2 border-border-subtle text-fg-muted{% endif %}">
+             class="px-3 py-1 rounded-full text-xs border transition-colors {% if opt == year %}bg-accent text-fg border-transparent{% else %}bg-surface-1 hover:bg-surface-2 border-border-subtle text-fg-muted{% endif %}">
             {{ opt }}
           </a>
         {% endfor %}

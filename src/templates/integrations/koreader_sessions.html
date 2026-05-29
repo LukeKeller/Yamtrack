@@ -64,7 +64,7 @@
               <td class="px-4 py-3">
                 {% if row.item %}
                   <a href="{% url 'media_details' source=row.item.source media_type='book' media_id=row.item.media_id title=row.item.title|slugify %}"
-                     class="text-indigo-400 hover:text-indigo-300">{{ row.item.title }}</a>
+                     class="text-accent hover:text-accent">{{ row.item.title }}</a>
                 {% else %}
                   <span class="text-fg-faint">Unlinked document</span>
                 {% endif %}

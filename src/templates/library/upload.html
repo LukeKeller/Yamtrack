@@ -25,10 +25,10 @@
            id="id_files"
            multiple
            accept=".epub,.zip,application/epub+zip,application/zip"
-           class="block w-full text-sm text-fg file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-indigo-600 file:text-white file:hover:bg-indigo-700 file:cursor-pointer">
+           class="block w-full text-sm text-fg file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-accent-strong file:text-white file:hover:bg-accent-hover file:cursor-pointer">
 
     {% if form.errors %}
-      <ul class="text-sm text-red-400">
+      <ul class="text-sm text-danger">
         {% for field, errors in form.errors.items %}
           {% for error in errors %}<li>{{ field }}: {{ error }}</li>{% endfor %}
         {% endfor %}
@@ -41,7 +41,7 @@
 
     <div class="pt-2 flex justify-end">
       <button type="submit"
-              class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm cursor-pointer">
+              class="px-4 py-2 bg-accent-strong text-white rounded-md hover:bg-accent-hover transition-colors text-sm cursor-pointer">
         Upload
       </button>
     </div>

@@ -11,33 +11,33 @@
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-y-4">
       <h2 class="text-2xl font-bold">Browse</h2>
       <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <div class="flex rounded-md overflow-hidden border border-gray-700">
+        <div class="flex rounded-md overflow-hidden border border-default">
           <a href="?media_type=movie&source={{ source }}&layout={{ layout }}"
-             class="px-3 py-1.5 text-sm transition-colors duration-200 cursor-pointer flex items-center {% if media_type == MediaTypes.MOVIE.value %}bg-indigo-600 text-white{% else %}bg-gray-700 text-fg hover:bg-gray-600{% endif %}">
+             class="px-3 py-1.5 text-sm transition-colors duration-200 cursor-pointer flex items-center {% if media_type == MediaTypes.MOVIE.value %}bg-accent-strong text-fg{% else %}bg-surface-2 text-fg hover:bg-surface-3{% endif %}">
             Movies
           </a>
           <a href="?media_type=tv&source={{ source }}&layout={{ layout }}"
-             class="px-3 py-1.5 text-sm transition-colors duration-200 cursor-pointer flex items-center {% if media_type == MediaTypes.TV.value %}bg-indigo-600 text-white{% else %}bg-gray-700 text-fg hover:bg-gray-600{% endif %}">
+             class="px-3 py-1.5 text-sm transition-colors duration-200 cursor-pointer flex items-center {% if media_type == MediaTypes.TV.value %}bg-accent-strong text-fg{% else %}bg-surface-2 text-fg hover:bg-surface-3{% endif %}">
             TV Shows
           </a>
         </div>
         {% if sources|length > 1 %}
-          <div class="flex rounded-md overflow-hidden border border-gray-700">
+          <div class="flex rounded-md overflow-hidden border border-default">
             {% for source_option in sources %}
               {# Only TMDB supports genre filtering; preserve the param when staying on TMDB, drop it when switching to another source. #}
               <a href="?media_type={{ media_type }}&source={{ source_option.value }}&layout={{ layout }}{% if source_option.value == 'tmdb' and genres_csv %}&genres={{ genres_csv }}{% endif %}"
-                 class="px-3 py-1.5 text-sm transition-colors duration-200 cursor-pointer flex items-center {% if source == source_option.value %}bg-indigo-600 text-white{% else %}bg-gray-700 text-fg hover:bg-gray-600{% endif %}">
+                 class="px-3 py-1.5 text-sm transition-colors duration-200 cursor-pointer flex items-center {% if source == source_option.value %}bg-accent-strong text-fg{% else %}bg-surface-2 text-fg hover:bg-surface-3{% endif %}">
                 {{ source_option.label }}
               </a>
             {% endfor %}
           </div>
         {% endif %}
-        <div class="flex rounded-md overflow-hidden border border-gray-700">
+        <div class="flex rounded-md overflow-hidden border border-default">
           <a href="?media_type={{ media_type }}&source={{ source }}&category={{ category }}&layout=grid{% if genres_csv %}&genres={{ genres_csv }}{% endif %}"
-             {% if layout == 'grid' %} class="p-2 cursor-pointer bg-indigo-600 text-white flex items-center" {% else %} class="p-2 cursor-pointer bg-surface-2 hover:bg-surface-3 flex items-center" {% endif %}
+             {% if layout == 'grid' %} class="p-2 cursor-pointer bg-accent-strong text-white flex items-center" {% else %} class="p-2 cursor-pointer bg-surface-2 hover:bg-surface-3 flex items-center" {% endif %}
              title="Grid View">{% include "app/icons/four-square.svg" with classes="w-5 h-5" %}</a>
           <a href="?media_type={{ media_type }}&source={{ source }}&category={{ category }}&layout=list{% if genres_csv %}&genres={{ genres_csv }}{% endif %}"
-             {% if layout == 'list' %} class="p-2 cursor-pointer bg-indigo-600 text-white flex items-center" {% else %} class="p-2 cursor-pointer bg-surface-2 hover:bg-surface-3 flex items-center" {% endif %}
+             {% if layout == 'list' %} class="p-2 cursor-pointer bg-accent-strong text-white flex items-center" {% else %} class="p-2 cursor-pointer bg-surface-2 hover:bg-surface-3 flex items-center" {% endif %}
              title="List View">{% include "app/icons/list.svg" with classes="w-5 h-5" %}</a>
         </div>
         {% comment %}
@@ -50,7 +50,7 @@
           <form method="post" action="{% url 'toggle_browse_language' %}">
             {% csrf_token %}
             <button type="submit"
-                    class="px-3 py-1.5 text-sm rounded-md transition-colors duration-200 cursor-pointer flex items-center gap-1.5 {% if user.browse_include_non_english %}bg-indigo-600 text-white{% else %}bg-gray-700 text-fg hover:bg-gray-600{% endif %}"
+                    class="px-3 py-1.5 text-sm rounded-md transition-colors duration-200 cursor-pointer flex items-center gap-1.5 {% if user.browse_include_non_english %}bg-accent-strong text-fg{% else %}bg-surface-2 text-fg hover:bg-surface-3{% endif %}"
                     title="{% if user.browse_include_non_english %}Showing all languages — click to hide Hindi{% else %}Hiding Hindi titles — click to show all languages{% endif %}">
               {% include "app/icons/cube.svg" with classes="w-4 h-4" %}
               {% if user.browse_include_non_english %}
@@ -67,7 +67,7 @@
     <div class="flex flex-wrap gap-2">
       {% for category_option in categories %}
         <a href="?media_type={{ media_type }}&source={{ source }}&category={{ category_option.value }}&layout={{ layout }}{% if genres_csv %}&genres={{ genres_csv }}{% endif %}"
-           class="px-3 py-1.5 text-sm rounded-md transition-colors duration-200 cursor-pointer flex items-center {% if category == category_option.value %}bg-indigo-600 text-white{% else %}bg-gray-700 text-fg hover:bg-gray-600{% endif %}">
+           class="px-3 py-1.5 text-sm rounded-md transition-colors duration-200 cursor-pointer flex items-center {% if category == category_option.value %}bg-accent-strong text-fg{% else %}bg-surface-2 text-fg hover:bg-surface-3{% endif %}">
           {{ category_option.label }}
         </a>
       {% endfor %}
@@ -85,7 +85,7 @@
         <div class="flex flex-wrap gap-2">
           {% for genre in available_genres %}
             <a href="?media_type={{ media_type }}&source={{ source }}&category={{ category }}&layout={{ layout }}{% if genre.toggle %}&genres={{ genre.toggle }}{% endif %}"
-               class="px-3 py-1 text-xs rounded-full transition-colors duration-200 cursor-pointer {% if genre.active %}bg-indigo-600 text-white{% else %}bg-gray-700 text-fg hover:bg-gray-600{% endif %}">
+               class="px-3 py-1 text-xs rounded-full transition-colors duration-200 cursor-pointer {% if genre.active %}bg-accent-strong text-fg{% else %}bg-surface-2 text-fg hover:bg-surface-3{% endif %}">
               {{ genre.name }}
             </a>
           {% endfor %}
@@ -113,11 +113,11 @@
       {# Previous button #}
       {% if data.page > 1 %}
         <a href="?media_type={{ media_type }}&source={{ source }}&category={{ category }}&page={{ data.page|add:'-1' }}&layout={{ layout }}{% if genres_csv %}&genres={{ genres_csv }}{% endif %}"
-           class="p-2 rounded-md bg-surface-1 text-white hover:bg-surface-2">
+           class="p-2 rounded-md bg-surface-1 text-fg hover:bg-surface-2">
           {% include "app/icons/chevron-left.svg" with classes="w-5 h-5" %}
         </a>
       {% else %}
-        <button class="p-2 rounded-md bg-gray-700 text-fg-faint cursor-not-allowed"
+        <button class="p-2 rounded-md bg-surface-2 text-fg-faint cursor-not-allowed"
                 disabled>{% include "app/icons/chevron-left.svg" with classes="w-5 h-5" %}</button>
       {% endif %}
 
@@ -126,7 +126,7 @@
       {% for page_num in pages %}
         {% if page_num %}
           <a href="?media_type={{ media_type }}&source={{ source }}&category={{ category }}&page={{ page_num }}&layout={{ layout }}{% if genres_csv %}&genres={{ genres_csv }}{% endif %}"
-             class="w-10 h-10 rounded-md {% if data.page == page_num %}bg-indigo-600{% else %}bg-surface-1 hover:bg-surface-2{% endif %} text-white flex items-center justify-center">
+             class="w-10 h-10 rounded-md {% if data.page == page_num %}bg-accent-strong{% else %}bg-surface-1 hover:bg-surface-2{% endif %} text-fg flex items-center justify-center">
             {{ page_num }}
           </a>
         {% else %}
@@ -140,11 +140,11 @@
       {# Next button #}
       {% if data.page < data.total_pages %}
         <a href="?media_type={{ media_type }}&source={{ source }}&category={{ category }}&page={{ data.page|add:'1' }}&layout={{ layout }}{% if genres_csv %}&genres={{ genres_csv }}{% endif %}"
-           class="p-2 rounded-md bg-surface-1 text-white hover:bg-surface-2">
+           class="p-2 rounded-md bg-surface-1 text-fg hover:bg-surface-2">
           {% include "app/icons/chevron-right.svg" with classes="w-5 h-5" %}
         </a>
       {% else %}
-        <button class="p-2 rounded-md bg-gray-700 text-fg-faint cursor-not-allowed"
+        <button class="p-2 rounded-md bg-surface-2 text-fg-faint cursor-not-allowed"
                 disabled>{% include "app/icons/chevron-right.svg" with classes="w-5 h-5" %}</button>
       {% endif %}
     </div>

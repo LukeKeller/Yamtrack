@@ -17,7 +17,7 @@
         <label for="days" class="block text-xs text-fg-muted mb-1">Range</label>
         <select name="days"
                 id="days"
-                class="bg-surface-2 border border-gray-700 rounded-md text-sm px-3 py-2"
+                class="bg-surface-2 border border-default rounded-md text-sm px-3 py-2"
                 onchange="this.form.submit()">
           <option value="7" {% if days == "7" %}selected{% endif %}>Last 7 days</option>
           <option value="30" {% if days == "30" %}selected{% endif %}>Last 30 days</option>
@@ -28,7 +28,7 @@
       </div>
       <noscript>
         <button type="submit"
-                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-md text-sm">Apply</button>
+                class="px-4 py-2 bg-accent-strong hover:bg-accent-hover rounded-md text-sm">Apply</button>
       </noscript>
     </form>
   </div>
@@ -39,7 +39,7 @@
       <p class="text-sm">
         Spin a record, scrobble via multi-scrobbler, or
         <a href="{% url 'import_data' %}"
-           class="text-indigo-400 hover:underline">import a scrobble CSV</a>.
+           class="text-accent hover:underline">import a scrobble CSV</a>.
       </p>
     </div>
   {% else %}
@@ -123,7 +123,7 @@
               {% for week in music.activity.calendar_weeks %}
                 <div class="flex flex-col gap-1">
                   {% for day in week %}
-                    <div class="w-4 h-4 rounded-sm transition-colors duration-200 hover:ring-2 hover:ring-white {% if day.level == 0 %}bg-surface-2{% elif day.level == 1 %}bg-indigo-700{% elif day.level == 2 %}bg-indigo-600{% elif day.level == 3 %}bg-indigo-500{% elif day.level == 4 %}bg-indigo-400{% endif %}"
+                    <div class="w-4 h-4 rounded-sm transition-colors duration-200 hover:ring-2 hover:ring-white {% if day.level == 0 %}bg-surface-2{% elif day.level == 1 %}bg-accent-hover{% elif day.level == 2 %}bg-accent-strong{% elif day.level == 3 %}bg-accent-strong{% elif day.level == 4 %}bg-accent{% endif %}"
                          title="{{ day.date }}: {{ day.count }} play{{ day.count|pluralize }}"></div>
                   {% endfor %}
                 </div>
@@ -134,10 +134,10 @@
         <div class="flex items-center gap-2 pl-6 text-xs text-fg-muted mt-4">
           <span>Less</span>
           <div class="w-4 h-4 rounded-sm bg-surface-2"></div>
-          <div class="w-4 h-4 rounded-sm bg-indigo-700"></div>
-          <div class="w-4 h-4 rounded-sm bg-indigo-600"></div>
-          <div class="w-4 h-4 rounded-sm bg-indigo-500"></div>
-          <div class="w-4 h-4 rounded-sm bg-indigo-400"></div>
+          <div class="w-4 h-4 rounded-sm bg-accent-hover"></div>
+          <div class="w-4 h-4 rounded-sm bg-accent-strong"></div>
+          <div class="w-4 h-4 rounded-sm bg-accent-strong"></div>
+          <div class="w-4 h-4 rounded-sm bg-accent"></div>
           <span>More</span>
         </div>
       </div>
@@ -151,7 +151,7 @@
         </div>
         {% if music.top_artists %}
           {% with max_plays=music.top_artists.0.plays %}
-            <ul class="divide-y divide-[#39404b]">
+            <ul class="divide-y divide-border-default">
               {% for row in music.top_artists %}
                 <li class="px-5 py-2">
                   <div class="flex justify-between items-center text-sm mb-1">
@@ -159,7 +159,7 @@
                     <span class="text-fg-muted ml-3 shrink-0">{{ row.plays }}</span>
                   </div>
                   <div class="h-1 bg-surface-2 rounded-full overflow-hidden">
-                    <div class="h-full bg-indigo-500"
+                    <div class="h-full bg-accent-strong"
                          style="width: {% widthratio row.plays max_plays 100 %}%"></div>
                   </div>
                 </li>
@@ -177,7 +177,7 @@
         </div>
         {% if music.top_albums %}
           {% with max_plays=music.top_albums.0.plays %}
-            <ul class="divide-y divide-[#39404b]">
+            <ul class="divide-y divide-border-default">
               {% for row in music.top_albums %}
                 <li class="px-5 py-2">
                   <div class="flex justify-between items-center text-sm mb-1">
@@ -185,7 +185,7 @@
                     <span class="text-fg-muted ml-3 shrink-0">{{ row.plays }}</span>
                   </div>
                   <div class="h-1 bg-surface-2 rounded-full overflow-hidden">
-                    <div class="h-full bg-indigo-500"
+                    <div class="h-full bg-accent-strong"
                          style="width: {% widthratio row.plays max_plays 100 %}%"></div>
                   </div>
                 </li>
@@ -203,7 +203,7 @@
         </div>
         {% if music.top_tracks %}
           {% with max_plays=music.top_tracks.0.plays %}
-            <ul class="divide-y divide-[#39404b]">
+            <ul class="divide-y divide-border-default">
               {% for row in music.top_tracks %}
                 <li class="px-5 py-2">
                   <div class="flex justify-between items-center text-sm mb-1">
@@ -211,7 +211,7 @@
                     <span class="text-fg-muted ml-3 shrink-0">{{ row.plays }}</span>
                   </div>
                   <div class="h-1 bg-surface-2 rounded-full overflow-hidden">
-                    <div class="h-full bg-indigo-500"
+                    <div class="h-full bg-accent-strong"
                          style="width: {% widthratio row.plays max_plays 100 %}%"></div>
                   </div>
                 </li>

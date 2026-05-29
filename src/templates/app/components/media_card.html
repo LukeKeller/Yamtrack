@@ -54,7 +54,7 @@
     {% if media.score|show_media_score:user %}
       <div class="absolute {% if from_grid %}sm:top-2 sm:right-2 sm:left-auto{% endif %} top-10 left-2 flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-white bg-black/60 backdrop-blur-sm shadow-md"
            data-quick-rate-badge>
-        {% include "app/icons/star.svg" with classes="w-3.5 h-3.5 text-amber-400 fill-current" %}
+        {% include "app/icons/star.svg" with classes="w-3.5 h-3.5 text-warning fill-current" %}
         <span>{{ media.formatted_score }}</span>
       </div>
     {% endif %}
@@ -217,13 +217,13 @@
 
   <div class="p-3">
     <a href="{{ item|media_url }}"
-       class="text-sm font-semibold text-white hover:text-indigo-400 transition duration-300 line-clamp-1"
+       class="text-sm font-semibold text-white hover:text-accent transition duration-300 line-clamp-1"
        title="{{ title }}">{{ title }}</a>
     {% if item.match_score and not media %}
       {# Personal match score, shown only on tiles the user hasn't engaged with. #}
       <div class="mt-1 flex items-center gap-1.5">
-        <span class="w-1.5 h-1.5 rounded-full {% if item.match_score >= 80 %}bg-emerald-400{% elif item.match_score >= 60 %}bg-amber-400{% else %}bg-fg-faint{% endif %}"></span>
-        <span class="text-xs font-medium {% if item.match_score >= 80 %}text-emerald-400{% elif item.match_score >= 60 %}text-amber-400{% else %}text-fg-muted{% endif %}">{{ item.match_score }}% match</span>
+        <span class="w-1.5 h-1.5 rounded-full {% if item.match_score >= 80 %}bg-success{% elif item.match_score >= 60 %}bg-warning{% else %}bg-fg-faint{% endif %}"></span>
+        <span class="text-xs font-medium {% if item.match_score >= 80 %}text-success{% elif item.match_score >= 60 %}text-warning{% else %}text-fg-muted{% endif %}">{{ item.match_score }}% match</span>
       </div>
     {% endif %}
   </div>

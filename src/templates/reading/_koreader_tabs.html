@@ -8,7 +8,7 @@
   the others render in the surface-2 muted style.
 {% endcomment %}
 <div class="mb-6 flex flex-wrap gap-2 text-xs">
-  {% with active_cls="px-3 py-1 rounded-md bg-indigo-600 text-white" idle_cls="px-3 py-1 rounded-md bg-surface-1 text-fg-muted hover:text-fg hover:bg-surface-2 transition-colors" %}
+  {% with active_cls="px-3 py-1 rounded-md bg-accent-strong text-white" idle_cls="px-3 py-1 rounded-md bg-surface-1 text-fg-muted hover:text-fg hover:bg-surface-2 transition-colors" %}
     <a href="{% url 'koreader_cadence' %}"
        class="{% if active == 'cadence' %}{{ active_cls }}{% else %}{{ idle_cls }}{% endif %}">Cadence</a>
     <a href="{% url 'koreader_sessions' %}"

@@ -14,7 +14,7 @@
     <div class="space-y-6">
       <div class="space-y-2">
         <div class="flex items-center gap-2 text-lg font-medium text-fg">
-          {% include "app/icons/info.svg" with classes="w-5 h-5 text-indigo-400" %}
+          {% include "app/icons/info.svg" with classes="w-5 h-5 text-accent" %}
           <h3>Description</h3>
         </div>
         <p class="text-fg pl-7">Yamtrack is an open-source media tracker that helps you organize and track your media.</p>
@@ -22,14 +22,14 @@
 
       <div class="space-y-4">
         <div class="flex items-center gap-2 text-lg font-medium text-fg">
-          {% include "app/icons/external-link.svg" with classes="w-5 h-5 text-indigo-400" %}
+          {% include "app/icons/external-link.svg" with classes="w-5 h-5 text-accent" %}
           <h3>Links</h3>
         </div>
         <div class="grid gap-3 pl-7">
           <a href="https://github.com/FuzzyGrim/Yamtrack"
              target="_blank"
              rel="noopener noreferrer"
-             class="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition-colors">
+             class="flex items-center gap-2 text-accent hover:text-accent transition-colors">
             {% include "app/icons/github.svg" with classes="w-4 h-4" %}
             <span>Source Code</span>
             {% include "app/icons/external-link.svg" with classes="w-3 h-3 ml-1" %}
@@ -38,7 +38,7 @@
           <a href="https://github.com/FuzzyGrim/Yamtrack/wiki"
              target="_blank"
              rel="noopener noreferrer"
-             class="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition-colors">
+             class="flex items-center gap-2 text-accent hover:text-accent transition-colors">
             {% include "app/icons/book-open.svg" with classes="w-4 h-4" %}
             <span>Documentation</span>
             {% include "app/icons/external-link.svg" with classes="w-3 h-3 ml-1" %}
@@ -47,7 +47,7 @@
           <a href="https://github.com/FuzzyGrim/Yamtrack/issues"
              target="_blank"
              rel="noopener noreferrer"
-             class="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition-colors">
+             class="flex items-center gap-2 text-accent hover:text-accent transition-colors">
             {% include "app/icons/bug.svg" with classes="w-4 h-4" %}
             <span>Bug Reports</span>
             {% include "app/icons/external-link.svg" with classes="w-3 h-3 ml-1" %}
@@ -57,7 +57,7 @@
 
       <div class="space-y-2">
         <div class="flex items-center gap-2 text-lg font-medium text-fg">
-          {% include "app/icons/page.svg" with classes="w-5 h-5 text-indigo-400" %}
+          {% include "app/icons/page.svg" with classes="w-5 h-5 text-accent" %}
           <h3>License</h3>
         </div>
         <p class="text-fg pl-7">
@@ -66,13 +66,13 @@
           <a href="https://github.com/FuzzyGrim/Yamtrack/blob/dev/LICENSE"
              target="_blank"
              rel="noopener noreferrer"
-             class="text-indigo-400 hover:text-indigo-300 transition-colors">GNU Affero General Public License v3.0 (AGPL-3.0)</a>
+             class="text-accent hover:text-accent transition-colors">GNU Affero General Public License v3.0 (AGPL-3.0)</a>
         </p>
       </div>
 
       <div class="space-y-2">
         <div class="flex items-center gap-2 text-lg font-medium text-fg">
-          {% include "app/icons/page.svg" with classes="w-5 h-5 text-indigo-400" %}
+          {% include "app/icons/page.svg" with classes="w-5 h-5 text-accent" %}
           <h3>Attribution</h3>
         </div>
         <p class="text-fg pl-7">
@@ -80,14 +80,14 @@
           <a href="https://www.justwatch.com/"
              target="_blank"
              rel="noopener noreferrer"
-             class="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition-colors">
+             class="inline-flex items-center gap-2 text-accent hover:text-accent transition-colors">
             JustWatch
             {% include "app/icons/external-link.svg" with classes="w-3 h-3 ml-1" %}
           </a>
         </p>
       </div>
 
-      <div class="mt-8 pt-4 border-t border-gray-700">
+      <div class="mt-8 pt-4 border-t border-default">
         <p class="text-fg-muted text-sm">
           Version: <span class="font-mono">{{ version }}</span>
         </p>

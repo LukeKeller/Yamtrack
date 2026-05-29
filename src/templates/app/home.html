@@ -414,7 +414,7 @@
              style="border: 1px solid var(--color-border-default)">
           {% for value, label in sort_choices %}
             <a href="{% url 'home' %}?sort={{ value }}"
-               class="block w-full px-3 py-1.5 text-left text-sm transition-colors {% if current_sort == value %}bg-accent text-white font-medium{% else %}text-fg-muted hover:bg-surface-3 hover:text-fg{% endif %}">
+               class="block w-full px-3 py-1.5 text-left text-sm transition-colors {% if current_sort == value %}bg-accent text-fg font-medium{% else %}text-fg-muted hover:bg-surface-3 hover:text-fg{% endif %}">
               {{ label }}
             </a>
           {% endfor %}

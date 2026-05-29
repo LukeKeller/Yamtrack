@@ -26,7 +26,7 @@
           <a href="{{ person.source_url }}"
              target="_blank"
              rel="noopener"
-             class="px-3 py-2 rounded-md bg-surface-2 hover:bg-surface-3 text-white text-sm flex items-center gap-2"
+             class="px-3 py-2 rounded-md bg-surface-2 hover:bg-surface-3 text-fg text-sm flex items-center gap-2"
              title="Open TMDB page for {{ person.name }}">
             {% include "app/icons/external-link.svg" with classes="w-4 h-4" %}
             TMDB
@@ -68,7 +68,7 @@
                class="text-fg text-pretty">{{ person.biography|linebreaksbr }}</p>
             <button x-show="isClamped"
                     @click="isExpanded = !isExpanded"
-                    class="text-indigo-400 hover:text-indigo-300 text-sm mt-2 focus:outline-none transition-colors cursor-pointer">
+                    class="text-accent hover:text-accent text-sm mt-2 focus:outline-none transition-colors cursor-pointer">
               <span x-text="isExpanded ? 'Show less' : 'Read more'"></span>
             </button>
           </div>
@@ -111,7 +111,7 @@
       <div class="flex items-center gap-x-3 flex-wrap">
         <label class="text-sm text-fg-muted">Sort</label>
         <select onchange="window.location.search = new URLSearchParams({...Object.fromEntries(new URLSearchParams(window.location.search)), sort: this.value}).toString()"
-                class="bg-surface-2 text-white text-sm rounded-md px-3 py-1.5 border border-transparent focus:border-indigo-500 outline-none cursor-pointer">
+                class="bg-surface-2 text-fg text-sm rounded-md px-3 py-1.5 border border-transparent focus:border-accent-strong outline-none cursor-pointer">
           {% for value, label in sort_choices %}
             <option value="{{ value }}" {% if value == sort_by %}selected{% endif %}>{{ label }}</option>
           {% endfor %}
@@ -123,7 +123,7 @@
       <span class="text-sm text-fg-muted self-center mr-1">Role:</span>
       {% for value, label in role_choices %}
         <a href="?role={{ value }}&type={{ type_filter }}&sort={{ sort_by }}"
-           class="px-3 py-1.5 text-sm rounded-md transition-colors duration-200 cursor-pointer {% if role_filter == value %}bg-indigo-600 text-white{% else %}bg-gray-700 text-fg hover:bg-gray-600{% endif %}">
+           class="px-3 py-1.5 text-sm rounded-md transition-colors duration-200 cursor-pointer {% if role_filter == value %}bg-accent-strong text-fg{% else %}bg-surface-2 text-fg hover:bg-surface-3{% endif %}">
           {{ label }}
         </a>
       {% endfor %}
@@ -133,7 +133,7 @@
       <span class="text-sm text-fg-muted self-center mr-1">Type:</span>
       {% for value, label in type_choices %}
         <a href="?role={{ role_filter }}&type={{ value }}&sort={{ sort_by }}"
-           class="px-3 py-1.5 text-sm rounded-md transition-colors duration-200 cursor-pointer {% if type_filter == value %}bg-indigo-600 text-white{% else %}bg-gray-700 text-fg hover:bg-gray-600{% endif %}">
+           class="px-3 py-1.5 text-sm rounded-md transition-colors duration-200 cursor-pointer {% if type_filter == value %}bg-accent-strong text-fg{% else %}bg-surface-2 text-fg hover:bg-surface-3{% endif %}">
           {{ label }}
         </a>
       {% endfor %}

@@ -29,7 +29,7 @@
                           height:72px"
                    aria-hidden="true">{% include "app/icons/book-open.svg" with classes="w-5 h-5" %}</div>
               <div class="min-w-0 flex-1">
-                <div class="text-sm text-amber-400 font-medium mb-1">Awaiting link</div>
+                <div class="text-sm text-warning font-medium mb-1">Awaiting link</div>
                 <div class="text-xs text-fg-muted flex flex-wrap gap-x-3 gap-y-0.5">
                   <span>{{ mapping.last_percentage|floatformat:1 }}%</span>
                   {% if mapping.last_device %}
@@ -49,11 +49,11 @@
             </div>
 
             {% if match %}
-              <div class="mb-2 text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-md px-3 py-1.5 inline-block">
+              <div class="mb-2 text-xs text-success bg-emerald-500/10 border border-success/30 rounded-md px-3 py-1.5 inline-block">
                 Filename match: <span class="font-medium">{{ match.title }}</span> (KOReader filename hash matched your library)
               </div>
             {% elif likely_match_id %}
-              <div class="mb-2 text-xs text-indigo-300 bg-indigo-500/10 border border-indigo-500/30 rounded-md px-3 py-1.5 inline-block">
+              <div class="mb-2 text-xs text-accent bg-accent-strong/10 border border-accent-strong/30 rounded-md px-3 py-1.5 inline-block">
                 Likely match: <span class="font-medium">{{ likely_match_title }}</span> (your only In-progress book without a sync mapping)
                 {% if likely_expected_filename %}
                   — rename your KOReader file to <span class="font-mono">{{ likely_expected_filename }}</span> to auto-bind next sync.

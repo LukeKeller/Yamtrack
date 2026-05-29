@@ -17,8 +17,8 @@
       {% if day == 0 %}
         <div class="min-h-[130px] p-1 rounded-md relative bg-surface-3 opacity-40"></div>
       {% else %}
-        <div class="min-h-[130px] p-1 rounded-md relative bg-surface-2 cursor-pointer hover:bg-surface-3 {% if day == today.day and month == today.month and year == today.year %}ring-2 ring-indigo-500{% endif %}">
-          <div class="text-right text-sm p-1 font-medium {% if day == today.day and month == today.month and year == today.year %}bg-indigo-500 text-white rounded-full w-7 h-7 flex items-center justify-center ml-auto{% endif %}">
+        <div class="min-h-[130px] p-1 rounded-md relative bg-surface-2 cursor-pointer hover:bg-surface-3 {% if day == today.day and month == today.month and year == today.year %}ring-2 ring-accent-strong{% endif %}">
+          <div class="text-right text-sm p-1 font-medium {% if day == today.day and month == today.month and year == today.year %}bg-accent-strong text-white rounded-full w-7 h-7 flex items-center justify-center ml-auto{% endif %}">
             {{ day }}
           </div>
           <div class="mt-1 space-y-1 max-h-24 overflow-y-auto">

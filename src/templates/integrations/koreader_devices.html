@@ -41,7 +41,7 @@
               <td class="px-4 py-3">
                 {% if device.last_item %}
                   <a href="{% url 'media_details' source=device.last_item.source media_type='book' media_id=device.last_item.media_id title=device.last_item.title|slugify %}"
-                     class="text-indigo-400 hover:text-indigo-300">{{ device.last_item.title }}</a>
+                     class="text-accent hover:text-accent">{{ device.last_item.title }}</a>
                 {% else %}
                   <span class="text-fg-muted">—</span>
                 {% endif %}

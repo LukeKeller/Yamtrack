@@ -87,7 +87,7 @@
         {% for week in weeks %}
           <div class="flex flex-col gap-[3px]">
             {% for day in week %}
-              <div class="w-[12px] h-[12px] rounded-[2px] {% if not day.in_window %}bg-transparent {% elif day.bucket == 0 %}bg-surface-2 {% elif day.bucket == 1 %}bg-indigo-500/25 {% elif day.bucket == 2 %}bg-indigo-500/50 {% elif day.bucket == 3 %}bg-indigo-500/75 {% else %}bg-indigo-500{% endif %}"
+              <div class="w-[12px] h-[12px] rounded-[2px] {% if not day.in_window %}bg-transparent {% elif day.bucket == 0 %}bg-surface-2 {% elif day.bucket == 1 %}bg-accent-strong/25 {% elif day.bucket == 2 %}bg-accent-strong/50 {% elif day.bucket == 3 %}bg-accent-strong/75 {% else %}bg-accent-strong{% endif %}"
                    title="{{ day.date|date:'M j, Y' }} — {% if day.in_window %}{{ day.percent_read|floatformat:2 }} book-units · {{ day.event_count }} sync{{ day.event_count|pluralize }} · {{ day.mapping_count }} book{{ day.mapping_count|pluralize }}{% else %}(outside window){% endif %}">
               </div>
             {% endfor %}
@@ -99,10 +99,10 @@
     <div class="flex items-center gap-2 text-xs text-fg-muted mt-4">
       <span>Less</span>
       <div class="w-[12px] h-[12px] rounded-[2px] bg-surface-2"></div>
-      <div class="w-[12px] h-[12px] rounded-[2px] bg-indigo-500/25"></div>
-      <div class="w-[12px] h-[12px] rounded-[2px] bg-indigo-500/50"></div>
-      <div class="w-[12px] h-[12px] rounded-[2px] bg-indigo-500/75"></div>
-      <div class="w-[12px] h-[12px] rounded-[2px] bg-indigo-500"></div>
+      <div class="w-[12px] h-[12px] rounded-[2px] bg-accent-strong/25"></div>
+      <div class="w-[12px] h-[12px] rounded-[2px] bg-accent-strong/50"></div>
+      <div class="w-[12px] h-[12px] rounded-[2px] bg-accent-strong/75"></div>
+      <div class="w-[12px] h-[12px] rounded-[2px] bg-accent-strong"></div>
       <span>More</span>
     </div>
   </div>
