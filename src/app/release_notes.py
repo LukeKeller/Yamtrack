@@ -10,10 +10,19 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh143"
+CURRENT_FORK_VERSION = "0.25.2~ynh144"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh144",
+        "date": "2026-05-28",
+        "title": "Book Journey chart now actually draws (fixes double-encoded JSON)",
+        "highlights": [
+            'The inlined Reading history section landed in ~ynh143 but the Book Journey bar chart never drew — only the empty 420px canvas backdrop appeared. The view was passing <span class="font-mono">json.dumps(journey_data)</span> (a JSON string) into context and the template then ran it through <span class="font-mono">{% ...|json_script %}</span>, which JSON-encodes the value a second time. The script tag ended up carrying a quoted string literal, so <span class="font-mono">JSON.parse</span> in the chart JS returned a string instead of an array, the script logged "payload is not an array", and bailed silently. The view now hands a plain Python list to the template and lets <span class="font-mono">json_script</span> do the single encode. Chart redraws on the next page load.',
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh143",
         "date": "2026-05-28",

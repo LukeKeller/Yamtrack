@@ -935,7 +935,7 @@
           <canvas id="koreader-history-chart"></canvas>
         </div>
       </div>
-      {{ koreader_summary.journey_json|json_script:"koreader-history-data" }}
+      {{ koreader_summary.journey_data|json_script:"koreader-history-data" }}
       <script src="{% static 'js/libraries/chartjs-4.4.9.min.js' %}"></script>
       <script src="{% static 'js/koreader-history-chart.js' %}{% get_static_file_mtime 'js/koreader-history-chart.js' %}"></script>
 

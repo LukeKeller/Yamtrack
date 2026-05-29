@@ -931,7 +931,12 @@ def _koreader_book_summary(user, book):
         current_percentage = None
 
     # Sessions come back newest-first; the chart wants oldest-first so
-    # the bars read left-to-right chronologically.
+    # the bars read left-to-right chronologically. Pass the list to the
+    # template as a plain Python list — ``{% ...|json_script %}`` will
+    # encode it once. Pre-encoding with ``json.dumps`` here would make
+    # the script tag contain a quoted JSON string literal, so
+    # ``JSON.parse`` in the chart JS returns a string and the chart
+    # silently bails on "payload is not an array".
     journey_data = [
         {
             "label": s.start.strftime("%b %-d"),
@@ -954,7 +959,7 @@ def _koreader_book_summary(user, book):
         "current_percentage": current_percentage,
         "total_minutes": total_minutes,
         "total_hours": total_minutes / 60,
-        "journey_json": json.dumps(journey_data),
+        "journey_data": journey_data,
     }
 
 
