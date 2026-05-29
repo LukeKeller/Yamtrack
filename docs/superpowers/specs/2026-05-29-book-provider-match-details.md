@@ -20,17 +20,25 @@ Redefine an uploaded book's "Matched" to mean *resolved to a metadata provider (
 - `src/library/views.py`: epub upload enqueues the task (new uploads start UNRESOLVED); `library_link` stamps MATCHED/MANUAL on link, UNRESOLVED on unlink.
 - Tests: `src/library/tests/test_matching.py` (17) + updated `test_library.py`.
 
-## TODO — Phase 2 (details page)
-- New view + url `/library/<id>/` + template. Always render from epub OPF metadata (title/author/cover) + KOReader history (look up `KOReaderBookMapping`/events by user+item if matched). When `match_status==MATCHED`, enrich from provider (`services.get_media_metadata(item.media_type, item.media_id, item.source)`), show "track this" CTA (reuse the existing media_save/track flow). Link every library row + reading inbox row to this page.
-- `media_details` (src/app/views.py ~1112) already renders untracked from provider metadata — reuse patterns; the new page is the home for uploaded books incl. unresolved ones.
+## DONE — Phase 2 (details page, commit 47cc29f)
+- `library/views.py: library_detail` + `_library_reading_history`; url `library_detail` at `/reading/library/file/<id>/` (browser library lives under `/reading/` now, not `/library/`). Template `templates/library/detail.html`.
+- Always renders from epub OPF metadata; finds KOReader history by the OPDS hash (`document_hash == koreader_filename_md5`) and, when matched, by `item`. When `match_status==MATCHED`, enriches via `services.get_media_metadata(...)` (falls back to local metadata on `ProviderAPIError`), shows the tracking state or a "Track this book" CTA into `media_details`.
+- Linked from every library card + reading-inbox row.
+- 7 tests in `test_library.py::LibraryDetailTests`.
 
-## TODO — Phase 3 (inbox + picker rework)
-- `src/reading/views.py reading_unmatched` + `src/reading/helpers.py ranked_book_choices`: replace the tracked-books picker with a provider SEARCH (Hardcover/OpenLibrary) for library files; the match action should `get_or_create` a provider Item and set MATCHED/MANUAL. Relabel "Matched/Unmatched" (provider-resolved). Update `reading_index` `library_unmatched` count to `match_status != MATCHED` (inbox shows UNRESOLVED + NO_MATCH).
-- Fix `library/index.html` "Tracked:" badge → "Matched (provider)" semantics.
-- Decide whether KOReader auto-bind (`integrations/koreader.py`, still uses `find_matching_book`) should also move to provider matching or stay tracked-book based.
+## DONE — Phase 3 (inbox + picker rework, commit ce9dcd6)
+- `library/matching.py: provider_search(user, query)` (Hardcover-if-token-else-OpenLibrary free-text search, normalised, never raises) + `bind_to_provider(...)` (manual match → same MATCHED state, `match_method=MANUAL`).
+- `library/views.py: library_match_search` (HTMX results partial) + `library_match_apply` (`get_or_create` provider Item, stamp MATCHED/MANUAL, honour `next`). URLs `library_match_search` / `library_match_apply`.
+- New components `templates/library/components/{provider_match_picker,match_search_results}.html`; the inbox rows, library cards, and detail page now search providers instead of selecting a tracked book. Detail page gained "Clear current match".
+- Semantics realigned to `match_status` (not item-presence): `reading_index` count + `/reading/unmatched` inbox show `match_status != MATCHED`; `library_index` filters/counts + the card badge ("Matched / No provider match / Matching…") key on `match_status`.
+- KOReader hash auto-bind stays tracked-book based by design (it binds onto the Item a file already resolved to). `find_matching_book` untouched.
+- Tests in `test_library.py::{ProviderSearchTests,ProviderMatchViewTests,InboxProviderSemanticsTests}`.
 
-## Deployability note
-Phase 1 alone is migration-safe and won't crash, but it ships a half-migrated UX (upload now provider-matches while inbox/labels/picker still assume tracked-book). Prefer shipping 1→3 together. A tiny back-compat shim could make P1 standalone-safe if needed.
+## Status: ready to ship (P1–P3 landed together)
+The half-migrated-UX concern from the original handoff is resolved — uploads provider-match AND the inbox/labels/picker all speak provider-match now. Not yet merged to `main` / bumped; that's the release flow below and needs user authorization.
+
+## CI caveat (worth fixing separately)
+`.github/workflows/app-tests.yml` runs `manage.py test app users integrations lists events` — it does **not** include `library` or `reading`, so none of this feature's tests run in CI. They pass locally (`DB_HOST= python manage.py test library reading --settings=config.test_settings`, 61 lib tests green). Adding the two apps to that line needs a workflow edit (CLAUDE.md says ask first / the PR check fails on `.github/**` changes).
 
 ## Cross-cutting (per Yamtrack/CLAUDE.md)
 - Bump `serviceworker.js` VERSION if static/templates change. `makemigrations --check`. Django test runner with `config.test_settings` (celery eager), not pytest. `ruff`/`djlint`. History-aware bulk ops. Ship via the release flow (merge to main, bump ynh marker, pin yamtrack_ynh manifest) — needs user authorization. Run tests with `DB_HOST=` unset → SQLite (repo .env points at a non-local Postgres).
