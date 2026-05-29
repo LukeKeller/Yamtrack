@@ -201,8 +201,38 @@ class SessionGroupingTests(TestCase):
         )
 
     def test_short_single_event_is_dropped(self):
-        # One isolated event = startup-sync ping, dropped.
+        # One isolated event with no prior position = startup-sync ping,
+        # dropped (no evidence it represents forward reading).
         _add_event(self.mapping, percentage=0.10, at=self._at(120))
+
+        sessions = compute_sessions(self.user)
+        self.assertEqual(sessions, [])
+
+    def test_single_sync_session_with_forward_progress_is_kept(self):
+        # Regression: KOReader synced once for a whole reading session
+        # (offline reading flushed on close / long autosync interval), so
+        # the session is a lone event — but it advanced the book past the
+        # previously synced position. It must NOT be dropped as a ping:
+        # the book's progress moved (and pushed to Hardcover), so the
+        # session has to appear in the history too.
+        _add_event(self.mapping, percentage=0.45, at=self._at(600))
+        _add_event(self.mapping, percentage=0.60, at=self._at(60))
+
+        sessions = compute_sessions(self.user)
+        self.assertEqual(len(sessions), 1)
+        session = sessions[0]
+        self.assertEqual(session.event_count, 1)
+        self.assertAlmostEqual(session.percent_end, 0.60, places=6)
+        # Start is backfilled from the prior synced position so the
+        # journey chart shows the real delta instead of a flat bar.
+        self.assertAlmostEqual(session.percent_start, 0.45, places=6)
+        self.assertAlmostEqual(session.percent_traversed, 0.15, places=6)
+
+    def test_single_event_same_position_is_dropped(self):
+        # A lone event that re-reports the last synced position is a
+        # book-open ping (no forward progress) and stays filtered out.
+        _add_event(self.mapping, percentage=0.45, at=self._at(600))
+        _add_event(self.mapping, percentage=0.45, at=self._at(60))
 
         sessions = compute_sessions(self.user)
         self.assertEqual(sessions, [])

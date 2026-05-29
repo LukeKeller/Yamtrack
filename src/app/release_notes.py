@@ -10,10 +10,19 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh145"
+CURRENT_FORK_VERSION = "0.25.2~ynh146"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh146",
+        "date": "2026-05-29",
+        "title": "Reading history: single-sync reading sessions no longer vanish",
+        "highlights": [],
+        "fixes": [
+            'A reading session that KOReader pushed as a single progress update — offline reading flushed when you closed the book, a long autosync interval, or "sync on close" mode — was dropped from the inline reading history on the book details page, even though that same push had correctly advanced the book\'s progress and synced it to Hardcover. The session-grouping logic treated any lone, short sync event as a KOReader book-open ping and filtered it out. It now keeps a lone event when it advanced past the last synced position for that book (the signature of a real single-sync read) while still dropping pings that re-report the same position, and backfills the kept session\'s start to the prior position so the Book Journey chart shows the real progress delta instead of a flat bar. Note: a single-sync session still reads ~0&nbsp;min of <em>duration</em> — reading time is derived from the spread of sync timestamps, so keeping WiFi on while reading (which lets KOReader sync several times mid-session) is what makes the time totals accurate.',
+        ],
+    },
     {
         "version": "0.25.2~ynh145",
         "date": "2026-05-28",

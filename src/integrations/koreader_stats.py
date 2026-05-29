@@ -149,6 +149,28 @@ class ReadingSession:
         return self.percent_traversed * 100
 
 
+def _session_is_real(session, prev_pct, *, min_events, min_seconds):
+    """Whether a grouped session is a real read rather than noise.
+
+    A session is noise when it's *both* too sparse (< ``min_events``)
+    and too short (< ``min_seconds``) — unless it advanced past the last
+    synced position for its book. A lone event that re-reports the same
+    position is a KOReader book-open ping (dropped); a lone event that
+    moved the percentage forward is a genuine single-sync read (kept).
+    When such a lone event is kept its start is backfilled to the prior
+    position so the journey chart shows the real delta, not a flat bar.
+    """
+    too_small = (
+        session.event_count < min_events and session.duration_seconds < min_seconds
+    )
+    if not too_small:
+        return True
+    advanced = prev_pct is not None and session.percent_end > prev_pct
+    if advanced and session.event_count == 1:
+        session.percent_start = prev_pct
+    return advanced
+
+
 def compute_sessions(
     user,
     *,
@@ -173,6 +195,19 @@ def compute_sessions(
     mostly those one-shot pings, but a long single-event session
     (e.g. one bookmark mid-read) should still show up.
 
+    The "too short and too sparse" rule has one carve-out: a session
+    that advanced the percentage past the last synced position for its
+    book is kept even when it's a lone event. That's the signature of a
+    real single-sync read — KOReader only pushed once for the whole
+    session (offline reading flushed on close, a long autosync
+    interval, "sync on close" mode) — whereas a book-open ping re-reports
+    the *same* position it last synced. Without this carve-out those
+    single-sync reads vanish from the history even though they moved the
+    book's progress (and pushed it to Hardcover). A kept lone event is
+    backfilled with the prior synced percentage as its start so the
+    journey chart shows the progress it represents instead of a flat
+    zero-delta bar.
+
     Returns ``ReadingSession`` objects newest first; pass ``limit`` to
     cap the result.
     """
@@ -192,12 +227,26 @@ def compute_sessions(
     sessions: list[ReadingSession] = []
     current: ReadingSession | None = None
 
-    def _is_noise(s):
-        return s.event_count < min_events and s.duration_seconds < min_seconds
+    # Last synced percentage per book, carried across sessions so a
+    # lone forward-progress event can be told apart from a same-position
+    # book-open ping. Keyed by mapping_id because "forward progress" is
+    # per book — a different title at a lower percentage isn't a regress.
+    last_pct: dict[int, float] = {}
 
     def _close(s):
-        if s is not None and not _is_noise(s):
+        if s is None:
+            return
+        if _session_is_real(
+            s,
+            last_pct.get(s.mapping_id),
+            min_events=min_events,
+            min_seconds=min_seconds,
+        ):
             sessions.append(s)
+        # Advance the per-book watermark whether or not the session was
+        # kept — a dropped book-open ping still establishes "where we
+        # last were" for the next session's forward-progress check.
+        last_pct[s.mapping_id] = s.percent_end
 
     for ev in events:
         if current is None:
