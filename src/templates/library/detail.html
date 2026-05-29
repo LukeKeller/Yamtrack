@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% load static %}
+{% load app_tags %}
+
+{% block title %}
+  {{ library_file.title|default:library_file.canonical_filename }} — Library
+{% endblock title %}
+
+{% block content %}
+  {% with lf=library_file %}
+    <div class="mb-3">
+      <a href="{% url 'library_index' %}"
+         class="text-fg-muted hover:text-fg text-sm inline-flex items-center gap-1">← Library</a>
+    </div>
+
+    {% comment %}
+      Header: cover + title/author + status badges. Cover prefers the
+      epub-extracted image, then the provider image when matched.
+    {% endcomment %}
+    <div class="bg-surface-1 rounded-lg p-4 sm:p-6 mb-6 flex flex-col sm:flex-row gap-5">
+      {% if lf.cover %}
+        <img src="{{ lf.cover.url }}"
+             alt="Cover of {{ lf.title|default:lf.canonical_filename }}"
+             class="shrink-0 w-32 h-48 object-cover rounded-md bg-surface-2 mx-auto sm:mx-0"
+             loading="lazy">
+      {% elif provider_metadata.image %}
+        <img src="{{ provider_metadata.image }}"
+             alt="Cover of {{ lf.title|default:lf.canonical_filename }}"
+             class="shrink-0 w-32 h-48 object-cover rounded-md bg-surface-2 mx-auto sm:mx-0"
+             loading="lazy">
+      {% else %}
+        <div class="shrink-0 w-32 h-48 rounded-md bg-surface-2 flex items-center justify-center text-fg-faint mx-auto sm:mx-0">
+          {% include "app/icons/book-open.svg" with classes="w-10 h-10" %}
+        </div>
+      {% endif %}
+
+      <div class="min-w-0 flex-1">
+        <h1 class="text-2xl font-bold mb-1">{{ lf.title|default:lf.canonical_filename }}</h1>
+        {% if lf.author %}<p class="text-fg-muted mb-3">{{ lf.author }}</p>{% endif %}
+
+        <div class="flex flex-wrap items-center gap-2 mb-3 text-xs">
+          {% if lf.is_matched %}
+            <span class="px-2 py-0.5 rounded-md bg-success/15 text-success">
+              Matched · {{ lf.item.get_source_display|default:lf.item.source }}
+            </span>
+            {% if lf.match_method and lf.match_method != 'manual' %}
+              <span class="px-2 py-0.5 rounded-md bg-surface-2 text-fg-muted">via {{ lf.get_match_method_display }}</span>
+            {% elif lf.match_method == 'manual' %}
+              <span class="px-2 py-0.5 rounded-md bg-surface-2 text-fg-muted">linked manually</span>
+            {% endif %}
+          {% elif lf.match_status == 'no_match' %}
+            <span class="px-2 py-0.5 rounded-md bg-warning/15 text-warning">No provider match</span>
+          {% else %}
+            <span class="px-2 py-0.5 rounded-md bg-surface-2 text-fg-muted">Matching…</span>
+          {% endif %}
+        </div>
+
+        <dl class="text-xs text-fg-faint flex flex-wrap gap-x-4 gap-y-1">
+          <div>
+            <dt class="inline">Size</dt>
+            <dd class="inline text-fg-muted">
+              {{ lf.size_bytes|filesizeformat }}
+            </dd>
+          </div>
+          {% if lf.language %}
+            <div>
+              <dt class="inline">Language</dt>
+              <dd class="inline text-fg-muted">
+                {{ lf.language }}
+              </dd>
+            </div>
+          {% endif %}
+          {% if lf.isbn_13 %}
+            <div>
+              <dt class="inline">ISBN</dt>
+              <dd class="inline text-fg-muted font-mono">
+                {{ lf.isbn_13 }}
+              </dd>
+            </div>
+          {% endif %}
+          <div>
+            <dt class="inline">File</dt>
+            <dd class="inline text-fg-muted font-mono">
+              {{ lf.canonical_filename }}
+            </dd>
+          </div>
+        </dl>
+
+        {% comment %} Tracking state / track CTA when provider-matched. {% endcomment %}
+        {% if lf.is_matched %}
+          {% url 'media_details' media_type='book' media_id=lf.item.media_id source=lf.item.source title=lf.item.title as details_url %}
+          <div class="mt-4 flex flex-wrap items-center gap-2">
+            {% if tracked_instance %}
+              <span class="px-2 py-0.5 rounded-md bg-accent-strong/15 text-accent text-xs">
+                Tracking · {{ tracked_instance.get_status_display }}
+                {% if tracked_instance.progress %}· {{ tracked_instance.progress }} pages{% endif %}
+                {% if tracked_instance.score %}· {{ tracked_instance.score }}/10{% endif %}
+              </span>
+              <a href="{{ details_url }}"
+                 class="px-3 py-1.5 bg-surface-2 text-fg rounded-md hover:bg-surface-2/70 transition-colors text-sm">
+                Open book page
+              </a>
+            {% else %}
+              <a href="{{ details_url }}"
+                 class="px-3 py-1.5 bg-accent-strong text-white rounded-md hover:bg-accent-hover transition-colors text-sm cursor-pointer">
+                Track this book
+              </a>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {% comment %} Provider synopsis + facts when matched. {% endcomment %}
+    {% if provider_metadata %}
+      <div class="bg-surface-1 rounded-lg p-4 sm:p-6 mb-6">
+        <h2 class="text-lg font-semibold mb-3">About</h2>
+        {% if provider_metadata.synopsis %}
+          <p class="text-sm text-fg-muted whitespace-pre-line mb-4">{{ provider_metadata.synopsis }}</p>
+        {% endif %}
+        <dl class="text-sm grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {% if provider_metadata.details.number_of_pages %}
+            <div>
+              <dt class="text-fg-faint text-xs">Pages</dt>
+              <dd class="text-fg">
+                {{ provider_metadata.details.number_of_pages }}
+              </dd>
+            </div>
+          {% endif %}
+          {% if provider_metadata.details.publish_date %}
+            <div>
+              <dt class="text-fg-faint text-xs">Published</dt>
+              <dd class="text-fg">
+                {{ provider_metadata.details.publish_date }}
+              </dd>
+            </div>
+          {% endif %}
+          {% if provider_metadata.score %}
+            <div>
+              <dt class="text-fg-faint text-xs">Rating</dt>
+              <dd class="text-fg">
+                {{ provider_metadata.score }}
+              </dd>
+            </div>
+          {% endif %}
+        </dl>
+        {% if provider_metadata.genres %}
+          <div class="mt-4 flex flex-wrap gap-1.5">
+            {% for genre in provider_metadata.genres %}
+              <span class="px-2 py-0.5 rounded-md bg-surface-2 text-fg-muted text-xs">{{ genre.name|default:genre }}</span>
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    {% comment %} KOReader reading history summary. {% endcomment %}
+    {% if reading_history %}
+      <div class="bg-surface-1 rounded-lg p-4 sm:p-6 mb-6">
+        <h2 class="text-lg font-semibold mb-3">Reading history</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+          {% if reading_history.current_percentage is not None %}
+            <div>
+              <dt class="text-fg-faint text-xs">Progress</dt>
+              <dd class="text-fg text-lg font-semibold">
+                {{ reading_history.current_percentage }}%
+              </dd>
+            </div>
+          {% endif %}
+          <div>
+            <dt class="text-fg-faint text-xs">Reading time</dt>
+            <dd class="text-fg text-lg font-semibold">
+              {{ reading_history.total_hours|floatformat:1 }}h
+            </dd>
+          </div>
+          <div>
+            <dt class="text-fg-faint text-xs">Sessions</dt>
+            <dd class="text-fg text-lg font-semibold">
+              {{ reading_history.session_count }}
+            </dd>
+          </div>
+          {% if reading_history.last_progress_at %}
+            <div>
+              <dt class="text-fg-faint text-xs">Last read</dt>
+              <dd class="text-fg">
+                {{ reading_history.last_progress_at|timesince }} ago
+              </dd>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+
+    {% comment %}
+      Manual link — bind this file to a tracked book. Available
+      regardless of provider match so the user can always correct it.
+    {% endcomment %}
+    <div class="bg-surface-1 rounded-lg p-4 sm:p-6 mb-6">
+      <h2 class="text-lg font-semibold mb-1">Link to a tracked book</h2>
+      <p class="text-fg-muted text-sm mb-3">Bind this file to a book you track so KOReader progress flows onto it.</p>
+      {% url 'library_link' pk=lf.pk as library_link_url %}
+      {% include "app/components/match_book_form.html" with form_action=library_link_url book_choices=book_choices selected_id=lf.item_id blank_label="— Unlink —" submit_label="Save" %}
+    </div>
+
+    {% comment %} Manage: rename + delete. {% endcomment %}
+    <div class="bg-surface-1 rounded-lg p-4 sm:p-6">
+      <h2 class="text-lg font-semibold mb-3">Manage file</h2>
+      <form method="post"
+            action="{% url 'library_rename' pk=lf.pk %}"
+            class="flex items-center gap-2 mb-3">
+        {% csrf_token %}
+        <input name="canonical_filename"
+               type="text"
+               value="{{ lf.canonical_filename }}"
+               class="flex-1 min-w-0 py-1.5 px-2 bg-surface-2 rounded-md text-fg text-sm border-0 focus:ring-1 focus:ring-accent-strong outline-none font-mono">
+        <button type="submit"
+                class="shrink-0 px-3 py-1.5 bg-accent-strong text-white rounded-md hover:bg-accent-hover transition-colors text-sm cursor-pointer">
+          Rename
+        </button>
+      </form>
+      <p class="text-fg-faint text-xs mb-4">
+        Renaming rotates the kosync auto-bind hash. Make sure KOReader hasn't downloaded the file yet — or re-download after renaming.
+      </p>
+      <form method="post" action="{% url 'library_delete' pk=lf.pk %}">
+        {% csrf_token %}
+        <button type="submit"
+                class="text-sm text-danger hover:text-danger cursor-pointer"
+                onclick="return confirm('Delete {{ lf.canonical_filename|escapejs }}? This cannot be undone.')">
+          Delete this file
+        </button>
+      </form>
+    </div>
+  {% endwith %}
+{% endblock content %}

@@ -59,19 +59,24 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
       {% for lf in files %}
         <div class="bg-surface-1 rounded-lg p-4 flex flex-col gap-3">
+          {% url 'library_detail' pk=lf.pk as detail_url %}
           <div class="flex items-start gap-3">
-            {% if lf.cover %}
-              <img src="{{ lf.cover.url }}"
-                   alt="Cover of {{ lf.title|default:lf.canonical_filename }}"
-                   class="shrink-0 w-16 h-24 object-cover rounded-sm bg-surface-2"
-                   loading="lazy">
-            {% else %}
-              <div class="shrink-0 w-16 h-24 rounded-sm bg-surface-2 flex items-center justify-center text-fg-faint">
-                {% include "app/icons/book-open.svg" with classes="w-6 h-6" %}
-              </div>
-            {% endif %}
+            <a href="{{ detail_url }}" class="shrink-0">
+              {% if lf.cover %}
+                <img src="{{ lf.cover.url }}"
+                     alt="Cover of {{ lf.title|default:lf.canonical_filename }}"
+                     class="w-16 h-24 object-cover rounded-sm bg-surface-2"
+                     loading="lazy">
+              {% else %}
+                <div class="w-16 h-24 rounded-sm bg-surface-2 flex items-center justify-center text-fg-faint">
+                  {% include "app/icons/book-open.svg" with classes="w-6 h-6" %}
+                </div>
+              {% endif %}
+            </a>
             <div class="min-w-0 flex-1">
-              <div class="font-medium text-fg truncate" title="{{ lf.title }}">{{ lf.title|default:lf.canonical_filename }}</div>
+              <a href="{{ detail_url }}"
+                 class="font-medium text-fg truncate block hover:text-accent transition-colors"
+                 title="{{ lf.title }}">{{ lf.title|default:lf.canonical_filename }}</a>
               {% if lf.author %}<div class="text-sm text-fg-muted truncate" title="{{ lf.author }}">{{ lf.author }}</div>{% endif %}
               <div class="text-xs text-fg-faint mt-1 flex flex-wrap gap-x-2">
                 <span>{{ lf.size_bytes|filesizeformat }}</span>

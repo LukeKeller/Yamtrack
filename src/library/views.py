@@ -26,10 +26,13 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
+from app.providers import services
+from app.providers.services import ProviderAPIError
 from library.forms import LibraryUploadForm
 from library.helpers import (
     canonical_filename_for,
@@ -81,6 +84,129 @@ def library_index(request):
                 item__isnull=True,
             ).count(),
             "book_choices": book_choices,
+        },
+    )
+
+
+def _library_reading_history(library_file):
+    """Compact KOReader reading summary for an uploaded file, or ``None``.
+
+    Finds the KOReader mappings tied to this file — by the OPDS
+    auto-bind hash (``document_hash == koreader_filename_md5``) and, when
+    the file is provider-matched, by the bound ``Item`` — and aggregates
+    their progress events into a single summary the detail page can
+    render without an N+1. Returns ``None`` when there's no reading
+    history yet (no mappings, or mappings with no events).
+
+    Imports the stats helpers lazily so the (cheap) detail-page render
+    for a file with no reading history doesn't pay the import cost.
+    """
+    from integrations.koreader_stats import (  # noqa: PLC0415
+        aggregate_reading_time,
+        compute_sessions,
+    )
+
+    mapping_model = apps.get_model("integrations", "KOReaderBookMapping")
+    match = Q(document_hash=library_file.koreader_filename_md5)
+    if library_file.item_id:
+        match |= Q(item_id=library_file.item_id)
+    mappings = list(
+        mapping_model.objects.filter(match, user=library_file.user),
+    )
+    if not mappings:
+        return None
+
+    # Single-mapping common case filters at the query layer; the rare
+    # multi-mapping case (OPDS hash plus an item bound by another route)
+    # post-filters the per-user session list. Mirrors the book detail
+    # page's ``_koreader_book_summary``.
+    if len(mappings) == 1:
+        sessions = compute_sessions(library_file.user, mapping=mappings[0])
+    else:
+        mapping_ids = {m.id for m in mappings}
+        sessions = [
+            s
+            for s in compute_sessions(library_file.user)
+            if s.mapping_id in mapping_ids
+        ]
+    if not sessions:
+        return None
+
+    total_minutes, session_count, _avg = aggregate_reading_time(sessions)
+    latest = max(
+        (m for m in mappings if m.last_progress_at is not None),
+        key=lambda m: m.last_progress_at,
+        default=None,
+    )
+    current_percentage = (
+        round(latest.last_percentage * 100, 1) if latest is not None else None
+    )
+    return {
+        "current_percentage": current_percentage,
+        "total_minutes": total_minutes,
+        "total_hours": total_minutes / 60,
+        "session_count": session_count,
+        "latest_mapping": latest,
+        "last_progress_at": latest.last_progress_at if latest else None,
+    }
+
+
+@require_GET
+@login_required
+def library_detail(request, pk):
+    """Details page for an uploaded book — matched or not.
+
+    Every uploaded file gets a page here, even one that never resolved to
+    a metadata provider. The page always renders from the epub OPF
+    metadata stashed on the row (title/author/cover/language/ISBN) plus
+    any KOReader reading history. When the file is provider-``MATCHED``
+    it's enriched with the provider's synopsis/genres/page count and, if
+    the user already tracks the book, their tracking state — with a
+    "track this" CTA pointing at the canonical media details page
+    otherwise.
+    """
+    from reading.helpers import ranked_book_choices  # noqa: PLC0415
+
+    library_file = get_object_or_404(
+        LibraryFile.objects.select_related("item"),
+        pk=pk,
+        user=request.user,
+    )
+
+    provider_metadata = None
+    tracked_instance = None
+    if library_file.item_id:
+        item = library_file.item
+        try:
+            provider_metadata = services.get_media_metadata(
+                item.media_type,
+                item.media_id,
+                item.source,
+            )
+        except ProviderAPIError:
+            # A provider hiccup shouldn't 500 the page — fall back to the
+            # epub OPF metadata we already have on the row.
+            logger.warning(
+                "Provider metadata fetch failed for library file %s (item %s)",
+                pk,
+                item.pk,
+            )
+        book_model = apps.get_model("app", "book")
+        tracked_instance = (
+            book_model.objects.filter(user=request.user, item=item)
+            .select_related("item")
+            .first()
+        )
+
+    return render(
+        request,
+        "library/detail.html",
+        {
+            "library_file": library_file,
+            "provider_metadata": provider_metadata,
+            "tracked_instance": tracked_instance,
+            "reading_history": _library_reading_history(library_file),
+            "book_choices": ranked_book_choices(request.user),
         },
     )
 

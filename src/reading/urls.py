@@ -32,6 +32,11 @@ urlpatterns = [
     path("library/", library_views.library_index, name="library_index"),
     path("library/upload", library_views.library_upload, name="library_upload"),
     path(
+        "library/file/<int:pk>/",
+        library_views.library_detail,
+        name="library_detail",
+    ),
+    path(
         "library/file/<int:pk>/link",
         library_views.library_link,
         name="library_link",

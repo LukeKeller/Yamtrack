@@ -35,9 +35,11 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db import IntegrityError
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 from ebooklib import epub
 
 from app.models import Book, Item, MediaTypes, Sources, Status
+from app.providers.services import ProviderAPIError
 from integrations.models import KOReaderBookMapping
 from library.helpers import (
     canonical_filename_for,
@@ -45,6 +47,7 @@ from library.helpers import (
     find_matching_book,
 )
 from library.models import LibraryFile
+from library.views import _library_reading_history
 
 
 def _md5(value):
@@ -538,3 +541,145 @@ class KOSyncAutoBindTests(TestCase):
         # so this test just checks no crash + a mapping exists. The
         # specific binding-or-not is covered in test_koreader_filename.
         self.assertIsNotNone(mapping)
+
+
+class _FakeResponse:
+    """Minimal stand-in so we can build a ProviderAPIError in tests."""
+
+    status_code = 500
+    text = "boom"
+
+
+class _FakeHTTPError(Exception):
+    """An exception carrying a ``.response`` like requests' HTTPError."""
+
+    response = _FakeResponse()
+
+
+@override_settings(MEDIA_ROOT="library_test_media")
+class LibraryDetailTests(TestCase):
+    """The /reading/library/file/<pk>/ details page (Phase 2)."""
+
+    def setUp(self):
+        self.user = _make_user()
+        self.client.force_login(self.user)
+        self.canonical = "Dune.epub"
+        self.lf = LibraryFile.objects.create(
+            user=self.user,
+            canonical_filename=self.canonical,
+            koreader_filename_md5=_md5(self.canonical),
+            title="Dune",
+            author="Frank Herbert",
+            language="en",
+            isbn_13="9780441172719",
+            size_bytes=1234,
+        )
+
+    def _url(self, lf=None):
+        return reverse("library_detail", args=[(lf or self.lf).pk])
+
+    def test_unresolved_file_renders_without_provider_call(self):
+        response = self.client.get(self._url())
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Dune")
+        self.assertContains(response, "Frank Herbert")
+        # No provider link yet, so no "Track this book" CTA.
+        self.assertNotContains(response, "Track this book")
+
+    def test_other_users_file_is_404(self):
+        other = _make_user("other")
+        self.client.force_login(other)
+        self.assertEqual(self.client.get(self._url()).status_code, 404)
+
+    @patch("library.views.services.get_media_metadata")
+    def test_matched_untracked_file_enriches_and_shows_track_cta(self, mock_meta):
+        item = _make_book_item(title="Dune", media_id="OL1W")
+        self.lf.item = item
+        self.lf.match_status = LibraryFile.MatchStatus.MATCHED
+        self.lf.match_method = LibraryFile.MatchMethod.ISBN
+        self.lf.save(update_fields=["item", "match_status", "match_method"])
+        mock_meta.return_value = {
+            "title": "Dune",
+            "image": "",
+            "synopsis": "A desert planet epic.",
+            "genres": [{"name": "Science Fiction"}],
+            "score": 4.5,
+            "details": {"number_of_pages": 412, "publish_date": "1965"},
+        }
+        response = self.client.get(self._url())
+        self.assertEqual(response.status_code, 200)
+        mock_meta.assert_called_once_with("book", "OL1W", Sources.OPENLIBRARY.value)
+        self.assertContains(response, "A desert planet epic.")
+        self.assertContains(response, "Science Fiction")
+        self.assertContains(response, "Track this book")
+
+    @patch("library.views.services.get_media_metadata")
+    def test_matched_tracked_file_shows_tracking_state(self, mock_meta):
+        item = _make_book_item(title="Dune", media_id="OL2W")
+        Book.objects.create(
+            user=self.user,
+            item=item,
+            status=Status.PLANNING.value,
+        )
+        self.lf.item = item
+        self.lf.match_status = LibraryFile.MatchStatus.MATCHED
+        self.lf.save(update_fields=["item", "match_status"])
+        mock_meta.return_value = {"title": "Dune", "image": "", "details": {}}
+        response = self.client.get(self._url())
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Tracking")
+        self.assertContains(response, "Open book page")
+        self.assertNotContains(response, "Track this book")
+
+    @patch("library.views.services.get_media_metadata")
+    def test_provider_error_falls_back_to_local_metadata(self, mock_meta):
+        item = _make_book_item(title="Dune", media_id="OL3W")
+        self.lf.item = item
+        self.lf.match_status = LibraryFile.MatchStatus.MATCHED
+        self.lf.save(update_fields=["item", "match_status"])
+        mock_meta.side_effect = ProviderAPIError(
+            Sources.OPENLIBRARY.value,
+            _FakeHTTPError(),
+        )
+        response = self.client.get(self._url())
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Dune")
+
+    @patch("library.views._library_reading_history")
+    def test_reading_history_section_renders_when_present(self, mock_history):
+        mock_history.return_value = {
+            "current_percentage": 42.0,
+            "total_minutes": 120,
+            "total_hours": 2.0,
+            "session_count": 3,
+            "latest_mapping": None,
+            "last_progress_at": None,
+        }
+        response = self.client.get(self._url())
+        self.assertContains(response, "Reading history")
+        self.assertContains(response, "42.0%")
+        self.assertContains(response, "2.0h")
+
+    def test_reading_history_finds_mapping_by_filename_hash(self):
+        mapping = KOReaderBookMapping.objects.create(
+            user=self.user,
+            document_hash=self.lf.koreader_filename_md5,
+            last_percentage=0.5,
+            last_progress_at=timezone.now(),
+        )
+        sentinel = object()
+        with (
+            patch(
+                "integrations.koreader_stats.compute_sessions",
+                return_value=[sentinel],
+            ),
+            patch(
+                "integrations.koreader_stats.aggregate_reading_time",
+                return_value=(90, 2, 45),
+            ),
+        ):
+            summary = _library_reading_history(self.lf)
+        self.assertIsNotNone(summary)
+        self.assertEqual(summary["session_count"], 2)
+        self.assertEqual(summary["current_percentage"], 50.0)
+        self.assertEqual(summary["latest_mapping"], mapping)

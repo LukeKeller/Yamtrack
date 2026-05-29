@@ -57,7 +57,9 @@
                      aria-hidden="true">{% include "app/icons/book-open.svg" with classes="w-5 h-5" %}</div>
               {% endif %}
               <div class="min-w-0 flex-1">
-                <div class="font-medium text-fg truncate" title="{{ lf.title }}">{{ lf.title|default:lf.canonical_filename }}</div>
+                <a href="{% url 'library_detail' pk=lf.pk %}"
+                   class="font-medium text-fg truncate block hover:text-accent transition-colors"
+                   title="{{ lf.title }}">{{ lf.title|default:lf.canonical_filename }}</a>
                 {% if lf.author %}<div class="text-sm text-fg-muted truncate">{{ lf.author }}</div>{% endif %}
                 <div class="text-xs text-fg-faint mt-1">{{ lf.size_bytes|filesizeformat }}</div>
               </div>
