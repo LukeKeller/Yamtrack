@@ -187,6 +187,12 @@ class UploadTests(TestCase):
     def setUp(self):
         self.user = _make_user()
         self.client.force_login(self.user)
+        # Upload enqueues the provider auto-match task, which runs inline
+        # under CELERY eager and would hit live providers. Stub it; the
+        # resolver is covered in test_matching.
+        patcher = patch("library.views.auto_match_library_file")
+        self.mock_auto_match = patcher.start()
+        self.addCleanup(patcher.stop)
 
     def _upload(self, files):
         return self.client.post(
@@ -245,9 +251,9 @@ class UploadTests(TestCase):
         self._upload([upload])
         self.assertEqual(LibraryFile.objects.count(), 0)
 
-    def test_auto_links_to_matching_book(self):
-        item = _make_book_item(title="Dune")
-        Book.objects.create(user=self.user, item=item, status=Status.PLANNING.value)
+    def test_upload_starts_unresolved_and_enqueues_provider_match(self):
+        # Uploads no longer auto-link to a tracked Book; they start
+        # UNRESOLVED and enqueue the provider auto-match task instead.
         upload = SimpleUploadedFile(
             "anything.epub",
             _build_epub_bytes(title="Dune", author="Frank Herbert"),
@@ -255,7 +261,9 @@ class UploadTests(TestCase):
         )
         self._upload([upload])
         lf = LibraryFile.objects.get()
-        self.assertEqual(lf.item, item)
+        self.assertIsNone(lf.item)
+        self.assertEqual(lf.match_status, LibraryFile.MatchStatus.UNRESOLVED)
+        self.mock_auto_match.delay.assert_called_once_with(lf.id)
         lf.file.delete(save=False)
 
     def test_duplicate_upload_in_same_form_only_creates_one_row(self):
@@ -276,6 +284,10 @@ class OPDSTests(TestCase):
         self.user = _make_user()
         self.user.token = "the-token"  # noqa: S105
         self.user.save(update_fields=["token"])
+        # Stub provider auto-match so the upload fixture doesn't call out.
+        patcher = patch("library.views.auto_match_library_file")
+        patcher.start()
+        self.addCleanup(patcher.stop)
         epub_bytes = _build_epub_bytes(title="Dune", author="Frank Herbert")
         upload = SimpleUploadedFile("dune.epub", epub_bytes)
         self.client.force_login(self.user)

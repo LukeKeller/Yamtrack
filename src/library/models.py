@@ -54,12 +54,35 @@ class LibraryFile(models.Model):
     time (or when the user renames via the UI) — keeping them as columns
     lets the kosync hot path stay a single indexed lookup.
 
-    ``item`` is nullable: an upload that doesn't match an existing Book on
-    ISBN or title+author lands in unmatched state, and the user can link
-    it manually from the library browser. When linked (or auto-matched),
-    a kosync push for ``koreader_filename_md5`` binds straight onto the
-    Book without ever passing through ``/koreader/unmatched``.
+    ``item`` is nullable: an upload that doesn't resolve to a provider
+    work lands in unmatched state, and the user can link it manually
+    from the library browser. When linked (or auto-matched), a kosync
+    push for ``koreader_filename_md5`` binds straight onto the Book
+    without ever passing through ``/koreader/unmatched``.
+
+    "Matched" means resolved to a metadata *provider* work (Hardcover or
+    OpenLibrary), independent of whether the user tracks the Book. The
+    ``item`` FK is the provider link; ``match_status`` records the
+    resolution outcome and ``match_method`` how it was reached. A row
+    stays ``UNRESOLVED`` until the auto-match task runs; a provider miss
+    lands it in ``NO_MATCH`` (retryable), and a manual link sets
+    ``MATCHED`` / ``MANUAL``.
     """
+
+    class MatchStatus(models.TextChoices):
+        """Resolution outcome against a metadata provider."""
+
+        UNRESOLVED = "unresolved", "Unresolved"
+        MATCHED = "matched", "Matched"
+        NO_MATCH = "no_match", "No match"
+
+    class MatchMethod(models.TextChoices):
+        """How a provider match was reached."""
+
+        NONE = "none", "None"
+        ISBN = "isbn", "ISBN"
+        TITLE_AUTHOR = "title_author", "Title + Author"
+        MANUAL = "manual", "Manual"
 
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -96,6 +119,20 @@ class LibraryFile(models.Model):
         blank=True,
         related_name="library_files",
     )
+    match_status = models.CharField(
+        max_length=12,
+        choices=MatchStatus.choices,
+        default=MatchStatus.UNRESOLVED,
+        db_index=True,
+        help_text="Whether the upload has been resolved to a metadata provider.",
+    )
+    match_method = models.CharField(
+        max_length=16,
+        choices=MatchMethod.choices,
+        default=MatchMethod.NONE,
+        help_text="How the provider match was made (ISBN, title+author, manual).",
+    )
+    matched_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -117,3 +154,8 @@ class LibraryFile(models.Model):
     def __str__(self):
         """Short label for admin / shell."""
         return f"{self.canonical_filename} (user {self.user_id})"
+
+    @property
+    def is_matched(self):
+        """True when the file is resolved to a provider work."""
+        return self.match_status == LibraryFile.MatchStatus.MATCHED

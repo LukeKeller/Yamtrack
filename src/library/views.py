@@ -27,17 +27,18 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.core.files import File
 from django.db import IntegrityError, transaction
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
 from library.forms import LibraryUploadForm
 from library.helpers import (
     canonical_filename_for,
     compute_koreader_filename_md5,
-    find_matching_book,
     parse_epub_metadata,
     save_cover_for,
 )
 from library.models import LibraryFile
+from library.tasks import auto_match_library_file
 
 logger = logging.getLogger(__name__)
 
@@ -127,7 +128,18 @@ def library_link(request, pk):
 
     if not item_id:
         library_file.item = None
-        library_file.save(update_fields=["item", "updated_at"])
+        library_file.match_status = LibraryFile.MatchStatus.UNRESOLVED
+        library_file.match_method = LibraryFile.MatchMethod.NONE
+        library_file.matched_at = None
+        library_file.save(
+            update_fields=[
+                "item",
+                "match_status",
+                "match_method",
+                "matched_at",
+                "updated_at",
+            ],
+        )
         messages.info(request, f"Unlinked {library_file.canonical_filename}.")
         return _library_post_redirect(request)
 
@@ -139,7 +151,18 @@ def library_link(request, pk):
         return _library_post_redirect(request)
 
     library_file.item = item
-    library_file.save(update_fields=["item", "updated_at"])
+    library_file.match_status = LibraryFile.MatchStatus.MATCHED
+    library_file.match_method = LibraryFile.MatchMethod.MANUAL
+    library_file.matched_at = timezone.now()
+    library_file.save(
+        update_fields=[
+            "item",
+            "match_status",
+            "match_method",
+            "matched_at",
+            "updated_at",
+        ],
+    )
     messages.success(
         request,
         f"Linked {library_file.canonical_filename} to {item.title}.",
@@ -260,12 +283,17 @@ def _ingest_one_epub_from_django_file(user, django_file, basename, summary):
 
 
 def _ingest_one_epub_from_stream(user, stream, basename, summary):
-    """Persist one .epub stream; parse metadata; attempt auto-link.
+    """Persist one .epub stream; parse metadata; enqueue provider match.
 
     Streams the upload to a tempfile first so ebooklib can crack the
     OPF off a real path, then re-streams it into the LibraryFile via
     Django's FileField. Avoids loading the full file into memory twice
     and keeps the on-disk write atomic.
+
+    New rows start ``UNRESOLVED``; once saved we enqueue
+    ``auto_match_library_file`` to resolve them to a metadata provider
+    (Hardcover when connected, else OpenLibrary). Runs inline under
+    CELERY eager in tests.
     """
     with tempfile.NamedTemporaryFile(suffix=EPUB_EXT, delete=False) as tmp:
         for chunk in iter(lambda: stream.read(64 * 1024), b""):
@@ -299,10 +327,6 @@ def _ingest_one_epub_from_stream(user, stream, basename, summary):
             isbn_10=metadata["isbn_10"][:10],
         )
 
-        matched_item = find_matching_book(user, library_file.title, library_file.author)
-        if matched_item is not None:
-            library_file.item = matched_item
-
         with tmp_path.open("rb") as fp:
             library_file.file.save(canonical, File(fp), save=False)
 
@@ -327,6 +351,7 @@ def _ingest_one_epub_from_stream(user, stream, basename, summary):
             summary["duplicates"] += 1
             return
 
+        auto_match_library_file.delay(library_file.id)
         summary["imported"] += 1
     finally:
         with contextlib.suppress(OSError):
