@@ -930,6 +930,33 @@
         </div>
       </div>
 
+      {% if koreader_summary.projection %}
+        {% comment %}
+          Pace + projected finish, shown only for in-progress books with a
+          multi-day reading window (see _reading_projection). Extrapolates
+          recent forward pace to the remaining percentage.
+        {% endcomment %}
+        <div class="card px-4 py-3 mb-6 flex items-center gap-3"
+             style="border-color: var(--color-border-subtle); background: var(--color-accent-soft)">
+          <span class="w-9 h-9 rounded-md bg-accent text-white flex items-center justify-center shrink-0">
+            {% include "app/icons/clock.svg" with classes="w-5 h-5" %}
+          </span>
+          <div class="flex-1 min-w-0 text-sm text-fg">
+            At your recent pace
+            {% if koreader_summary.projection.pace_pages_per_day %}
+              (<span class="font-medium">~{{ koreader_summary.projection.pace_pages_per_day }} pages/day</span>)
+            {% else %}
+              (<span class="font-medium">~{{ koreader_summary.projection.pace_pct_per_day|floatformat:"-1" }}%/day</span>)
+            {% endif %}
+            you'll finish around
+            <span class="font-medium">{{ koreader_summary.projection.projected_finish|date:"M j, Y" }}</span>
+            {% if koreader_summary.projection.days_left %}
+              <span class="text-fg-muted">(~{{ koreader_summary.projection.days_left }} day{{ koreader_summary.projection.days_left|pluralize }})</span>
+            {% endif %}.
+          </div>
+        </div>
+      {% endif %}
+
       <div class="bg-surface-1 rounded-lg p-5 mb-6">
         <div class="relative h-[420px]">
           <canvas id="koreader-history-chart"></canvas>

@@ -1,13 +1,18 @@
+from datetime import timedelta
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from app.models import (
     MediaTypes,
     Sources,
+    Status,
 )
+from app.views import _reading_projection
 
 
 class MediaDetailsViewTests(TestCase):
@@ -114,3 +119,51 @@ class MediaDetailsViewTests(TestCase):
             Sources.TMDB.value,
             [1],
         )
+
+
+class ReadingProjectionTests(TestCase):
+    """``_reading_projection`` extrapolates pace to a finish date."""
+
+    @staticmethod
+    def _session(days_ago, percent_start):
+        return SimpleNamespace(
+            start=timezone.now() - timedelta(days=days_ago),
+            percent_start=percent_start,
+        )
+
+    @staticmethod
+    def _book(status=Status.IN_PROGRESS.value, progress=275):
+        return SimpleNamespace(status=status, progress=progress)
+
+    def test_pace_and_finish_date_are_projected(self):
+        """20% -> 55% over 7 days projects ~9 days and ~25 pages/day."""
+        sessions = [self._session(0, 0.55), self._session(7, 0.20)]
+        projection = _reading_projection(sessions, 55.0, self._book())
+
+        self.assertIsNotNone(projection)
+        self.assertEqual(projection["days_left"], 9)
+        # progress 275 pages at 55% => 500-page book, 5%/day => 25 pages/day.
+        self.assertEqual(projection["pace_pages_per_day"], 25)
+        self.assertGreater(projection["projected_finish"], timezone.now())
+
+    def test_completed_book_has_no_projection(self):
+        """Only in-progress books get a projection."""
+        sessions = [self._session(0, 0.55), self._session(7, 0.20)]
+        projection = _reading_projection(
+            sessions,
+            55.0,
+            self._book(status=Status.COMPLETED.value),
+        )
+        self.assertIsNone(projection)
+
+    def test_near_finished_book_has_no_projection(self):
+        """A book past the completion floor isn't projected."""
+        sessions = [self._session(0, 0.99), self._session(7, 0.80)]
+        projection = _reading_projection(sessions, 99.0, self._book())
+        self.assertIsNone(projection)
+
+    def test_same_day_window_is_too_short(self):
+        """A sub-day reading window is noise, not a pace."""
+        sessions = [self._session(0, 0.50), self._session(0, 0.20)]
+        projection = _reading_projection(sessions, 50.0, self._book())
+        self.assertIsNone(projection)

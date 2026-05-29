@@ -10,16 +10,16 @@ When something ships, move it to "Shipped" with the `~ynhNN` it landed in.
 These were the original short list (2026-05-23) and are the next things to build.
 
 - [x] **Display all scores out of 10** — shipped ynh87 (2026-05-24).
-- [x] **Stats / year-in-review page** — shipped ynh88 (2026-05-24). `/wrapped/` with year chips, hero stats, monthly bars, top rated, day-of-week callout. Hours-watched / pages-read deferred (needs Item runtime/pages backfill).
+- [x] **Stats / year-in-review page** — shipped ynh88 (2026-05-24). `/wrapped/` with year chips, hero stats, monthly bars, top rated, day-of-week callout. Reading depth (pages read + KOReader reading time) added ynh147 (2026-05-29); video/game runtime still deferred (needs runtime metadata we don't store).
 - [x] **TMDB "Where to watch"** — shipped ynh89 (2026-05-24). Repositioned the existing provider lookup out of the bottom Details pile into the hero, made provider chips clickable via TMDB's region link, and labeled the region explicitly. Backbone (region preference, TMDB cache, filter_providers) was already in place.
 - [ ] **Bulk-select on lists** — multi-select checkboxes → bulk status/score/delete/add-to-list. Alpine store + action bar on `media_grid_items.html` / `media_table_items.html`; new `bulk_action` view that routes through `Media.save()` for safety, raw `update()` only for pure score/status changes.
-- [ ] **PWA install + offline list browse** — SW already exists (`app/serviceworker.js`); cache home shell + last-rendered list HTML on background sync. Image cache via Cache API with LRU.
+- [x] **PWA install + offline list browse** — shipped ynh112 (offline page, runtime caching, install prompt, web push, background-sync write queue).
 - [ ] **Smarter duplicate/merge detection** — when adding from `mal`, check if same canonical work is already tracked via `openlibrary`/`hardcover`/`tmdb` (fuzzy title+year), offer merge. Heavier follow-up: management command that ranks suspected duplicates across the library.
 - [ ] **Hardcover inbound sync** — push side already shipped (ynh82). Plan in `HARDCOVER_SYNC_PLAN.md`. Still TODO: `me { user_books }` poll, identity map (`HardcoverBookMapping`), echo suppression via `last_hardcover_sync_at`.
 - [x] **List Import (paste-and-match)** — shipped ynh111 as `/list/import`. Picks one media type, searches each pasted title, takes the top hit, batch-adds to a new CustomList. The per-row "pick from candidates" review for ambiguous matches is a future polish.
-- [ ] **KOReader visibility A+B** (2026-05-26): per-book reading timeline on the book detail page + a devices dashboard at `/users/koreader/devices`. Both reuse `KOReaderBookMapping` + `Book.history`; no new model fields. See "KOReader sync data visibility" entry below for the full cut list.
-- [ ] **KOReader visibility D** (next-up): reading-cadence stats — pages/percent per day, weekly contribution-grid style — folded into `/wrapped/`.
-- [ ] **KOReader visibility F** (after D): inferred reading sessions — group sync events within a 30-min window into start/end/duration sessions.
+- [x] **KOReader visibility A+B** — shipped. Per-book reading history is inlined on the book detail page (ynh143) and the Reading hub at `/reading/` carries the devices/sync workspace (ynh141). Backed by `KOReaderProgressEvent` (an append-only event log added alongside the original mapping).
+- [x] **KOReader visibility D** — shipped. Reading-cadence stats (`compute_daily_cadence`, contribution-grid heatmap) live on the Reading hub / cadence view.
+- [x] **KOReader visibility F** — shipped. Inferred reading sessions (`compute_sessions`, 30-min idle gap) render on the book page and hub. Single-sync sessions were being dropped; fixed ynh146.
 
 ---
 
@@ -73,6 +73,13 @@ User picks from this list once the queue above is shipping. Grouped by theme. No
 
 ## Shipped (recent — see git log for the full list)
 
+- ynh150 — **Reading pace + projected finish on the book page** (in-progress books with a multi-day KOReader window get a pace estimate — pages/day — and an extrapolated finish date callout in the reading-history section)
+- ynh149 — **Games list playtime stats panel** (collapsible Playtime Stats on `/medialist/game`: total hours, completed, average over played games, top-games-by-playtime bar list; games store progress as minutes)
+- ynh148 — **Up Next unwatched-episode count badge** (Plex-style cover badge = released minus watched for episodic types; hidden when caught up so it reads as a "new episode is out" nudge)
+- ynh147 — **Reading depth in year-in-review** (pages read from completed books + KOReader reading time, folded into `/wrapped/`) ✓ from queue
+- ynh146 — **Fix: single-sync KOReader reading sessions no longer vanish** (a session pushed as one event that advanced progress was dropped as a book-open ping; kept now when it shows forward progress)
+- ynh141/143 — **Reading hub + inline KOReader history** ✓ from queue (visibility A+B/D/F)
+- ynh112 — **PWA upgrade** (offline, install, web push, background sync) ✓ from queue
 - ynh111 — **List Import (paste-and-match)** (new `/list/import` page: name + media type + textarea of titles → searches each, takes top hit, batch-adds to a new CustomList. Empty-match runs clean up the empty list; partial-match runs surface unmatched titles via messages. Cap at 100 titles per import.)
 - ynh110 — **Release Date sort on custom lists** (`Item.air_date` generalized from "episode air date" to a premiere/release date for any media type; new `ListDetailSortChoices.RELEASE_DATE`; `lists_modal` populates `air_date` at Item-creation time; `backfill_item_release_dates` management command for existing rows)
 - ynh89 — **Where to watch polish** (TMDB streaming chips moved into the detail-page hero, clickable to the JustWatch region link, region labeled in the heading) ✓ from queue

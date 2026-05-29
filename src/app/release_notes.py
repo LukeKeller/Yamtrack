@@ -10,10 +10,19 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh149"
+CURRENT_FORK_VERSION = "0.25.2~ynh150"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh150",
+        "date": "2026-05-29",
+        "title": "Book page: reading pace and a projected finish date",
+        "highlights": [
+            'The reading-history section on a book\'s detail page now shows a pace-and-finish callout for books you\'re part-way through. Yamtrack measures your forward pace across the span from your first KOReader session to your latest synced position, then extrapolates the remaining percentage to estimate when you\'ll finish — e.g. "At your recent pace (~25 pages/day) you\'ll finish around Jun 14 (~9 days)." Pace is shown in pages/day when the page count can be inferred, otherwise as percent/day. It only appears for in-progress books with a multi-day reading window and real forward motion, so a single binge or a nearly-finished book won\'t show a noisy guess.',
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh149",
         "date": "2026-05-29",

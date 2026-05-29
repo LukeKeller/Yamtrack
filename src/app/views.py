@@ -948,6 +948,56 @@ def _resolve_browse_genres(media_type, raw):
     return selected_ids, available
 
 
+def _reading_projection(sessions, current_percentage, book):
+    """Estimate reading pace and a projected finish date for a book.
+
+    Uses the span from the user's first recorded KOReader session to the
+    latest synced position: average forward pace over that window, then
+    extrapolate the remaining fraction to a finish date. Returns ``None``
+    unless the book is in progress with enough signal to be meaningful —
+    a multi-day span, real forward progress, and a position that's
+    started but not effectively done. ``sessions`` is newest-first (so
+    the oldest, the baseline, is last). Pace is also expressed in
+    pages/day when the page count can be inferred from the current page
+    progress and percentage.
+    """
+    if book.status != Status.IN_PROGRESS.value or current_percentage is None:
+        return None
+
+    current_fraction = current_percentage / 100
+    completion_floor = 0.97
+    if not 0 < current_fraction < completion_floor:
+        return None
+    if not sessions:
+        return None
+
+    oldest = sessions[-1]
+    elapsed_days = (timezone.now() - oldest.start).total_seconds() / 86400
+    gained = current_fraction - oldest.percent_start
+    # Need a real multi-day window and forward motion, or the
+    # extrapolation is noise (e.g. one burst of reading on day one).
+    if elapsed_days < 1 or gained <= 0:
+        return None
+
+    pace_per_day = gained / elapsed_days
+    days_left = (1.0 - current_fraction) / pace_per_day
+    # A projection further out than a couple of years is not useful and
+    # usually means the pace sample is too small; don't show it.
+    max_projection_days = 730
+    if days_left > max_projection_days:
+        return None
+
+    projection = {
+        "days_left": round(days_left),
+        "projected_finish": timezone.now() + timedelta(days=days_left),
+        "pace_pct_per_day": round(pace_per_day * 100, 1),
+    }
+    if book.progress:
+        total_pages = book.progress / current_fraction
+        projection["pace_pages_per_day"] = round(total_pages * pace_per_day)
+    return projection
+
+
 def _koreader_book_summary(user, book):
     """Return KOReader reading-history data for ``book`` or ``None``.
 
@@ -1054,6 +1104,7 @@ def _koreader_book_summary(user, book):
         "total_minutes": total_minutes,
         "total_hours": total_minutes / 60,
         "journey_data": journey_data,
+        "projection": _reading_projection(all_sessions, current_percentage, book),
     }
 
 
