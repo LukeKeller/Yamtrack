@@ -10,6 +10,7 @@ from app.models import (
     Anime,
     Book,
     Episode,
+    Game,
     Item,
     MediaTypes,
     Movie,
@@ -1046,3 +1047,61 @@ class YearInReviewReadingTests(TestCase):
         self.assertEqual(recap["pages_read"], 0)
         self.assertEqual(recap["reading_minutes"], 0)
         self.assertFalse(recap["has_reading_stats"])
+
+
+class GameStatsTests(TestCase):
+    """``get_game_stats`` totals and ranks game playtime (minutes)."""
+
+    def setUp(self):
+        """Create games with playtime; stub the provider fetch on save."""
+        metadata_patcher = patch(
+            "app.providers.services.get_media_metadata",
+            return_value={"max_progress": None},
+        )
+        metadata_patcher.start()
+        self.addCleanup(metadata_patcher.stop)
+
+        self.user = User.objects.create_user(
+            username="gamer",
+            password="pw",  # noqa: S106
+        )
+
+    def _game(self, media_id, *, minutes, status):
+        item = Item.objects.create(
+            media_id=media_id,
+            source=Sources.IGDB.value,
+            media_type=MediaTypes.GAME.value,
+            title=f"Game {media_id}",
+        )
+        return Game.objects.create(
+            user=self.user,
+            item=item,
+            status=status,
+            progress=minutes,
+        )
+
+    def test_totals_average_and_top_games(self):
+        """Totals minutes, counts completed/played, ranks by playtime."""
+        self._game("1", minutes=600, status=Status.COMPLETED.value)
+        self._game("2", minutes=120, status=Status.IN_PROGRESS.value)
+        self._game("3", minutes=0, status=Status.PLANNING.value)
+
+        result = statistics.get_game_stats(self.user)
+
+        self.assertEqual(result["total"], 3)
+        self.assertEqual(result["total_minutes"], 720)
+        self.assertEqual(result["total_hours"], 12.0)
+        self.assertEqual(result["completed"], 1)
+        self.assertEqual(result["played_count"], 2)
+        # 720 minutes over 2 played games = 360 min = 6h.
+        self.assertEqual(result["avg_minutes"], 360)
+        self.assertEqual(result["avg_hours"], 6.0)
+        # Most-played first, with the zero-playtime game excluded.
+        self.assertEqual(len(result["top_games"]), 2)
+        self.assertEqual(result["top_games"][0]["title"], "Game 1")
+        self.assertEqual(result["top_games"][0]["bar_pct"], 100)
+        self.assertEqual(result["top_games"][1]["bar_pct"], 20)
+
+    def test_no_games_returns_none(self):
+        """A user with no games gets no panel."""
+        self.assertIsNone(statistics.get_game_stats(self.user))

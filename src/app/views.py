@@ -688,6 +688,13 @@ def media_list(request, media_type):
     ):
         context["record_stats"] = stats.get_record_stats(request.user)
 
+    # Games carry real runtime in their progress field (minutes played),
+    # so the games list gets a playtime panel.
+    if media_type == MediaTypes.GAME.value and not request.headers.get(
+        "HX-Request",
+    ):
+        context["game_stats"] = stats.get_game_stats(request.user)
+
     # Handle HTMX requests for partial updates
     if request.headers.get("HX-Request"):
         # Filtering from empty list

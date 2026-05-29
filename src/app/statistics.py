@@ -647,6 +647,53 @@ def get_record_stats(user):
     }
 
 
+def get_game_stats(user, top_limit=8):
+    """Build the playtime stats panel for the games list page.
+
+    Games store ``progress`` as minutes played, so unlike most media
+    types their progress field carries a real runtime we can total and
+    rank. Returns ``None`` when the user tracks no games so the caller
+    can skip the panel. ``top_games`` carries a ``bar_pct`` relative to
+    the most-played title for a no-canvas horizontal-bar list.
+    """
+    game_model = apps.get_model(app_label="app", model_name=MediaTypes.GAME.value)
+    qs = game_model.objects.filter(user=user).select_related("item")
+    total = qs.count()
+    if total == 0:
+        return None
+
+    total_minutes = qs.aggregate(total=models.Sum("progress"))["total"] or 0
+    completed = qs.filter(status=Status.COMPLETED.value).count()
+    played_qs = qs.filter(progress__gt=0)
+    played_count = played_qs.count()
+    avg_minutes = round(total_minutes / played_count) if played_count else 0
+
+    top_rows = list(
+        played_qs.order_by("-progress").values("item__title", "progress")[:top_limit],
+    )
+    max_minutes = top_rows[0]["progress"] if top_rows else 0
+    top_games = [
+        {
+            "title": row["item__title"],
+            "minutes": row["progress"],
+            "hours": round(row["progress"] / 60, 1),
+            "bar_pct": round(row["progress"] / max_minutes * 100) if max_minutes else 0,
+        }
+        for row in top_rows
+    ]
+
+    return {
+        "total": total,
+        "total_minutes": total_minutes,
+        "total_hours": round(total_minutes / 60, 1),
+        "completed": completed,
+        "played_count": played_count,
+        "avg_minutes": avg_minutes,
+        "avg_hours": round(avg_minutes / 60, 1),
+        "top_games": top_games,
+    }
+
+
 def _build_top_played(user, days=90, limit=10):
     """Bar chart payload for the most-played records in the last ``days`` days.
 

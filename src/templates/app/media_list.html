@@ -95,6 +95,60 @@
     </div>
   {% endif %}
 
+  {% if game_stats %}
+    <div x-data="{ open: true }" class="mb-6">
+      <button @click="open = !open"
+              class="flex items-center justify-between w-full bg-surface-1 hover:bg-surface-3 rounded-lg px-4 py-3 mb-3 transition-colors cursor-pointer">
+        <div class="flex items-center gap-2">
+          {% include "app/icons/bars-increasing.svg" with classes="w-5 h-5 text-amber-400" %}
+          <span class="text-sm font-semibold">Playtime Stats</span>
+          <span class="text-xs text-fg-muted">{{ game_stats.total }} game{{ game_stats.total|pluralize }}</span>
+        </div>
+        <div class="w-4 h-4 transition-transform" :class="{ 'rotate-180': open }">
+          {% include "app/icons/chevron-down.svg" %}
+        </div>
+      </button>
+      <div x-cloak x-show="open" class="space-y-4">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div class="bg-surface-1 rounded-lg p-4">
+            <div class="text-[11px] uppercase tracking-wider text-fg-muted mb-1">Total playtime</div>
+            <div class="text-2xl font-bold text-accent">{{ game_stats.total_hours|floatformat:"-1" }}h</div>
+          </div>
+          <div class="bg-surface-1 rounded-lg p-4">
+            <div class="text-[11px] uppercase tracking-wider text-fg-muted mb-1">Completed</div>
+            <div class="text-2xl font-bold text-fg">{{ game_stats.completed }}</div>
+          </div>
+          <div class="bg-surface-1 rounded-lg p-4">
+            <div class="text-[11px] uppercase tracking-wider text-fg-muted mb-1">Avg / played game</div>
+            <div class="text-2xl font-bold text-fg">{{ game_stats.avg_hours|floatformat:"-1" }}h</div>
+          </div>
+          <div class="bg-surface-1 rounded-lg p-4">
+            <div class="text-[11px] uppercase tracking-wider text-fg-muted mb-1">With playtime</div>
+            <div class="text-2xl font-bold text-fg">{{ game_stats.played_count }}</div>
+          </div>
+        </div>
+        {% if game_stats.top_games %}
+          <div class="bg-surface-1 rounded-lg p-4">
+            <h3 class="text-sm font-medium text-fg mb-3">Most played</h3>
+            <div class="space-y-2">
+              {% for game in game_stats.top_games %}
+                <div>
+                  <div class="flex items-baseline justify-between gap-2 text-xs mb-1">
+                    <span class="truncate text-fg">{{ game.title }}</span>
+                    <span class="shrink-0 text-fg-muted tabular-nums">{{ game.hours|floatformat:"-1" }}h</span>
+                  </div>
+                  <div class="h-1.5 rounded-full bg-surface-3 overflow-hidden">
+                    <div class="h-full rounded-full bg-accent" style="width: {{ game.bar_pct }}%"></div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+
   <div x-data="{ sort: '{{ current_sort }}', status: '{{ current_status }}', layout: '{{ current_layout }}', search: '{{ request.GET.search|default:'' }}', statusLabels: {
     {% for value, label in status_choices %}
       '{{ value }}': '{{ label }}'

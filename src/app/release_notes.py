@@ -10,10 +10,19 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh148"
+CURRENT_FORK_VERSION = "0.25.2~ynh149"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh149",
+        "date": "2026-05-29",
+        "title": "Games list: a playtime stats panel",
+        "highlights": [
+            'The games list (<span class="font-mono">/medialist/game</span>) gained a collapsible <strong>Playtime Stats</strong> panel, mirroring the records collection stats. Because a game\'s progress is tracked as minutes played, Yamtrack can total it: the panel shows your <strong>total playtime</strong> in hours, how many games you\'ve <strong>completed</strong>, the <strong>average</strong> playtime across games that have any time logged, and a <strong>Most played</strong> list ranking your top titles with a simple bar each. It only appears once you track at least one game, and games with no logged time are left out of the ranking. Playtime comes from whatever you\'ve logged manually or imported (e.g. HowLongToBeat / Steam).',
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh148",
         "date": "2026-05-29",
