@@ -10,10 +10,19 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh147"
+CURRENT_FORK_VERSION = "0.25.2~ynh148"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh148",
+        "date": "2026-05-29",
+        "title": "Home: unwatched-episode count badge on the Up Next rail",
+        "highlights": [
+            'Cards in the home <strong>Up Next</strong> rail now carry a small count badge on the cover when there are released episodes (or chapters) you haven\'t watched yet — the difference between what\'s aired and your progress. For a show you\'d already caught up on it stays hidden until a new episode airs, so the badge reads as a "new episode is out" nudge rather than a permanent "you\'re mid-binge" marker; for a back-catalogue binge it tells you how many are queued up. Movies are excluded (they\'d always show "1"), and anything without release data (e.g. an anime with no air-date schedule) simply shows no badge.',
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh147",
         "date": "2026-05-29",

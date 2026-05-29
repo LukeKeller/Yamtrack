@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -15,6 +16,7 @@ from app.models import (
     Sources,
     Status,
 )
+from app.views import _annotate_ready_count
 from users.models import HomeSortChoices
 
 
@@ -300,3 +302,45 @@ class HomeViewTests(TestCase):
         self.assertIn("media_list", response.context)
         self.assertEqual(len(response.context["media_list"]["items"]), 2)
         self.assertEqual(response.context["media_list"]["total"], 16)
+
+
+class AnnotateReadyCountTests(TestCase):
+    """``_annotate_ready_count`` flags released-but-unwatched episodes."""
+
+    @staticmethod
+    def _media(media_type, *, max_progress, progress):
+        return SimpleNamespace(
+            item=SimpleNamespace(media_type=media_type),
+            max_progress=max_progress,
+            progress=progress,
+        )
+
+    def test_unwatched_released_episodes_are_counted(self):
+        """Released minus watched is the ready count."""
+        tv = self._media(MediaTypes.TV.value, max_progress=10, progress=7)
+        _annotate_ready_count([tv])
+        self.assertEqual(tv.ready_count, 3)
+
+    def test_caught_up_show_has_no_ready_count(self):
+        """Watched == released: nothing new until another airs."""
+        tv = self._media(MediaTypes.TV.value, max_progress=10, progress=10)
+        _annotate_ready_count([tv])
+        self.assertEqual(tv.ready_count, 0)
+
+    def test_new_episode_lights_up_a_caught_up_show(self):
+        """A freshly aired episode (10 -> 11) badges a finished show."""
+        tv = self._media(MediaTypes.TV.value, max_progress=11, progress=10)
+        _annotate_ready_count([tv])
+        self.assertEqual(tv.ready_count, 1)
+
+    def test_movies_are_skipped(self):
+        """An unstarted movie (max_progress 1) must not read as 1 ready."""
+        movie = self._media(MediaTypes.MOVIE.value, max_progress=1, progress=0)
+        _annotate_ready_count([movie])
+        self.assertEqual(movie.ready_count, 0)
+
+    def test_missing_max_progress_is_safe(self):
+        """No release data (e.g. an anime with no events) means no badge."""
+        anime = self._media(MediaTypes.ANIME.value, max_progress=None, progress=4)
+        _annotate_ready_count([anime])
+        self.assertEqual(anime.ready_count, 0)

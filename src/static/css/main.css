@@ -354,6 +354,9 @@
   .top-0 {
     top: calc(var(--spacing) * 0);
   }
+  .top-0\.5 {
+    top: calc(var(--spacing) * 0.5);
+  }
   .top-1\.5 {
     top: calc(var(--spacing) * 1.5);
   }
@@ -422,6 +425,9 @@
   }
   .left-0 {
     left: calc(var(--spacing) * 0);
+  }
+  .left-0\.5 {
+    left: calc(var(--spacing) * 0.5);
   }
   .left-1\.5 {
     left: calc(var(--spacing) * 1.5);
@@ -1013,6 +1019,9 @@
   }
   .min-w-44 {
     min-width: calc(var(--spacing) * 44);
+  }
+  .min-w-\[1rem\] {
+    min-width: 1rem;
   }
   .min-w-\[4ch\] {
     min-width: 4ch;

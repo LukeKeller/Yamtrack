@@ -59,6 +59,27 @@ _PALATE_MIN_SAMPLE = 5  # minimum history rows needed for the palate-cleanser nu
 _HIGH_SCORE_THRESHOLD = 8  # "8+ rated" cutoff on the person-stats panel
 
 
+def _annotate_ready_count(media_list):
+    """Flag episodic items that have released-but-unwatched units.
+
+    Sets ``ready_count`` on each item: released units (``max_progress`` —
+    e.g. aired episodes or published chapters) minus watched
+    ``progress``, floored at zero. For a show you're caught up on this
+    stays 0 until a new episode airs and ``max_progress`` ticks past your
+    progress, so the rail's badge doubles as a "new episode is out"
+    nudge rather than just a "you're mid-binge" count. Movies are skipped
+    (their ``max_progress`` is always 1, so an unstarted movie would
+    otherwise read as "1 ready").
+    """
+    for media in media_list:
+        if media.item.media_type == MediaTypes.MOVIE.value:
+            media.ready_count = 0
+            continue
+        max_progress = getattr(media, "max_progress", None) or 0
+        watched = getattr(media, "progress", 0) or 0
+        media.ready_count = max(0, max_progress - watched)
+
+
 @require_GET
 def home(request):
     """Home page with media items in progress and planning."""
@@ -119,6 +140,7 @@ def home(request):
             reverse=True,
         )
         up_next = up_next[:12]
+        _annotate_ready_count(up_next)
 
     context = {
         "home_sections": home_sections,

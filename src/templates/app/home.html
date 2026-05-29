@@ -68,12 +68,23 @@
               <a href="{{ m.item|media_url }}?continue=1"
                  class="flex gap-3 items-stretch min-w-0 p-3"
                  aria-label="{{ m.item }}">
-                <div class="w-14 h-20 rounded-md overflow-hidden bg-surface-2 shrink-0 ring-1"
+                <div class="w-14 h-20 rounded-md overflow-hidden bg-surface-2 shrink-0 ring-1 relative"
                      style="--tw-ring-color: var(--color-border-subtle)">
                   <img alt=""
                        class="lazyload w-full h-full {% if m.item.image != IMG_NONE %}object-cover{% endif %}"
                        data-src="{{ m.item.image }}"
                        src="{{ IMG_NONE }}">
+                  {% if m.ready_count %}
+                    {% comment %}
+                      Unwatched-released count, Plex-style. Appears the moment a
+                      new episode airs for a show you'd caught up on, so it reads
+                      as a "new episodes ready" nudge.
+                    {% endcomment %}
+                    <span class="absolute top-0.5 left-0.5 min-w-[1rem] h-4 px-1 rounded-full bg-accent text-white text-[10px] font-bold flex items-center justify-center leading-none shadow"
+                          title="{{ m.ready_count }} released {{ m.item.media_type|long_unit|lower }}{{ m.ready_count|pluralize }} you haven't watched yet">
+                      {{ m.ready_count }}
+                    </span>
+                  {% endif %}
                 </div>
                 <div class="flex-1 min-w-0 flex flex-col">
                   <div class="text-[10px] text-fg-faint uppercase tracking-wider mb-0.5">
