@@ -341,7 +341,7 @@
         <a href="{{ browse_url }}"
            class="flex flex-col items-center gap-0.5 px-2 py-1.5 text-[10px] {% if request.path|str_equals:browse_url %}text-accent{% else %}text-fg-muted{% endif %}">
           {% include "app/icons/flame.svg" with classes="w-5 h-5" %}
-          <span>Discover</span>
+          <span>Browse</span>
         </a>
         <button type="button"
                 @click="$dispatch('cmdk-open')"

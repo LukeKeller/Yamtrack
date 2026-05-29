@@ -1002,11 +1002,17 @@ def browse_categories(media_type):
     return [{"value": value, "label": label} for value, label in raw]
 
 
-def browse_request_config(media_type, category, watch_region):
+def browse_request_config(media_type, category, watch_region, genres=None):
     """Return the (url, extra_params) for a browse category.
 
     Unknown categories fall back to the "popular" endpoint so the page
     always renders something instead of erroring on a stale bookmark.
+
+    ``genres`` is an optional iterable of TMDB genre ids. When non-empty,
+    every category is routed through ``/discover`` (the only endpoint
+    that accepts ``with_genres``) and simple categories are translated
+    to their discover-equivalent sort/window params so the genre filter
+    composes with the category instead of replacing it.
     """
     today = timezone.localdate()
     recent_floor = (today - timedelta(days=STREAMING_WINDOW_DAYS)).isoformat()
@@ -1044,6 +1050,38 @@ def browse_request_config(media_type, category, watch_region):
             "vote_average.gte": 7.5,
             "vote_count.gte": 500,
         }
+        # Discover-equivalent params for the simple-endpoint categories,
+        # used when a genre filter is active (with_genres only works on
+        # /discover). Time windows roughly mirror TMDB's own definitions
+        # of now_playing / upcoming so the user-facing semantics hold.
+        now_playing_floor = (today - timedelta(days=45)).isoformat()
+        upcoming_floor = (today + timedelta(days=1)).isoformat()
+        simple_discover_overrides = {
+            "popular": {
+                "sort_by": "popularity.desc",
+                "vote_count.gte": 50,
+            },
+            "now_playing": {
+                "sort_by": "primary_release_date.desc",
+                "primary_release_date.gte": now_playing_floor,
+                "primary_release_date.lte": today.isoformat(),
+                "with_release_type": "2|3",
+            },
+            "upcoming": {
+                "sort_by": "primary_release_date.asc",
+                "primary_release_date.gte": upcoming_floor,
+            },
+            "top_rated": {
+                "sort_by": "vote_average.desc",
+                "vote_count.gte": 300,
+            },
+            # Trending has no /discover equivalent — fall back to popularity
+            # so the page still renders something coherent with a genre on.
+            "trending": {
+                "sort_by": "popularity.desc",
+                "vote_count.gte": 50,
+            },
+        }
     else:
         simple = {
             "popular": "tv/popular",
@@ -1074,12 +1112,55 @@ def browse_request_config(media_type, category, watch_region):
             "vote_average.gte": 7.5,
             "vote_count.gte": 100,
         }
+        on_air_floor = (today - timedelta(days=7)).isoformat()
+        on_air_ceiling = (today + timedelta(days=7)).isoformat()
+        airing_today_date = today.isoformat()
+        simple_discover_overrides = {
+            "popular": {
+                "sort_by": "popularity.desc",
+                "vote_count.gte": 30,
+            },
+            "on_the_air": {
+                "sort_by": "first_air_date.desc",
+                "air_date.gte": on_air_floor,
+                "air_date.lte": on_air_ceiling,
+            },
+            "airing_today": {
+                "air_date.gte": airing_today_date,
+                "air_date.lte": airing_today_date,
+            },
+            "top_rated": {
+                "sort_by": "vote_average.desc",
+                "vote_count.gte": 200,
+            },
+            "trending": {
+                "sort_by": "popularity.desc",
+                "vote_count.gte": 30,
+            },
+        }
 
     discover_overrides = {
         "streaming": streaming_params,
         "hidden_gems": hidden_gems_params,
         "classics": classics_params,
     }
+
+    if genres:
+        # with_genres requires /discover. Pick the category's discover
+        # variant if it has one, else its simple-endpoint equivalent.
+        # Missing keys (e.g., a brand-new category that forgot to add
+        # an entry here) fall back to popularity-sorted.
+        category_params = (
+            discover_overrides.get(category)
+            or simple_discover_overrides.get(category)
+            or {"sort_by": "popularity.desc"}
+        )
+        extra_params = {
+            **category_params,
+            "with_genres": ",".join(str(g) for g in genres),
+        }
+        return f"{base_url}/{discover_path}", extra_params
+
     if category in discover_overrides:
         path, extra_params = discover_path, discover_overrides[category]
     else:
@@ -1088,21 +1169,33 @@ def browse_request_config(media_type, category, watch_region):
     return f"{base_url}/{path}", extra_params
 
 
-def browse(media_type, category, page, watch_region=None):
-    """Return a paginated, browsable list of movies or TV shows from TMDB."""
+def browse(media_type, category, page, watch_region=None, genres=None):
+    """Return a paginated, browsable list of movies or TV shows from TMDB.
+
+    ``genres`` is an optional list of TMDB genre ids that, when non-empty,
+    routes the request through ``/discover`` with ``with_genres`` so the
+    page is filtered server-side (AND semantics across multiple ids).
+    """
     if not watch_region or watch_region == "UNSET":
         watch_region = DEFAULT_WATCH_REGION
 
     page = min(max(int(page), 1), TMDB_MAX_PAGE)
 
+    genres_key = ",".join(str(g) for g in sorted(genres)) if genres else ""
     cache_key = (
-        f"browse_{Sources.TMDB.value}_{media_type}_{category}_{watch_region}_{page}"
+        f"browse_{Sources.TMDB.value}_{media_type}_{category}_{watch_region}"
+        f"_{page}_g={genres_key}"
     )
     data = cache.get(cache_key)
     if data is not None:
         return data
 
-    url, extra_params = browse_request_config(media_type, category, watch_region)
+    url, extra_params = browse_request_config(
+        media_type,
+        category,
+        watch_region,
+        genres=genres,
+    )
     params = {**base_params, "page": page, **extra_params}
     if settings.TMDB_NSFW:
         params["include_adult"] = "true"
@@ -1146,6 +1239,22 @@ def browse(media_type, category, page, watch_region=None):
     return data
 
 
+def _filter_by_genre_names(items, media_type, genres):
+    """Drop items whose ``genre_names`` don't overlap any selected genre.
+
+    No-op when ``genres`` is falsy. Translates the selected TMDB genre
+    ids to their canonical names via ``get_genre_map`` so the filter
+    matches against the same name vocabulary the enrichers attach.
+    """
+    if not genres:
+        return items
+    genre_map = get_genre_map(media_type)
+    selected_names = {genre_map[g] for g in genres if g in genre_map}
+    if not selected_names:
+        return items
+    return [r for r in items if selected_names & set(r.get("genre_names") or [])]
+
+
 def get_genre_map(media_type):
     """Return ``{tmdb_genre_id: name}`` for the given media type.
 
@@ -1160,9 +1269,7 @@ def get_genre_map(media_type):
         return data
 
     path = (
-        "genre/movie/list"
-        if media_type == MediaTypes.MOVIE.value
-        else "genre/tv/list"
+        "genre/movie/list" if media_type == MediaTypes.MOVIE.value else "genre/tv/list"
     )
     try:
         response = services.api_request(
@@ -1179,7 +1286,7 @@ def get_genre_map(media_type):
     return data
 
 
-def for_you_browse(media_type, user, page, watch_region=None):
+def for_you_browse(media_type, user, page, watch_region=None, genres=None):
     """Personalized browse list scored against the user's taste profile.
 
     Aggregates a candidate pool from the existing TMDB browse
@@ -1192,6 +1299,10 @@ def for_you_browse(media_type, user, page, watch_region=None):
     positive signal for the taste profile to be meaningful — same
     contract as ``browse()`` so the caller doesn't have to special-case
     cold-start users.
+
+    ``genres`` (list of TMDB genre ids) further narrows the candidate
+    pool to items tagged with at least one of those genres — applied
+    after match-score sorting so the personalized order is preserved.
     """
     # Local imports to dodge circular-import cycles
     # (tmdb -> taste -> services -> tmdb).
@@ -1200,11 +1311,14 @@ def for_you_browse(media_type, user, page, watch_region=None):
 
     profile = taste.build_profile(user, media_type)
     if not taste.has_enough_signal(profile):
+        if genres:
+            return browse(media_type, "popular", page, watch_region, genres=genres)
         return browse(media_type, "popular", page, watch_region)
 
+    genres_key = ",".join(str(g) for g in sorted(genres)) if genres else ""
     cache_key = (
         f"browse_{Sources.TMDB.value}_{media_type}_for_you_{user.id}"
-        f"_{watch_region or DEFAULT_WATCH_REGION}_{page}"
+        f"_{watch_region or DEFAULT_WATCH_REGION}_{page}_g={genres_key}"
     )
     data = cache.get(cache_key)
     if data is not None:
@@ -1247,6 +1361,8 @@ def for_you_browse(media_type, user, page, watch_region=None):
         for mid, r in seen.items()
         if str(mid) not in dismissed_ids and str(mid) not in owned_ids
     ]
+
+    candidates = _filter_by_genre_names(candidates, media_type, genres)
 
     for r in candidates:
         r["match_score"] = taste.score_item(profile, r.get("genre_names") or [])

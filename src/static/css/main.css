@@ -2420,6 +2420,9 @@
   .underline {
     text-decoration-line: underline;
   }
+  .underline-offset-2 {
+    text-underline-offset: 2px;
+  }
   .placeholder-fg-faint {
     &::placeholder {
       color: var(--color-fg-faint);

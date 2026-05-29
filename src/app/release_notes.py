@@ -10,10 +10,20 @@ Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
 on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh144"
+CURRENT_FORK_VERSION = "0.25.2~ynh145"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh145",
+        "date": "2026-05-28",
+        "title": "Browse: genre filter on TMDB rows + one-word nav label",
+        "highlights": [
+            'The TMDB browse page now carries a <strong>Genres</strong> chip row below the existing category strip — toggling a chip narrows whatever category is active (Popular, Top Rated, Streaming Now, Hidden Gems, Classics, For You, etc.) to titles tagged with that genre. Multi-select stacks (AND across selected genres), and a <span class="font-mono">Clear</span> link to the right of the row drops all selections. The filter is server-side: every category now routes through TMDB\'s <span class="font-mono">/discover/movie</span> or <span class="font-mono">/discover/tv</span> with <span class="font-mono">with_genres=…</span> when chips are active, with the original sort/window for each category mapped to its discover-equivalent so the semantics stay intact (e.g., Top Rated keeps <span class="font-mono">vote_average.desc</span> + a vote-count floor; Streaming Now keeps its 180-day window). For You is filtered after match-score sorting so the personalized order is preserved. Switching media type (Movies ↔ TV Shows) drops the chips because TMDB\'s movie/TV genre IDs don\'t share a vocabulary; switching source (TMDB ↔ Trakt) drops them because Trakt uses slugs, not IDs. The chip row hides entirely on Trakt.',
+            'The mobile bottom bar said <span class="font-mono">Discover</span> while the side rail and page title said <span class="font-mono">Browse</span>. Standardized on <span class="font-mono">Browse</span> across both since that\'s also the URL slug.',
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh144",
         "date": "2026-05-28",

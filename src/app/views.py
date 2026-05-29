@@ -775,13 +775,27 @@ def browse(request):
     page = int(request.GET.get("page", 1))
     layout = request.GET.get("layout", "grid")
 
+    # Genre filter — TMDB only (Trakt slugs and TMDB ids don't share a
+    # vocabulary, so we just hide the filter for Trakt). Silently drops
+    # stale ids so a bookmarked URL never errors.
     if source == Sources.TMDB.value:
+        selected_genre_ids, available_genres = _resolve_browse_genres(
+            media_type,
+            request.GET.get("genres", ""),
+        )
+    else:
+        selected_genre_ids, available_genres = [], []
+    genres_csv = ",".join(str(g) for g in selected_genre_ids)
+
+    if source == Sources.TMDB.value:
+        provider_kwargs = {"genres": selected_genre_ids} if selected_genre_ids else {}
         if category == "for_you":
             data = provider.for_you_browse(
                 media_type,
                 request.user,
                 page,
                 request.user.watch_provider_region,
+                **provider_kwargs,
             )
         else:
             data = provider.browse(
@@ -789,6 +803,7 @@ def browse(request):
                 category,
                 page,
                 request.user.watch_provider_region,
+                **provider_kwargs,
             )
     else:
         data = provider.browse(media_type, category, page)
@@ -850,8 +865,58 @@ def browse(request):
             {"value": entry["value"], "label": entry["label"]}
             for entry in available_sources
         ],
+        "available_genres": available_genres,
+        "genres_csv": genres_csv,
     }
     return render(request, "app/browse.html", context)
+
+
+def _toggle_genre_csv(current_ids, gid):
+    """Return the comma-separated genre id string after toggling ``gid``.
+
+    ``current_ids`` is the list of already-selected genre ids, in the
+    order they appeared in the URL. Adds or removes ``gid`` while
+    preserving order so the chip row doesn't visibly re-shuffle.
+    """
+    if gid in current_ids:
+        next_ids = [g for g in current_ids if g != gid]
+    else:
+        next_ids = [*current_ids, gid]
+    return ",".join(str(g) for g in next_ids)
+
+
+def _resolve_browse_genres(media_type, raw):
+    """Parse `?genres=` and pair it with the available-genre list.
+
+    Returns ``(selected_ids, available)`` where ``selected_ids`` is the
+    validated list of genre ids preserved in URL order, and
+    ``available`` is the chip-row payload (id, name, active flag, and
+    the CSV that toggling this chip would produce). Unknown ids and
+    non-numeric junk are dropped so a stale bookmark never errors.
+    """
+    genre_map = tmdb.get_genre_map(media_type)
+    selected_ids = []
+    for raw_chunk in raw.split(","):
+        chunk = raw_chunk.strip()
+        if not chunk:
+            continue
+        try:
+            gid = int(chunk)
+        except ValueError:
+            continue
+        if gid in genre_map and gid not in selected_ids:
+            selected_ids.append(gid)
+    selected_set = set(selected_ids)
+    available = [
+        {
+            "id": gid,
+            "name": name,
+            "active": gid in selected_set,
+            "toggle": _toggle_genre_csv(selected_ids, gid),
+        }
+        for gid, name in sorted(genre_map.items(), key=lambda kv: kv[1])
+    ]
+    return selected_ids, available
 
 
 def _koreader_book_summary(user, book):

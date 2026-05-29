@@ -6,6 +6,7 @@
 {% endblock title %}
 
 {% block content %}
+  {# Media-type switch drops the genres param — TMDB movie/TV genre ids don't overlap, so reusing the previous selection would silently 404. #}
   <div class="flex flex-col gap-y-6 mb-8">
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-y-4">
       <h2 class="text-2xl font-bold">Browse</h2>
@@ -23,7 +24,8 @@
         {% if sources|length > 1 %}
           <div class="flex rounded-md overflow-hidden border border-gray-700">
             {% for source_option in sources %}
-              <a href="?media_type={{ media_type }}&source={{ source_option.value }}&layout={{ layout }}"
+              {# Only TMDB supports genre filtering; preserve the param when staying on TMDB, drop it when switching to another source. #}
+              <a href="?media_type={{ media_type }}&source={{ source_option.value }}&layout={{ layout }}{% if source_option.value == 'tmdb' and genres_csv %}&genres={{ genres_csv }}{% endif %}"
                  class="px-3 py-1.5 text-sm transition-colors duration-200 cursor-pointer flex items-center {% if source == source_option.value %}bg-indigo-600 text-white{% else %}bg-gray-700 text-fg hover:bg-gray-600{% endif %}">
                 {{ source_option.label }}
               </a>
@@ -31,10 +33,10 @@
           </div>
         {% endif %}
         <div class="flex rounded-md overflow-hidden border border-gray-700">
-          <a href="?media_type={{ media_type }}&source={{ source }}&category={{ category }}&layout=grid"
+          <a href="?media_type={{ media_type }}&source={{ source }}&category={{ category }}&layout=grid{% if genres_csv %}&genres={{ genres_csv }}{% endif %}"
              {% if layout == 'grid' %} class="p-2 cursor-pointer bg-indigo-600 text-white flex items-center" {% else %} class="p-2 cursor-pointer bg-surface-2 hover:bg-surface-3 flex items-center" {% endif %}
              title="Grid View">{% include "app/icons/four-square.svg" with classes="w-5 h-5" %}</a>
-          <a href="?media_type={{ media_type }}&source={{ source }}&category={{ category }}&layout=list"
+          <a href="?media_type={{ media_type }}&source={{ source }}&category={{ category }}&layout=list{% if genres_csv %}&genres={{ genres_csv }}{% endif %}"
              {% if layout == 'list' %} class="p-2 cursor-pointer bg-indigo-600 text-white flex items-center" {% else %} class="p-2 cursor-pointer bg-surface-2 hover:bg-surface-3 flex items-center" {% endif %}
              title="List View">{% include "app/icons/list.svg" with classes="w-5 h-5" %}</a>
         </div>
@@ -64,12 +66,32 @@
 
     <div class="flex flex-wrap gap-2">
       {% for category_option in categories %}
-        <a href="?media_type={{ media_type }}&source={{ source }}&category={{ category_option.value }}&layout={{ layout }}"
+        <a href="?media_type={{ media_type }}&source={{ source }}&category={{ category_option.value }}&layout={{ layout }}{% if genres_csv %}&genres={{ genres_csv }}{% endif %}"
            class="px-3 py-1.5 text-sm rounded-md transition-colors duration-200 cursor-pointer flex items-center {% if category == category_option.value %}bg-indigo-600 text-white{% else %}bg-gray-700 text-fg hover:bg-gray-600{% endif %}">
           {{ category_option.label }}
         </a>
       {% endfor %}
     </div>
+
+    {% if available_genres %}
+      <div class="flex flex-col gap-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs uppercase tracking-wide text-fg-muted">Genres</span>
+          {% if genres_csv %}
+            <a href="?media_type={{ media_type }}&source={{ source }}&category={{ category }}&layout={{ layout }}"
+               class="text-xs text-fg-muted hover:text-fg underline-offset-2 hover:underline">Clear</a>
+          {% endif %}
+        </div>
+        <div class="flex flex-wrap gap-2">
+          {% for genre in available_genres %}
+            <a href="?media_type={{ media_type }}&source={{ source }}&category={{ category }}&layout={{ layout }}{% if genre.toggle %}&genres={{ genre.toggle }}{% endif %}"
+               class="px-3 py-1 text-xs rounded-full transition-colors duration-200 cursor-pointer {% if genre.active %}bg-indigo-600 text-white{% else %}bg-gray-700 text-fg hover:bg-gray-600{% endif %}">
+              {{ genre.name }}
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
   </div>
 
   {% if data.results %}
@@ -90,7 +112,7 @@
     <div class="flex flex-wrap justify-center items-center mt-8 gap-x-2 gap-y-3">
       {# Previous button #}
       {% if data.page > 1 %}
-        <a href="?media_type={{ media_type }}&source={{ source }}&category={{ category }}&page={{ data.page|add:'-1' }}&layout={{ layout }}"
+        <a href="?media_type={{ media_type }}&source={{ source }}&category={{ category }}&page={{ data.page|add:'-1' }}&layout={{ layout }}{% if genres_csv %}&genres={{ genres_csv }}{% endif %}"
            class="p-2 rounded-md bg-surface-1 text-white hover:bg-surface-2">
           {% include "app/icons/chevron-left.svg" with classes="w-5 h-5" %}
         </a>
@@ -103,7 +125,7 @@
       {% get_pagination_range data.page data.total_pages 2 as pages %}
       {% for page_num in pages %}
         {% if page_num %}
-          <a href="?media_type={{ media_type }}&source={{ source }}&category={{ category }}&page={{ page_num }}&layout={{ layout }}"
+          <a href="?media_type={{ media_type }}&source={{ source }}&category={{ category }}&page={{ page_num }}&layout={{ layout }}{% if genres_csv %}&genres={{ genres_csv }}{% endif %}"
              class="w-10 h-10 rounded-md {% if data.page == page_num %}bg-indigo-600{% else %}bg-surface-1 hover:bg-surface-2{% endif %} text-white flex items-center justify-center">
             {{ page_num }}
           </a>
@@ -117,7 +139,7 @@
 
       {# Next button #}
       {% if data.page < data.total_pages %}
-        <a href="?media_type={{ media_type }}&source={{ source }}&category={{ category }}&page={{ data.page|add:'1' }}&layout={{ layout }}"
+        <a href="?media_type={{ media_type }}&source={{ source }}&category={{ category }}&page={{ data.page|add:'1' }}&layout={{ layout }}{% if genres_csv %}&genres={{ genres_csv }}{% endif %}"
            class="p-2 rounded-md bg-surface-1 text-white hover:bg-surface-2">
           {% include "app/icons/chevron-right.svg" with classes="w-5 h-5" %}
         </a>

@@ -442,3 +442,110 @@ class BrowseViewTests(TestCase):
             1,
             self.user.watch_provider_region,
         )
+
+    @patch("app.providers.tmdb.get_genre_map")
+    @patch("app.providers.tmdb.browse")
+    def test_browse_passes_validated_genres_to_provider(
+        self,
+        mock_browse,
+        mock_genre_map,
+    ):
+        """Known genre ids in `?genres=` are passed through; unknown ids are dropped."""
+        mock_genre_map.return_value = {28: "Action", 35: "Comedy"}
+        mock_browse.return_value = {
+            "page": 1,
+            "total_results": 0,
+            "total_pages": 0,
+            "results": [],
+        }
+
+        response = self.client.get(
+            reverse("browse") + "?genres=28,99999,not-an-int,35",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        mock_browse.assert_called_once_with(
+            MediaTypes.MOVIE.value,
+            "popular",
+            1,
+            self.user.watch_provider_region,
+            genres=[28, 35],
+        )
+
+    @patch("app.providers.tmdb.get_genre_map")
+    @patch("app.providers.tmdb.browse")
+    def test_browse_omits_genres_kwarg_when_unset(
+        self,
+        mock_browse,
+        mock_genre_map,
+    ):
+        """No `?genres=` means no kwarg — protects the existing call shape."""
+        mock_genre_map.return_value = {28: "Action"}
+        mock_browse.return_value = {
+            "page": 1,
+            "total_results": 0,
+            "total_pages": 0,
+            "results": [],
+        }
+
+        response = self.client.get(reverse("browse"))
+
+        self.assertEqual(response.status_code, 200)
+        mock_browse.assert_called_once_with(
+            MediaTypes.MOVIE.value,
+            "popular",
+            1,
+            self.user.watch_provider_region,
+        )
+
+    @override_settings(TRAKT_API="dummy-trakt-key")
+    @patch("app.providers.trakt.browse")
+    def test_browse_ignores_genres_for_trakt(self, mock_trakt_browse):
+        """Trakt source doesn't accept genres — kwarg must not be forwarded."""
+        mock_trakt_browse.return_value = {
+            "page": 1,
+            "total_results": 0,
+            "total_pages": 0,
+            "results": [],
+        }
+
+        response = self.client.get(reverse("browse") + "?source=trakt&genres=28")
+
+        self.assertEqual(response.status_code, 200)
+        mock_trakt_browse.assert_called_once_with(
+            MediaTypes.MOVIE.value,
+            "trending",
+            1,
+        )
+
+    @patch("app.providers.tmdb.get_genre_map")
+    @patch("app.providers.tmdb.browse")
+    def test_browse_renders_genre_chips(self, mock_browse, mock_genre_map):
+        """Genre row renders a chip per genre and marks the active one."""
+        mock_genre_map.return_value = {28: "Action", 35: "Comedy"}
+        mock_browse.return_value = {
+            "page": 1,
+            "total_results": 0,
+            "total_pages": 0,
+            "results": [],
+        }
+
+        response = self.client.get(reverse("browse") + "?genres=28")
+        content = response.content.decode()
+
+        self.assertContains(response, "Action")
+        self.assertContains(response, "Comedy")
+        self.assertContains(response, "Genres")
+        # Active chip gets the indigo background.
+        self.assertRegex(
+            content,
+            r'bg-indigo-600[^"]*"[^>]*>\s+Action',
+        )
+        # Toggling the active genre off zeroes out the genres param.
+        self.assertRegex(
+            content,
+            r'category=for_you&layout=grid"\s+class="px-3 py-1 text-xs'
+            r' rounded-full[^"]*bg-indigo-600',
+        )
+        # Inactive chip toggles ON by adding to the CSV (preserving 28).
+        self.assertIn("genres=28,35", content)
