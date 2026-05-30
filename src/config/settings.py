@@ -361,7 +361,13 @@ TZ = zoneinfo.ZoneInfo(TIME_ZONE)
 
 IMG_NONE = "https://www.themoviedb.org/assets/2/v4/glyphicons/basic/glyphicons-basic-38-picture-grey-c2ebdbb057f2a7614185931650f8cee23fa137b93812ccb132b9df511df1cfac.svg"
 
-REQUEST_TIMEOUT = 120  # seconds
+# Outbound provider request timeout (connect + between-bytes read). Kept
+# short so a slow/unresponsive provider on a synchronous, user-facing page
+# (e.g. a book detail page fetching OpenLibrary live) fails fast and frees
+# the gunicorn worker instead of holding it for two minutes — with only a
+# couple of workers that wedges the whole site. The friendly
+# ProviderAPIError page renders on timeout.
+REQUEST_TIMEOUT = 20  # seconds
 PER_PAGE = 24
 
 TMDB_API = config(
