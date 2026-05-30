@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% load app_tags %}
+
+{% block title %}
+  Dismissed items - Yamtrack
+{% endblock title %}
+
+{% block content %}
+  <div class="mb-8 flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <h1 class="text-3xl font-bold mb-2">Dismissed items</h1>
+      <p class="text-fg-muted">
+        Titles you marked "not interested" on Browse. Restore one to let it
+        resurface in discovery rows.
+      </p>
+    </div>
+    <a href="{% url 'browse' %}"
+       class="text-sm text-accent hover:underline shrink-0">← Back to Browse</a>
+  </div>
+
+  {% if page_obj.object_list %}
+    <p class="text-fg-faint text-sm mb-4">{{ total_dismissed }} dismissed</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      {% for d in page_obj.object_list %}
+        <div data-dismiss-target
+             class="bg-surface-1 rounded-lg p-4 flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <a href="{% url 'media_details' d.source d.media_type d.media_id d.title|default:d.media_id %}"
+               class="text-sm font-semibold text-fg hover:text-accent transition-colors line-clamp-1">
+              {{ d.title|default:d.media_id }}
+            </a>
+            <p class="text-xs text-fg-faint mt-0.5">
+              {{ d.media_type|capfirst }} · {{ d.get_source_display }} ·
+              {{ d.dismissed_at|date_format:user }}
+            </p>
+          </div>
+          <button title="Restore to discovery"
+                  hx-post="{% url 'undismiss_item' %}"
+                  hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                  hx-vals='{"source": "{{ d.source }}", "media_type": "{{ d.media_type }}", "media_id": "{{ d.media_id }}"}'
+                  hx-target="closest [data-dismiss-target]"
+                  hx-swap="delete swap:200ms"
+                  class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md bg-surface-2 hover:bg-surface-3 text-fg-muted transition-colors">
+            {% include "app/icons/repeat.svg" with classes="w-3.5 h-3.5" %}
+            Restore
+          </button>
+        </div>
+      {% endfor %}
+    </div>
+
+    {% if page_obj.has_other_pages %}
+      <div class="flex items-center justify-center gap-4 mt-6 text-sm">
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}"
+             class="text-accent hover:underline">← Newer</a>
+        {% endif %}
+        <span class="text-fg-faint">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}"
+             class="text-accent hover:underline">Older →</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="bg-surface-1 rounded-lg p-8 text-center">
+      <p class="text-fg-muted">You haven't dismissed anything yet.</p>
+      <p class="text-fg-faint text-sm mt-1">
+        On Browse, the "not interested" action hides a title from discovery —
+        it'll show up here so you can undo it.
+      </p>
+    </div>
+  {% endif %}
+{% endblock content %}

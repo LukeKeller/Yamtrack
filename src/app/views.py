@@ -1,5 +1,6 @@
 import json
 import logging
+import random
 import re
 from datetime import timedelta
 
@@ -28,6 +29,7 @@ from app.models import (
     MOOD_LABELS,
     TV,
     BasicMedia,
+    DiaryEntry,
     DismissedItem,
     Item,
     MediaTypes,
@@ -41,7 +43,7 @@ from app.models import (
     Track,
     UserMessage,
 )
-from app.providers import discogs, manual, services, tmdb, trakt
+from app.providers import discogs, igdb, manual, services, tmdb, trakt
 from app.templatetags import app_tags
 from events.models import Event
 from events.views import build_calendar_context
@@ -782,7 +784,7 @@ def _available_browse_sources():
 
 
 @require_GET
-def browse(request):
+def browse(request):  # noqa: C901, PLR0912 — linear source/genre/provider resolution; splitting hurts readability
     """Browse curated movie / TV lists from one of several providers."""
     media_type = request.GET.get("media_type", MediaTypes.MOVIE.value)
     if media_type not in (MediaTypes.MOVIE.value, MediaTypes.TV.value):
@@ -816,6 +818,16 @@ def browse(request):
         selected_genre_ids, available_genres = [], []
     genres_csv = ",".join(str(g) for g in selected_genre_ids)
 
+    # "Only my services" filter: when enabled (and the user actually has
+    # subscribed providers), constrain TMDB discover results to titles
+    # streamable on those services. The "for_you" rail has its own candidate
+    # pipeline, so the provider filter only applies to the standard browse
+    # path. Other sources (Trakt) don't expose provider availability.
+    subscribed_ids = config.parse_streaming_providers(
+        request.user.streaming_providers,
+    )
+    only_my_services = bool(request.user.browse_only_my_services and subscribed_ids)
+
     if source == Sources.TMDB.value:
         provider_kwargs = {"genres": selected_genre_ids} if selected_genre_ids else {}
         if category == "for_you":
@@ -827,6 +839,8 @@ def browse(request):
                 **provider_kwargs,
             )
         else:
+            if only_my_services:
+                provider_kwargs["watch_providers"] = sorted(subscribed_ids)
             data = provider.browse(
                 media_type,
                 category,
@@ -896,6 +910,8 @@ def browse(request):
         ],
         "available_genres": available_genres,
         "genres_csv": genres_csv,
+        "has_streaming_providers": bool(subscribed_ids),
+        "only_my_services": only_my_services,
     }
     return render(request, "app/browse.html", context)
 
@@ -1109,7 +1125,7 @@ def _koreader_book_summary(user, book):
 
 
 @require_GET
-def media_details(request, source, media_type, media_id, title):  # noqa: ARG001, C901, PLR0912 title for URL; complexity is acceptable here
+def media_details(request, source, media_type, media_id, title):  # noqa: ARG001, C901, PLR0912, PLR0915 title for URL; complexity is acceptable here
     """Return the details page for a media item."""
     media_metadata = services.get_media_metadata(media_type, media_id, source)
     user_medias = BasicMedia.objects.filter_media_prefetch(
@@ -1158,6 +1174,35 @@ def media_details(request, source, media_type, media_id, title):  # noqa: ARG001
             current_instance,
         ),
     }
+
+    # Games: surface IGDB "time to beat" estimates so the user can size up a
+    # title before starting. Soft-fails to None inside the provider.
+    if media_type == MediaTypes.GAME.value and source == Sources.IGDB.value:
+        context["time_to_beat"] = igdb.time_to_beat(media_id)
+
+    # Diary card — dated, replay-aware log entries for the top-level media
+    # types. Entries key on the Item, so they survive even if the title isn't
+    # in the user's tracker yet.
+    if media_type in _DIARY_MEDIA_TYPES:
+        diary_item = Item.objects.filter(
+            media_id=str(media_id),
+            source=source,
+            media_type=media_type,
+            season_number__isnull=True,
+        ).first()
+        context["diary_can_log"] = True
+        context["diary_source"] = source
+        context["diary_media_type"] = media_type
+        context["diary_media_id"] = media_id
+        context["diary_default_date"] = timezone.localdate().isoformat()
+        context["diary_entries"] = (
+            DiaryEntry.objects.filter(user=request.user, item=diary_item).order_by(
+                "-logged_at",
+                "-created_at",
+            )
+            if diary_item is not None
+            else []
+        )
 
     # Books: surface a compact KOReader summary card on the book
     # detail page when the user has at least one sync event for this
@@ -2060,6 +2105,18 @@ def toggle_browse_language(request):
 
 
 @require_POST
+def toggle_browse_services(request):
+    """Flip the "only my streaming services" Browse filter.
+
+    Pure flip back to the referrer, matching ``toggle_browse_language``.
+    """
+    user = request.user
+    user.browse_only_my_services = not user.browse_only_my_services
+    user.save(update_fields=["browse_only_my_services"])
+    return redirect(request.headers.get("referer") or "browse")
+
+
+@require_POST
 def dismiss_item(request):
     """Record that the user marked a Browse tile 'not interested'.
 
@@ -2413,11 +2470,16 @@ def statistics(request):
 
     activity_data = stats.get_activity_data(request.user, start_date, end_date)
 
+    # Backlog is "what's still ahead", independent of the selected date range,
+    # so it reads the user's current Planning shelf directly.
+    backlog = stats.get_backlog(request.user)
+
     context = {
         "start_date": start_date,
         "end_date": end_date,
         "media_count": media_count,
         "activity_data": activity_data,
+        "backlog": backlog,
         "media_type_distribution": media_type_distribution,
         "score_distribution": score_distribution,
         "top_rated": top_rated,
@@ -2981,3 +3043,312 @@ def share_intake(request):
     if title:
         return redirect(f"{reverse('search')}?q={title}")
     return redirect("home")
+
+
+# ---------------------------------------------------------------------------
+# Diary — dated, rewatch-aware log entries (see app.models.DiaryEntry)
+# ---------------------------------------------------------------------------
+
+# Diary supports the top-level, single-row media types. Seasons/episodes track
+# at the episode grid; vinyl uses the richer Play log. Keeping the diary to the
+# "one work = one item" types avoids ambiguous (season_number) identity.
+_DIARY_MEDIA_TYPES = (
+    MediaTypes.MOVIE.value,
+    MediaTypes.TV.value,
+    MediaTypes.ANIME.value,
+    MediaTypes.MANGA.value,
+    MediaTypes.GAME.value,
+    MediaTypes.BOOK.value,
+    MediaTypes.COMIC.value,
+    MediaTypes.BOARDGAME.value,
+)
+
+
+def _group_diary_by_day(entries):
+    """Group an ordered iterable of DiaryEntry into [(local_date, [entry,...])].
+
+    Entries are assumed already ordered newest-first (model default). Grouping
+    preserves that order and buckets by the entry's *local* calendar date so
+    the diary reads like a journal.
+    """
+    groups = []
+    current_date = None
+    for entry in entries:
+        day = timezone.localtime(entry.logged_at).date()
+        if day != current_date:
+            current_date = day
+            groups.append((day, []))
+        groups[-1][1].append(entry)
+    return groups
+
+
+@require_GET
+def diary(request):
+    """Chronological diary of the user's dated log entries."""
+    qs = (
+        DiaryEntry.objects.filter(user=request.user)
+        .select_related("item")
+        .order_by("-logged_at", "-created_at")
+    )
+    paginator = Paginator(qs, 50)
+    page = paginator.get_page(request.GET.get("page", 1))
+    context = {
+        "page_obj": page,
+        "day_groups": _group_diary_by_day(page.object_list),
+        "total_entries": paginator.count,
+    }
+    return render(request, "app/diary.html", context)
+
+
+def _resolve_diary_item(source, media_type, media_id):
+    """Return the Item for a diary target, creating it lazily from metadata.
+
+    Mirrors the lazy Item creation in ``log_record_spin`` so a user can log a
+    diary entry straight from a details page without first adding the title to
+    their tracker. Returns ``None`` if the metadata can't be fetched.
+    """
+    item = Item.objects.filter(
+        media_id=str(media_id),
+        source=source,
+        media_type=media_type,
+        season_number__isnull=True,
+    ).first()
+    if item is not None:
+        return item
+    try:
+        metadata = services.get_media_metadata(media_type, media_id, source)
+    except services.ProviderAPIError:
+        return None
+    item, _ = Item.objects.get_or_create(
+        media_id=str(media_id),
+        source=source,
+        media_type=media_type,
+        season_number=None,
+        episode_number=None,
+        defaults={
+            "title": metadata.get("title") or "",
+            "image": metadata.get("image") or "",
+        },
+    )
+    return item
+
+
+def _parse_diary_score(raw):
+    """Parse an optional diary score string into a clamped float or None."""
+    raw = (raw or "").strip()
+    if raw == "":
+        return None
+    try:
+        value = float(raw)
+    except ValueError:
+        return None
+    return max(0.0, min(10.0, value))
+
+
+def _parse_diary_logged_at(raw):
+    """Parse the optional diary date, preserving the current local time-of-day.
+
+    Returning a datetime at the current time keeps multiple same-day entries
+    ordered by when they were logged. Falls back to "now" when blank; returns
+    ``False`` for a malformed date so the caller can 400.
+    """
+    raw = (raw or "").strip()
+    if raw == "":
+        return timezone.now()
+    parsed = parse_date(raw)
+    if parsed is None:
+        return False
+    now_local = timezone.localtime()
+    return now_local.replace(
+        year=parsed.year,
+        month=parsed.month,
+        day=parsed.day,
+    )
+
+
+@require_POST
+def diary_log(request):
+    """Create a diary entry for a media item.
+
+    Accepts ``source`` / ``media_type`` / ``media_id`` plus optional
+    ``logged_at`` (date), ``score``, ``notes`` and ``is_rewatch``. Returns the
+    refreshed per-item diary fragment for HTMX callers (the details page), or
+    redirects back for plain form posts.
+    """
+    source = request.POST.get("source", "").strip()
+    media_type = request.POST.get("media_type", "").strip()
+    media_id = request.POST.get("media_id", "").strip()
+
+    if source not in Sources.values or media_type not in _DIARY_MEDIA_TYPES:
+        return HttpResponseBadRequest("unknown or unsupported source/media_type")
+    if not media_id:
+        return HttpResponseBadRequest("missing media_id")
+
+    logged_at = _parse_diary_logged_at(request.POST.get("logged_at"))
+    if logged_at is False:
+        return HttpResponseBadRequest("invalid date")
+
+    item = _resolve_diary_item(source, media_type, media_id)
+    if item is None:
+        return HttpResponseBadRequest("media not found")
+
+    DiaryEntry.objects.create(
+        user=request.user,
+        item=item,
+        logged_at=logged_at,
+        score=_parse_diary_score(request.POST.get("score")),
+        notes=request.POST.get("notes", "").strip(),
+        is_rewatch=request.POST.get("is_rewatch") in ("on", "true", "1"),
+    )
+    logger.info("Diary entry logged for %s by %s", item, request.user)
+
+    if request.headers.get("HX-Request"):
+        return _render_item_diary_fragment(request, item)
+    messages.success(request, f"Logged {item} to your diary.")
+    return redirect(request.POST.get("next") or "diary")
+
+
+@require_POST
+def diary_delete(request, pk):
+    """Delete one of the user's own diary entries."""
+    entry = (
+        DiaryEntry.objects.select_related("item")
+        .filter(
+            pk=pk,
+            user=request.user,
+        )
+        .first()
+    )
+    if entry is None:
+        return HttpResponseBadRequest("not found")
+    item = entry.item
+    entry.delete()
+    logger.info("Diary entry %s deleted by %s", pk, request.user)
+
+    if request.headers.get("HX-Request"):
+        if request.POST.get("scope") == "item":
+            return _render_item_diary_fragment(request, item)
+        return HttpResponse(b"")
+    return redirect(request.POST.get("next") or "diary")
+
+
+def _render_item_diary_fragment(request, item):
+    """Render the per-item diary card used on the details page."""
+    entries = DiaryEntry.objects.filter(user=request.user, item=item).order_by(
+        "-logged_at",
+        "-created_at",
+    )
+    context = {
+        "diary_item": item,
+        "diary_entries": entries,
+        "diary_source": item.source,
+        "diary_media_type": item.media_type,
+        "diary_media_id": item.media_id,
+        "diary_can_log": item.media_type in _DIARY_MEDIA_TYPES,
+        "diary_default_date": timezone.localdate().isoformat(),
+    }
+    return render(request, "app/components/diary_item.html", context)
+
+
+@require_GET
+def roulette(request):
+    """Decide-for-me page: spin a random pick from the user's backlog.
+
+    Renders the shell + controls; the actual pick is fetched via the HTMX
+    ``roulette_spin`` endpoint so re-rolling never reloads the page.
+    """
+    media_types = [
+        {"value": mt.value, "label": mt.label}
+        for mt in MediaTypes
+        if mt.value in _DIARY_MEDIA_TYPES
+    ]
+    context = {
+        "roulette_media_types": media_types,
+        "status_choices": [
+            (Status.PLANNING.value, "Planning"),
+            (Status.PAUSED.value, "Paused"),
+            (Status.IN_PROGRESS.value, "In progress"),
+        ],
+    }
+    return render(request, "app/roulette.html", context)
+
+
+@require_GET
+def roulette_spin(request):
+    """Return a single random media card matching the chosen filters."""
+    status = request.GET.get("status", Status.PLANNING.value)
+    if status not in {s.value for s in Status}:
+        status = Status.PLANNING.value
+    media_type = request.GET.get("media_type", "")
+
+    media_types = (
+        [media_type] if media_type in _DIARY_MEDIA_TYPES else list(_DIARY_MEDIA_TYPES)
+    )
+
+    pick = None
+    # Shuffle the eligible media types so we don't bias toward the first type
+    # that happens to have a match; pick one random row from a random type.
+    # Non-cryptographic shuffle is fine for a "what should I watch" spinner.
+    shuffled = list(media_types)
+    random.shuffle(shuffled)
+    for mt in shuffled:
+        try:
+            model = apps.get_model("app", mt)
+        except LookupError:
+            continue
+        candidate = (
+            model.objects.filter(user=request.user, status=status)
+            .select_related("item")
+            .order_by("?")
+            .first()
+        )
+        if candidate is not None:
+            pick = candidate
+            break
+
+    return render(
+        request,
+        "app/components/roulette_result.html",
+        {"pick": pick, "status": status},
+    )
+
+
+@require_GET
+def dismissed_items(request):
+    """Manage the Browse tiles the user marked 'not interested'."""
+    qs = DismissedItem.objects.filter(user=request.user).order_by("-dismissed_at")
+    paginator = Paginator(qs, 60)
+    page = paginator.get_page(request.GET.get("page", 1))
+    return render(
+        request,
+        "app/dismissed.html",
+        {"page_obj": page, "total_dismissed": paginator.count},
+    )
+
+
+@require_POST
+def undismiss_item(request):
+    """Remove a 'not interested' dismissal so the tile can resurface."""
+    source = request.POST.get("source", "").strip()
+    media_type = request.POST.get("media_type", "").strip()
+    media_id = request.POST.get("media_id", "").strip()
+    if not (source and media_type and media_id):
+        return HttpResponseBadRequest("missing source/media_type/media_id")
+
+    DismissedItem.objects.filter(
+        user=request.user,
+        source=source,
+        media_type=media_type,
+        media_id=media_id,
+    ).delete()
+    logger.info(
+        "Un-dismissed %s/%s/%s for %s",
+        source,
+        media_type,
+        media_id,
+        request.user,
+    )
+
+    if request.headers.get("HX-Request"):
+        return HttpResponse(b"")
+    return redirect(request.headers.get("referer") or "dismissed_items")

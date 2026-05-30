@@ -113,6 +113,18 @@ urlpatterns = [
     path("statistics", views.statistics, name="statistics"),
     path("wrapped/", views.wrapped, name="wrapped"),
     path("wrapped/<int:year>/", views.wrapped, name="wrapped_year"),
+    path("diary", views.diary, name="diary"),
+    path("diary/log", views.diary_log, name="diary_log"),
+    path("diary/<int:pk>/delete", views.diary_delete, name="diary_delete"),
+    path("roulette", views.roulette, name="roulette"),
+    path("roulette/spin", views.roulette_spin, name="roulette_spin"),
+    path("browse/dismissed", views.dismissed_items, name="dismissed_items"),
+    path("browse/undismiss", views.undismiss_item, name="undismiss_item"),
+    path(
+        "toggle_browse_services",
+        views.toggle_browse_services,
+        name="toggle_browse_services",
+    ),
     path(
         "play/record/spin/<source:source>/<str:media_id>",
         views.log_record_spin,

@@ -2314,3 +2314,87 @@ class Track(models.Model):
     def __str__(self):
         """Render as 'A1: Title' for admin/debug."""
         return f"{self.position}: {self.title}" if self.position else self.title
+
+
+class DiaryEntry(models.Model):
+    """A dated diary entry for a tracked item.
+
+    Where the ``Media`` subclasses hold one row of *current* tracking state
+    per (user, item), a ``DiaryEntry`` records a discrete, dated *event*: "I
+    watched / read / played this on date X, here's my rating and a note."
+
+    This makes rewatches / rereads first-class — the same item can have many
+    entries — and powers a chronological diary view. Entries are intentionally
+    decoupled from the ``Media``/``simple_history`` machinery: creating one
+    never mutates progress or status, so it can't loop back into the
+    progress→status hooks or the calendar refresh.
+
+    ``score`` mirrors ``Media.score`` (0-10, one decimal, ``None`` == no
+    rating) so a diary entry can carry the rating the user gave it *that*
+    time without overwriting the item-level score.
+
+    Named ``DiaryEntry`` (not ``LogEntry``) to avoid colliding with
+    ``django.contrib.admin.models.LogEntry``'s reverse accessor on ``User``.
+    """
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="diary_entries",
+    )
+    item = models.ForeignKey(
+        Item,
+        on_delete=models.CASCADE,
+        related_name="diary_entries",
+    )
+    logged_at = models.DateTimeField(default=timezone.now, db_index=True)
+    score = models.DecimalField(
+        null=True,
+        blank=True,
+        max_digits=3,
+        decimal_places=1,
+        validators=[
+            DecimalValidator(3, 1),
+            MinValueValidator(0),
+            MaxValueValidator(10),
+        ],
+    )
+    notes = models.TextField(blank=True, default="")
+    is_rewatch = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        """Meta options for the model."""
+
+        ordering = ["-logged_at", "-created_at"]
+        indexes = [
+            models.Index(
+                fields=["user", "-logged_at"],
+                name="app_diary_user_logged_idx",
+            ),
+            models.Index(
+                fields=["item", "-logged_at"],
+                name="app_diary_item_logged_idx",
+            ),
+        ]
+        constraints = [
+            CheckConstraint(
+                condition=Q(score__isnull=True) | Q(score__gte=0, score__lte=10),
+                name="app_diaryentry_score_range",
+            ),
+        ]
+
+    def __str__(self):
+        """Return a short label for the entry."""
+        return f"{self.item} @ {self.logged_at:%Y-%m-%d}"
+
+    @property
+    def formatted_score(self):
+        """Return as int if score is 10.0 or 0.0, otherwise show decimal."""
+        if self.score is not None:
+            max_score = 10
+            min_score = 0
+            if self.score in (max_score, min_score):
+                return int(self.score)
+            return self.score
+        return None

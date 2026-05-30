@@ -126,6 +126,80 @@ def get_user_media(user, start_date, end_date):
     return user_media, media_count
 
 
+# Rough average hours-to-finish per media type, used only to size the backlog
+# (an estimate, clearly labelled as such in the UI). These are deliberately
+# coarse community averages — Yamtrack doesn't store per-title runtime/length,
+# so a single constant per type is the honest level of precision here. Types
+# without a meaningful single-sitting estimate (manga/comic vary wildly) are
+# omitted, so they contribute to the count but not the hours total.
+BACKLOG_AVG_HOURS = {
+    MediaTypes.MOVIE.value: 2.0,
+    MediaTypes.TV.value: 12.0,
+    MediaTypes.ANIME.value: 8.0,
+    MediaTypes.GAME.value: 20.0,
+    MediaTypes.BOOK.value: 8.0,
+}
+
+# Media types that represent a "thing to get to" — excludes season/episode
+# (tracked within a show) and record (vinyl isn't a backlog).
+BACKLOG_MEDIA_TYPES = (
+    MediaTypes.MOVIE.value,
+    MediaTypes.TV.value,
+    MediaTypes.ANIME.value,
+    MediaTypes.MANGA.value,
+    MediaTypes.GAME.value,
+    MediaTypes.BOOK.value,
+    MediaTypes.COMIC.value,
+    MediaTypes.BOARDGAME.value,
+)
+
+
+def get_backlog(user, statuses=(Status.PLANNING.value,)):
+    """Summarise the user's backlog: per-type counts + a rough hours estimate.
+
+    The forward-looking counterpart to the retrospective playtime/activity
+    stats. Counts items sitting in ``statuses`` (Planning by default) per media
+    type and, where a coarse average exists, an estimated hours-to-clear.
+    Returns ``{"rows": [...], "total_count": n, "total_hours": h,
+    "has_estimate": bool}`` with rows already filtered to non-empty types and
+    ordered by descending count.
+    """
+    rows = []
+    total_count = 0
+    total_hours = 0.0
+    has_estimate = False
+    for media_type in BACKLOG_MEDIA_TYPES:
+        try:
+            model = apps.get_model("app", media_type)
+        except LookupError:
+            continue
+        count = model.objects.filter(user=user, status__in=statuses).count()
+        if not count:
+            continue
+        avg = BACKLOG_AVG_HOURS.get(media_type)
+        est_hours = round(count * avg, 1) if avg else None
+        if est_hours:
+            total_hours += est_hours
+            has_estimate = True
+        rows.append(
+            {
+                "media_type": media_type,
+                "label": MediaTypes(media_type).label,
+                "count": count,
+                "est_hours": est_hours,
+            },
+        )
+        total_count += count
+
+    rows.sort(key=lambda row: row["count"], reverse=True)
+    return {
+        "rows": rows,
+        "total_count": total_count,
+        "total_hours": round(total_hours, 1),
+        "has_estimate": has_estimate,
+    }
+
+
 def get_media_type_distribution(media_count):
     """Get data formatted for Chart.js pie chart."""
     # Define colors for each media type

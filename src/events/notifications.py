@@ -121,6 +121,137 @@ def send_daily_digest():
     return f"Daily digest sent for {result['event_count']} releases"
 
 
+# Concrete media types that store a real ``end_date`` column and represent a
+# single finished work (TV/Season aggregate from episodes, so they're counted
+# via the episode tally instead).
+_RECAP_FINISH_TYPES = (
+    MediaTypes.MOVIE.value,
+    MediaTypes.ANIME.value,
+    MediaTypes.MANGA.value,
+    MediaTypes.GAME.value,
+    MediaTypes.BOOK.value,
+    MediaTypes.COMIC.value,
+    MediaTypes.BOARDGAME.value,
+)
+
+# How many finished-work titles to name in the recap for flavour.
+_RECAP_TITLE_LIMIT = 3
+
+
+def build_weekly_recap(user, window_start, window_end):
+    """Summarise a user's finished media in the [start, end) window.
+
+    Returns ``{"finished": n, "episodes": n, "titles": [str, ...]}`` where
+    ``titles`` is up to three recently-finished work titles for flavour.
+    """
+    from app.models import Episode, Status  # noqa: PLC0415 — avoid import cycle
+
+    finished = 0
+    titles = []
+    for media_type in _RECAP_FINISH_TYPES:
+        try:
+            model = apps.get_model("app", media_type)
+        except LookupError:
+            continue
+        qs = (
+            model.objects.filter(
+                user=user,
+                status=Status.COMPLETED.value,
+                end_date__gte=window_start,
+                end_date__lt=window_end,
+            )
+            .select_related("item")
+            .order_by("-end_date")
+        )
+        finished += qs.count()
+        if len(titles) < _RECAP_TITLE_LIMIT:
+            remaining = _RECAP_TITLE_LIMIT - len(titles)
+            titles.extend(str(media.item) for media in qs[:remaining])
+
+    episodes = Episode.objects.filter(
+        related_season__user=user,
+        end_date__gte=window_start,
+        end_date__lt=window_end,
+    ).count()
+
+    return {"finished": finished, "episodes": episodes, "titles": titles}
+
+
+def format_weekly_recap(recap):
+    """Render the recap dict into a short multi-line notification body."""
+    lines = ["Here's your week in media:"]
+    if recap["finished"]:
+        lines.append(
+            f"✅ {recap['finished']} finished"
+            + (f" — {', '.join(recap['titles'])}" if recap["titles"] else ""),
+        )
+    if recap["episodes"]:
+        lines.append(f"📺 {recap['episodes']} episodes watched")
+    lines.append("Keep it going!")
+    return "\n".join(lines)
+
+
+def send_weekly_recap():
+    """Send each opted-in user a short recap of what they finished this week."""
+    now = timezone.now()
+    window_start = now - timezone.timedelta(days=7)
+
+    users = (
+        get_user_model()
+        .objects.filter(
+            Q(~Q(notification_urls="")) | Q(push_subscriptions__isnull=False),
+            weekly_recap_enabled=True,
+        )
+        .distinct()
+        .prefetch_related("push_subscriptions")
+    )
+
+    if not users.exists():
+        return "No users with weekly recap enabled"
+
+    title = "🗓️ Yamtrack: Your week in media"
+    sent = 0
+    for user in users:
+        recap = build_weekly_recap(user, window_start, now)
+        # Don't send an empty recap — a "you did nothing" ping is just noise.
+        if not recap["finished"] and not recap["episodes"]:
+            continue
+
+        body = format_weekly_recap(recap)
+        urls = [
+            url.strip()
+            for url in user.notification_urls.splitlines()
+            if url.strip()
+        ]
+        if urls:
+            send_user_notification(user, urls, title, body)
+        _send_recap_push(user, recap, title)
+        sent += 1
+
+    return f"Weekly recap sent to {sent} users"
+
+
+def _send_recap_push(user, recap, title):
+    """Send a single Web Push summarising the weekly recap."""
+    if not web_push.push_enabled():
+        return
+    subscriptions = getattr(user, "push_subscriptions", None)
+    if not subscriptions or not subscriptions.exists():
+        return
+
+    parts = []
+    if recap["finished"]:
+        parts.append(f"{recap['finished']} finished")
+    if recap["episodes"]:
+        parts.append(f"{recap['episodes']} episodes")
+    body = " · ".join(parts) if parts else "Your week in media"
+
+    try:
+        web_push.push_to_user(user, title=title, body=body, url="/wrapped/")
+    except Exception:
+        logger.exception("Weekly recap push failed for %s", user.username)
+
+
 def send_notifications(events, users, title):
     """Process events and send notifications to appropriate users.
 

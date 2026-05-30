@@ -455,6 +455,22 @@ class User(AbstractUser):
         help_text="Comma-separated TMDB provider IDs the user subscribes to.",
     )
 
+    # When on, the Browse page filters movie/TV results to titles available
+    # on the streaming services the user subscribes to (``streaming_providers``)
+    # in their ``watch_provider_region``. Persisted so the choice sticks across
+    # visits; also toggleable per-request via the Browse UI.
+    browse_only_my_services = models.BooleanField(
+        default=False,
+        help_text="Only show Browse results available on my streaming services.",
+    )
+
+    # Opt-in weekly recap notification: a short "your week in media" summary
+    # delivered via the same Apprise / Web Push channels as the daily digest.
+    weekly_recap_enabled = models.BooleanField(
+        default=False,
+        help_text="Send a weekly recap of what you finished.",
+    )
+
     # Calendar preferences
     calendar_layout = models.CharField(
         max_length=20,

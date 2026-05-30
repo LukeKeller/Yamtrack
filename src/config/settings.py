@@ -607,6 +607,11 @@ CELERY_BEAT_SCHEDULE = {
         "task": "Send daily digest",
         "schedule": crontab(hour=DAILY_DIGEST_HOUR, minute=0),
     },
+    "send_weekly_recap": {
+        "task": "Send weekly recap",
+        # Monday morning, same hour as the daily digest.
+        "schedule": crontab(hour=DAILY_DIGEST_HOUR, minute=0, day_of_week=1),
+    },
     "cleanup_user_messages": {
         "task": "Cleanup user messages",
         "schedule": 60 * 60 * 24,  # every 24 hours

@@ -5,6 +5,7 @@ from django.contrib import admin
 from django.contrib.admin.sites import AlreadyRegistered
 
 from app.models import (
+    DiaryEntry,
     DismissedItem,
     Episode,
     Item,
@@ -77,8 +78,28 @@ class TrackAdmin(admin.ModelAdmin):
     """
 
     search_fields = ["title", "artist", "record_item__title"]
-    list_display = ["__str__", "record_item", "side", "track_number", "duration_seconds"]
+    list_display = [
+        "__str__",
+        "record_item",
+        "side",
+        "track_number",
+        "duration_seconds",
+    ]
     list_filter = ["side"]
+
+
+@admin.register(DiaryEntry)
+class DiaryEntryAdmin(admin.ModelAdmin):
+    """Custom admin for diary entries.
+
+    Diary entries are not Media (no status; their score is per-event), so
+    they need their own ModelAdmin rather than the shared MediaAdmin.
+    """
+
+    search_fields = ["user__username", "item__title", "notes"]
+    list_display = ["__str__", "user", "score", "is_rewatch", "logged_at"]
+    list_filter = ["is_rewatch"]
+    date_hierarchy = "logged_at"
 
 
 class MediaAdmin(admin.ModelAdmin):
@@ -102,6 +123,7 @@ SpecialModels = [
     "Play",
     "Track",
     "DismissedItem",
+    "DiaryEntry",
 ]
 for model in app_models:
     if (

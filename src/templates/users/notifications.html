@@ -108,6 +108,29 @@
                 </div>
               </label>
             </div>
+
+            <div class="flex items-center justify-between pt-3 border-t border-strong">
+              <div>
+                <label for="id_weekly_recap_enabled"
+                       class="text-sm font-medium text-fg flex items-center">
+                  {% include "app/icons/history.svg" with classes="w-4 h-4 mr-2 text-accent" %}
+                  Send a weekly recap
+                </label>
+                <p class="text-xs text-fg-muted mt-1 ml-6">
+                  A short Monday summary of what you finished over the past week
+                </p>
+              </div>
+
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input class="sr-only peer"
+                       type="checkbox"
+                       name="weekly_recap_enabled"
+                       id="id_weekly_recap_enabled"
+                       {% if form.weekly_recap_enabled.value %}checked{% endif %}>
+                <div class="w-9 h-5 bg-surface-3 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-px after:left-0.5 after:bg-white after:border-strong after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-accent-strong">
+                </div>
+              </label>
+            </div>
           </div>
         </div>
 

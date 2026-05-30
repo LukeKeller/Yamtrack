@@ -166,6 +166,35 @@
       </div>
     </div>
 
+    <!-- Backlog Section -->
+    {% if backlog.total_count %}
+      <div class="bg-surface-1 rounded-lg p-6 mb-8">
+        <div class="flex flex-wrap items-end justify-between gap-3 mb-4">
+          <h2 class="text-xl font-semibold">Backlog</h2>
+          <div class="text-right">
+            <p class="text-2xl font-bold leading-tight">{{ backlog.total_count }} <span class="text-fg-faint text-base font-normal">to get to</span></p>
+            {% if backlog.has_estimate %}
+              <p class="text-xs text-fg-faint">
+                ~{{ backlog.total_hours|floatformat:"-1" }}h to clear (rough estimate)
+              </p>
+            {% endif %}
+          </div>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          {% for row in backlog.rows %}
+            <a href="{% url 'medialist' row.media_type %}?status=Planning"
+               class="bg-surface-2 rounded-lg p-3 hover:bg-surface-3 transition-colors">
+              <p class="text-xs text-fg-muted">{{ row.label }}</p>
+              <p class="text-2xl font-bold mt-0.5">{{ row.count }}</p>
+              {% if row.est_hours %}
+                <p class="text-[11px] text-fg-faint">~{{ row.est_hours|floatformat:"-1" }}h</p>
+              {% endif %}
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
     <!-- Activity History Section -->
     <div class="bg-surface-1 rounded-lg p-6 max-w-[calc(100svw-4rem)]">
       <h2 class="text-xl font-semibold mb-4 text-center">Activity History</h2>

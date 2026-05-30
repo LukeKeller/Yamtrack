@@ -359,6 +359,89 @@ def game(media_id):
     return data
 
 
+def time_to_beat(media_id):
+    """Return IGDB "time to beat" estimates for a game, in hours.
+
+    Hits IGDB's ``game_time_to_beats`` endpoint, which aggregates community
+    completion times into three buckets (returned in *seconds*):
+
+    * ``hastily``    -> rushing the main story
+    * ``normally``   -> main story at a normal pace
+    * ``completely`` -> 100% / completionist
+
+    Returns ``{"hastily": h, "normally": h, "completely": h, "count": n}`` with
+    each value a rounded float of hours (or ``None`` when that bucket is
+    missing), or ``None`` when IGDB has no data for the game. Soft-fails to
+    ``None`` on any provider error so the details page still renders.
+    """
+    cache_key = f"{Sources.IGDB.value}_{MediaTypes.GAME.value}_{media_id}_ttb"
+    data = cache.get(cache_key)
+    if data is not None:
+        # Cache stores a sentinel empty dict for "looked up, no data" so we
+        # don't re-hit IGDB on every page view for games it doesn't cover.
+        return data or None
+
+    access_token = get_access_token()
+    url = f"{base_url}/game_time_to_beats"
+    body = (
+        "fields game_id,hastily,normally,completely,count;"
+        f"where game_id = {media_id};"
+    )
+    headers = {
+        "Client-ID": settings.IGDB_ID,
+        "Authorization": f"Bearer {access_token}",
+    }
+
+    try:
+        response = services.api_request(
+            Sources.IGDB.value,
+            "POST",
+            url,
+            data=body,
+            headers=headers,
+        )
+    except requests.exceptions.HTTPError as error:
+        error_resp = handle_error(error)
+        if error_resp and error_resp.get("retry"):
+            headers["Authorization"] = f"Bearer {get_access_token()}"
+            response = services.api_request(
+                Sources.IGDB.value,
+                "POST",
+                url,
+                data=body,
+                headers=headers,
+            )
+        else:
+            return None
+    except services.ProviderAPIError:
+        return None
+
+    if not response:
+        cache.set(cache_key, {})
+        return None
+
+    row = response[0]
+    seconds_per_hour = 3600
+
+    def _hours(field):
+        value = row.get(field)
+        if not value:
+            return None
+        return round(value / seconds_per_hour, 1)
+
+    data = {
+        "hastily": _hours("hastily"),
+        "normally": _hours("normally"),
+        "completely": _hours("completely"),
+        "count": row.get("count"),
+    }
+    # Only cache "no useful data" as the empty sentinel; otherwise cache the
+    # parsed estimates for the normal provider TTL.
+    has_estimate = any(data[bucket] for bucket in ("hastily", "normally", "completely"))
+    cache.set(cache_key, data if has_estimate else {})
+    return data
+
+
 def get_image_url(response):
     """Return the image URL for the media."""
     # when no image, cover is not present in the response

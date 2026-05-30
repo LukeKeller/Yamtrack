@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load app_tags %}
+
+{% block title %}
+  Decide for me - Yamtrack
+{% endblock title %}
+
+{% block content %}
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold mb-2">Decide for me</h1>
+    <p class="text-fg-muted">Stuck on what to start next? Spin for a random pick from your backlog.</p>
+  </div>
+
+  <form id="roulette-form"
+        class="bg-surface-1 rounded-lg p-4 mb-6 flex flex-wrap gap-3 items-end"
+        hx-get="{% url 'roulette_spin' %}"
+        hx-target="#roulette-result"
+        hx-swap="innerHTML"
+        hx-trigger="submit, change">
+    <div>
+      <label for="status" class="block text-xs text-fg-muted mb-1">From</label>
+      <select name="status"
+              id="status"
+              class="bg-surface-2 border border-default rounded-md text-sm px-3 py-2">
+        {% for value, label in status_choices %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="media_type" class="block text-xs text-fg-muted mb-1">Type</label>
+      <select name="media_type"
+              id="media_type"
+              class="bg-surface-2 border border-default rounded-md text-sm px-3 py-2">
+        <option value="">Any type</option>
+        {% for entry in roulette_media_types %}<option value="{{ entry.value }}">{{ entry.label }}</option>{% endfor %}
+      </select>
+    </div>
+    <button type="submit"
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-accent hover:bg-accent-hover text-white text-sm font-medium transition-colors">
+      {% include "app/icons/repeat.svg" with classes="w-4 h-4" %}
+      Spin
+    </button>
+  </form>
+
+  <div id="roulette-result"
+       hx-get="{% url 'roulette_spin' %}"
+       hx-trigger="load"
+       hx-include="#roulette-form"
+       hx-swap="innerHTML">
+    <div class="bg-surface-1 rounded-lg p-8 text-center text-fg-muted">Spinning…</div>
+  </div>
+{% endblock content %}

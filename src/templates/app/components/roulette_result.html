@@ -1,0 +1,16 @@
+{% load app_tags %}
+
+{% if pick %}
+  <div class="mx-auto w-full max-w-[16rem]">
+    {% include "app/components/media_card.html" with media=pick item=pick.item title=pick.item media_type=pick.item.media_type from_grid=True %}
+  </div>
+{% else %}
+  <div class="bg-surface-1 rounded-lg p-8 text-center">
+    <p class="text-fg-muted">
+      Nothing in your
+      <span class="text-fg font-medium">{{ status|lower }}</span>
+      backlog matches those filters.
+    </p>
+    <p class="text-fg-faint text-sm mt-1">Add some titles or widen the filters, then spin again.</p>
+  </div>
+{% endif %}

@@ -12,10 +12,24 @@ This must happen as part of every release — it's what the About page and the
 What's New modal read, so skipping it leaves the app reporting a stale version.
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh156"
+CURRENT_FORK_VERSION = "0.25.2~ynh157"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh157",
+        "date": "2026-05-30",
+        "title": "Diary, a backlog spinner, and smarter discovery",
+        "highlights": [
+            'New <strong>Diary</strong>: log any movie, show, book or game with a date, rating and note — replays included — from a card on its details page, and browse the whole timeline at <span class="font-mono">/diary</span>. Unlike the existing tracking state, diary entries are dated events, so the same title can be logged as many times as you watch or read it.',
+            "New <strong>Decide for me</strong> page: spin for a random pick from your backlog, optionally narrowed by media type or status, to break decision paralysis.",
+            "A <strong>Backlog</strong> panel on the Statistics page shows how much is still ahead — counts per media type plus a rough time-to-clear estimate.",
+            "Game detail pages now show <strong>Time to beat</strong> estimates (Rushed / Main story / Completionist) sourced from IGDB.",
+            'Browse gains an <strong>"only my services"</strong> filter that hides anything you can\'t stream on the providers you\'ve configured, and a <strong>Dismissed</strong> page to review and restore titles you marked "not interested".',
+            "Optional <strong>weekly recap</strong> notification: a short Monday summary of what you finished over the past week (enable it under Settings → Notifications).",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh156",
         "date": "2026-05-30",
@@ -39,7 +53,7 @@ RELEASE_NOTES = [
         "date": "2026-05-30",
         "title": "More book covers on the list and detail pages",
         "highlights": [
-            'Books matched to OpenLibrary often showed no cover, because OpenLibrary\'s edition record frequently carries no cover image even when the book clearly has one. Yamtrack now falls back to the book\'s <em>work</em>-level cover, and then to OpenLibrary\'s cover-by-ISBN endpoint, so a lot more books get art. Book detail pages pick this up immediately; books already in your library are refilled by a one-time <span class="font-mono">backfill_book_covers</span> admin command (covers that OpenLibrary genuinely doesn\'t have stay blank).',
+            "Books matched to OpenLibrary often showed no cover, because OpenLibrary's edition record frequently carries no cover image even when the book clearly has one. Yamtrack now falls back to the book's <em>work</em>-level cover, and then to OpenLibrary's cover-by-ISBN endpoint, so a lot more books get art. Book detail pages pick this up immediately; books already in your library are refilled by a one-time <span class=\"font-mono\">backfill_book_covers</span> admin command (covers that OpenLibrary genuinely doesn't have stay blank).",
         ],
         "fixes": [],
     },
@@ -58,7 +72,7 @@ RELEASE_NOTES = [
         "date": "2026-05-29",
         "title": "Book page: reading pace and a projected finish date",
         "highlights": [
-            'The reading-history section on a book\'s detail page now shows a pace-and-finish callout for books you\'re part-way through. Yamtrack measures your forward pace across the span from your first KOReader session to your latest synced position, then extrapolates the remaining percentage to estimate when you\'ll finish — e.g. "At your recent pace (~25 pages/day) you\'ll finish around Jun 14 (~9 days)." Pace is shown in pages/day when the page count can be inferred, otherwise as percent/day. It only appears for in-progress books with a multi-day reading window and real forward motion, so a single binge or a nearly-finished book won\'t show a noisy guess.',
+            "The reading-history section on a book's detail page now shows a pace-and-finish callout for books you're part-way through. Yamtrack measures your forward pace across the span from your first KOReader session to your latest synced position, then extrapolates the remaining percentage to estimate when you'll finish — e.g. \"At your recent pace (~25 pages/day) you'll finish around Jun 14 (~9 days).\" Pace is shown in pages/day when the page count can be inferred, otherwise as percent/day. It only appears for in-progress books with a multi-day reading window and real forward motion, so a single binge or a nearly-finished book won't show a noisy guess.",
         ],
         "fixes": [],
     },
@@ -67,7 +81,7 @@ RELEASE_NOTES = [
         "date": "2026-05-29",
         "title": "Games list: a playtime stats panel",
         "highlights": [
-            'The games list (<span class="font-mono">/medialist/game</span>) gained a collapsible <strong>Playtime Stats</strong> panel, mirroring the records collection stats. Because a game\'s progress is tracked as minutes played, Yamtrack can total it: the panel shows your <strong>total playtime</strong> in hours, how many games you\'ve <strong>completed</strong>, the <strong>average</strong> playtime across games that have any time logged, and a <strong>Most played</strong> list ranking your top titles with a simple bar each. It only appears once you track at least one game, and games with no logged time are left out of the ranking. Playtime comes from whatever you\'ve logged manually or imported (e.g. HowLongToBeat / Steam).',
+            "The games list (<span class=\"font-mono\">/medialist/game</span>) gained a collapsible <strong>Playtime Stats</strong> panel, mirroring the records collection stats. Because a game's progress is tracked as minutes played, Yamtrack can total it: the panel shows your <strong>total playtime</strong> in hours, how many games you've <strong>completed</strong>, the <strong>average</strong> playtime across games that have any time logged, and a <strong>Most played</strong> list ranking your top titles with a simple bar each. It only appears once you track at least one game, and games with no logged time are left out of the ranking. Playtime comes from whatever you've logged manually or imported (e.g. HowLongToBeat / Steam).",
         ],
         "fixes": [],
     },
@@ -85,7 +99,7 @@ RELEASE_NOTES = [
         "date": "2026-05-29",
         "title": "Year in review now counts pages read and reading time",
         "highlights": [
-            'The <span class="font-mono">/wrapped/</span> year-in-review recap gained a <strong>Reading</strong> section. <strong>Pages read</strong> sums the page count of every book you finished that year (a book\'s progress <em>is</em> its page count, so no new tracking was needed), and <strong>Reading time</strong> totals the hours from your KOReader sync sessions whose start falls in the year, with the session count alongside. Each card only appears when it has something to show, so the section stays hidden for non-readers and shows just the half that applies if you have one without the other (pages without KOReader, or KOReader time without finishing a book that year). Video and game runtime are still left out — those need duration metadata Yamtrack doesn\'t store — but reading was always derivable and is no longer skipped.',
+            "The <span class=\"font-mono\">/wrapped/</span> year-in-review recap gained a <strong>Reading</strong> section. <strong>Pages read</strong> sums the page count of every book you finished that year (a book's progress <em>is</em> its page count, so no new tracking was needed), and <strong>Reading time</strong> totals the hours from your KOReader sync sessions whose start falls in the year, with the session count alongside. Each card only appears when it has something to show, so the section stays hidden for non-readers and shows just the half that applies if you have one without the other (pages without KOReader, or KOReader time without finishing a book that year). Video and game runtime are still left out — those need duration metadata Yamtrack doesn't store — but reading was always derivable and is no longer skipped.",
         ],
         "fixes": [],
     },
@@ -95,7 +109,7 @@ RELEASE_NOTES = [
         "title": "Reading history: single-sync reading sessions no longer vanish",
         "highlights": [],
         "fixes": [
-            'A reading session that KOReader pushed as a single progress update — offline reading flushed when you closed the book, a long autosync interval, or "sync on close" mode — was dropped from the inline reading history on the book details page, even though that same push had correctly advanced the book\'s progress and synced it to Hardcover. The session-grouping logic treated any lone, short sync event as a KOReader book-open ping and filtered it out. It now keeps a lone event when it advanced past the last synced position for that book (the signature of a real single-sync read) while still dropping pings that re-report the same position, and backfills the kept session\'s start to the prior position so the Book Journey chart shows the real progress delta instead of a flat bar. Note: a single-sync session still reads ~0&nbsp;min of <em>duration</em> — reading time is derived from the spread of sync timestamps, so keeping WiFi on while reading (which lets KOReader sync several times mid-session) is what makes the time totals accurate.',
+            "A reading session that KOReader pushed as a single progress update — offline reading flushed when you closed the book, a long autosync interval, or \"sync on close\" mode — was dropped from the inline reading history on the book details page, even though that same push had correctly advanced the book's progress and synced it to Hardcover. The session-grouping logic treated any lone, short sync event as a KOReader book-open ping and filtered it out. It now keeps a lone event when it advanced past the last synced position for that book (the signature of a real single-sync read) while still dropping pings that re-report the same position, and backfills the kept session's start to the prior position so the Book Journey chart shows the real progress delta instead of a flat bar. Note: a single-sync session still reads ~0&nbsp;min of <em>duration</em> — reading time is derived from the spread of sync timestamps, so keeping WiFi on while reading (which lets KOReader sync several times mid-session) is what makes the time totals accurate.",
         ],
     },
     {

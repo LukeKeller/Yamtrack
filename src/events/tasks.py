@@ -36,3 +36,11 @@ def send_daily_digest_notifications():
     logger.info("Starting daily digest task")
 
     return notifications.send_daily_digest()
+
+
+@shared_task(name="Send weekly recap")
+def send_weekly_recap_notifications():
+    """Send each opted-in user a recap of what they finished this week."""
+    logger.info("Starting weekly recap task")
+
+    return notifications.send_weekly_recap()

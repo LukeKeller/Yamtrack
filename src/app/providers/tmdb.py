@@ -1002,7 +1002,13 @@ def browse_categories(media_type):
     return [{"value": value, "label": label} for value, label in raw]
 
 
-def browse_request_config(media_type, category, watch_region, genres=None):
+def browse_request_config(
+    media_type,
+    category,
+    watch_region,
+    genres=None,
+    watch_providers=None,
+):
     """Return the (url, extra_params) for a browse category.
 
     Unknown categories fall back to the "popular" endpoint so the page
@@ -1013,6 +1019,11 @@ def browse_request_config(media_type, category, watch_region, genres=None):
     that accepts ``with_genres``) and simple categories are translated
     to their discover-equivalent sort/window params so the genre filter
     composes with the category instead of replacing it.
+
+    ``watch_providers`` is an optional iterable of TMDB provider ids. Like
+    ``genres`` it forces ``/discover`` (the only endpoint that accepts
+    ``with_watch_providers``) and constrains results to titles streamable
+    on those services (flatrate) in ``watch_region``.
     """
     today = timezone.localdate()
     recent_floor = (today - timedelta(days=STREAMING_WINDOW_DAYS)).isoformat()
@@ -1145,20 +1156,27 @@ def browse_request_config(media_type, category, watch_region, genres=None):
         "classics": classics_params,
     }
 
-    if genres:
-        # with_genres requires /discover. Pick the category's discover
-        # variant if it has one, else its simple-endpoint equivalent.
-        # Missing keys (e.g., a brand-new category that forgot to add
-        # an entry here) fall back to popularity-sorted.
+    if genres or watch_providers:
+        # with_genres / with_watch_providers require /discover. Pick the
+        # category's discover variant if it has one, else its simple-endpoint
+        # equivalent. Missing keys (e.g., a brand-new category that forgot to
+        # add an entry here) fall back to popularity-sorted.
         category_params = (
             discover_overrides.get(category)
             or simple_discover_overrides.get(category)
             or {"sort_by": "popularity.desc"}
         )
-        extra_params = {
-            **category_params,
-            "with_genres": ",".join(str(g) for g in genres),
-        }
+        extra_params = {**category_params}
+        if genres:
+            extra_params["with_genres"] = ",".join(str(g) for g in genres)
+        if watch_providers:
+            # TMDB OR-joins providers with a pipe; flatrate keeps it to
+            # subscription availability (not rent/buy) in the user's region.
+            extra_params["with_watch_providers"] = "|".join(
+                str(p) for p in watch_providers
+            )
+            extra_params["with_watch_monetization_types"] = "flatrate"
+            extra_params["watch_region"] = watch_region
         return f"{base_url}/{discover_path}", extra_params
 
     if category in discover_overrides:
@@ -1169,12 +1187,23 @@ def browse_request_config(media_type, category, watch_region, genres=None):
     return f"{base_url}/{path}", extra_params
 
 
-def browse(media_type, category, page, watch_region=None, genres=None):
+def browse(
+    media_type,
+    category,
+    page,
+    watch_region=None,
+    genres=None,
+    watch_providers=None,
+):
     """Return a paginated, browsable list of movies or TV shows from TMDB.
 
     ``genres`` is an optional list of TMDB genre ids that, when non-empty,
     routes the request through ``/discover`` with ``with_genres`` so the
     page is filtered server-side (AND semantics across multiple ids).
+
+    ``watch_providers`` is an optional list of TMDB provider ids that, when
+    non-empty, constrains results to titles streamable on those services in
+    ``watch_region`` (also via ``/discover``).
     """
     if not watch_region or watch_region == "UNSET":
         watch_region = DEFAULT_WATCH_REGION
@@ -1182,9 +1211,12 @@ def browse(media_type, category, page, watch_region=None, genres=None):
     page = min(max(int(page), 1), TMDB_MAX_PAGE)
 
     genres_key = ",".join(str(g) for g in sorted(genres)) if genres else ""
+    providers_key = (
+        ",".join(str(p) for p in sorted(watch_providers)) if watch_providers else ""
+    )
     cache_key = (
         f"browse_{Sources.TMDB.value}_{media_type}_{category}_{watch_region}"
-        f"_{page}_g={genres_key}"
+        f"_{page}_g={genres_key}_wp={providers_key}"
     )
     data = cache.get(cache_key)
     if data is not None:
@@ -1195,6 +1227,7 @@ def browse(media_type, category, page, watch_region=None, genres=None):
         category,
         watch_region,
         genres=genres,
+        watch_providers=watch_providers,
     )
     params = {**base_params, "page": page, **extra_params}
     if settings.TMDB_NSFW:

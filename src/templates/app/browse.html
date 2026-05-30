@@ -60,7 +60,33 @@
               {% endif %}
             </button>
           </form>
+          {% comment %}
+            "Only my services" filter — constrains discover results to titles
+            streamable on the user's subscribed providers. Only shown when the
+            user has configured providers (otherwise the filter returns nothing).
+          {% endcomment %}
+          {% if has_streaming_providers %}
+            <form method="post" action="{% url 'toggle_browse_services' %}">
+              {% csrf_token %}
+              <button type="submit"
+                      class="px-3 py-1.5 text-sm rounded-md transition-colors duration-200 cursor-pointer flex items-center gap-1.5 {% if only_my_services %}bg-accent-strong text-fg{% else %}bg-surface-2 text-fg hover:bg-surface-3{% endif %}"
+                      title="{% if only_my_services %}Showing only titles on your services — click to show everything{% else %}Showing everything — click to filter to your services{% endif %}">
+                {% include "app/icons/funnel.svg" with classes="w-4 h-4" %}
+                {% if only_my_services %}
+                  My services
+                {% else %}
+                  All services
+                {% endif %}
+              </button>
+            </form>
+          {% endif %}
         {% endif %}
+        <a href="{% url 'dismissed_items' %}"
+           class="px-3 py-1.5 text-sm rounded-md transition-colors duration-200 cursor-pointer flex items-center gap-1.5 bg-surface-2 text-fg-muted hover:bg-surface-3"
+           title="Manage dismissed items">
+          {% include "app/icons/circle-x.svg" with classes="w-4 h-4" %}
+          Dismissed
+        </a>
       </div>
     </div>
 

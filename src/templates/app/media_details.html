@@ -720,6 +720,46 @@
   {# Anchor target for the Overview tab so scroll-margin-top works cleanly. #}
   <span id="overview" class="block" style="scroll-margin-top: 7rem"></span>
 
+  {# Time to beat — IGDB community completion estimates for games #}
+  {% if time_to_beat %}
+    <section class="mb-10 max-w-3xl">
+      <div class="flex items-center gap-2 mb-3">
+        {% include "app/icons/clock.svg" with classes="w-4 h-4 text-accent" %}
+        <h2 class="text-sm font-semibold text-fg-muted uppercase tracking-wide">Time to beat</h2>
+      </div>
+      <div class="grid grid-cols-3 gap-3">
+        <div class="bg-surface-1 rounded-lg p-4 text-center">
+          <p class="text-xs text-fg-muted">Rushed</p>
+          <p class="text-2xl font-bold mt-1">
+            {% if time_to_beat.hastily %}{{ time_to_beat.hastily|floatformat:"-1" }}h{% else %}—{% endif %}
+          </p>
+        </div>
+        <div class="bg-surface-1 rounded-lg p-4 text-center">
+          <p class="text-xs text-fg-muted">Main story</p>
+          <p class="text-2xl font-bold mt-1 text-accent">
+            {% if time_to_beat.normally %}{{ time_to_beat.normally|floatformat:"-1" }}h{% else %}—{% endif %}
+          </p>
+        </div>
+        <div class="bg-surface-1 rounded-lg p-4 text-center">
+          <p class="text-xs text-fg-muted">Completionist</p>
+          <p class="text-2xl font-bold mt-1">
+            {% if time_to_beat.completely %}{{ time_to_beat.completely|floatformat:"-1" }}h{% else %}—{% endif %}
+          </p>
+        </div>
+      </div>
+      {% if time_to_beat.count %}
+        <p class="text-xs text-fg-faint mt-2">Based on {{ time_to_beat.count|intcomma }} submissions on IGDB.</p>
+      {% endif %}
+    </section>
+  {% endif %}
+
+  {# Diary — dated, replay-aware log entries for this title #}
+  {% if diary_can_log %}
+    <section class="mb-12 max-w-3xl">
+      {% include "app/components/diary_item.html" %}
+    </section>
+  {% endif %}
+
   {# Record listening stats — Koito-style panels for vinyl records #}
   {% if record_listen_stats %}
     <section class="mb-12">

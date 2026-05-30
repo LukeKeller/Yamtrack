@@ -87,6 +87,7 @@ class NotificationSettingsForm(forms.ModelForm):
             "notification_urls",
             "daily_digest_enabled",
             "release_notifications_enabled",
+            "weekly_recap_enabled",
         ]
         widgets = {
             "notification_urls": forms.Textarea(
