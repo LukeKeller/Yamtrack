@@ -73,3 +73,12 @@ class BackfillBookCovers(TestCase):
         call_command("backfill_book_covers", "--dry-run", stdout=StringIO())
         item.refresh_from_db()
         self.assertEqual(item.image, "")
+
+    @patch("app.management.commands.backfill_book_covers.cache.delete")
+    @patch("app.providers.services.get_media_metadata")
+    def test_busts_provider_cache_before_fetching(self, mock_meta, mock_delete):
+        _book_item("OL6M", settings.IMG_NONE)
+        mock_meta.return_value = {"image": settings.IMG_NONE}
+        call_command("backfill_book_covers", stdout=StringIO())
+        # The stale 24h metadata cache is cleared so the resolver runs fresh.
+        mock_delete.assert_called_once_with("openlibrary_book_OL6M")

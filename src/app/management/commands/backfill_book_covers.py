@@ -16,9 +16,14 @@ but that only helps fresh lookups; existing rows keep their stale image.
 
 This command re-fetches metadata for book Items whose image is empty or
 the placeholder and writes back any real cover the improved resolver now
-finds. It uses the shared rate-limited provider session, so a backlog of
-a few hundred books takes a minute or two. Manual entries are skipped —
-they have no metadata source to look up.
+finds. It busts the 24h provider metadata cache per item first, so it
+re-resolves fresh rather than reading back coverless metadata cached
+before the resolver fix shipped. It uses the shared rate-limited provider
+session, so a backlog of a few hundred books takes a minute or two.
+Manual entries are skipped — they have no metadata source to look up.
+
+Pass ``-v 2`` to list the items that still have no cover (genuinely
+absent from the provider) so they're easy to spot.
 """
 
 from __future__ import annotations
@@ -26,6 +31,7 @@ from __future__ import annotations
 import logging
 
 from django.conf import settings
+from django.core.cache import cache
 from django.core.management.base import BaseCommand
 from django.db.models import Q
 
@@ -33,6 +39,9 @@ from app.models import Item, MediaTypes, Sources
 from app.providers import services
 
 logger = logging.getLogger(__name__)
+
+# Django verbosity level at/above which we list the still-coverless items.
+VERBOSE = 2
 
 
 class Command(BaseCommand):
@@ -78,9 +87,16 @@ class Command(BaseCommand):
             return
 
         self.stdout.write(f"Backfilling covers on {total} book item(s)...")
+        verbosity = options["verbosity"]
         updated = skipped = errors = 0
 
         for item in qs.iterator(chunk_size=100):
+            # Bust the 24h provider metadata cache first, otherwise we just
+            # read back the same coverless metadata that was cached before
+            # this command (or the cover-resolver fix) existed and every
+            # item "skips". A backfill has to re-resolve fresh.
+            cache.delete(f"{item.source}_{item.media_type}_{item.media_id}")
+
             try:
                 metadata = services.get_media_metadata(
                     item.media_type,
@@ -95,6 +111,8 @@ class Command(BaseCommand):
             image = metadata.get("image") or ""
             if not image or image == settings.IMG_NONE:
                 skipped += 1
+                if verbosity >= VERBOSE:
+                    self.stdout.write(f"  no cover for {item} ({item.source})")
                 continue
 
             if options["dry_run"]:
