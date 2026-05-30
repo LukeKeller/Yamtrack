@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yamtrack — Feature Gap Analysis (2026-05-30)</title>
+<style>
+  :root{
+    --bg:#f5f7f9; --panel:#ffffff; --panel2:#f1f3f5; --panel3:#e9edf1; --line:#d7dde3;
+    --ink:#1b2127; --muted:#52606c; --faint:#8a949e;
+    --accent:#2f9e54; --accent2:#2674b8; --warn:#a9701f; --danger:#c0463f; --purple:#6a59c0;
+    --chip:#eaeef2;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.62 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  a{color:var(--accent2);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{background:#eef1f4;border:1px solid var(--line);border-radius:5px;padding:.06em .42em;
+    font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#2c4a38}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+  header.hero{background:linear-gradient(160deg,#eef2f6,#ffffff);border-bottom:1px solid var(--line);
+    padding:46px 0 34px}
+  header.hero h1{margin:0 0 6px;font-size:30px;letter-spacing:-.4px}
+  header.hero .sub{color:var(--muted);font-size:15px;max-width:760px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+  .meta span{background:var(--panel3);border:1px solid var(--line);border-radius:999px;
+    padding:5px 13px;font-size:12.5px;color:var(--muted)}
+  .meta span b{color:var(--ink);font-weight:600}
+
+  nav.toc{position:sticky;top:0;z-index:20;background:rgba(245,247,249,.92);
+    backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+  nav.toc .wrap{display:flex;flex-wrap:wrap;gap:4px;padding:9px 22px}
+  nav.toc a{color:var(--muted);font-size:12.5px;padding:5px 10px;border-radius:7px}
+  nav.toc a:hover{background:var(--panel3);color:var(--ink);text-decoration:none}
+
+  section{padding:34px 0 6px}
+  h2{font-size:21px;margin:6px 0 4px;letter-spacing:-.2px;display:flex;align-items:center;gap:10px}
+  h2 .n{display:inline-grid;place-items:center;width:27px;height:27px;border-radius:8px;
+    background:var(--panel3);border:1px solid var(--line);font-size:13px;color:var(--accent)}
+  h2 .tag{font-size:11px;font-weight:600;color:var(--faint);letter-spacing:.08em;text-transform:uppercase}
+  .lead{color:var(--muted);margin:2px 0 18px;max-width:840px}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:13px;
+    padding:18px 20px 16px;margin:14px 0;box-shadow:0 1px 2px rgba(27,33,39,.05)}
+  .card h3{margin:0 0 4px;font-size:16.5px;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+  .card h3 .id{font:600 12px ui-monospace,monospace;color:var(--muted);
+    background:#eef1f4;border:1px solid var(--line);border-radius:6px;padding:1px 7px}
+  .card .pitch{color:var(--ink);margin:.35em 0 .7em}
+  .row{display:grid;grid-template-columns:120px 1fr;gap:6px 14px;margin:.35em 0;align-items:start}
+  .row .k{color:var(--faint);font-size:12px;text-transform:uppercase;letter-spacing:.05em;padding-top:2px}
+  .row .v{color:var(--muted)}
+  .row .v b{color:var(--ink);font-weight:600}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:3px}
+  .chip{font-size:11.5px;background:var(--chip);border:1px solid var(--line);border-radius:999px;
+    padding:2px 10px;color:var(--muted)}
+  .pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;
+    border-radius:999px;padding:2px 10px;vertical-align:middle}
+  .p-high{background:rgba(47,158,84,.12);color:#1f7a3d;border:1px solid rgba(47,158,84,.38)}
+  .p-med{background:rgba(169,112,31,.12);color:#9a5e16;border:1px solid rgba(169,112,31,.38)}
+  .p-low{background:rgba(38,116,184,.12);color:#1f6aa8;border:1px solid rgba(38,116,184,.38)}
+  .e-s{color:#1f7a3d}.e-m{color:#9a5e16}.e-l{color:#c0463f}
+  .novel{border-left:3px solid var(--purple);background:rgba(106,89,192,.08);
+    padding:7px 12px;border-radius:0 8px 8px 0;margin-top:10px;font-size:13px;color:var(--muted)}
+  .novel b{color:#5648ab}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}.row{grid-template-columns:1fr}.row .k{padding-top:8px}}
+
+  .exist{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .exist ul{margin:8px 0 0;padding-left:18px;columns:2;column-gap:28px}
+  .exist li{margin:3px 0;color:var(--muted);font-size:13.5px;break-inside:avoid}
+  @media(max-width:760px){.exist ul{columns:1}}
+
+  table.matrix{width:100%;border-collapse:collapse;margin-top:12px;font-size:13.5px}
+  table.matrix th,table.matrix td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top}
+  table.matrix th{background:var(--panel3);color:var(--ink);font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  table.matrix td{color:var(--muted)}
+  table.matrix td b{color:var(--ink)}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin:10px 0 0;font-size:12.5px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+  details.method{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:4px 18px;margin:10px 0}
+  details.method summary{cursor:pointer;padding:12px 0;font-weight:600;color:var(--ink)}
+  details.method[open]{padding-bottom:14px}
+  details.method ul{margin:.4em 0;color:var(--muted)}
+
+  footer{border-top:1px solid var(--line);margin-top:40px;padding:24px 0 60px;color:var(--faint);font-size:12.5px}
+  .kbd{font:600 11px ui-monospace,monospace;background:#eef1f4;border:1px solid var(--line);
+    border-bottom-width:2px;border-radius:5px;padding:1px 6px;color:#2c4a38}
+  hr.s{border:0;border-top:1px solid var(--line);margin:26px 0}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>Yamtrack — Feature Gap Analysis</h1>
+    <div class="sub">A deep-dive into flows and features that feel <em>missing</em> from the current build, grounded in a full codebase inventory and fresh research across ~30 competing media-tracking tools. Every item below was checked against both the shipped code and the existing <code>IDEAS.md</code> backlog so the list is genuinely new.</div>
+    <div class="meta">
+      <span>Date: <b>2026-05-30</b></span>
+      <span>Basis: <b>latest <code>main</code> @ 0.25.2~ynh156</b></span>
+      <span>Branch: <b>claude/feature-gap-analysis-JLShT</b></span>
+      <span>Scope: <b>net-new ideas only</b></span>
+      <span>Items: <b>21 gaps + 3 unfinished flows</b></span>
+    </div>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="wrap">
+    <a href="#summary">Summary</a>
+    <a href="#state">Current state</a>
+    <a href="#A">Logging depth</a>
+    <a href="#B">Decide-what-next</a>
+    <a href="#C">Lists &amp; organization</a>
+    <a href="#D">Streaming intel</a>
+    <a href="#E">Discovery</a>
+    <a href="#F">Engagement</a>
+    <a href="#G">Capture</a>
+    <a href="#H">Data quality</a>
+    <a href="#unfinished">Unfinished flows</a>
+    <a href="#matrix">Priority matrix</a>
+    <a href="#method">Method</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<!-- ============ SUMMARY ============ -->
+<section id="summary">
+  <h2><span class="n">§</span> Executive summary</h2>
+  <p class="lead">Yamtrack is already a remarkably <em>complete</em> tracker — far ahead of its own docs. It has vinyl/music tracking with ListenBrainz scrobbling, an OPDS ebook library with KOReader two-way sync, Hardcover sync, a taste-profile recommender, a browse/discovery surface with "not interested" dismissals, a Spotify-style Wrapped, streak stats, and a dense home page (Up Next, Watch Tonight, On This Day, Palate Cleanser, Stale Planning). That maturity means the remaining gaps are not "add basic tracking" — they're <b>depth-of-logging</b>, <b>decision-support</b>, and <b>availability-intelligence</b> features that power-users of the best single-purpose trackers reach for daily.</p>
+  <p class="lead">The strongest recurring theme across competitors: Yamtrack is excellent at <em>recording state</em> ("I am 40% through this") but thin on <em>recording events over time</em> ("I read this on these three dates, audiobook, 4 stars, no spoilers"). A first-class <b>diary / relog model</b> (gap&nbsp;1) is the single highest-leverage foundation — it unlocks per-episode ratings, rewatch-aware Wrapped, format tracking, and play journals. The other two high-impact clusters are <b>"decide what to watch next"</b> tooling (roulette, time-budget, backlog analyzer) and <b>streaming availability alerts</b> (the app already stores your services and region but never tells you when a watchlist title lands on — or leaves — them).</p>
+  <div class="novel"><b>How to read this:</b> each card states the gap, the <b>evidence</b> it's actually absent (with file references), the competitor that inspired it, a concrete <b>implementation sketch</b> tied to real models/views, a rough <b>effort</b>, and an explicit note on how it differs from anything already in <code>IDEAS.md</code>.</p>
+</section>
+
+<!-- ============ CURRENT STATE ============ -->
+<section id="state">
+  <h2><span class="n">✓</span> Current state — what already exists <span class="tag">so the gaps below are real</span></h2>
+  <p class="lead">Verified by reading the codebase directly. These are <em>excluded</em> from the gap list:</p>
+  <div class="exist">
+    <ul>
+      <li>11 media types incl. <b>vinyl/records</b> with A/B-side spin logging</li>
+      <li>ListenBrainz scrobble <em>server</em> + Discogs import</li>
+      <li>OPDS ebook library, file uploads, <b>KOReader two-way sync</b></li>
+      <li>Hardcover two-way book sync; reading pace + projection</li>
+      <li>Per-episode <em>watched</em> tracking &amp; seasons</li>
+      <li>Taste-profile <b>% match</b> badge on Browse (<code>app/taste.py</code>)</li>
+      <li>Browse discovery + <b>"not interested"</b> dismissals</li>
+      <li>System <b>mood filters</b> (highly-rated, stuck, unrewatched 3y+)</li>
+      <li>Home rails: Up Next, Watch Tonight, On This Day, Palate Cleanser, Stale Planning, Recent Activity</li>
+      <li>Wrapped / year-in-review + Statistics (streaks, heatmap)</li>
+      <li>Calendar + iCal feed; release &amp; daily-digest notifications</li>
+      <li>Web Push (VAPID) + Apprise; PWA offline + share-target</li>
+      <li>Collaborative custom lists; list import (paste-and-match)</li>
+      <li>Imports: Trakt, Simkl, MAL, AniList, Kitsu, Steam, IMDB, HLTB, GoodReads, Discogs, CSV</li>
+      <li>Webhooks: Jellyfin / Plex / Emby (with anime detection)</li>
+      <li>Quick-log token API; per-user token; regen</li>
+      <li>17 themes, density, font picker, <b>e-ink mode</b>, onboarding wizard</li>
+      <li>Suwayomi URL; person &amp; artist detail pages</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ A. LOGGING DEPTH ============ -->
+<section id="A">
+  <h2><span class="n">A</span> Logging &amp; journaling depth <span class="tag">record events, not just state</span></h2>
+  <p class="lead">The biggest conceptual gap. Yamtrack stores one row of <em>current</em> tracking state per (user, item). Repeats/rewatches are <em>derived</em> from the <code>simple_history</code> audit trail rather than logged as intentional, dated, ratable events — so there is no diary, no per-episode rating, and no way to say "I watched this twice, loved it the first time."</p>
+
+  <div class="card">
+    <h3><span class="id">A1</span> First-class Diary &amp; relog model <span class="pill p-high">High impact</span></h3>
+    <p class="pitch">A dedicated <code>LogEntry</code> (date, optional rating, optional note, format, rewatch flag) so the <em>same</em> film/book/game can be logged multiple times as distinct dated entries, plus a chronological <code>/diary</code> view of everything you've watched/read/played. This is Letterboxd's signature mechanic and the foundation the rest of this section builds on.</p>
+    <div class="row"><div class="k">Evidence</div><div class="v">No log/diary model exists. "Repeats" are computed via a <code>Window</code> annotation over history (<code>app/models.py:334</code>); there's <b>no</b> intentional re-log action and no diary route in any <code>urls.py</code>. <code>_recent_activity</code> reads history but isn't a browsable, dated journal.</div></div>
+    <div class="row"><div class="k">Inspired by</div><div class="v">Letterboxd diary, Backloggd journal, BGG play log</div></div>
+    <div class="row"><div class="k">Sketch</div><div class="v">New <code>app/models.py: LogEntry(user, item, logged_on, rating, note, format, is_rewatch, source)</code>. A "Log again" action on the detail page + on cards. <code>/diary</code> grouped by month. Backfill: synthesize entries from existing <code>simple_history</code> on first view. Feed Wrapped from logs so rewatches finally count.</div></div>
+    <div class="row"><div class="k">Effort</div><div class="v"><span class="e-l">Large</span> — new model + migration + views; but highest unlock value.</div></div>
+    <div class="novel"><b>Net-new:</b> <code>IDEAS.md</code> has "per-episode notes" and "soft-delete" but <em>nothing</em> resembling a diary/relog primitive. This is the keystone for A2–A5.</div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h3><span class="id">A2</span> Per-episode &amp; per-season ratings/reviews <span class="pill p-med">Medium</span></h3>
+      <p class="pitch">Let users score and briefly review individual episodes (and write a whole-season review at a finale), the way Serializd and TV Time treat episodes/seasons as first-class objects.</p>
+      <div class="row"><div class="k">Evidence</div><div class="v"><code>Episode</code> (<code>app/models.py:2005</code>) has <b>only</b> <code>end_date</code>/<code>item</code>/<code>related_season</code> — no <code>score</code>, no <code>notes</code>. Seasons inherit <code>score</code>/<code>notes</code> but the UI never surfaces a "review this season" affordance.</div></div>
+      <div class="row"><div class="k">Inspired by</div><div class="v">Serializd, TV Time</div></div>
+      <div class="row"><div class="k">Sketch</div><div class="v">Add <code>score</code>+<code>notes</code> to <code>Episode</code>; tiny inline star row on the episode list; surface the existing <code>Season.score/notes</code> in a "Season review" card.</div></div>
+      <div class="row"><div class="k">Effort</div><div class="v"><span class="e-m">Medium</span></div></div>
+      <div class="novel"><b>Net-new:</b> IDEAS lists per-episode <em>notes</em> only — not ratings, and not season-level reviews.</div>
+    </div>
+
+    <div class="card">
+      <h3><span class="id">A3</span> Reviews as objects w/ spoiler flag <span class="pill p-low">Low</span></h3>
+      <p class="pitch">Split a short, spoiler-taggable <em>review</em> from the freeform <code>notes</code> scratchpad, rendered with a blur-until-click spoiler guard. Makes "my reviews" exportable and Wrapped-able.</p>
+      <div class="row"><div class="k">Evidence</div><div class="v">Only one <code>notes</code> TextField on <code>Media</code> (<code>app/models.py</code>); no spoiler concept anywhere.</div></div>
+      <div class="row"><div class="k">Inspired by</div><div class="v">Letterboxd / Serializd reviews</div></div>
+      <div class="row"><div class="k">Sketch</div><div class="v">Reuse the A1 <code>LogEntry.note</code> + a <code>has_spoilers</code> bool; CSS blur reveal. No new model if A1 lands.</div></div>
+      <div class="row"><div class="k">Effort</div><div class="v"><span class="e-s">Small</span> (free with A1)</div></div>
+    </div>
+
+    <div class="card">
+      <h3><span class="id">A4</span> Format / edition per read <span class="pill p-low">Low</span></h3>
+      <p class="pitch">Record <em>how</em> you consumed something — audiobook vs print vs ebook; theatrical vs streaming; physical vs digital game. Powers "hours listened" stats and honest Wrapped breakdowns.</p>
+      <div class="row"><div class="k">Evidence</div><div class="v">No format/edition field on any media model. KOReader/Hardcover only know "a book."</div></div>
+      <div class="row"><div class="k">Inspired by</div><div class="v">Hardcover (audiobook-vs-print per read)</div></div>
+      <div class="row"><div class="k">Sketch</div><div class="v"><code>LogEntry.format</code> (TextChoices per media type) or a single <code>format</code> on <code>Media</code>; chip on detail + a Wrapped slice.</div></div>
+      <div class="row"><div class="k">Effort</div><div class="v"><span class="e-s">Small</span></div></div>
+    </div>
+
+    <div class="card">
+      <h3><span class="id">A5</span> Play / session log for games &amp; board games <span class="pill p-med">Medium</span></h3>
+      <p class="pitch">Generalize the existing vinyl <code>Play</code> model to board games (date, players, scores, win/loss) and games (a dated session of N minutes), then surface a BGG-style play count and <b>H-index</b>. Today only records can log a "play."</p>
+      <div class="row"><div class="k">Evidence</div><div class="v"><code>Play</code>/<code>PlaySide</code> exist only for <code>Record</code> (<code>app/models.py:2214</code>); board games &amp; games just store a single <code>progress</code> integer. No session/play-count concept for them.</div></div>
+      <div class="row"><div class="k">Inspired by</div><div class="v">BoardGameGeek play logging + H-index; Backloggd calendar journal</div></div>
+      <div class="row"><div class="k">Sketch</div><div class="v">Extend <code>Play</code> (or A1 <code>LogEntry</code>) with optional <code>players</code>/<code>scores</code> JSON + <code>duration_min</code>; "Log a play" button on boardgame/game detail; play-count + H-index in <code>statistics.py</code>.</div></div>
+      <div class="row"><div class="k">Effort</div><div class="v"><span class="e-m">Medium</span></div></div>
+      <div class="novel"><b>Net-new:</b> not in IDEAS; the closest entry ("watch-with mode") is about partners, not play sessions/scores.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ B. DECIDE WHAT NEXT ============ -->
+<section id="B">
+  <h2><span class="n">B</span> "Decide what to watch / read next" <span class="tag">beat decision paralysis</span></h2>
+  <p class="lead">Yamtrack has passive nudges (Palate Cleanser surfaces one item; Watch Tonight ranks by taste) but no <em>interactive</em> "help me pick right now" tools — the category competitors invest in most heavily.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h3><span class="id">B1</span> Roulette / "Decide for me" <span class="pill p-high">High impact</span></h3>
+      <p class="pitch">A <span class="kbd">R</span>-to-roll button that picks a random item from your Planning backlog, optionally filtered by media type / mood / runtime, with a satisfying reveal and "re-roll / log it" actions.</p>
+      <div class="row"><div class="k">Evidence</div><div class="v"><code>_palate_cleanser</code> (<code>app/views.py:242</code>) is a passive, single, server-chosen suggestion — there is no user-triggered random picker or filter-aware roll.</div></div>
+      <div class="row"><div class="k">Inspired by</div><div class="v">Letterboxd roulette (press R), Simkl random-from-filter</div></div>
+      <div class="row"><div class="k">Sketch</div><div class="v">New <code>/roulette</code> (or home widget) → <code>BasicMedia.objects</code> filtered to Planning + facets, <code>.order_by('?')[:1]</code>; Alpine card flip. Reuses existing mood filters.</div></div>
+      <div class="row"><div class="k">Effort</div><div class="v"><span class="e-s">Small</span> — high delight per line of code.</div></div>
+      <div class="novel"><b>Net-new:</b> not in IDEAS at all.</div>
+    </div>
+
+    <div class="card">
+      <h3><span class="id">B2</span> Time-budget picker ("I have 45 min") <span class="pill p-med">Medium</span></h3>
+      <p class="pitch">Tell the app how long you've got; it filters your in-progress/watchlist to things that <em>fit</em> — a 22-min episode, a 90-min film, a board game that plays in 30. Sofa &amp; JustWatch lean on this hard.</p>
+      <div class="row"><div class="k">Evidence</div><div class="v">No runtime-aware filtering. <code>media_list</code> filters only status/sort/search/mood (<code>app/views.py:616</code>). Runtime metadata isn't stored on <code>Item</code> (Wrapped notes "video/game runtime deferred").</div></div>
+      <div class="row"><div class="k">Inspired by</div><div class="v">Sofa, JustWatch, BGG play-time</div></div>
+      <div class="row"><div class="k">Sketch</div><div class="v">Backfill <code>Item.runtime</code> from TMDB/IGDB/BGG on metadata fetch (mirrors the <code>air_date</code> backfill command), then a "time available" chip on home.</div></div>
+      <div class="row"><div class="k">Effort</div><div class="v"><span class="e-m">Medium</span> — gated on the runtime backfill.</div></div>
+    </div>
+
+    <div class="card">
+      <h3><span class="id">B3</span> Backlog analyzer <span class="pill p-med">Medium</span></h3>
+      <p class="pitch">"It will take ~340 hours / 12,000 pages to clear your Planning shelf." A forward-looking counterpart to the existing (past-facing) playtime stats, per media type.</p>
+      <div class="row"><div class="k">Evidence</div><div class="v">Stats are retrospective (<code>get_game_stats</code>, hours <em>played</em>). No "hours/pages remaining to clear backlog" anywhere.</div></div>
+      <div class="row"><div class="k">Inspired by</div><div class="v">HowLongToBeat Backlog Analyzer</div></div>
+      <div class="row"><div class="k">Sketch</div><div class="v">Sum runtime/page estimates over Planning items (HLTB import already gives game times; surface them). Panel on <code>/statistics</code>.</div></div>
+      <div class="row"><div class="k">Effort</div><div class="v"><span class="e-m">Medium</span> (shares runtime backfill with B2)</div></div>
+      <div class="novel"><b>Net-new:</b> IDEAS has a "watch-time leaderboard" (past hours); a <em>backlog</em> projection is the inverse and absent.</div>
+    </div>
+
+    <div class="card">
+      <h3><span class="id">B4</span> Surface HLTB "time to beat" on game pages <span class="pill p-low">Low</span></h3>
+      <p class="pitch">Show Main / Main+Extras / Completionist hour estimates on the game detail page so you can decide before starting — the single datapoint HLTB exists for.</p>
+      <div class="row"><div class="k">Evidence</div><div class="v">HLTB is an <em>import</em> source only (<code>integrations/imports/hltb.py</code>); the data isn't fetched/shown on the live game detail page.</div></div>
+      <div class="row"><div class="k">Inspired by</div><div class="v">HowLongToBeat</div></div>
+      <div class="row"><div class="k">Sketch</div><div class="v">Add a small HLTB lookup to the game detail context (cache 24h like other providers); three pills under the hero.</div></div>
+      <div class="row"><div class="k">Effort</div><div class="v"><span class="e-s">Small</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ C. LISTS ============ -->
+<section id="C">
+  <h2><span class="n">C</span> Lists, filtering &amp; organization <span class="tag">shape the library your way</span></h2>
+  <p class="lead">Custom lists are manual, date-ordered bags of items. Power-trackers add dynamic/smart lists, manual ranking, favorites, and free-text tagging.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h3><span class="id">C1</span> Saved Smart Lists (rule-based) <span class="pill p-high">High impact</span></h3>
+      <p class="pitch">Lists that auto-populate from a saved filter ("In-progress anime rated 8+", "Planning films under 2h on a service I have"). Plex smart collections / Sofa smart lists / Maintainerr rules.</p>
+      <div class="row"><div class="k">Evidence</div><div class="v"><code>CustomList</code> is a static M2M of items (<code>lists/models.py:48</code>); filtering on <code>media_list</code> is ephemeral (status/sort/search/mood) and can't be saved or named.</div></div>
+      <div class="row"><div class="k">Inspired by</div><div class="v">Plex smart collections, Sofa, Maintainerr</div></div>
+      <div class="row"><div class="k">Sketch</div><div class="v"><code>CustomList.is_smart</code> + <code>rules_json</code>; resolve to a queryset at render. Reuse the existing filter machinery.</div></div>
+      <div class="row"><div class="k">Effort</div><div class="v"><span class="e-l">Large</span></div></div>
+      <div class="novel"><b>Net-new:</b> IDEAS has public/embed lists but no <em>dynamic</em> lists.</div>
+    </div>
+
+    <div class="card">
+      <h3><span class="id">C2</span> Manual ranking &amp; tier lists <span class="pill p-med">Medium</span></h3>
+      <p class="pitch">Drag to order a list into a ranked "My Top 25", or bucket items into S/A/B/C/D tiers — a hugely popular format in games/anime communities.</p>
+      <div class="row"><div class="k">Evidence</div><div class="v"><code>CustomListItem</code> has only <code>date_added</code> (<code>lists/models.py:106</code>) — <b>no</b> position/rank field, so manual ordering is impossible.</div></div>
+      <div class="row"><div class="k">Inspired by</div><div class="v">Backloggd ranked lists, community tier lists</div></div>
+      <div class="row"><div class="k">Sketch</div><div class="v">Add <code>CustomListItem.position</code> (+ optional <code>tier</code> char); SortableJS drag; new <code>ListDetailSortChoices.MANUAL</code>.</div></div>
+      <div class="row"><div class="k">Effort</div><div class="v"><span class="e-m">Medium</span></div></div>
+    </div>
+
+    <div class="card">
+      <h3><span class="id">C3</span> Favorites &amp; showcase <span class="pill p-low">Low</span></h3>
+      <p class="pitch">A one-tap heart to mark all-time favorites, plus a "Favorites" showcase rail on home (and a future public profile). Letterboxd's "top 4" / AniList favorites.</p>
+      <div class="row"><div class="k">Evidence</div><div class="v">No <code>favorite</code>/<code>pinned</code> field anywhere (grep of <code>models.py</code> confirms). Closest is a <em>derived</em> "highly rated" mood.</div></div>
+      <div class="row"><div class="k">Inspired by</div><div class="v">Letterboxd top 4, AniList favorites</div></div>
+      <div class="row"><div class="k">Sketch</div><div class="v"><code>Media.is_favorite</code> bool; heart on cards/detail; home rail + Wrapped slice.</div></div>
+      <div class="row"><div class="k">Effort</div><div class="v"><span class="e-s">Small</span></div></div>
+      <div class="novel"><b>Net-new:</b> distinct from the "public profile" idea in IDEAS.</div>
+    </div>
+
+    <div class="card">
+      <h3><span class="id">C4</span> Free-text tags / shelves on items <span class="pill p-med">Medium</span></h3>
+      <p class="pitch">Per-item user tags ("comfort", "cozy-fall", "with-the-kids", "DNF-but-might-return") that double as filters — Goodreads shelves / StoryGraph tags / Grouvee sticky shelves.</p>
+      <div class="row"><div class="k">Evidence</div><div class="v">No user-defined tag model on <code>Media</code>/<code>Item</code>; only <em>system</em> <code>MOOD_LABELS</code> exist (<code>app/models.py:284</code>).</div></div>
+      <div class="row"><div class="k">Inspired by</div><div class="v">Goodreads shelves, StoryGraph, Grouvee</div></div>
+      <div class="row"><div class="k">Sketch</div><div class="v"><code>Tag(user, name)</code> + M2M to <code>Media</code>; tag chips on detail; <code>?tag=</code> filter on media list.</div></div>
+      <div class="row"><div class="k">Effort</div><div class="v"><span class="e-m">Medium</span></div></div>
+      <div class="novel"><b>vs IDEAS:</b> IDEAS proposes <em>system</em> "custom mood tags" surfaced beside <code>MOOD_LABELS</code>; this is fully <em>user-authored</em>, free-text, and filterable — a different, more general mechanic.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ D. STREAMING INTEL ============ -->
+<section id="D">
+  <h2><span class="n">D</span> Streaming-availability intelligence <span class="tag">you already store the data</span></h2>
+  <p class="lead">Yamtrack knows your region (<code>watch_provider_region</code>) and which services you pay for (<code>streaming_providers</code>) and uses them for the Watch-Tonight rail — but never proactively alerts you about availability changes.</p>
+
+  <div class="card">
+    <h3><span class="id">D1</span> "Now streaming on your services" &amp; "leaving soon" alerts <span class="pill p-high">High impact</span></h3>
+    <p class="pitch">When a Planning title newly lands on a service you subscribe to — or is about to leave one — push a notification (Apprise/Web Push, both already wired). The single most-loved JustWatch/Reelgood feature, and Yamtrack is <em>one Celery task away</em> from it.</p>
+    <div class="row"><div class="k">Evidence</div><div class="v">Notifications today are release/airing-only (<code>events/notifications.py</code>: <code>send_releases</code>, <code>send_daily_digest</code>). Watch-Tonight reads provider availability live (<code>_available_providers_in_region</code>, <code>app/views.py:367</code>) but nothing is <em>diffed over time</em> or alerted.</div></div>
+    <div class="row"><div class="k">Inspired by</div><div class="v">JustWatch availability/price alerts, Reelgood, Maintainerr "leaving soon"</div></div>
+    <div class="row"><div class="k">Sketch</div><div class="v">Nightly task: for each user's Planning movies/TV, fetch TMDB <code>/watch/providers</code>, store a per-item availability snapshot, diff vs last run → "now on Netflix" / "leaves Max in 5 days". Route through the existing notification + push delivery.</div></div>
+    <div class="row"><div class="k">Effort</div><div class="v"><span class="e-m">Medium</span> — new periodic task + a small snapshot table; all delivery + provider plumbing already exists.</div></div>
+    <div class="novel"><b>Net-new:</b> not in IDEAS; "Where to watch" there was the static detail-page chip, not change alerts.</div>
+  </div>
+
+  <div class="card">
+    <h3><span class="id">D2</span> "Filter to my services" across Browse &amp; lists <span class="pill p-low">Low</span></h3>
+    <p class="pitch">A global toggle to hide anything you can't actually stream right now, applied to Browse and any movie/TV list — extends the Watch-Tonight logic everywhere.</p>
+    <div class="row"><div class="k">Evidence</div><div class="v">Provider filtering exists only inside the Watch-Tonight home rail; Browse (<code>app/views.py:785</code>) and lists have no "only my services" filter.</div></div>
+    <div class="row"><div class="k">Inspired by</div><div class="v">JustWatch "My Services", Letterboxd Pro service filter</div></div>
+    <div class="row"><div class="k">Sketch</div><div class="v">Reuse <code>filter_providers</code> + <code>streaming_providers</code> as an optional querystring/pref applied in Browse and media-list rendering.</div></div>
+    <div class="row"><div class="k">Effort</div><div class="v"><span class="e-s">Small</span></div></div>
+  </div>
+</section>
+
+<!-- ============ E. DISCOVERY ============ -->
+<section id="E">
+  <h2><span class="n">E</span> Discovery surfaces <span class="tag">find the next thing</span></h2>
+  <div class="grid2">
+    <div class="card">
+      <h3><span class="id">E1</span> "Airing this season" anime grid <span class="pill p-med">Medium</span></h3>
+      <p class="pitch">A dedicated seasonal chart of what's airing now / next season (with one-tap add to Planning) — the MAL/AniChart home base for anime fans, which generic Browse doesn't replicate.</p>
+      <div class="row"><div class="k">Evidence</div><div class="v">Browse surfaces trending per provider but has no season-scoped anime view; MAL provider exists (<code>app/providers/mal.py</code>) but no seasonal endpoint is used.</div></div>
+      <div class="row"><div class="k">Inspired by</div><div class="v">MyAnimeList seasonal page, AniChart</div></div>
+      <div class="row"><div class="k">Sketch</div><div class="v">MAL/Jikan <code>season/{year}/{season}</code> → grid with taste % badges (reuse <code>taste.py</code>) and Browse's add/dismiss.</div></div>
+      <div class="row"><div class="k">Effort</div><div class="v"><span class="e-m">Medium</span></div></div>
+    </div>
+
+    <div class="card">
+      <h3><span class="id">E2</span> "Coming up on your watchlist's services" digest <span class="pill p-low">Low</span></h3>
+      <p class="pitch">A weekly discovery email/push pairing D1 availability with taste %, e.g. "3 of your Planning titles arrive on services you have this week." Turns passive watchlists into timely prompts.</p>
+      <div class="row"><div class="k">Evidence</div><div class="v">Daily digest is release-only; no taste/availability-blended discovery digest.</div></div>
+      <div class="row"><div class="k">Inspired by</div><div class="v">GG "For You", Reelgood</div></div>
+      <div class="row"><div class="k">Sketch</div><div class="v">Compose from D1 snapshots + <code>taste.py</code> scores into the existing digest pipeline.</div></div>
+      <div class="row"><div class="k">Effort</div><div class="v"><span class="e-s">Small</span> once D1 exists.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ F. ENGAGEMENT ============ -->
+<section id="F">
+  <h2><span class="n">F</span> Engagement &amp; gamification <span class="tag">keep coming back</span></h2>
+  <div class="grid2">
+    <div class="card">
+      <h3><span class="id">F1</span> Prompt-based challenges <span class="pill p-med">Medium</span></h3>
+      <p class="pitch">Beyond a yearly <em>count</em> goal: themed checklists ("a film pre-1950", "a horror book in October", "a game from a new genre") that auto-tick when a matching item is completed. Sharable templates.</p>
+      <div class="row"><div class="k">Evidence</div><div class="v">No goal/challenge model exists at all (grep confirms). Streaks are computed but there's no target/prompt structure.</div></div>
+      <div class="row"><div class="k">Inspired by</div><div class="v">StoryGraph custom challenges, Goodreads challenge</div></div>
+      <div class="row"><div class="k">Sketch</div><div class="v"><code>Challenge</code> + <code>ChallengePrompt(rule_json)</code>; auto-match completions against decade/genre/length; progress card on home.</div></div>
+      <div class="row"><div class="k">Effort</div><div class="v"><span class="e-m">Medium</span></div></div>
+      <div class="novel"><b>vs IDEAS:</b> IDEAS has a numeric "goal ring"; prompt-based challenges are a richer, separate mechanic.</div>
+    </div>
+
+    <div class="card">
+      <h3><span class="id">F2</span> Weekly "your week in media" recap <span class="pill p-low">Low</span></h3>
+      <p class="pitch">A Monday push/email mini-Wrapped: what you finished, hours/pages, a streak nudge, one "pick this next" suggestion. Re-engagement without a social graph.</p>
+      <div class="row"><div class="k">Evidence</div><div class="v">Only per-release and per-day digests exist (<code>events/notifications.py</code>); no periodic personal recap.</div></div>
+      <div class="row"><div class="k">Inspired by</div><div class="v">Wrapped cadence; Spotify weekly</div></div>
+      <div class="row"><div class="k">Sketch</div><div class="v">New weekly Celery beat task reusing <code>statistics.py</code> + Roulette (B1) for the suggestion; deliver via existing push/Apprise.</div></div>
+      <div class="row"><div class="k">Effort</div><div class="v"><span class="e-s">Small</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ G. CAPTURE ============ -->
+<section id="G">
+  <h2><span class="n">G</span> Capture &amp; input <span class="tag">add things faster</span></h2>
+  <div class="card">
+    <h3><span class="id">G1</span> Barcode / ISBN / UPC scan-to-add <span class="pill p-med">Medium</span></h3>
+    <p class="pitch">Point your phone camera at a book's ISBN, a board-game box UPC, or a vinyl barcode to add it instantly. The PWA already has camera-capable install + a share target; this is the natural mobile capture flow the best book/game apps ship.</p>
+    <div class="row"><div class="k">Evidence</div><div class="v">Adding is search-only (<code>media_search</code>, <code>cmdk_search</code>). The PWA/service worker exist (<code>app/views.py:2846</code>) but there's no camera/scan entry point.</div></div>
+    <div class="row"><div class="k">Inspired by</div><div class="v">StoryGraph &amp; Goodreads barcode scan; Discogs barcode</div></div>
+    <div class="row"><div class="k">Sketch</div><div class="v">A small JS barcode lib (e.g. ZXing/BarcodeDetector) → ISBN→OpenLibrary/Hardcover, UPC→BGG/Discogs lookup → existing track modal. Mobile-only button.</div></div>
+    <div class="row"><div class="k">Effort</div><div class="v"><span class="e-m">Medium</span> — front-end heavy; back-end lookups already exist.</div></div>
+    <div class="novel"><b>Net-new:</b> nothing camera/scan-related in IDEAS.</div>
+  </div>
+</section>
+
+<!-- ============ H. DATA QUALITY ============ -->
+<section id="H">
+  <h2><span class="n">H</span> Data quality &amp; closing the loop <span class="tag">richer, two-way data</span></h2>
+  <div class="grid2">
+    <div class="card">
+      <h3><span class="id">H1</span> Content warnings / age-rating surface &amp; filter <span class="pill p-low">Low</span></h3>
+      <p class="pitch">Show certification/age rating (and, where available, content advisories) on the detail page, and let Browse hide content above a threshold — useful for family/household accounts.</p>
+      <div class="row"><div class="k">Evidence</div><div class="v">Age ratings aren't surfaced or filterable. TMDB content-ratings &amp; OMDB <code>Rated</code> are reachable (<code>providers/tmdb.py</code>, <code>omdb.py</code>) but unused for this.</div></div>
+      <div class="row"><div class="k">Inspired by</div><div class="v">StoryGraph content warnings; TV parental ratings</div></div>
+      <div class="row"><div class="k">Sketch</div><div class="v">Pull certification into metadata; chip on detail; a Browse "max rating" pref.</div></div>
+      <div class="row"><div class="k">Effort</div><div class="v"><span class="e-s">Small</span>–<span class="e-m">Med</span></div></div>
+    </div>
+
+    <div class="card">
+      <h3><span class="id">H2</span> Two-way scrobble-back to Trakt <span class="pill p-med">Medium</span></h3>
+      <p class="pitch">Books already round-trip via Hardcover; movies/TV/anime only flow <em>in</em>. Push your Yamtrack watches/ratings back out to Trakt so the rest of your ecosystem stays in sync.</p>
+      <div class="row"><div class="k">Evidence</div><div class="v">Trakt is import-only (<code>integrations/imports/trakt.py</code>); no outbound sync. Hardcover proves the pattern (<code>integrations/signals.py</code> echo-suppressed push).</div></div>
+      <div class="row"><div class="k">Inspired by</div><div class="v">Trakt scrobbler; Hardcover two-way (already in-house)</div></div>
+      <div class="row"><div class="k">Sketch</div><div class="v">Mirror the Hardcover outbound design: <code>post_save</code> on Movie/Episode → Trakt <code>/sync/history</code>, with <code>last_trakt_sync_at</code> echo suppression.</div></div>
+      <div class="row"><div class="k">Effort</div><div class="v"><span class="e-l">Large</span> (but a well-trodden in-house pattern)</div></div>
+      <div class="novel"><b>vs IDEAS:</b> IDEAS has Letterboxd CSV <em>export</em>; this is live API push-back, distinct.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ UNFINISHED FLOWS ============ -->
+<section id="unfinished">
+  <h2><span class="n">!</span> Unfinished flows already half-built in the code <span class="tag">finish what's started</span></h2>
+  <p class="lead">These aren't competitor-inspired — they're places where the codebase itself shows an explicit "to be continued". Cheap wins that close a visibly open loop.</p>
+
+  <div class="grid2">
+    <div class="card">
+      <h3><span class="id">U1</span> Gate onboarding for new users <span class="pill p-med">Medium-value</span></h3>
+      <p class="pitch">The onboarding wizard exists and is fully built, but new users are never sent to it — the redirect is gated on a <code>User.onboarded</code> flag that was never added.</p>
+      <div class="row"><div class="k">Evidence</div><div class="v"><code>users/views.py:539</code> — comment: "redirecting brand-new users here … gated on a <code>User.onboarded</code> boolean — that gating is deferred until the field lands." The route is reachable only manually today.</div></div>
+      <div class="row"><div class="k">Sketch</div><div class="v">Add <code>User.onboarded</code> (default False) + migration; middleware/adapter redirect on first login; set True on completion.</div></div>
+      <div class="row"><div class="k">Effort</div><div class="v"><span class="e-s">Small</span></div></div>
+    </div>
+
+    <div class="card">
+      <h3><span class="id">U2</span> "Manage dismissed items" page <span class="pill p-low">Low</span></h3>
+      <p class="pitch">Browse "not interested" dismissals are stored (with title captured for exactly this purpose) but there's no way to review or undo them — so a mis-tap hides a title forever.</p>
+      <div class="row"><div class="k">Evidence</div><div class="v"><code>app/models.py:921</code> — <code>DismissedItem.title</code> exists so "a future <em>manage dismissed items</em> page can list them." That page was never built.</div></div>
+      <div class="row"><div class="k">Sketch</div><div class="v"><code>/browse/dismissed</code> listing <code>DismissedItem</code> with an "un-dismiss" action (delete row).</div></div>
+      <div class="row"><div class="k">Effort</div><div class="v"><span class="e-s">Small</span></div></div>
+    </div>
+
+    <div class="card">
+      <h3><span class="id">U3</span> Per-row review for List Import ambiguous matches <span class="pill p-low">Low</span></h3>
+      <p class="pitch">List Import takes the top search hit for each pasted title; ambiguous titles silently grab the wrong item. A "review unsure matches" step (already noted as future polish) would fix import accuracy.</p>
+      <div class="row"><div class="k">Evidence</div><div class="v"><code>IDEAS.md</code> + the List Import view (<code>lists/views.py</code>) take the top hit only; the per-row candidate picker is explicitly deferred.</div></div>
+      <div class="row"><div class="k">Sketch</div><div class="v">When the top-2 search scores are close, stage the row for a confirm UI before batch-add.</div></div>
+      <div class="row"><div class="k">Effort</div><div class="v"><span class="e-s">Small</span></div></div>
+      <div class="novel"><b>Note:</b> listed because it's a concrete unfinished flow; the broad "List Import" item itself is already shipped in IDEAS.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ MATRIX ============ -->
+<section id="matrix">
+  <h2><span class="n">▦</span> Priority matrix <span class="tag">impact vs effort</span></h2>
+  <p class="lead">A suggested ordering. "Quick wins" (high value / low effort) are the obvious first pulls; A1 is a large bet but the keystone that makes A2–A5 and a rewatch-true Wrapped possible.</p>
+  <table class="matrix">
+    <thead><tr><th>Tier</th><th>Items</th><th>Why this order</th></tr></thead>
+    <tbody>
+      <tr><td><b>Quick wins</b><br><span class="chip">do first</span></td>
+        <td><b>B1</b> Roulette · <b>C3</b> Favorites · <b>D2</b> Filter-to-my-services · <b>F2</b> Weekly recap · <b>U1</b> Onboarding gate · <b>U2</b> Manage dismissed · <b>B4</b> HLTB on game page</td>
+        <td>Small, self-contained, high delight; several reuse existing machinery (taste, push, providers). U1/U2 just finish what's started.</td></tr>
+      <tr><td><b>Keystone bet</b><br><span class="chip">enables a lot</span></td>
+        <td><b>A1</b> Diary/relog model → then <b>A2</b> ep ratings · <b>A3</b> spoiler reviews · <b>A4</b> format · <b>A5</b> play log</td>
+        <td>One model unlocks five features and makes Wrapped/stats rewatch-accurate. Build once, harvest repeatedly.</td></tr>
+      <tr><td><b>High-value medium</b></td>
+        <td><b>D1</b> Now-streaming/leaving alerts · <b>C1</b> Smart lists · <b>C2</b> Ranked/tier lists · <b>C4</b> User tags · <b>G1</b> Barcode scan · <b>F1</b> Challenges</td>
+        <td>Clear daily value; medium build. D1 is the standout — you already store the inputs.</td></tr>
+      <tr><td><b>Runtime-gated</b></td>
+        <td><b>B2</b> Time-budget picker · <b>B3</b> Backlog analyzer</td>
+        <td>Both need an <code>Item.runtime</code> backfill first (one shared prerequisite, mirrors the <code>air_date</code> backfill).</td></tr>
+      <tr><td><b>Bigger plays</b></td>
+        <td><b>H2</b> Trakt two-way · <b>E1</b> Seasonal anime · <b>H1</b> Content ratings · <b>E2</b> Availability digest</td>
+        <td>Valuable but either large (H2) or dependent on earlier items (E2 needs D1).</td></tr>
+    </tbody>
+  </table>
+  <div class="legend">
+    <span><span class="dot" style="background:#2f9e54"></span> Small effort</span>
+    <span><span class="dot" style="background:#a9701f"></span> Medium effort</span>
+    <span><span class="dot" style="background:#c0463f"></span> Large effort</span>
+    <span><span class="dot" style="background:#6a59c0"></span> Net-new vs IDEAS.md</span>
+  </div>
+</section>
+
+<!-- ============ METHOD ============ -->
+<section id="method">
+  <h2><span class="n">⚙</span> Methodology &amp; sources</h2>
+  <details class="method" open>
+    <summary>How this analysis was produced</summary>
+    <ul>
+      <li><b>Baseline:</b> reset to latest <code>main</code> (0.25.2~ynh156) per the brief — 86 commits ahead of the prior branch — so the inventory reflects shipped reality, not the docs (which lag badly; CLAUDE.md predates music tracking, OPDS, the reading hub, etc.).</li>
+      <li><b>Codebase inventory:</b> read every <code>urls.py</code>, the <code>User</code> preference model, <code>app/models.py</code> (media types, <code>Media</code>/<code>Item</code>/<code>Episode</code>/<code>Record</code>/<code>Play</code>), the home/statistics/detail views, integrations, events/notifications, and lists — to catalogue exactly what exists.</li>
+      <li><b>Competitor research:</b> surveyed ~30 tools across all of Yamtrack's media categories — Trakt, Letterboxd, Serializd, TV Time, Simkl, JustWatch, Sofa, Reelgood, Goodreads, StoryGraph, Hardcover, BookWyrm, Oku, Backloggd, HowLongToBeat, GG, Grouvee, Playnite, AniList, MyAnimeList, Kitsu, AniChart, BoardGameGeek, Maintainerr, Overseerr/Jellyseerr, Ryot — and extracted their signature, named features.</li>
+      <li><b>Freshness filter:</b> every candidate was cross-checked against (a) the shipped code and (b) the existing <code>IDEAS.md</code> queue/brainstorm/shipped sections. Anything already present or already proposed was dropped or explicitly differentiated (see the purple "vs IDEAS" notes).</li>
+      <li><b>Deliberately excluded</b> as already-covered: bulk-select, duplicate/merge, public list pages, list embeds, friends/following, public read-only API, bookmarklet, soft-delete/trash, health page, swipe gestures, watch-with mode, home composer, per-episode <em>notes</em>, "already tracking" badge, OPDS (shipped), KOReader visibility (shipped), Letterboxd CSV, OL next-in-series, numeric goal ring, "did you finish" nudge, rating-quirks dashboard, per-genre heatmaps.</li>
+    </ul>
+  </details>
+  <p class="lead" style="margin-top:14px">Social/community features from competitors (live activity feeds, federation, buddy reads, clubs, comments, GeekBuddy) were largely set aside: they presuppose a multi-tenant social graph that runs against Yamtrack's self-hosted, single-tenant grain, and IDEAS already tracks a minimal "friends/following" idea. The gaps above are intentionally things that work for a solo self-hoster.</p>
+</section>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    Yamtrack feature-gap analysis · generated 2026-05-30 · basis: <code>main</code> @ 0.25.2~ynh156 · 21 net-new gaps + 3 unfinished flows.
+    File references point at the source tree as read on the analysis branch. None of these are commitments — they're a prioritized menu for you to pick from.
+  </div>
+</footer>
+
+</body>
+</html>
