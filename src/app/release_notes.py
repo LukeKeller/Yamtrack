@@ -7,13 +7,52 @@ modal compares ``request.user.last_seen_version`` against ``CURRENT_FORK_VERSION
 and shows every entry newer than what the user has dismissed.
 
 Bump ``CURRENT_FORK_VERSION`` whenever a new ``Bump fork package`` marker lands
-on ``dev`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
+on ``main`` and prepend a matching entry to ``RELEASE_NOTES`` (newest first).
+This must happen as part of every release — it's what the About page and the
+What's New modal read, so skipping it leaves the app reporting a stale version.
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh150"
+CURRENT_FORK_VERSION = "0.25.2~ynh156"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh156",
+        "date": "2026-05-30",
+        "title": "Version label catch-up",
+        "highlights": [],
+        "fixes": [
+            'The version shown under <span class="font-mono">Settings &rarr; About</span> and in this What\'s New banner had been stuck at <span class="font-mono">ynh150</span> while the package itself moved on through several releases — the version identifier simply wasn\'t being bumped alongside the package. It now tracks the shipped version again, which is why a batch of notes for the in-between releases is showing up at once.',
+        ],
+    },
+    {
+        "version": "0.25.2~ynh155",
+        "date": "2026-05-30",
+        "title": "Pages no longer hang when a metadata provider is slow",
+        "highlights": [],
+        "fixes": [
+            "The timeout on outbound metadata-provider requests (OpenLibrary, TMDB, etc.) was 120 seconds. On a page that fetches its provider live — most notably a book's detail page — a slow or unresponsive provider could tie up one of the server's handful of web workers for two full minutes, and a couple of those at once made the whole site appear to hang before eventually recovering. The timeout is now 20 seconds, so a stalled provider fails fast and shows the friendly error page instead of wedging the site.",
+        ],
+    },
+    {
+        "version": "0.25.2~ynh153",
+        "date": "2026-05-30",
+        "title": "More book covers on the list and detail pages",
+        "highlights": [
+            'Books matched to OpenLibrary often showed no cover, because OpenLibrary\'s edition record frequently carries no cover image even when the book clearly has one. Yamtrack now falls back to the book\'s <em>work</em>-level cover, and then to OpenLibrary\'s cover-by-ISBN endpoint, so a lot more books get art. Book detail pages pick this up immediately; books already in your library are refilled by a one-time <span class="font-mono">backfill_book_covers</span> admin command (covers that OpenLibrary genuinely doesn\'t have stay blank).',
+        ],
+        "fixes": [],
+    },
+    {
+        "version": "0.25.2~ynh152",
+        "date": "2026-05-29",
+        "title": "Books: a details page for every upload + provider-search matching",
+        "highlights": [
+            "Every ebook you upload to the library now has its own details page, whether or not it's been matched — it always shows the title, author, cover and reading history pulled from the file, and enriches with the synopsis, page count and your tracking state once it's matched to a metadata provider.",
+            'Matching an uploaded book (and clearing the unmatched inbox) is now a <strong>Hardcover / OpenLibrary search</strong> rather than a dropdown of books you already track: type a title, pick the right result, and the file resolves to that provider work. "Matched" now means "resolved to a metadata provider" consistently across the library grid, the unmatched inbox, and the reading hub counts.',
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh150",
         "date": "2026-05-29",
