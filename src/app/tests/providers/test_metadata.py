@@ -714,3 +714,58 @@ class Metadata(TestCase):
             hardcover.handle_error(error)
 
         self.assertEqual(cm.exception.provider, Sources.HARDCOVER.value)
+
+
+class OpenLibraryCover(TestCase):
+    """Cover resolution for OpenLibrary book metadata (no network)."""
+
+    def test_cover_id_from_covers_array(self):
+        """A real cover id resolves to the id-based cover URL."""
+        self.assertEqual(
+            openlibrary.get_cover_image_url({"covers": [12345]}),
+            "https://covers.openlibrary.org/b/id/12345-L.jpg",
+        )
+
+    def test_sentinel_minus_one_is_not_a_cover(self):
+        """OpenLibrary's -1 ('no cover') sentinel falls back to placeholder."""
+        self.assertEqual(
+            openlibrary.get_cover_image_url({"covers": [-1]}),
+            settings.IMG_NONE,
+        )
+
+    def test_resolve_prefers_edition_cover(self):
+        """The edition's own cover wins over the work's."""
+        self.assertEqual(
+            openlibrary._resolve_book_cover(
+                {"covers": [111]},
+                {"covers": [222]},
+            ),
+            "https://covers.openlibrary.org/b/id/111-L.jpg",
+        )
+
+    def test_resolve_falls_back_to_work_cover(self):
+        """A coverless edition borrows the work's cover."""
+        self.assertEqual(
+            openlibrary._resolve_book_cover(
+                {"covers": [-1]},
+                {"covers": [222]},
+            ),
+            "https://covers.openlibrary.org/b/id/222-L.jpg",
+        )
+
+    def test_resolve_falls_back_to_isbn(self):
+        """With no cover id anywhere, fall back to the ISBN cover endpoint."""
+        self.assertEqual(
+            openlibrary._resolve_book_cover(
+                {"isbn_13": ["9780441172719"]},
+                {},
+            ),
+            "https://covers.openlibrary.org/b/isbn/9780441172719-L.jpg",
+        )
+
+    def test_resolve_uses_placeholder_when_nothing(self):
+        """No cover and no ISBN yields the shared placeholder."""
+        self.assertEqual(
+            openlibrary._resolve_book_cover({}, {}),
+            settings.IMG_NONE,
+        )

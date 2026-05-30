@@ -175,7 +175,7 @@ async def async_book(media_id):
             "media_type": MediaTypes.BOOK.value,
             "title": response_book["title"],
             "max_progress": response_book.get("number_of_pages"),
-            "image": get_cover_image_url(response_book),
+            "image": _resolve_book_cover(response_book, response_work),
             "synopsis": get_description(response_book, response_work),
             "genres": get_subjects(response_work),
             "score": score,
@@ -200,10 +200,55 @@ async def async_book(media_id):
 
 def get_cover_image_url(response):
     """Get the cover image URL from a work response."""
-    covers = response.get("covers", [])
-    if covers:
-        return f"https://covers.openlibrary.org/b/id/{covers[0]}-L.jpg"
+    cover_id = _first_valid_cover_id(response.get("covers"))
+    if cover_id:
+        return f"https://covers.openlibrary.org/b/id/{cover_id}-L.jpg"
     return settings.IMG_NONE
+
+
+def _first_valid_cover_id(covers):
+    """First usable cover id in an OpenLibrary ``covers`` list, or None.
+
+    OpenLibrary stores a sentinel ``-1`` (and occasionally ``None``) in the
+    ``covers`` array to mean "we know there is no cover" — treating those
+    as real ids yields a broken ``/b/id/-1-L.jpg`` image, so skip them.
+    """
+    for cover_id in covers or []:
+        if isinstance(cover_id, int) and cover_id > 0:
+            return cover_id
+    return None
+
+
+def _isbn_cover_url(response_book):
+    """Cover-by-ISBN URL for an edition, or "" when it has no ISBN.
+
+    OpenLibrary serves ``/b/isbn/<isbn>-L.jpg`` even for editions whose
+    JSON record carries no ``covers`` id, so this catches a large slice of
+    the "edition has no cover_id but a cover clearly exists" cases.
+    """
+    for key in ("isbn_13", "isbn_10"):
+        values = response_book.get(key) or []
+        if values:
+            return f"https://covers.openlibrary.org/b/isbn/{values[0]}-L.jpg"
+    return ""
+
+
+def _resolve_book_cover(response_book, response_work):
+    """Best-effort cover URL for a book detail lookup.
+
+    Edition records frequently omit ``covers`` even when the work has one
+    or a cover is reachable by ISBN, which left a lot of books imageless
+    on the list/detail pages. Prefer the reliable id-based covers (edition
+    first, then work), then fall back to the ISBN cover endpoint, then the
+    shared placeholder.
+    """
+    edition_cover = _first_valid_cover_id(response_book.get("covers"))
+    if edition_cover:
+        return f"https://covers.openlibrary.org/b/id/{edition_cover}-L.jpg"
+    work_cover = _first_valid_cover_id(response_work.get("covers"))
+    if work_cover:
+        return f"https://covers.openlibrary.org/b/id/{work_cover}-L.jpg"
+    return _isbn_cover_url(response_book) or settings.IMG_NONE
 
 
 def get_description(response_book, response_work):
