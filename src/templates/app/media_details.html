@@ -426,7 +426,7 @@
               <div class="flex items-center justify-center">
                 {% include "app/icons/star.svg" with classes="w-5 h-5 mr-1.5 text-warning fill-warning" %}
                 {% if media.score is not None %}
-                  <span class="text-lg font-bold text-white">{{ media.score }}</span><span class="text-fg-muted ml-0.5 text-sm">/10</span>
+                  <span class="text-lg font-bold text-fg">{{ media.score }}</span><span class="text-fg-muted ml-0.5 text-sm">/10</span>
                 {% else %}
                   <span class="text-lg font-bold text-fg-muted">-</span>
                 {% endif %}
@@ -442,7 +442,7 @@
               <h3 class="text-xs font-semibold text-fg-muted mb-1 text-center">IMDB</h3>
               <div class="flex items-center justify-center">
                 {% include "app/icons/star.svg" with classes="w-5 h-5 mr-1.5 text-warning fill-warning" %}
-                <span class="text-lg font-bold text-white">{{ media.details.imdb_rating }}</span>
+                <span class="text-lg font-bold text-fg">{{ media.details.imdb_rating }}</span>
               </div>
             </div>
           {% endif %}
@@ -731,19 +731,31 @@
         <div class="bg-surface-1 rounded-lg p-4 text-center">
           <p class="text-xs text-fg-muted">Rushed</p>
           <p class="text-2xl font-bold mt-1">
-            {% if time_to_beat.hastily %}{{ time_to_beat.hastily|floatformat:"-1" }}h{% else %}—{% endif %}
+            {% if time_to_beat.hastily %}
+              {{ time_to_beat.hastily|floatformat:"-1" }}h
+            {% else %}
+              —
+            {% endif %}
           </p>
         </div>
         <div class="bg-surface-1 rounded-lg p-4 text-center">
           <p class="text-xs text-fg-muted">Main story</p>
           <p class="text-2xl font-bold mt-1 text-accent">
-            {% if time_to_beat.normally %}{{ time_to_beat.normally|floatformat:"-1" }}h{% else %}—{% endif %}
+            {% if time_to_beat.normally %}
+              {{ time_to_beat.normally|floatformat:"-1" }}h
+            {% else %}
+              —
+            {% endif %}
           </p>
         </div>
         <div class="bg-surface-1 rounded-lg p-4 text-center">
           <p class="text-xs text-fg-muted">Completionist</p>
           <p class="text-2xl font-bold mt-1">
-            {% if time_to_beat.completely %}{{ time_to_beat.completely|floatformat:"-1" }}h{% else %}—{% endif %}
+            {% if time_to_beat.completely %}
+              {{ time_to_beat.completely|floatformat:"-1" }}h
+            {% else %}
+              —
+            {% endif %}
           </p>
         </div>
       </div>
@@ -977,7 +989,8 @@
           recent forward pace to the remaining percentage.
         {% endcomment %}
         <div class="card px-4 py-3 mb-6 flex items-center gap-3"
-             style="border-color: var(--color-border-subtle); background: var(--color-accent-soft)">
+             style="border-color: var(--color-border-subtle);
+                    background: var(--color-accent-soft)">
           <span class="w-9 h-9 rounded-md bg-accent text-white flex items-center justify-center shrink-0">
             {% include "app/icons/clock.svg" with classes="w-5 h-5" %}
           </span>
@@ -992,7 +1005,8 @@
             <span class="font-medium">{{ koreader_summary.projection.projected_finish|date:"M j, Y" }}</span>
             {% if koreader_summary.projection.days_left %}
               <span class="text-fg-muted">(~{{ koreader_summary.projection.days_left }} day{{ koreader_summary.projection.days_left|pluralize }})</span>
-            {% endif %}.
+            {% endif %}
+            .
           </div>
         </div>
       {% endif %}
@@ -1379,7 +1393,7 @@
                 <div class="p-2.5 bg-accent-strong text-white rounded-full mb-3">
                   {% include "app/icons/external-link.svg" with classes="w-6 h-6" %}
                 </div>
-                <span class="text-sm font-semibold text-white">View all</span>
+                <span class="text-sm font-semibold text-fg">View all</span>
                 <span class="text-xs text-fg-muted mt-1">{{ media.total_cast_count }} cast members</span>
               </a>
             {% endif %}

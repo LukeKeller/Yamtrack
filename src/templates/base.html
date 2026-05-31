@@ -5,10 +5,57 @@
 <html lang="en"
       class="scheme-dark bg-canvas"
       data-theme="{% if request.user.is_authenticated %}{{ request.user.theme|default:'default' }}{% else %}default{% endif %}"
+      data-account-theme="{% if request.user.is_authenticated %}{{ request.user.theme|default:'default' }}{% else %}default{% endif %}"
       data-density="{% if request.user.is_authenticated %}{{ request.user.density|default:'comfortable' }}{% else %}comfortable{% endif %}"
       data-font="{% if request.user.is_authenticated %}{{ request.user.font|default:'system' }}{% else %}system{% endif %}"
-      data-eink="{% if request.user.is_authenticated %}{{ request.user.eink_mode|default:'auto' }}{% else %}auto{% endif %}">
+      data-eink="{% if request.user.is_authenticated %}{{ request.user.eink_mode|default:'auto' }}{% else %}auto{% endif %}"
+      data-account-eink="{% if request.user.is_authenticated %}{{ request.user.eink_mode|default:'auto' }}{% else %}auto{% endif %}">
   <head>
+    {% comment %}
+      Per-device appearance overrides (theme + e-ink). One account can look
+      different on each device — e.g. a high-contrast e-ink theme on a Boox
+      e-reader while a phone stays on Dracula. The override lives in this
+      browser's localStorage and wins over the account default carried in
+      data-account-* on <html>. Inline and first in <head> so it runs before
+      first paint (no flash of the account theme). yamtrackAppearance is also
+      the small API the header e-ink toggle and the "This device" panel in
+      Preferences talk to.
+    {% endcomment %}
+    <script>
+      window.yamtrackAppearance = {
+        keys: { theme: "yamtrack:device-theme", eink: "yamtrack:device-eink" },
+        get: function (axis) {
+          try {
+            return localStorage.getItem(this.keys[axis]) || "";
+          } catch (e) {
+            return "";
+          }
+        },
+        set: function (axis, value) {
+          try {
+            if (value) {
+              localStorage.setItem(this.keys[axis], value);
+            } else {
+              localStorage.removeItem(this.keys[axis]);
+            }
+          } catch (e) {
+            /* private mode / storage disabled — just skip persistence */
+          }
+          this.apply(axis);
+        },
+        apply: function (axis) {
+          var root = document.documentElement;
+          var override = this.get(axis);
+          var fallback = root.getAttribute("data-account-" + axis) || "";
+          root.setAttribute("data-" + axis, override || fallback);
+        },
+        applyAll: function () {
+          this.apply("theme");
+          this.apply("eink");
+        },
+      };
+      window.yamtrackAppearance.applyAll();
+    </script>
     {# Required meta tags #}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -62,7 +109,8 @@
           crossorigin="use-credentials">
     <link rel="mask-icon"
           href="{% static "favicon/safari-pinned-tab.svg" color="#181a1b" %}">
-    <link rel="shortcut icon" href="{% static "favicon/favicon.ico" %}{% get_static_file_mtime 'favicon/favicon.ico' %}">
+    <link rel="shortcut icon"
+          href="{% static "favicon/favicon.ico" %}{% get_static_file_mtime 'favicon/favicon.ico' %}">
     <meta name="msapplication-TileColor" content="#181a1b">
     <meta name="msapplication-config"
           content="{% static "favicon/browserconfig.xml" %}">
@@ -292,12 +340,14 @@
                 {% include "app/icons/download.svg" with classes="w-4 h-4" %}
               </button>
               {% comment %}
-                Quick e-ink toggle. Mirrors [data-eink] on <html> live via
-                Alpine so the page flips instantly, and persists the choice
-                with an HTMX POST (the {% csrf_token %} hidden input is
-                serialized automatically on the form submit). "Auto" only
-                takes visible effect on e-ink hardware — see themes.css.
-                Full theme/font/density controls live in Preferences.
+                Quick e-ink toggle — this device only. Writes the device
+                override through window.yamtrackAppearance (localStorage), so
+                flipping e-ink on an e-reader doesn't change how the same
+                account looks on a phone. The page updates instantly and the
+                choice survives reloads on this device. The account-wide
+                default (and the per-device theme override) live in
+                Preferences. "Auto" only takes visible effect on e-ink
+                hardware — see themes.css.
               {% endcomment %}
               {% if request.user.is_authenticated %}
                 <div class="relative"
@@ -308,20 +358,19 @@
                           @click="open = !open"
                           :aria-expanded="open"
                           aria-haspopup="true"
-                          title="E-ink mode">{% include "app/icons/contrast.svg" with classes="w-4 h-4" %}</button>
+                          title="E-ink mode (this device)">
+                    {% include "app/icons/contrast.svg" with classes="w-4 h-4" %}
+                  </button>
                   <div x-show="open"
                        x-cloak
                        x-transition
                        @click.outside="open = false"
                        class="absolute right-0 mt-2 w-52 z-50 rounded-lg border border-border-default bg-surface-1 shadow-[var(--shadow-elev-2)] p-2"
                        role="menu">
-                    <p class="px-2 pt-1 pb-2 text-[11px] font-medium uppercase tracking-wide text-fg-faint">E-ink mode</p>
-                    <form hx-post="{% url 'set_eink_mode' %}"
-                          hx-trigger="change"
-                          hx-swap="none"
-                          x-data="{ eink: document.documentElement.dataset.eink || 'auto' }"
-                          x-init="$watch('eink', v => document.documentElement.dataset.eink = v)">
-                      {% csrf_token %}
+                    <p class="px-2 pt-1 pb-0.5 text-[11px] font-medium uppercase tracking-wide text-fg-faint">E-ink mode</p>
+                    <p class="px-2 pb-2 text-[11px] text-fg-faint">This device only</p>
+                    <div x-data="{ eink: window.yamtrackAppearance.get('eink') || document.documentElement.dataset.eink || 'auto' }"
+                         x-init="$watch('eink', v => window.yamtrackAppearance.set('eink', v))">
                       {% for value, label in eink_choices %}
                         <label class="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer text-sm transition-colors hover:bg-surface-2"
                                :class="eink === '{{ value }}' ? 'text-fg' : 'text-fg-muted'">
@@ -333,7 +382,7 @@
                           <span>{{ label }}</span>
                         </label>
                       {% endfor %}
-                    </form>
+                    </div>
                     <a href="{% url 'preferences' %}"
                        class="block mt-1 px-2 py-1.5 rounded-md text-sm text-fg-muted hover:bg-surface-2 hover:text-fg transition-colors">
                       More appearance settings…
