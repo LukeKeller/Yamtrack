@@ -12,12 +12,12 @@
     {# Required meta tags #}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="keywords" content="Yamtrack, Media Tracker">
-    <meta name="description" content="Search and track media on Yamtrack.">
+    <meta name="keywords" content="Stackwise, Media Tracker">
+    <meta name="description" content="Search and track media on Stackwise.">
 
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="mobile-web-app-title" content="Yamtrack">
+    <meta name="mobile-web-app-title" content="Stackwise">
 
     {% comment %}
       Opt every HTMX swap into the View Transitions API. Browsers without
@@ -28,7 +28,7 @@
 
     <title>
       {% block title %}
-        Yamtrack
+        Stackwise
       {% endblock title %}
     </title>
 
@@ -108,9 +108,9 @@
           <div class="h-14 border-b border-border-default flex items-center gap-2 px-4">
             <a href="{% url 'home' %}"
                class="flex items-center gap-2"
-               :aria-label="sidebarCollapsed ? 'Yamtrack — home' : ''">
-              <div class="w-8 h-8 rounded-md bg-accent flex items-center justify-center text-white font-bold shrink-0">Y</div>
-              <span class="font-semibold text-fg sidebar-label">Yamtrack</span>
+               :aria-label="sidebarCollapsed ? 'Stackwise — home' : ''">
+              <div class="w-8 h-8 rounded-md bg-accent flex items-center justify-center text-white font-bold shrink-0">S</div>
+              <span class="font-semibold text-fg sidebar-label">Stackwise</span>
             </a>
           </div>
 
@@ -277,7 +277,7 @@
                 {% include "app/icons/magnifying-glass.svg" with classes="w-4 h-4" %}
               </button>
               {% comment %}
-                Install Yamtrack — hidden until the browser fires
+                Install Stackwise — hidden until the browser fires
                 `beforeinstallprompt`. The handler in the SW-registration
                 script below toggles `data-install-available` on <html> and
                 this rule reveals the button via the `[data-install-available]`
@@ -287,8 +287,8 @@
                       id="yt-install-app"
                       class="btn btn-icon btn-ghost yt-install-trigger"
                       hidden
-                      title="Install Yamtrack as an app"
-                      aria-label="Install Yamtrack as an app">
+                      title="Install Stackwise as an app"
+                      aria-label="Install Stackwise as an app">
                 {% include "app/icons/download.svg" with classes="w-4 h-4" %}
               </button>
               {% comment %}
@@ -478,7 +478,7 @@
           toast.className = 'fixed right-4 z-50 bg-surface-0 border border-border-default rounded-md shadow-lg p-3 flex items-center gap-3 max-w-sm';
           toast.style.bottom = 'calc(env(safe-area-inset-bottom) + 5rem)';
           toast.innerHTML = ''
-            + '<div class="text-sm text-fg flex-1">A new version of Yamtrack is available.</div>'
+            + '<div class="text-sm text-fg flex-1">A new version of Stackwise is available.</div>'
             + '<button type="button" id="yt-sw-update-reload" class="px-3 py-1.5 text-sm rounded-md bg-accent text-white hover:opacity-90">Reload</button>'
             + '<button type="button" id="yt-sw-update-dismiss" aria-label="Dismiss" class="px-2 text-fg-muted hover:text-fg">&times;</button>';
           document.body.appendChild(toast);

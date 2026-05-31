@@ -1,0 +1,9 @@
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Stackwise — monochrome silhouette for Safari pinned tabs (color set via mask-icon) -->
+  <path d="M104 330 L256 402 L408 330 L408 360 L256 432 L104 360 Z"/>
+  <path d="M256 296 L408 368 L256 440 L104 368 Z"/>
+  <path d="M104 248 L256 320 L408 248 L408 278 L256 350 L104 278 Z"/>
+  <path d="M256 214 L408 286 L256 358 L104 286 Z"/>
+  <path d="M104 166 L256 238 L408 166 L408 196 L256 268 L104 196 Z"/>
+  <path d="M256 132 L408 204 L256 276 L104 204 Z"/>
+</svg>

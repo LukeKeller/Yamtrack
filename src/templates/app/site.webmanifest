@@ -1,7 +1,7 @@
 {% load static %}{% spaceless %}
 {
-  "name": "Yamtrack - Media Tracker",
-  "short_name": "Yamtrack",
+  "name": "Stackwise - Media Tracker",
+  "short_name": "Stackwise",
   "description": "Track your movies, TV shows, anime, manga, games and books",
   "start_url": "{% url 'home' %}",
   "id": "{% url 'home' %}",
