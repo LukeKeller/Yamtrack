@@ -12,10 +12,19 @@ This must happen as part of every release — it's what the About page and the
 What's New modal read, so skipping it leaves the app reporting a stale version.
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh158"
+CURRENT_FORK_VERSION = "0.25.2~ynh159"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh159",
+        "date": "2026-05-31",
+        "title": "App icon refresh reaches installed devices",
+        "highlights": [],
+        "fixes": [
+            "After the Stackwise rebrand, the home-screen/PWA icon and name could keep showing the old Yamtrack mark because browsers cache the installed app icon aggressively. The favicon and web-app-manifest icon URLs are now versioned, so browsers re-fetch the new stacked-layers icon and refresh the installed app identity. If your phone still shows the old icon, remove the home-screen app and add it again to force an immediate refresh.",
+        ],
+    },
     {
         "version": "0.25.2~ynh158",
         "date": "2026-05-31",

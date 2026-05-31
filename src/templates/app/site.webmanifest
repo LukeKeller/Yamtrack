@@ -1,4 +1,4 @@
-{% load static %}{% spaceless %}
+{% load static %}{% load app_tags %}{% spaceless %}
 {
   "name": "Stackwise - Media Tracker",
   "short_name": "Stackwise",
@@ -12,10 +12,10 @@
   "orientation": "portrait-primary",
   "scope": "{% url 'home' %}",
   "icons": [
-    { "src": "{% static 'favicon/android-chrome-192x192.png' %}", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "{% static 'favicon/android-chrome-512x512.png' %}", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "{% static 'favicon/android-chrome-192x192-maskable.png' %}", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
-    { "src": "{% static 'favicon/android-chrome-512x512-maskable.png' %}", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "{% static 'favicon/android-chrome-192x192.png' %}{% get_static_file_mtime 'favicon/android-chrome-192x192.png' %}", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "{% static 'favicon/android-chrome-512x512.png' %}{% get_static_file_mtime 'favicon/android-chrome-512x512.png' %}", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "{% static 'favicon/android-chrome-192x192-maskable.png' %}{% get_static_file_mtime 'favicon/android-chrome-192x192-maskable.png' %}", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "{% static 'favicon/android-chrome-512x512-maskable.png' %}{% get_static_file_mtime 'favicon/android-chrome-512x512-maskable.png' %}", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "screenshots": [
     { "src": "https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/homepage.png?v2", "sizes": "2305x1350", "type": "image/png", "label": "Home screen showing main navigation and featured content" },
