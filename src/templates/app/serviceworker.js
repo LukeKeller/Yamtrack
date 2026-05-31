@@ -18,7 +18,7 @@
 // waiting worker, shows a toast, and posts {type: 'SKIP_WAITING'} when
 // the user accepts the update.
 
-const VERSION = 'v6';
+const VERSION = 'v7';
 const CACHE_SHELL = 'yamtrack-shell-' + VERSION;
 const CACHE_PAGES = 'yamtrack-pages-' + VERSION;
 const CACHE_STATIC = 'yamtrack-static-' + VERSION;
@@ -210,9 +210,9 @@ self.addEventListener('push', (event) => {
   let data = {};
   if (event.data) {
     try { data = event.data.json(); }
-    catch (_) { data = { title: 'Yamtrack', body: event.data.text() }; }
+    catch (_) { data = { title: 'Stackwise', body: event.data.text() }; }
   }
-  const title = data.title || 'Yamtrack';
+  const title = data.title || 'Stackwise';
   const opts = {
     body: data.body || '',
     icon: data.icon || "{% static 'favicon/android-chrome-192x192.png' %}",

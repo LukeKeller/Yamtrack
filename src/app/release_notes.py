@@ -12,10 +12,20 @@ This must happen as part of every release — it's what the About page and the
 What's New modal read, so skipping it leaves the app reporting a stale version.
 """
 
-CURRENT_FORK_VERSION = "0.25.2~ynh157"
+CURRENT_FORK_VERSION = "0.25.2~ynh158"
 
 
 RELEASE_NOTES = [
+    {
+        "version": "0.25.2~ynh158",
+        "date": "2026-05-31",
+        "title": "New name and look: say hello to Stackwise",
+        "highlights": [
+            'This fork now goes by <strong>Stackwise</strong>. The name, the browser tab titles, the sidebar, the install prompt and the app icon have all been updated — same app, same data, just its own identity distinct from upstream Yamtrack.',
+            "A new <strong>stacked-layers app icon</strong> in indigo with a warm amber top layer replaces the old mark across the favicon, home-screen and installed-app icons.",
+        ],
+        "fixes": [],
+    },
     {
         "version": "0.25.2~ynh157",
         "date": "2026-05-30",

@@ -3,7 +3,7 @@
 {% load app_tags %}
 
 {% block title %}
-  Integrations - Yamtrack
+  Integrations - Stackwise
 {% endblock title %}
 
 {% block settings_content %}
@@ -84,7 +84,7 @@
       </div>
       <p class="text-fg-muted mb-4 text-sm">
         The most recent inbound webhook hits from your media servers. Use this
-        to confirm a server is reaching Yamtrack and to surface payloads when
+        to confirm a server is reaching Stackwise and to surface payloads when
         processing fails.
       </p>
       {% if recent_webhook_events %}
@@ -158,7 +158,7 @@
             Restart your server, then configure the plugin:
             <ul class="list-disc list-inside ml-6 mt-2 space-y-1 text-fg-muted">
               <li>Click on the "Add Generic Destination" button to create a new webhook.</li>
-              <li>Name: Yamtrack</li>
+              <li>Name: Stackwise</li>
               {# djlint:off #}
                 <li>
                   <div class="inline-flex items-center gap-2 w-[calc(100%-30px)]">URL:
@@ -327,7 +327,7 @@
     rel="noopener noreferrer"
     class="text-accent hover:underline">Suwayomi-Server</a>
           so manga detail pages get a "Read on Suwayomi" button that jumps to a global search for the title.
-          Suwayomi already syncs progress to AniList/MAL/MangaUpdates, which Yamtrack can import.
+          Suwayomi already syncs progress to AniList/MAL/MangaUpdates, which Stackwise can import.
         </p>
         <div class="bg-surface-1 p-3 rounded-md">
           <form method="post"
@@ -406,7 +406,7 @@
     target="_blank"
     rel="noopener noreferrer"
     class="text-accent hover:underline">multi-scrobbler</a>
-          (or any client speaking the ListenBrainz <code class="text-xs">submit-listens</code> protocol) into Yamtrack. Each listen becomes a Play row,
+          (or any client speaking the ListenBrainz <code class="text-xs">submit-listens</code> protocol) into Stackwise. Each listen becomes a Play row,
           matched to a tracked record by <code class="text-xs">(artist, title)</code>; unmatched listens are still saved and shown on the
           <a href="{% url 'music_history' %}"
              class="text-accent hover:underline">Music</a> page.
@@ -450,10 +450,10 @@
           <div class="relative mt-3">
             <textarea readonly id="lb-ms-snippet" rows="9" class="w-full bg-surface-2 rounded-md text-fg text-sm border-0 focus:ring-0 outline-none font-mono p-3 resize-none overflow-auto">{
   "type": "listenbrainz",
-  "name": "yamtrack",
+  "name": "stackwise",
   "data": {
     "url": "{{ lb_base_url }}",
-    "token": "PASTE_YOUR_YAMTRACK_API_TOKEN_HERE"
+    "token": "PASTE_YOUR_STACKWISE_API_TOKEN_HERE"
   }
 }</textarea>
             <span class="absolute top-3 right-3 flex items-center cursor-pointer group"
@@ -483,7 +483,7 @@
       {% if hardcover_integration %}
         <p class="text-fg-muted mb-4 text-sm">
           Connected as <span class="font-mono text-fg">@{{ hardcover_integration.hardcover_username }}</span>.
-          Book progress, status, score, and reading dates push to Hardcover automatically when you save a change in Yamtrack.
+          Book progress, status, score, and reading dates push to Hardcover automatically when you save a change in Stackwise.
         </p>
         {% if hardcover_integration.last_error %}
           <div class="bg-surface-1 border border-warning/40 rounded-md p-3 mb-4 text-sm text-warning">
@@ -564,7 +564,7 @@
            class="text-xs text-accent hover:text-accent transition-colors whitespace-nowrap">Synced books →</a>
       </div>
       <p class="text-fg-muted mb-4 text-sm">
-        Configure KOReader's <span class="font-mono text-xs">Progress sync</span> plugin to push reading progress into Yamtrack. Synced books, reading cadence, devices, and unmatched documents live on the Reading page.
+        Configure KOReader's <span class="font-mono text-xs">Progress sync</span> plugin to push reading progress into Stackwise. Synced books, reading cadence, devices, and unmatched documents live on the Reading page.
       </p>
       <div class="bg-surface-1 p-3 rounded-md mb-4 space-y-3">
         <div>
