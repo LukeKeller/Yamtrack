@@ -178,6 +178,24 @@ class SidebarViewTests(TestCase):
         self.assertIn("one-dark", theme_values)
         self.assertIn("kanagawa", theme_values)
 
+    def test_base_renders_per_device_appearance_hooks(self):
+        """Base layout carries account defaults + the device-override script."""
+        response = self.client.get(reverse("preferences"))
+        content = response.content.decode()
+        # Account defaults are mirrored so the client script can fall back to
+        # them when this device has no local override.
+        self.assertIn("data-account-theme=", content)
+        self.assertIn("data-account-eink=", content)
+        # The localStorage-backed override API runs inline before first paint.
+        self.assertIn("window.yamtrackAppearance", content)
+
+    def test_preferences_renders_device_override_panel(self):
+        """Preferences exposes the per-device theme + e-ink override controls."""
+        response = self.client.get(reverse("preferences"))
+        content = response.content.decode()
+        self.assertIn("This device", content)
+        self.assertIn("Use account default", content)
+
     def test_preferences_post_persists_eink_mode(self):
         """E-ink mode saves through the preferences form."""
         response = self.client.post(

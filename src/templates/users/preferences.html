@@ -234,20 +234,72 @@
       </div>
 
       {% comment %}
-        Theme picker. Alpine mirrors the [data-theme] attribute on <html>
-        live so clicking a swatch (a) shows the selected-ring instantly and
-        (b) previews the palette across the whole page before saving. Same
-        pattern as the density picker below.
+        Per-device override. Theme + e-ink can be pinned to just this browser
+        (e-reader, work laptop, shared device) without touching the account
+        default below. Stored in localStorage via window.yamtrackAppearance;
+        "Use account default" clears the override. Applies instantly and
+        locally — no Save needed (the account pickers below still need Save).
+      {% endcomment %}
+      <div class="mb-5"
+           x-data="{ deviceTheme: window.yamtrackAppearance.get('theme'), deviceEink: window.yamtrackAppearance.get('eink') }"
+           x-init="$watch('deviceTheme', v => window.yamtrackAppearance.set('theme', v)); $watch('deviceEink', v => window.yamtrackAppearance.set('eink', v))">
+        <div class="p-3 bg-surface-2 rounded-md">
+          <div class="flex items-center text-fg mb-1">
+            {% include "app/icons/horizontal-sliders.svg" with classes="w-5 h-5 mr-2" %}
+            <span class="text-sm font-medium">This device</span>
+          </div>
+          <p class="text-xs text-fg-muted ml-7 mb-3">
+            Override the theme and e-ink mode on just this device. Saved in this
+            browser only — your account default (below) stays the same, and your
+            other devices keep following it. Applies instantly; no need to Save.
+          </p>
+          <div class="ml-7 grid gap-3 sm:grid-cols-2">
+            <label class="block">
+              <span class="text-xs font-medium text-fg-muted block mb-1">Device theme</span>
+              <select x-model="deviceTheme"
+                      class="w-full p-2 bg-surface-1 rounded-md text-fg text-sm border border-strong focus:outline-none focus:ring-2 focus:ring-accent">
+                <option value="">Use account default</option>
+                {% for choice in theme_choices %}<option value="{{ choice.0 }}">{{ choice.1 }}</option>{% endfor %}
+              </select>
+            </label>
+            <label class="block">
+              <span class="text-xs font-medium text-fg-muted block mb-1">Device e-ink mode</span>
+              <select x-model="deviceEink"
+                      class="w-full p-2 bg-surface-1 rounded-md text-fg text-sm border border-strong focus:outline-none focus:ring-2 focus:ring-accent">
+                <option value="">Use account default</option>
+                {% for choice in eink_choices %}<option value="{{ choice.0 }}">{{ choice.1 }}</option>{% endfor %}
+              </select>
+            </label>
+          </div>
+          <button type="button"
+                  x-show="deviceTheme || deviceEink"
+                  x-cloak
+                  @click="deviceTheme = ''; deviceEink = ''"
+                  class="ml-7 mt-3 text-xs font-medium text-accent hover:underline cursor-pointer">
+            Reset this device to account default
+          </button>
+        </div>
+      </div>
+
+      {% comment %}
+        Account theme picker (default across all devices). Alpine mirrors the
+        account default into data-account-theme and re-applies via
+        yamtrackAppearance, so the live preview shows here unless this device
+        has a theme override pinned above (in which case the override keeps
+        winning). Click Save to persist the account default. Same pattern as
+        the density picker below.
       {% endcomment %}
       <div class="mb-5"
            x-data="{ theme: '{{ user.theme|default:'default' }}' }"
-           x-init="$watch('theme', v => document.documentElement.dataset.theme = v)">
+           x-init="$watch('theme', v => { document.documentElement.dataset.accountTheme = v; window.yamtrackAppearance.apply('theme'); })">
         <div class="p-3 bg-surface-2 rounded-md">
           <div class="flex items-center text-fg mb-1">
             {% include "app/icons/star.svg" with classes="w-5 h-5 mr-2" %}
             <span class="text-sm font-medium">Theme</span>
           </div>
-          <p class="text-xs text-fg-muted ml-7 mb-3">Color theme for the web UI. Previews live; click Save to persist.</p>
+          <p class="text-xs text-fg-muted ml-7 mb-3">
+            Account default color theme, used on every device that isn't overridden above. Previews live; click Save to persist.
+          </p>
           <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
             {% for choice in theme_choices %}
               <label class="block cursor-pointer rounded-md p-2 transition-colors hover:bg-surface-3"
@@ -454,21 +506,24 @@
       </div>
 
       {% comment %}
-        E-ink mode — drives [data-eink] on <html>, layered on top of the
-        color theme. Live-previews via Alpine (the same attribute the header
-        quick-toggle writes) and persists on POST. "Auto" only takes visible
-        effect on e-ink hardware (see themes.css); on a normal screen the
-        preview won't change, which is expected.
+        Account-default e-ink mode — the cross-device default, layered on top
+        of the color theme. Mirrors into data-account-eink and re-applies via
+        yamtrackAppearance, so the preview shows here unless this device has an
+        e-ink override pinned in "This device" above (the header quick-toggle
+        sets that per-device override). Persists on Save. "Auto" only takes
+        visible effect on e-ink hardware (see themes.css); on a normal screen
+        the preview won't change, which is expected.
       {% endcomment %}
       <div class="mb-5"
            x-data="{ eink: '{{ user.eink_mode|default:'auto' }}' }"
-           x-init="$watch('eink', v => document.documentElement.dataset.eink = v)">
+           x-init="$watch('eink', v => { document.documentElement.dataset.accountEink = v; window.yamtrackAppearance.apply('eink'); })">
         <div class="p-3 bg-surface-2 rounded-md">
           <div class="flex items-center text-fg mb-1">
             {% include "app/icons/contrast.svg" with classes="w-5 h-5 mr-2" %}
             <span class="text-sm font-medium">E-ink mode</span>
           </div>
           <p class="text-xs text-fg-muted ml-7 mb-3">
+            Account default for every device that isn't overridden above.
             High-contrast monochrome look with flattened shadows and no
             animations, for e-readers and e-paper displays. "Auto" detects
             e-ink screens automatically and leaves normal screens untouched.

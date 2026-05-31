@@ -12,7 +12,7 @@
           {% endif %}
         </div>
         <div>
-          <h2 class="text-2xl font-semibold text-white">{{ section.key|media_status_readable|title }}</h2>
+          <h2 class="text-2xl font-semibold text-fg">{{ section.key|media_status_readable|title }}</h2>
         </div>
       </div>
       <span class="inline-flex items-center gap-2 rounded-full border border-default bg-surface-2 px-3 py-1 text-sm text-fg">
@@ -37,7 +37,7 @@
       {% for media_type, media_list in section.media_types.items %}
         <div class="space-y-4">
           <div class="mb-4 flex items-center justify-between gap-4">
-            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+            <h3 class="text-lg font-semibold text-fg flex items-center gap-2">
               <span class="w-1 h-4 rounded-full {% if section.key == Status.IN_PROGRESS.value %}bg-accent{% else %}bg-info{% endif %}"></span>
               {{ media_type|media_type_readable_plural }}
               <span class="text-xs text-fg-faint font-normal ml-1">{{ media_list.total }}</span>
@@ -81,7 +81,7 @@
           {% include "app/icons/leaf.svg" with classes="h-8 w-8 text-info" %}
         {% endif %}
       </div>
-      <h3 class="text-xl font-semibold text-white">
+      <h3 class="text-xl font-semibold text-fg">
         {% if section.key == Status.IN_PROGRESS.value %}
           Nothing is actively moving right now
         {% else %}
