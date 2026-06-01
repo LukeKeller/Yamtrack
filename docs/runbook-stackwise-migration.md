@@ -4,6 +4,15 @@ One-time cutover. Because the YunoHost **id changes** (`yamtrack_fork` → `stac
 
 > **blog-vps gotcha (known):** SSH stdout on this box is unreliable and can corrupt long command output. For anything whose result you need to read, redirect to a file and `scp` it back rather than trusting the terminal. Run destructive steps one at a time and verify each.
 
+## What to copy — and what NOT to
+
+You know both apps' DB passwords, so copying is easy. But:
+
+- **Do NOT point `stackwise` at `yamtrack_fork`'s database, and do NOT copy the `DB_*` / `REDIS_URL` / `URLS` / `BASE_URL` lines from the old `.env`.** Those are install-specific. Sharing the DB is a trap: removing `yamtrack_fork` later runs its remove script, which **drops that database** — taking `stackwise`'s data with it. Two live instances also run two Celery beat schedulers (duplicate notifications/digests) and can race on migrations. Give `stackwise` its own DB and **copy the data in** (logical `pg_dump | psql`, step 3). Raw Postgres file copy isn't a per-database operation, so dump/restore is the mechanism regardless.
+- **DO carry over `SECRET`.** Integration OAuth tokens (Trakt/Simkl/AniList) are Fernet-encrypted with a key derived from `SECRET`. A fresh install generates a new `SECRET`, so copied tokens won't decrypt. Either reuse the old `SECRET` (below) or re-authenticate the integrations afterward.
+- **DO carry over the provider/integration API keys** (TMDB/MAL/IGDB/BGG and the config-panel ones: Trakt/Simkl/AniList/Steam).
+- **`.env` caveat:** don't just `cp` the whole old `.env` over `stackwise`'s. YunoHost *regenerates* the managed parts of `.env` (`SECRET`, `DB_*`, `URLS`, OIDC, …) on every install/upgrade from **app settings** + the template (`yamtrack_setup_env` in `scripts/_common.sh`). The durable way to carry a value is to set the corresponding **app setting**, then let YunoHost write the `.env` — a hand-edit of `.env` survives until the next upgrade and then gets overwritten.
+
 ## 0. Pre-flight
 
 ```bash
@@ -34,12 +43,15 @@ yunohost app setting yamtrack_fork data_dir   # e.g. /home/yunohost.app/yamtrack
 
 ## 2. Install the new `stackwise` app
 
+Match the old app's SSO setting rather than guessing it:
+
 ```bash
+old_sso=$(yunohost app setting yamtrack_fork enable_sso)   # 1 or 0
 sudo yunohost app install https://github.com/LukeKeller/stackwise_ynh \
-  --args "domain=<your-domain>&path=/stackwise&admin=<admin-user>&enable_sso=<1|0>"
+  --args "domain=<your-domain>&path=/stackwise&admin=luke&enable_sso=$old_sso"
 ```
 
-This creates a fresh `stackwise` Postgres DB and runs migrations on an empty schema. Confirm it comes up at `/stackwise` before proceeding.
+This creates a fresh `stackwise` Postgres DB and runs migrations on an empty schema. Confirm it comes up at `/stackwise` before proceeding. (`/stackwise` is distinct from the old app's path, so both run side by side.)
 
 ## 3. Copy the data into the new app
 
@@ -66,6 +78,25 @@ new_data=$(yunohost app setting stackwise data_dir)
 rsync -a "$old_data"/ "$new_data"/
 chown -R stackwise:stackwise "$new_data"
 ```
+
+## 3b. Carry over SECRET + integration keys (via app settings)
+
+Set these as `stackwise` **app settings** so YunoHost writes them into `.env` and keeps them across future upgrades. `SECRET` is what makes the copied OAuth tokens decryptable.
+
+```bash
+# SECRET — required for Fernet-encrypted Trakt/Simkl/AniList tokens to decrypt.
+yunohost app setting stackwise secret -v "$(yunohost app setting yamtrack_fork secret)"
+
+# Config-panel integration keys (only the ones you actually set on the old app).
+for k in trakt_api trakt_api_secret simkl_id simkl_secret anilist_id anilist_secret steam_api_key; do
+    v=$(yunohost app setting yamtrack_fork "$k" 2>/dev/null || true)
+    [ -n "$v" ] && yunohost app setting stackwise "$k" -v "$v"
+done
+```
+
+Provider keys that live in `.env` but aren't config-panel settings (TMDB/MAL/IGDB/BGG): copy just those lines from the old `.env`, or re-enter them. Do **not** copy `DB_*`, `REDIS_URL`, `URLS`, or `BASE_URL` — `stackwise` has its own.
+
+Re-run the env regeneration so the new settings land in `.env` (a no-op upgrade does this, or just proceed — step 4's restart picks them up after you trigger a config refresh; simplest is `yunohost app upgrade stackwise` once more, or edit `.env` directly knowing it's authoritative until the next upgrade).
 
 ## 4. Migrate + restart
 
