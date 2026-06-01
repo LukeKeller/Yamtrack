@@ -32,19 +32,39 @@ def get_configured_app_url():
 
 
 def build_absolute_app_url(request, path):
-    """Build an absolute URL using the configured public origin when possible."""
+    """Build an absolute URL using the configured public origin when possible.
+
+    ``path`` is app-root-relative (the Django URL path, without the
+    ``FORCE_SCRIPT_NAME`` prefix). On a sub-path install (``BASE_URL=/stackwise``)
+    the public URL must carry that prefix, or links copied into KOReader / OPDS
+    and OAuth ``redirect_uri``s drop it and 302 to the SSO login page. ``URLS``
+    is just the origin (scheme+host), so we splice ``BASE_URL`` back in here —
+    unless the configured origin already includes it.
+    """
     parsed_path = urlparse(path)
     if parsed_path.scheme and parsed_path.netloc:
         return path
 
+    base_path = (getattr(settings, "BASE_URL", "") or "").strip("/")
+    normalized_path = path.lstrip("/")
+
     configured_app_url = get_configured_app_url()
     if configured_app_url:
-        return urljoin(f"{configured_app_url}/", path.lstrip("/"))
+        # Avoid doubling the prefix if URLS was set to include the sub-path.
+        if base_path and not urlparse(configured_app_url).path.strip("/").endswith(
+            base_path,
+        ):
+            normalized_path = f"{base_path}/{normalized_path}"
+        return urljoin(f"{configured_app_url}/", normalized_path)
 
     if request is None:
         return None
 
-    return request.build_absolute_uri(path)
+    if base_path:
+        full_path = f"/{base_path}/{normalized_path}"
+    else:
+        full_path = f"/{normalized_path}"
+    return request.build_absolute_uri(full_path)
 
 
 def minutes_to_hhmm(total_minutes):

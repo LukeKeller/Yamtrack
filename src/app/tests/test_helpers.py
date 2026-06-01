@@ -50,6 +50,28 @@ class HelpersTest(TestCase):
         self.assertEqual(result, "https://yamtrack.example.com/import/trakt/private")
         request.build_absolute_uri.assert_not_called()
 
+    @override_settings(URLS=["https://yamtrack.example.com"], BASE_URL="/stackwise")
+    def test_build_absolute_app_url_splices_base_url_subpath(self):
+        """A sub-path install prefixes BASE_URL so copied links don't 302."""
+        request = MagicMock()
+
+        result = build_absolute_app_url(request, "/api/koreader")
+
+        self.assertEqual(result, "https://yamtrack.example.com/stackwise/api/koreader")
+        request.build_absolute_uri.assert_not_called()
+
+    @override_settings(
+        URLS=["https://yamtrack.example.com/stackwise"],
+        BASE_URL="/stackwise",
+    )
+    def test_build_absolute_app_url_does_not_double_subpath(self):
+        """If URLS already carries the sub-path, don't prefix it twice."""
+        request = MagicMock()
+
+        result = build_absolute_app_url(request, "/api/koreader")
+
+        self.assertEqual(result, "https://yamtrack.example.com/stackwise/api/koreader")
+
     @override_settings(URLS=[])
     def test_build_absolute_app_url_falls_back_to_request(self):
         """Test request-based absolute URL construction without URLS."""
