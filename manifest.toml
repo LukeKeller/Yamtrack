@@ -2,19 +2,18 @@
 
 packaging_format = 2
 
-id = "yamtrack_fork"
-name = "Yamtrack (LukeKeller fork)"
-description.en = "Yamtrack — fork build (LukeKeller). Media tracker for movies, TV, anime, manga, games, books and more"
-description.fr = "Yamtrack — build de fork (LukeKeller). Suivi de médias pour films, séries, anime, manga, jeux, livres et plus"
+id = "stackwise"
+name = "Stackwise"
+description.en = "Stackwise — media tracker for movies, TV, anime, manga, games, books and more"
+description.fr = "Stackwise — suivi de médias pour films, séries, anime, manga, jeux, livres et plus"
 
 version = "0.25.2~ynh36"
 
-maintainers = ["gmanaud", "lukekeller (fork)"]
+maintainers = ["lukekeller"]
 
 [upstream]
 license = "AGPL-3.0-or-later"
-demo = "https://yamtrack.fuzzygrim.com"
-code = "https://github.com/LukeKeller/Yamtrack"
+code = "https://github.com/LukeKeller/stackwise_ynh"
 
 [integration]
 yunohost = ">= 12.1.39"
@@ -35,7 +34,7 @@ ram.runtime = "200M"
 
     [install.path]
     type = "path"
-    default = "/yamtrack-fork"
+    default = "/stackwise"
 
     [install.init_main_permission]
     type = "group"
@@ -49,16 +48,14 @@ ram.runtime = "200M"
     default = true
     ask.en = "Enable SSO authentication via Dex (OIDC)?"
     ask.fr = "Activer l'authentification SSO via Dex (OIDC) ?"
-    help.en = "If enabled and Dex is installed, users will authenticate via YunoHost SSO. Otherwise, Yamtrack uses its own local authentication. Dex must be installed separately: https://apps.yunohost.org/app/dex"
-    help.fr = "Si activé et que Dex est installé, les utilisateurs s'authentifieront via le SSO YunoHost. Sinon, Yamtrack utilisera son propre système d'authentification locale. Dex doit être installé séparément : https://apps.yunohost.org/app/dex"
+    help.en = "If enabled and Dex is installed, users will authenticate via YunoHost SSO. Otherwise, Stackwise uses its own local authentication. Dex must be installed separately: https://apps.yunohost.org/app/dex"
+    help.fr = "Si activé et que Dex est installé, les utilisateurs s'authentifieront via le SSO YunoHost. Sinon, Stackwise utilisera son propre système d'authentification locale. Dex doit être installé séparément : https://apps.yunohost.org/app/dex"
 
 [resources]
-    [resources.sources.main]
-    # Pinned to a specific commit on LukeKeller/Yamtrack so the install is reproducible.
-    # When you push new code on the fork, run yunohost-package/bump-source.sh
-    # to update both fields together.
-    url = "https://github.com/LukeKeller/Yamtrack/archive/7fbbd601e0f40393fc508336fbbfb619812bdb21.tar.gz"
-    sha256 = "1ef47a2302dd913d80ba5fdc76ef3037a6089fe2fc00c246d01a3684e7171e66"
+    # No [resources.sources] block: the application code (src/) is bundled in
+    # this repo and copied into place directly by scripts/install and
+    # scripts/upgrade. This is a self-contained package, not a wrapper around a
+    # remotely-hosted release tarball.
 
     [resources.system_user]
 

@@ -20,7 +20,7 @@ yamtrack_setup_certs() {
     chown -R "$app:$app" "$install_dir/certs"
 }
 
-# Yamtrack code on the LukeKeller fork uses PEP 701 multi-line f-strings
+# The app code uses PEP 701 multi-line f-strings
 # (Python 3.12+). Debian 12 (which YunoHost 12.x runs on) ships Python 3.11,
 # so we install a relocatable Python 3.12 from astral-sh/python-build-standalone
 # and create the venv from it. Bumping: pick a newer release tag from
@@ -130,7 +130,7 @@ yamtrack_setup_env() {
     ynh_store_file_checksum "$env_file"
 }
 
-# Register Yamtrack as an OIDC client in Dex (if installed and SSO enabled)
+# Register Stackwise as an OIDC client in Dex (if installed and SSO enabled)
 yamtrack_register_dex() {
     local enable_sso
     enable_sso=$(ynh_app_setting_get --key=enable_sso)

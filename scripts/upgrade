@@ -4,30 +4,59 @@ source _common.sh
 source /usr/share/yunohost/helpers
 
 #=================================================
-# INITIALIZE AND STORE SETTINGS
+# STOP SYSTEMD SERVICE
 #=================================================
+ynh_script_progression "Stopping $app's systemd service..."
 
-secret=$(ynh_string_random --length=50)
-ynh_app_setting_set --key=secret --value="$secret"
-
-redis_db=$(ynh_redis_get_free_db)
-ynh_app_setting_set --key=redis_db --value="$redis_db"
+ynh_systemctl --service="$app" --action="stop"
+ynh_systemctl --service="$app-celery" --action="stop" --log_path="/var/log/$app/$app-celery.log"
+ynh_systemctl --service="$app-celery-beat" --action="stop" --log_path="/var/log/$app/$app-celery-beat.log"
 
 #=================================================
-# DOWNLOAD, CHECK AND UNPACK SOURCE
+# ENSURE DOWNWARD COMPATIBILITY
 #=================================================
-ynh_script_progression "Setting up source files..."
+ynh_script_progression "Ensuring downward compatibility..."
 
-ynh_setup_source --dest_dir="$install_dir"
+ynh_app_setting_set_default --key=redis_db --value="$(ynh_redis_get_free_db)"
+ynh_app_setting_set_default --key=enable_sso --value="1"
+
+# Fix .env checksum: older versions appended SSO vars after ynh_config_add
+# without updating the stored checksum, causing a false "manually modified" warning
+if [[ -f "$install_dir/.env" ]]; then
+    ynh_store_file_checksum "$install_dir/.env"
+fi
+
+#=================================================
+# UPGRADE BUNDLED SOURCE
+#=================================================
+ynh_script_progression "Upgrading source files..."
+
+# Replace the bundled application code (src/ + requirements.txt) with this
+# package's version. .env, venv, certs and any runtime data in $install_dir are
+# left untouched. pkg_dir is this package's root (scripts/.. from the script).
+pkg_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ynh_safe_rm "$install_dir/src"
+cp -a "$pkg_dir/src" "$install_dir/src"
+cp -a "$pkg_dir/requirements.txt" "$install_dir/requirements.txt"
 
 chown -R "$app:www-data" "$install_dir"
 
 #=================================================
-# PROVISION PYTHON 3.12 (Yamtrack code uses PEP 701)
+# PROVISION PYTHON 3.12 (the app code uses PEP 701)
 #=================================================
 ynh_script_progression "Provisioning Python ${YAMTRACK_PYTHON_VERSION}..."
 
 yamtrack_provision_python
+
+# If the venv was created with a different Python (e.g., system 3.11 from a
+# pre-fix install), recreate it. Otherwise pip install will silently use
+# the wrong interpreter.
+if [[ -d "$install_dir/venv" ]]; then
+    venv_python_version=$("$install_dir/venv/bin/python" -c "import sys; print('%d.%d' % sys.version_info[:2])" 2>/dev/null || echo "missing")
+    if [[ "$venv_python_version" != "3.12" ]]; then
+        rm -rf "$install_dir/venv"
+    fi
+fi
 
 #=================================================
 # INSTALL PYTHON DEPENDENCIES
@@ -35,7 +64,9 @@ yamtrack_provision_python
 ynh_script_progression "Installing Python dependencies..."
 
 pushd "$install_dir"
-    "$YAMTRACK_PYTHON" -m venv venv
+    if [[ ! -x "$install_dir/venv/bin/python" ]]; then
+        "$YAMTRACK_PYTHON" -m venv venv
+    fi
     chown -R "$app:www-data" "$install_dir"
     ynh_hide_warnings ynh_exec_as_app "$install_dir/venv/bin/pip3" install --upgrade pip setuptools wheel
     ynh_hide_warnings ynh_exec_as_app "$install_dir/venv/bin/pip3" install -r "$install_dir/requirements.txt"
@@ -49,9 +80,9 @@ ynh_script_progression "Configuring authentication..."
 yamtrack_register_dex
 
 #=================================================
-# ADD A CONFIGURATION
+# UPDATE CONFIGURATION
 #=================================================
-ynh_script_progression "Adding $app's configuration..."
+ynh_script_progression "Updating $app's configuration..."
 
 yamtrack_setup_certs
 yamtrack_setup_env
@@ -67,24 +98,9 @@ pushd "$install_dir/src"
 popd
 
 #=================================================
-# CREATE THE ADMIN USER
+# REAPPLY SYSTEM CONFIGURATION
 #=================================================
-ynh_script_progression "Creating the admin user..."
-
-admin_email=$(ynh_user_get_info --username="$admin" --key=mail)
-admin_password=$(ynh_string_random --length=24)
-ynh_app_setting_set --key=admin_password --value="$admin_password"
-
-pushd "$install_dir/src"
-    ynh_exec_as_app env DJANGO_SUPERUSER_PASSWORD="$admin_password" \
-        "$install_dir/venv/bin/python" manage.py createsuperuser \
-        --noinput --username "$admin" --email "$admin_email" 2>/dev/null || true
-popd
-
-#=================================================
-# SYSTEM CONFIGURATION
-#=================================================
-ynh_script_progression "Adding system configurations..."
+ynh_script_progression "Upgrading system configurations..."
 
 ynh_config_add_nginx
 
@@ -97,9 +113,9 @@ chown -R "$app:$app" "/var/log/$app"
 
 ynh_config_add_logrotate
 
-yunohost service add "$app" --description="Yamtrack web server" --log="/var/log/$app/$app.log"
-yunohost service add "$app-celery" --description="Yamtrack Celery worker" --log="/var/log/$app/$app-celery.log"
-yunohost service add "$app-celery-beat" --description="Yamtrack Celery beat" --log="/var/log/$app/$app-celery-beat.log"
+yunohost service add "$app" --description="Stackwise web server" --log="/var/log/$app/$app.log"
+yunohost service add "$app-celery" --description="Stackwise Celery worker" --log="/var/log/$app/$app-celery.log"
+yunohost service add "$app-celery-beat" --description="Stackwise Celery beat" --log="/var/log/$app/$app-celery-beat.log"
 
 #=================================================
 # START SYSTEMD SERVICE
@@ -114,4 +130,4 @@ ynh_systemctl --service="$app-celery-beat" --action="start" --log_path="/var/log
 # END OF SCRIPT
 #=================================================
 
-ynh_script_progression "Installation of $app completed"
+ynh_script_progression "Upgrade of $app completed"

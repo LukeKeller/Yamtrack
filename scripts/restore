@@ -96,9 +96,9 @@ ynh_restore "/etc/logrotate.d/$app"
 #=================================================
 ynh_script_progression "Integrating service in YunoHost..."
 
-yunohost service add "$app" --description="Yamtrack web server" --log="/var/log/$app/$app.log"
-yunohost service add "$app-celery" --description="Yamtrack Celery worker" --log="/var/log/$app/$app-celery.log"
-yunohost service add "$app-celery-beat" --description="Yamtrack Celery beat" --log="/var/log/$app/$app-celery-beat.log"
+yunohost service add "$app" --description="Stackwise web server" --log="/var/log/$app/$app.log"
+yunohost service add "$app-celery" --description="Stackwise Celery worker" --log="/var/log/$app/$app-celery.log"
+yunohost service add "$app-celery-beat" --description="Stackwise Celery beat" --log="/var/log/$app/$app-celery-beat.log"
 
 #=================================================
 # START SYSTEMD SERVICE
