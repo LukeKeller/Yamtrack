@@ -7,7 +7,7 @@ name = "Stackwise"
 description.en = "Stackwise — media tracker for movies, TV, anime, manga, games, books and more"
 description.fr = "Stackwise — suivi de médias pour films, séries, anime, manga, jeux, livres et plus"
 
-version = "0.25.2~ynh38"
+version = "0.25.2~ynh39"
 
 maintainers = ["lukekeller"]
 
@@ -66,14 +66,16 @@ ram.runtime = "200M"
     [resources.permissions]
     main.url = "/"
 
-    # Public sub-paths: external services authenticate via their own bearer
-    # token (Yamtrack's per-user API token), not via SSOwat. Without
-    # auth_header=false the YunoHost auth_request middleware 302s any
-    # unauthenticated request to the SSO login page, ignoring the
-    # Authorization header — which broke the Jellyfin/Plex/Emby webhooks
-    # and the ListenBrainz scrobble receiver for Multi-Scrobbler.
+    # Public sub-paths: external clients authenticate with their own bearer
+    # token (the app's per-user API token, or KOReader's kosync x-auth-*
+    # headers), not via SSOwat. Without auth_header=false the YunoHost
+    # auth_request middleware 302s unauthenticated requests to the SSO login
+    # page, ignoring the Authorization header — which broke the
+    # Jellyfin/Plex/Emby webhooks, the ListenBrainz scrobble receiver,
+    # KOReader progress sync, and the OPDS library feed. Keep this list in
+    # sync with the public-regex location in conf/nginx.conf.
     api.url = "/api/scrobble"
-    api.additional_urls = ["/webhook"]
+    api.additional_urls = ["/webhook", "/api/koreader", "/library/opds"]
     api.allowed = "visitors"
     api.auth_header = false
     api.show_tile = false
