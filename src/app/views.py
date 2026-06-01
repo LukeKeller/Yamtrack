@@ -2918,6 +2918,10 @@ def service_worker(request):
     response = render(
         request,
         "app/serviceworker.js",
+        # Cache names embed the running build, so every package upgrade yields
+        # fresh cache keys and the activate handler evicts the stale ones —
+        # keeping installed PWAs current without a hand-bumped SW constant.
+        {"sw_version": settings.VERSION},
         content_type="application/javascript",
     )
     response["Service-Worker-Allowed"] = "/"

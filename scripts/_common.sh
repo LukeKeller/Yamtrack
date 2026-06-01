@@ -54,7 +54,7 @@ yamtrack_provision_python() {
 
 # Variables managed by this package (regenerated on every upgrade)
 # Any other variable found in .env will be preserved across upgrades
-YAMTRACK_MANAGED_ENV_VARS='SECRET|DEBUG|ALLOWED_HOSTS|CSRF|URLS|DB_HOST|DB_PORT|DB_NAME|DB_USER|DB_PASSWORD|REDIS_URL|TZ|ACCOUNT_LOGOUT_REDIRECT_URL|REQUESTS_CA_BUNDLE|BASE_URL|REGISTRATION|SOCIAL_PROVIDERS|SOCIALACCOUNT_PROVIDERS|SOCIALACCOUNT_ONLY|REDIRECT_LOGIN_TO_SSO'
+YAMTRACK_MANAGED_ENV_VARS='SECRET|DEBUG|ALLOWED_HOSTS|CSRF|URLS|DB_HOST|DB_PORT|DB_NAME|DB_USER|DB_PASSWORD|REDIS_URL|TZ|ACCOUNT_LOGOUT_REDIRECT_URL|REQUESTS_CA_BUNDLE|BASE_URL|VERSION|REGISTRATION|SOCIAL_PROVIDERS|SOCIALACCOUNT_PROVIDERS|SOCIALACCOUNT_ONLY|REDIRECT_LOGIN_TO_SSO'
 
 # Uppercase names of config panel questions bound to .env. Kept as empty
 # placeholders in the .env template so that ynh_read_var_in_file never returns
@@ -100,6 +100,17 @@ yamtrack_setup_env() {
         base_url="$path"
     fi
     echo "BASE_URL=$base_url" >> "$env_file"
+
+    # Surface the package version to the app (About page "Build" label and the
+    # service-worker cache key both read settings.VERSION). Parsed from the
+    # bundled manifest so a single version bump there flows everywhere — no
+    # separate in-code constant to keep in sync, and bumping it auto-busts the
+    # PWA cache. pkg_dir is set by scripts/{install,upgrade} before this runs.
+    local app_version=""
+    if [[ -n "${pkg_dir:-}" && -f "$pkg_dir/manifest.toml" ]]; then
+        app_version=$(sed -nE 's/^version = "(.*)"/\1/p' "$pkg_dir/manifest.toml" | head -1)
+    fi
+    echo "VERSION=$app_version" >> "$env_file"
 
     # Registration: allow when OIDC is active (SSOwat + Dex/LDAP protect access),
     # disable when using local auth only

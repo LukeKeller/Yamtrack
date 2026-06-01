@@ -18,7 +18,11 @@
 // waiting worker, shows a toast, and posts {type: 'SKIP_WAITING'} when
 // the user accepts the update.
 
-const VERSION = 'v8';
+// Derived from the running package build (settings.VERSION), passed in by the
+// service_worker view. Each upgrade changes VERSION -> new cache names -> the
+// activate handler evicts the old ones, so installed PWAs refresh on release
+// with no hand-maintained constant. Falls back to 'dev' off-YunoHost.
+const VERSION = '{{ sw_version|default:"dev" }}';
 const CACHE_SHELL = 'yamtrack-shell-' + VERSION;
 const CACHE_PAGES = 'yamtrack-pages-' + VERSION;
 const CACHE_STATIC = 'yamtrack-static-' + VERSION;

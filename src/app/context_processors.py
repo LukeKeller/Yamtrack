@@ -16,6 +16,10 @@ def export_vars(request):  # noqa: ARG001
         "IMG_NONE": settings.IMG_NONE,
         "TRACK_TIME": settings.TRACK_TIME,
         "FORK_VERSION": CURRENT_FORK_VERSION,
+        # The running package build (manifest version, wired in via the VERSION
+        # env on YunoHost; "dev" elsewhere). Drives the settings "Build" label
+        # and the service-worker cache key, so one manifest bump updates both.
+        "APP_VERSION": settings.VERSION,
         # Drives the header quick-toggle in base.html (off / auto / on).
         "eink_choices": EinkChoices.choices,
     }

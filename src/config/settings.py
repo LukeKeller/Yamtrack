@@ -351,7 +351,10 @@ AUTH_USER_MODEL = "users.User"
 
 # Yamtrack settings
 
-VERSION = config("VERSION", default="dev")
+# Running build, shown in the UI ("Build" label) and used as the PWA cache key.
+# Populated from the package manifest version via the VERSION env on YunoHost;
+# an empty/unset value (Docker, dev) falls back to "dev".
+VERSION = config("VERSION", default="dev") or "dev"
 
 ADMIN_ENABLED = config("ADMIN_ENABLED", default=False, cast=bool)
 
