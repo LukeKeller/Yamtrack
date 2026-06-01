@@ -7,7 +7,7 @@ name = "Stackwise"
 description.en = "Stackwise — media tracker for movies, TV, anime, manga, games, books and more"
 description.fr = "Stackwise — suivi de médias pour films, séries, anime, manga, jeux, livres et plus"
 
-version = "0.25.2~ynh37"
+version = "0.25.2~ynh38"
 
 maintainers = ["lukekeller"]
 
