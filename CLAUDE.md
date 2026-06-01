@@ -1,12 +1,19 @@
 # CLAUDE.md
 
-Guidance for AI assistants (Claude Code, etc.) working in this repository. Read this file before making changes — Yamtrack has a few load-bearing conventions (history-aware bulk ops, Item/Media split, MonitorField echo-suppression hooks) that aren't obvious from a casual scan.
+Guidance for AI assistants (Claude Code, etc.) working in this repository. Read this file before making changes — Stackwise has a few load-bearing conventions (history-aware bulk ops, Item/Media split, MonitorField echo-suppression hooks) that aren't obvious from a casual scan.
 
-## What Yamtrack is
+## What Stackwise is
 
 A self-hosted, multi-user Django app for tracking media: movies, TV (with seasons/episodes), anime, manga, games, books, comics, and board games. It pulls metadata from external providers (TMDB, MAL, IGDB, OpenLibrary, Hardcover, ComicVine, BoardGameGeek, etc.), supports webhooks from Jellyfin/Plex/Emby, and imports/exports from Trakt, Simkl, AniList, MyAnimeList, Kitsu, GoodReads, HowLongToBeat, IMDB, Steam, and CSV.
 
-License is **AGPL-3.0** — relevant if you redistribute a modified Docker image.
+This is a **single self-contained repo** (`LukeKeller/stackwise_ynh`): it holds both the Django app (`src/`) and its YunoHost package (`manifest.toml`, `scripts/`, `conf/`, `doc/` at the repo root). There is no separate packaging repo, no orphan branch, and no upstream fork to sync. Stackwise started as a fork of [Yamtrack](https://github.com/FuzzyGrim/Yamtrack) (FuzzyGrim) and is a derivative work under **AGPL-3.0** — preserve upstream attribution and the license notice (relevant if you redistribute a modified Docker image).
+
+## Naming convention (READ THIS before renaming anything)
+
+- **User-facing identity is "Stackwise"** — UI brand, PWA name, the YunoHost app (`id = stackwise`, path `/stackwise`, services `stackwise` / `stackwise-celery` / `stackwise-celery-beat`), service descriptions.
+- **Internal identifiers stay `yamtrack`** — the Django app, `Celery("yamtrack")`, Python module paths, DB tables, service-worker cache keys (`yamtrack-shell-*`), the `yamtrackAppearance` localStorage keys, and `YAMTRACK_PYTHON_*` / `yamtrack_*` helpers in `scripts/`. Renaming these is user-invisible and would force DB migrations, reset saved prefs, or orphan Celery tasks. **Do not rename them.**
+- The **"Import from Yamtrack"** feature (and its `source_display "yamtrack"` id) stays "Yamtrack" — it imports the upstream app's CSV format.
+- Rule of thumb: if a user or the server operator sees it, it's "Stackwise"; if only the code sees it, it stays `yamtrack`.
 
 ## Tech stack
 
@@ -205,56 +212,33 @@ CI (`app-tests.yml`) runs `ruff check src` and the test suite. **The PR check fa
 
 ## Branching and PR flow (this repo's expectations)
 
-- Develop on the feature branch given in the task brief (e.g., `claude/...` or `feature/...`), branched off `main`.
-- Upstream (`FuzzyGrim/Yamtrack`) uses `dev` for development and `main` for releases. **This fork uses `main` for both** — feature work, bump markers, and the source pin all live on `main`. Pulling from upstream therefore means merging `upstream/dev` into `main` (a normal cross-branch sync, just slightly unusual to read).
-- **In this fork (LukeKeller/Yamtrack)**, `main` is the canonical integration branch — keep it up to date with every shipped change. Feature work gets merged into `main` (fast-forward / linear rebase preferred to match existing style) as soon as it's ready, not parked on long-lived feature branches.
+- The integration branch is **`main`**. There is no `dev` branch and no upstream fork — this is a standalone repo. Don't push to or recreate `dev`.
+- Develop on the feature branch given in the task brief (e.g., `claude/...` or `feature/...`), branched off `main`. Merge into `main` (fast-forward / linear rebase preferred) as soon as it's ready; don't park work on long-lived branches.
+- Always `git fetch origin main && git pull --ff-only` (or `git reset --hard origin/main`) before computing a version bump — containers come up with whatever was cloned at session start.
 - Don't `--no-verify` past pre-commit hooks. If `makemigrations --check` fails, run it locally and commit the migration.
 - Pushing to `main` is allowed when the user authorizes a release (see "Shipping a release" below).
-- Don't modify `.github/workflows/**`.
+- `.github/workflows/**` still carries upstream-flavored CI (FuzzyGrim badges/registries, a stale `codeql.yml` branch list). Treat it as out-of-scope tech debt — don't touch it in feature work; ask before reworking it.
 
-## Shipping a release (Yamtrack + YunoHost package)
+## YunoHost package & the bundled source
 
-This fork ships through the `yamtrack_ynh` companion repo (`LukeKeller/yamtrack_ynh`), which pins a YunoHost manifest to a specific commit on this repo. The end-to-end flow when you finish a feature:
+The packaging lives at the repo root (`manifest.toml`, `scripts/`, `conf/`, `doc/`). The app is **self-contained**: `scripts/install` and `scripts/upgrade` copy the in-repo `src/` + `requirements.txt` into `$install_dir` directly (`pkg_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"`) — there is **no** `[resources.sources]` block, no remote tarball, no `ynh_setup_source`. `backup`/`restore` operate on `$install_dir` as before. If you change how the app is laid out under `src/`, check those two scripts still copy what the app needs at runtime.
 
-> **Pre-flight — do these two commands before anything else, every time.** They take five seconds and prevent the two mistakes that have happened in real sessions: pushing the bump to the wrong branch, and inventing a bump number from stale context. Don't trust earlier conversation memory or grep results from other branches — re-derive from the live remote.
->
-> ```bash
-> # 1. Confirm the integration branch — answer must be "main" for this fork.
-> #    If you find yourself about to push to "dev", STOP. That's upstream's
-> #    branch name and an older revision of this file used to say so.
-> git fetch origin main && git log --oneline -1 origin/main
->
-> # 2. Find the last bump marker ON main (not on a feature branch, not in
-> #    your context, not on dev). The next NN is exactly that + 1.
-> git log --oneline origin/main --grep="Bump fork package" -1
-> ```
+## Shipping a release (single repo)
 
-1. **Merge feature branch into `main`** here. Prefer fast-forward / linear history (rebase the feature branch first if needed). Example:
-   ```bash
-   git checkout main && git pull --ff-only
-   git checkout claude/<feature> && git rebase main
-   git checkout main && git merge --ff-only claude/<feature>
-   ```
-2. **Add an empty bump-marker commit on `main`** so the version number is visible in `git log` here too:
-   ```bash
-   git commit --allow-empty -m "Bump fork package to 0.25.2~ynhNN (<short feature description>)"
-   ```
-   `NN` is exactly one more than the previous marker on `main` — use the pre-flight command above; never guess from a number you remember.
-3. **Push `main`**: `git push origin main`. Record the new HEAD SHA — you'll need it next.
-4. **Switch to the `yamtrack_ynh` checkout** and bump the package against that SHA (see that repo's `README.md`). The `NN` you use there MUST match the one you used in step 2 — the two repos stay aligned by convention.
-5. After the YunoHost upgrade succeeds, the feature branch is safe to delete locally and on the remote.
+No companion repo, no source-pin, no `~ynhNN` cross-repo alignment anymore. The flow:
 
-If a feature spans multiple commits, you can use a non-fast-forward merge with `--no-ff` to keep them as a logical group — but still land it on `main` and add the bump marker on top.
+1. Land the feature on `main` (rebase + ff-merge preferred). Run the pre-commit hooks; commit any migration.
+2. Bump `version` in `manifest.toml` (e.g. `0.25.2~ynh37`). The manifest is the single source of truth for the package version — there is no separate bump-marker commit to keep in sync.
+3. If the ship modified files under `src/static/js/` or `src/static/css/` (or template-served JS), bump the service-worker `VERSION` in `src/templates/app/serviceworker.js` (see the Conventions note).
+4. `git push origin main`.
+5. On the server: `sudo yunohost app upgrade stackwise -u https://github.com/LukeKeller/stackwise_ynh` (or via the admin UI). The upgrade re-copies the bundled `src/`, reinstalls requirements, runs migrations + collectstatic.
+6. Delete the feature branch once the upgrade succeeds.
 
-### Common failure modes (learn from past mistakes)
-
-- **Pushed to `dev` instead of `main`.** This fork used `dev` for a while; an older revision of this file documented that. If your context says "dev is the integration branch," it's stale — re-read the Branching section above and run the pre-flight commands. `origin/dev` exists but is dormant; pushing to it now creates a misleading stray history.
-- **Picked the wrong `NN`.** The bump-marker for a feature branch you branched off three days ago is not the latest — `main` has advanced since. Always grep `origin/main` (not local, not your feature branch, not a remembered SHA) for the previous marker.
-- **Stale local `main` or `dev`.** Containers come up with whatever was cloned at session start. Always `git fetch origin main && git reset --hard origin/main` (or `git pull --ff-only` after a fresh checkout) before computing the next bump.
+> Moving the live `blog-vps` instance from the old `yamtrack_fork` install to `stackwise` is a one-time **fresh install + Postgres data migration** (a different YunoHost id is a different app), not an in-place upgrade — see the deployment runbook.
 
 ## Hardcover sync project (in flight)
 
-This branch is implementing a two-way Hardcover ↔ Yamtrack sync. The full plan is in `HARDCOVER_SYNC_PLAN.md` at the repo root — read it before touching any of:
+This branch is implementing a two-way Hardcover ↔ Stackwise sync. The full plan is in `HARDCOVER_SYNC_PLAN.md` at the repo root — read it before touching any of:
 
 - `src/integrations/imports/hardcover.py` (new — inbound importer, mirror `trakt.py`)
 - `src/integrations/hardcover_client.py` / `hardcover_mapping.py` (new — GraphQL wrapper + status/score/date mapping)

@@ -1,153 +1,105 @@
-# Yamtrack
+# Stackwise
 
-![App Tests](https://github.com/FuzzyGrim/Yamtrack/actions/workflows/app-tests.yml/badge.svg)
-![Docker Image](https://github.com/FuzzyGrim/Yamtrack/actions/workflows/docker-image.yml/badge.svg)
-![CodeFactor](https://www.codefactor.io/repository/github/fuzzygrim/yamtrack/badge)
-![Codecov](https://codecov.io/github/FuzzyGrim/Yamtrack/branch/dev/graph/badge.svg?token=PWUG660120)
-![GitHub](https://img.shields.io/badge/license-AGPL--3.0-blue)
+![License](https://img.shields.io/badge/license-AGPL--3.0-blue)
 
-Yamtrack is a self hosted media tracker for movies, tv shows, anime, manga, video games, books, comics, and board games.
+Stackwise is a self-hosted media tracker for movies, TV shows, anime, manga, video games, books, comics, and board games.
 
-## 🚀 Demo
+This repository is **self-contained**: it holds both the Django application (`src/`) and its YunoHost package (`manifest.toml`, `scripts/`, `conf/`). There is no separate packaging repo and no upstream sync — installing the YunoHost app deploys exactly the code in this repo.
 
-You can try the app at [yamtrack.fuzzygrim.com](https://yamtrack.fuzzygrim.com) using the username `demo` and password `demo`.
+## Relationship to Yamtrack
 
-## ✨ Features
+Stackwise began as a fork of [Yamtrack](https://github.com/FuzzyGrim/Yamtrack) by FuzzyGrim and has since evolved into its own project. It remains a derivative work distributed under the **AGPL-3.0** license; upstream attribution and the license notice are preserved in the app's About page. The "Import from Yamtrack" feature reads the upstream app's CSV/backup export and is named accordingly.
 
-- 🎬 Track movies, tv shows, anime, manga, games, books, comics, and board games.
-- 📺 Track each season of a tv show individually and episodes watched.
-- ⭐ Save score, status, progress, repeats (rewatches, rereads...), start and end dates, or write a note.
-- 📈 Keep a tracking history with each action with a media, such as when you added it, when you started it, when you started watching it again, etc.
-- ✏️ Create custom media entries, for niche media that cannot be found by the supported APIs.
-- 📂 Create personal lists to organize your media for any purpose, add other members to collaborate on your lists.
-- 📅 Keep up with your upcoming media with a calendar, which can be subscribed to in external applications using a iCalendar (.ics) URL.
-- 🔔 Receive notifications of upcoming releases via Apprise (supports Discord, Telegram, ntfy, Slack, email, and many more).
-- 🐳 Easy deployment with Docker via docker-compose with SQLite or PostgreSQL.
-- 👥 Multi-users functionality allowing individual accounts with personalized tracking.
-- 🔑 Flexible authentication options including OIDC and 100+ social providers (Google, GitHub, Discord, etc.) via django-allauth.
-- 🦀 Integration with [Jellyfin](https://jellyfin.org/), [Plex](https://plex.tv/) and [Emby](https://emby.media/) to automatically track new media watched.
-- 📥 Import from [Trakt](https://trakt.tv/), [Simkl](https://simkl.com/), [MyAnimeList](https://myanimelist.net/), [AniList](https://anilist.co/) and [Kitsu](https://kitsu.app/) with support for periodic automatic imports.
-- 📊 Export all your tracked media to a CSV file and import it back.
+## Naming convention (read before renaming anything)
 
-## 📱 Screenshots
+- **User-facing identity is "Stackwise"** — the brand shown in the UI, the PWA name, the YunoHost app (`id = stackwise`, installed at `/stackwise`), and the systemd service descriptions.
+- **Internal identifiers stay `yamtrack`** — the Django app, the Celery app name (`Celery("yamtrack")`), Python module paths, database tables, the service-worker cache keys, the `yamtrackAppearance` localStorage keys, and the `YAMTRACK_PYTHON_*` / `yamtrack_*` helpers in the install scripts. Renaming these buys nothing user-visible and would force data migrations, reset saved preferences, or orphan Celery tasks. **Leave them as `yamtrack`.**
 
-| Homepage                                                                                       | Calendar                                                                                    |
-| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/homepage.png?v2" alt="Homepage" /> | <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/calendar.png" alt="calendar" /> |
+When in doubt: if a user or the server operator sees it, it's "Stackwise"; if only the code sees it, it stays `yamtrack`.
 
-| Media List Grid                                                                                    | Media List Table                                                                                     |
-| -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/medialist_grid.png" alt="List Grid" /> | <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/medialist_table.png" alt="List Table" /> |
+## Features
 
-| Media Details                                                                                         | Tracking                                                                                    |
-| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/media_details.png" alt="Media Details" /> | <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/tracking.png" alt="Tracking" /> |
+- 🎬 Track movies, TV shows, anime, manga, games, books, comics, and board games.
+- 📺 Track each season of a TV show individually and episodes watched.
+- ⭐ Save score, status, progress, repeats, start/end dates, or write a note.
+- 📈 Keep a tracking history of every action on a media item.
+- ✏️ Create custom media entries for niche media not covered by the supported APIs.
+- 📂 Create personal lists and collaborate with other members.
+- 📅 Calendar of upcoming media, subscribable via iCalendar (.ics).
+- 🔔 Upcoming-release notifications via Apprise (Discord, Telegram, ntfy, Slack, email, and more).
+- 🐳 Docker deployment via docker-compose with SQLite or PostgreSQL.
+- 👥 Multi-user accounts with personalized tracking.
+- 🔑 OIDC and 100+ social providers (Google, GitHub, Discord, etc.) via django-allauth.
+- 🦀 Jellyfin / Plex / Emby integration to auto-track watched media.
+- 📥 Import from Trakt, Simkl, MyAnimeList, AniList, Kitsu, and Yamtrack (CSV), with periodic auto-imports.
+- 📊 Export all tracked media to CSV and import it back.
 
-| Season Details                                                                                          | Tracking Episodes                                                                                            |
-| ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/season_details.png" alt="Season Details" /> | <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/tracking_episode.png" alt="Tracking Episodes" /> |
+## Installing on YunoHost (recommended)
 
-| Lists                                                                                 | Statistics                                                                                      |
-| ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/lists.png" alt="Lists" /> | <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/statistics.png" alt="Statistics" /> |
+The package is self-contained — the app code is bundled in this repo and copied into place by the install script (no remote tarball, no version pinning).
 
-| Create Manual Entries                                                                                         | Import Data                                                                                       |
-| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/create_custom.png" alt="Create Manual Entries" /> | <img src="https://cdn.fuzzygrim.com/file/fuzzygrim/yamtrack/import_data.png" alt="Import Data" /> |
+```bash
+sudo yunohost app install https://github.com/LukeKeller/stackwise_ynh
+```
 
-## 🐳 Installing with Docker
+This installs the app with YunoHost id `stackwise` at the `/stackwise` path by default (configurable at install time). Optional SSO via Dex/OIDC is supported — see `doc/PRE_INSTALL.md`. Operational details (Postgres, Celery services, OIDC) are in [`YUNOHOST_DEPLOYMENT.md`](YUNOHOST_DEPLOYMENT.md).
 
-Copy the default `docker-compose.yml` file from the repository and set the environment variables. This would use a SQlite database, which is enough for most use cases.
+## Installing with Docker
 
-To start the containers run:
+Copy `docker-compose.yml` from the repository and set the environment variables (SQLite by default, which is enough for most use cases):
 
 ```bash
 docker-compose up -d
 ```
 
-Alternatively, if you need a PostgreSQL database, you can use the `docker-compose.postgres.yml` file.
+Use `docker-compose.postgres.yml` if you need PostgreSQL.
 
-### 🌊 Reverse Proxy Setup
+### Reverse proxy
 
-When using a reverse proxy, set the `URLS` environment variable to the URL you are using for the app. This allows Yamtrack to trust the proxy origin and generate correct public URLs for OAuth redirects and webhook integrations.
+Set the `URLS` environment variable to the public URL so the app trusts the proxy origin and generates correct URLs for OAuth redirects and webhooks:
 
-```bash
+```yaml
 services:
-  yamtrack:
+  stackwise:
     ...
     environment:
-      - URLS=https://yamtrack.mydomain.com
-    ...
+      - URLS=https://stackwise.mydomain.com
 ```
 
-Note that the setting must include the correct protocol (`https` or `http`), and must not include the application `/` context path. Multiple origins can be specified by separating them with a comma (`,`).
+Include the protocol (`https`/`http`) and no trailing context path. Separate multiple origins with commas.
 
-### ⚙️ Environment variables
-
-For detailed information on environment variables, please refer to the [Environment Variables wiki page](https://github.com/FuzzyGrim/Yamtrack/wiki/Environment-Variables).
-
-## 💻 Local development
-
-Clone the repository and change directory to it.
+## Local development
 
 ```bash
-git clone https://github.com/FuzzyGrim/Yamtrack.git
-cd Yamtrack
-```
+git clone https://github.com/LukeKeller/stackwise_ynh.git
+cd stackwise_ynh
 
-Install Redis or spin up a bare redis container:
-
-```bash
+# Redis
 docker run -d --name redis -p 6379:6379 --restart unless-stopped redis:8-alpine
-```
 
-Create a `.env` file in the root directory and add the following variables.
-
-```bash
+# .env in the repo root
+cat > .env <<'EOF'
 TMDB_API=API_KEY
 MAL_API=API_KEY
 IGDB_ID=IGDB_ID
 IGDB_SECRET=IGDB_SECRET
-STEAM_API_KEY=STEAM_API_SECRET
+STEAM_API_KEY=STEAM_API_KEY
 BGG_API_TOKEN=BGG_API_TOKEN
-SECRET=SECRET
+SECRET=any-string
 DEBUG=True
-```
+EOF
 
-Then run the following commands.
-
-```bash
 python -m pip install -U -r requirements-dev.txt
 pre-commit install
 cd src
 python manage.py migrate
-python manage.py runserver & celery -A config worker --beat --scheduler django --loglevel DEBUG & tailwindcss -i ./static/css/input.css -o ./static/css/tailwind.css --watch
+python manage.py runserver & \
+  celery -A config worker --beat --scheduler django --loglevel DEBUG & \
+  npx tailwindcss -i ./static/css/input.css -o ./static/css/main.css --watch
 ```
 
-Go to: http://localhost:8000
+App at http://localhost:8000. See [`CLAUDE.md`](CLAUDE.md) for architecture and conventions.
 
-## 💪 Support the Project
+## License
 
-There are many ways you can support Yamtrack's development:
-
-### ⭐ Star the Project
-
-The simplest way to show your support is to star the repository on GitHub. It helps increase visibility and shows appreciation for the work.
-
-### 🐛 Bug Reports
-
-Found a bug? Open an [issue](https://github.com/FuzzyGrim/Yamtrack/issues) on GitHub with detailed steps to reproduce it. Quality bug reports are incredibly valuable for improving stability.
-
-### 💡 Feature Suggestions
-
-Have ideas for new features? Share them through [GitHub issues](https://github.com/FuzzyGrim/Yamtrack/issues). Your feedback helps shape the future of Yamtrack.
-
-### 🧪 Contributing
-
-Pull requests are welcome! Whether it's fixing typos, improving documentation, or adding new features, your contributions help make Yamtrack better for everyone.
-
-### ☕ Donate
-
-If you'd like to support the project financially:
-
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/fuzzygrim)
+AGPL-3.0-or-later. As a derivative of Yamtrack, Stackwise preserves upstream copyright and the AGPL notice; if you redistribute a modified build (including a modified Docker image), you must make the corresponding source available under the same license.

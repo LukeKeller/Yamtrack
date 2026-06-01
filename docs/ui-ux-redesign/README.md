@@ -1,7 +1,7 @@
-# Yamtrack — UI/UX Audit & Redesign
+# Stackwise — UI/UX Audit & Redesign
 
 This folder is a self-contained research package: an exhaustive audit of
-the current Yamtrack UI, a comparison against modern media-tracker
+the current Stackwise UI, a comparison against modern media-tracker
 conventions, a proposed design system, a phased implementation plan, and
 a gallery of HTML mocks showing the target look and feel.
 
@@ -15,7 +15,7 @@ CDN so the visual approximations are accurate without a build step).
 | Doc | What's inside |
 | --- | --- |
 | [01-current-state-audit.md](./01-current-state-audit.md) | Per-screen breakdown of today's UI — layout, components, palette, behavior, friction points |
-| [02-modern-standards.md](./02-modern-standards.md) | Conventions in 2026 media trackers (Letterboxd, Trakt, AniList, Plex, Backloggd, Discogs, StoryGraph) and what Yamtrack does and doesn't pick up |
+| [02-modern-standards.md](./02-modern-standards.md) | Conventions in 2026 media trackers (Letterboxd, Trakt, AniList, Plex, Backloggd, Discogs, StoryGraph) and what Stackwise does and doesn't pick up |
 | [03-design-system.md](./03-design-system.md) | Proposed design tokens, typography, spacing, color, status & media-type semantics, motion |
 | [04-redesign-plan.md](./04-redesign-plan.md) | Phased roadmap with file-level scope and effort estimates |
 | [05-user-flows.md](./05-user-flows.md) | Flow diagrams for the seven flows the redesign is optimizing for |
@@ -116,7 +116,7 @@ above.
 
 **Is:** a Tailwind/Alpine/HTMX-native evolution. Same stack, same
 templating, same Django views. The goal is to harvest the patterns that
-make Letterboxd/Trakt/Plex feel modern and apply them inside Yamtrack's
+make Letterboxd/Trakt/Plex feel modern and apply them inside Stackwise's
 existing technical constraints, while normalizing the design language
 (tokens, motion, status semantics) so themes don't fight the templates.
 

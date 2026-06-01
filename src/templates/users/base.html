@@ -63,13 +63,13 @@
         </nav>
 
         {% comment %}
-          Fork build identifier — surfaced on every settings page so you can
-          confirm at a glance which YunoHost build is actually running after
-          an upgrade. Value comes from CURRENT_FORK_VERSION via the
+          Build identifier — surfaced on every settings page so you can
+          confirm at a glance which build is actually running after an
+          upgrade. Value comes from CURRENT_FORK_VERSION via the
           export_vars context processor.
         {% endcomment %}
         <div class="mt-auto pt-4 text-xs text-fg-faint text-center"
-             title="Fork build pinned by the yamtrack_ynh YunoHost package">
+             title="Stackwise — self-hosted via the stackwise_ynh YunoHost package">
           Build <span class="font-mono">{{ FORK_VERSION }}</span>
         </div>
       </aside>

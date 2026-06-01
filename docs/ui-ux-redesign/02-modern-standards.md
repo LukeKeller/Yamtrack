@@ -1,11 +1,11 @@
 # 02 — Modern standards & competitive scan
 
 Conventions used by the leading apps in each adjacent category, and
-the patterns Yamtrack should adopt, adapt, or skip.
+the patterns Stackwise should adopt, adapt, or skip.
 
 ## Comparison set
 
-Media tracking is a fragmented space. Yamtrack is unusual in covering
+Media tracking is a fragmented space. Stackwise is unusual in covering
 nine media types in one app — most competitors specialize. The
 comparison below pulls from:
 
@@ -22,7 +22,7 @@ comparison below pulls from:
 | **Linear** / **Notion** / **Vercel** | Productivity UX | Command palette, keyboard-first, density |
 
 What follows is a pattern-by-pattern audit: what the leaders do, what
-Yamtrack does, and the proposed direction.
+Stackwise does, and the proposed direction.
 
 ## 1. Detail-page hero
 
@@ -37,7 +37,7 @@ games) — fall back to a stretched, blurred poster as a hero.
 AniList, IMDb. It's the single biggest visual difference between a
 "this is a media app" and "this is an admin tool".
 
-**Yamtrack today.** No backdrop. Poster is 1/4 of the page width on
+**Stackwise today.** No backdrop. Poster is 1/4 of the page width on
 desktop, sitting in a flat slate column.
 
 **Proposed adoption.** Add a `media.backdrop` field (most TMDB / IGDB
@@ -57,7 +57,7 @@ down to **one** verb: "Mark watched", "Add to watchlist", "Add to
 library". Secondary actions live in a kebab/overflow menu. Status is
 displayed as a pill or chip, not as a button.
 
-**Yamtrack today.** Three colored buttons (Track / Lists / History) of
+**Stackwise today.** Three colored buttons (Track / Lists / History) of
 equal visual weight on cards and detail pages. The "Track" button has
 edit-pencil + chevron + status text all bundled.
 
@@ -76,7 +76,7 @@ Plex). Goodreads / StoryGraph stick to 5 whole stars. AniList lets the
 user pick scoring scale (5-pt, 10-pt decimal, 100-pt) — most
 configurable.
 
-**Yamtrack today.** 10-pt integer scoring, displayed as one star
+**Stackwise today.** 10-pt integer scoring, displayed as one star
 glyph + the number. Editor is a row of 10 star buttons with the
 numerals 1-10 underneath.
 
@@ -93,7 +93,7 @@ Dropped) is rendered as a colored pill or chip. Color is consistent
 across every appearance — same green for completed in the list, on the
 card, on the detail page.
 
-**Yamtrack today.** Status colors are defined (`status_color`
+**Stackwise today.** Status colors are defined (`status_color`
 template tag) but they're applied to icon strokes, not to backgrounds
 or pills. Status on cards is a `bg-gray-900/90` badge with the colored
 SVG inside — the color is barely visible.
@@ -111,7 +111,7 @@ Trakt's home is "Up next" — a list of the next unwatched episode per
 in-progress show. Backloggd has "Currently playing" with last-save
 date.
 
-**Yamtrack today.** The home page lists in-progress media but doesn't
+**Stackwise today.** The home page lists in-progress media but doesn't
 say "what's the *next thing to do*". For a TV show you have to drill
 into the season page to see which episode is next.
 
@@ -127,7 +127,7 @@ See `mocks/home.html`.
 strip. Letterboxd's "Recent activity" is sit-down content; Trakt has a
 last-watched feed; AniList has a per-user activity wall.
 
-**Yamtrack today.** simple-history records every change but nothing
+**Stackwise today.** simple-history records every change but nothing
 surfaces it. The closest is the statistics-page "timeline" view which
 groups by month/year and is calendar-shaped, not feed-shaped.
 
@@ -140,7 +140,7 @@ calendar". One line per event, max 7 items. Click-through to the item.
 **Convention.** Calendar apps default to grid for desktop, agenda
 (list) for mobile. Trakt also offers a "premiere only" filter.
 
-**Yamtrack today.** Both views are user-selectable on every viewport.
+**Stackwise today.** Both views are user-selectable on every viewport.
 The grid view on mobile gets vertical-cramped.
 
 **Proposed adoption.** Auto-select agenda for mobile, grid for
@@ -153,7 +153,7 @@ on grid cells.
 mosaics (or 2x2 cover collages) for list previews when no list cover
 art is set. Communicates "what's inside" instantly.
 
-**Yamtrack today.** Single cover image (uploaded by user, falls back
+**Stackwise today.** Single cover image (uploaded by user, falls back
 to a generic placeholder).
 
 **Proposed adoption.** When `custom_list.image == IMG_NONE`, render a
@@ -165,7 +165,7 @@ to a generic placeholder).
 year-in-review and StoryGraph's monthly stats followed. The narrative
 pattern: one card per insight, full-screen, swipeable.
 
-**Yamtrack today.** Statistics is a chart wall. Good charts, but a wall.
+**Stackwise today.** Statistics is a chart wall. Good charts, but a wall.
 
 **Proposed adoption.** Keep the chart wall at `/statistics`. Add a
 `/statistics/recap/<year>` view that wraps the same data into a
@@ -180,7 +180,7 @@ data backend doesn't change — only the presentation.
 palette. Linear / Notion / Vercel / GitHub / Raycast. Lets power users
 move through the app without sidebar clicks.
 
-**Yamtrack today.** No palette. Only `/` to focus search.
+**Stackwise today.** No palette. Only `/` to focus search.
 
 **Proposed adoption.** A ⌘K palette with:
 
@@ -201,7 +201,7 @@ bottom nav for 4-5 primary destinations. Self-hosted PWA installs
 benefit specifically because users add the app to the home screen and
 expect native-style navigation.
 
-**Yamtrack today.** Sidebar via hamburger only. No bottom nav. No
+**Stackwise today.** Sidebar via hamburger only. No bottom nav. No
 gestures.
 
 **Proposed adoption.** A 5-item bottom nav on mobile (`< lg`): Home,
@@ -218,7 +218,7 @@ They preserve context (the page is still partly visible), they're
 thumb-friendly (controls at the bottom), and they support gesture
 dismiss (swipe down).
 
-**Yamtrack today.** All modals are centered overlays — same on
+**Stackwise today.** All modals are centered overlays — same on
 desktop and mobile.
 
 **Proposed adoption.** Detect viewport width in the modal CSS — on
@@ -231,7 +231,7 @@ the height. On `≥ md` it stays centered.
 density toggle (Comfortable / Compact / Cozy). Some auto-detect by
 collection size.
 
-**Yamtrack today.** None. The grid is one size.
+**Stackwise today.** None. The grid is one size.
 
 **Proposed adoption.** A simple user pref + toggle button in the
 filter bar. The grid responds via `data-density="compact|comfortable"`
@@ -244,7 +244,7 @@ hue. Trakt does it for sub-modes (TV blue, movies green). The
 discriminator is small (~10% saturation increase on a colored stripe
 or border) but it tells the eye where it is.
 
-**Yamtrack today.** All media types use the same indigo accent.
+**Stackwise today.** All media types use the same indigo accent.
 
 **Proposed adoption.** Each media type gets a tertiary accent for
 edges, badges, and the active sidebar state:
@@ -271,7 +271,7 @@ brand color is preserved for CTAs.
 swap to real content. HTMX-first apps still benefit — the `htmx-request`
 class can drive `animate-pulse` skeletons during a swap.
 
-**Yamtrack today.** Spinning circle indicators. lazysizes places a
+**Stackwise today.** Spinning circle indicators. lazysizes places a
 solid gray placeholder for images.
 
 **Proposed adoption.** A `.skeleton` class with `animate-pulse` and a
@@ -283,7 +283,7 @@ swaps; image placeholders gain the shimmer too.
 **Convention.** Spotify and Apple Music both show a persistent banner
 at the top of the screen while a large operation runs.
 
-**Yamtrack today.** The import is fire-and-forget; the user has to
+**Stackwise today.** The import is fire-and-forget; the user has to
 revisit the import page to see status.
 
 **Proposed adoption.** Detect a running TaskResult on every page load
@@ -297,7 +297,7 @@ once it completes.
 interactive element, with `focus-visible` (not just `focus`) so the
 ring only shows on keyboard nav.
 
-**Yamtrack today.** Some elements have `focus:ring-2` (search input,
+**Stackwise today.** Some elements have `focus:ring-2` (search input,
 forms). Many do not (sidebar links, card buttons, sort dropdowns).
 
 **Proposed adoption.** A global `*:focus-visible { outline: 2px solid
@@ -310,7 +310,7 @@ ring-offset-1` where the outline doesn't visually fit.
 animates and updates state before the server response — the request
 flies in the background; if it fails, the UI rolls back with a toast.
 
-**Yamtrack today.** Server-rendered with HTMX swap — typical latency
+**Stackwise today.** Server-rendered with HTMX swap — typical latency
 80-200ms, no optimistic update.
 
 **Proposed adoption.** Two-step pattern using Alpine + HTMX:
@@ -325,7 +325,7 @@ flies in the background; if it fails, the UI rolls back with a toast.
 "What do you track?", "Connect an existing tracker?", "Pick your
 theme". Skippable. Stored on the user model.
 
-**Yamtrack today.** Signup → empty home. The user has to discover
+**Stackwise today.** Signup → empty home. The user has to discover
 sidebar, then discover import.
 
 **Proposed adoption.** A `?onboarding=1` flow after signup that takes
@@ -336,7 +336,7 @@ the user through 3 steps. See `mocks/onboarding.html`.
 **Convention.** A bell icon in the top bar opens a notification
 center. Unread badge count. Items are typed (release / import / system).
 
-**Yamtrack today.** Notifications go out through Apprise to external
+**Stackwise today.** Notifications go out through Apprise to external
 channels (Discord, Telegram). The in-app surface is a toast that
 disappears.
 
@@ -359,7 +359,7 @@ for a tracker:
 - `e` edit (open track drawer)
 - `?` show shortcut sheet
 
-**Yamtrack today.** Only `/` to focus search.
+**Stackwise today.** Only `/` to focus search.
 
 **Proposed adoption.** Implement a lightweight Alpine store that
 listens for non-typing keypresses and dispatches actions. `?` opens a
@@ -371,7 +371,7 @@ shortcut sheet (`mocks/command-palette.html` shows the layout).
 fine on desktop with hover affordances. Modern apps mix: hover-based
 desktop dense, finger-based mobile spacious.
 
-**Yamtrack today.** Buttons are mostly `p-2` (32 px) or `px-4 py-2`
+**Stackwise today.** Buttons are mostly `p-2` (32 px) or `px-4 py-2`
 (36 px tall). Card overlay buttons are `p-2.5` rounded-full —
 borderline at 32 px.
 
@@ -384,7 +384,7 @@ borderline at 32 px.
 **Convention.** A good empty state shows: an illustration, a
 one-sentence promise, two CTAs (primary action + secondary explanation).
 
-**Yamtrack today.** Empty states exist on most pages and they're
+**Stackwise today.** Empty states exist on most pages and they're
 warm. Most just say "Browse Media". A few link to import.
 
 **Proposed adoption.** Each empty state gets two concrete CTAs based
@@ -398,7 +398,7 @@ on the page:
 **Convention.** Notion's slash-command, Linear's `c` to create. Type
 to act, not just to filter.
 
-**Yamtrack today.** Search submits to a results page.
+**Stackwise today.** Search submits to a results page.
 
 **Proposed adoption.** The ⌘K palette covers this. The header search
 input gains an inline-suggestions dropdown that lets the user
@@ -410,7 +410,7 @@ mark-watched without leaving the page.
 VS Code Themes shows full editor previews. iOS shows two preview
 phones (light/dark).
 
-**Yamtrack today.** Theme is a `<select>` in the Preferences page.
+**Stackwise today.** Theme is a `<select>` in the Preferences page.
 Apply on next page load.
 
 **Proposed adoption.** Move the picker to a popover in the top bar
@@ -420,11 +420,11 @@ immediately via a JS class swap; persist on dropdown close.
 
 ## Anti-patterns to skip
 
-A few patterns are popular but don't fit Yamtrack's audience (self-
+A few patterns are popular but don't fit Stackwise's audience (self-
 hosted, privacy-conscious, single-user-or-small-team):
 
 - **Social timelines.** Letterboxd/AniList lean into follow / share /
-  comment. Yamtrack's multi-user model is "your household / your
+  comment. Stackwise's multi-user model is "your household / your
   homelab", not "the public". Lists with collaborators is enough.
 - **Recommendation engines.** "Because you watched X, try Y" requires
   off-server ML or third-party calls. Not worth the complexity.
@@ -433,7 +433,7 @@ hosted, privacy-conscious, single-user-or-small-team):
 - **Push notifications.** PWA push is brittle and Apprise already
   covers the need.
 - **Infinite-scroll-only collections.** Skip-to-page is critical for
-  archive scrolling; pagination + load-on-revealed (Yamtrack's current
+  archive scrolling; pagination + load-on-revealed (Stackwise's current
   pattern) is the right hybrid.
 
 ## Inspiration sources

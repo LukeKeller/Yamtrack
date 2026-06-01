@@ -1,12 +1,12 @@
 # 01 — Current state audit
 
-Snapshot of the Yamtrack UI as of commit `874e45b` (main / fork branch
+Snapshot of the Stackwise UI as of commit `874e45b` (main / fork branch
 `claude/ui-ux-audit-redesign-UFa0c`). Numbers in parentheses are file
 paths inside `src/templates/` so findings stay anchored to code.
 
 ## TL;DR
 
-Yamtrack already gets a lot right: it's responsive, theme-aware, fast
+Stackwise already gets a lot right: it's responsive, theme-aware, fast
 (HTMX live filtering, lazy-loaded images), supports nine media types
 with the same data model, and has thoughtful empty states. It feels
 like a self-hosted Trakt with broader scope.
@@ -116,7 +116,7 @@ focuses search (`static/js/searchShortcut.js`).
   page.
 - **No command palette trigger.** ⌘K is the universal escape hatch in
   modern productivity apps (Linear, Notion, Vercel, GitHub) and the
-  pattern fits Yamtrack perfectly: jump to media list, change theme,
+  pattern fits Stackwise perfectly: jump to media list, change theme,
   start an import, mark today's planned movie watched.
 - **Right side of the top bar is empty.** No notifications, no theme
   toggle, no avatar — all three are conventional anchors that the
@@ -144,7 +144,7 @@ subgrid swaps in the full list via HTMX.
 - **No "Continue watching" / "Next up".** For TV/manga/games — the
   three media types where "what's the next episode/chapter/save" is the
   most-asked question — the user has to drill into the detail page.
-  Yamtrack already has `formatted_progress` and `max_progress` per item;
+  Stackwise already has `formatted_progress` and `max_progress` per item;
   exposing "S03E05 → +1" on the card would be ~one HTMX endpoint.
 - **No recent activity feed.** simple-history already tracks every
   state transition. A "you marked X completed yesterday" / "Y aired
@@ -175,7 +175,7 @@ list of category pills above a paginated grid.
 
 **Issues.**
 - **Discoverability.** It's the second sidebar item, with a flame icon,
-  and most users will assume it's "what's new in Yamtrack". The label
+  and most users will assume it's "what's new in Stackwise". The label
   needs to communicate that it's TMDB-curated discovery for movies/TV.
 - **TV / Movie only.** Anime/manga/games/books all have curatable
   feeds (MAL's seasonal, IGDB's upcoming, OpenLibrary's trending) but
@@ -427,7 +427,7 @@ About). Each sub-page is a stack of cards with form sections.
 
 ### Login / signup (`account/login.html`, `allauth/layouts/entrance.html`)
 
-**What it is.** Centered card on a `#212529` background, `Yamtrack`
+**What it is.** Centered card on a `#212529` background, `Stackwise`
 wordmark above. Form below the wordmark, social provider list below the
 form, "Register now" link in a small line.
 
@@ -439,9 +439,9 @@ form, "Register now" link in a small line.
 **Issues.**
 - **No marketing left rail.** Most self-hosted apps now run a two-pane
   entrance: marketing/feature pane on the left, form on the right. For
-  Yamtrack this is a chance to show the demo URL, feature list,
+  Stackwise this is a chance to show the demo URL, feature list,
   GitHub stars, etc., during the first impression.
-- **No visual identity.** The "Yamtrack" wordmark is text-only and
+- **No visual identity.** The "Stackwise" wordmark is text-only and
   the brand is a teapot emoji. A small logomark + the wordmark would
   consolidate identity.
 - **Social-account list looks like a list of stylelessly-rendered
