@@ -98,6 +98,15 @@ pushd "$install_dir/src"
 popd
 
 #=================================================
+# ALLOW NGINX TO SERVE MEDIA FROM THE DATA DIR
+#=================================================
+# nginx (www-data) must traverse $data_dir to serve MEDIA_ROOT ($data_dir/media)
+# via the /media/ location. The data_dir resource resets ownership to $app:$app
+# on every run, so re-assert group access here (non-recursive: just the dir).
+chown "$app:www-data" "$data_dir"
+chmod g+rx "$data_dir"
+
+#=================================================
 # REAPPLY SYSTEM CONFIGURATION
 #=================================================
 ynh_script_progression "Upgrading system configurations..."
