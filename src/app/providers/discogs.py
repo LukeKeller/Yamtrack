@@ -508,9 +508,9 @@ def parse_duration_seconds(value):
         nums = [int(p) for p in parts]
     except ValueError:
         return None
-    if len(nums) == 2:
+    if len(nums) == 2:  # noqa: PLR2004 — mm:ss
         return nums[0] * 60 + nums[1]
-    if len(nums) == 3:
+    if len(nums) == 3:  # noqa: PLR2004 — hh:mm:ss
         return nums[0] * 3600 + nums[1] * 60 + nums[2]
     return None
 

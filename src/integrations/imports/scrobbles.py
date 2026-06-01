@@ -59,7 +59,7 @@ class ScrobblesImporter:
         self.mode = mode
         self.warnings = []
 
-    def import_data(self):
+    def import_data(self):  # noqa: C901
         """Parse the CSV and bulk-insert Play rows. Returns (counts, warnings)."""
         try:
             raw = self.file.read()
@@ -153,7 +153,9 @@ class ScrobblesImporter:
 
 
 def _parse_played_at(raw):
-    """Accept a Unix epoch (seconds), an ISO 8601 timestamp, or any free-form
+    """Parse a played-at value into an aware datetime.
+
+    Accepts a Unix epoch (seconds), an ISO 8601 timestamp, or any free-form
     date string that dateutil can recognize (e.g. "09 May 2026, 17:57").
     Returns ``None`` if nothing parses, in which case the row is skipped.
     """
@@ -168,7 +170,7 @@ def _parse_played_at(raw):
             dt = timezone.make_aware(dt, UTC)
         return dt
     try:
-        dt = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        dt = datetime.fromisoformat(raw)
     except ValueError:
         dt = None
     if dt is not None:

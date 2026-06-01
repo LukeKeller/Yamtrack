@@ -67,7 +67,7 @@ def _select_release(recording, album):
     return releases[0].get("id") or ""
 
 
-def lookup(artist, recording, release=""):
+def lookup(artist, recording, release=""):  # noqa: PLR0911
     """Return ``{recording_mbid, release_mbid, artist_mbids}`` for a listen.
 
     ``{}`` means a definitive no-match (cached). ``None`` means a

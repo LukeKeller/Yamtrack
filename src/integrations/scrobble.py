@@ -247,8 +247,7 @@ def _norm(value):
     text = _FEAT_RE.sub(" ", text)
     text = text.replace("&", " and ")
     text = _NONALNUM_RE.sub(" ", text).strip()
-    if text.startswith("the "):
-        text = text[4:]
+    text = text.removeprefix("the ")
     return re.sub(r"\s+", " ", text).strip()
 
 
@@ -263,14 +262,14 @@ def _artist_keys(value):
         return set()
     keys = {base}
     for chunk in _ARTIST_SPLIT_RE.split(base):
-        chunk = chunk.strip()
-        if chunk:
-            keys.add(chunk)
+        stripped = chunk.strip()
+        if stripped:
+            keys.add(stripped)
     return keys
 
 
 def _artist_match(a_keys, b_keys):
-    """True if two artist key sets refer to the same artist.
+    """Return True if two artist key sets refer to the same artist.
 
     Direct overlap, or one credit's significant tokens are a subset of
     the other's (handles "the strokes" vs "strokes", extra feat. names).
@@ -318,7 +317,7 @@ def _candidate_records(artist_keys):
             tok
             for key in artist_keys
             for tok in key.split()
-            if len(tok) > 2 and tok not in _ARTIST_STOPWORDS
+            if len(tok) > 2 and tok not in _ARTIST_STOPWORDS  # noqa: PLR2004
         },
         key=len,
         reverse=True,
@@ -338,7 +337,7 @@ def _candidate_records(artist_keys):
     return list(base)
 
 
-def _match(artist, title, album):
+def _match(artist, title, album):  # noqa: C901, PLR0911, PLR0912
     """Resolve a scrobble to ``(Item | None, Track | None)``.
 
     Order of preference:
@@ -358,7 +357,9 @@ def _match(artist, title, album):
     n_album = _norm(album)
 
     records = [
-        r for r in _candidate_records(a_keys) if _artist_match(a_keys, _artist_keys(r.artist))
+        r
+        for r in _candidate_records(a_keys)
+        if _artist_match(a_keys, _artist_keys(r.artist))
     ]
     if not records:
         return None, None

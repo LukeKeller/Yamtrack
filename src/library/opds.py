@@ -175,7 +175,7 @@ def _sub(parent, tag, text=None, *, ns=OPDS_NAMESPACE, **attrs):
 
 
 def _feed_header(feed, request, user, *, title, self_url, kind):
-    """Common id/title/updated/author/self+start links for any feed."""
+    """Add the common id/title/updated/author/self+start links to any feed."""
     root_url = _shelf_url(request, "opds_root")
     self_type = NAV_TYPE if kind == "navigation" else ACQ_TYPE
     _sub(feed, "id", f"yamtrack:library:{user.pk}:{kind}:{title}")
@@ -207,7 +207,9 @@ def _build_navigation_feed(request, user, *, title, self_url, sections):
 def _build_acquisition_feed(request, user, files, *, title, self_url):
     """Return the OPDS acquisition feed XML for ``files``."""
     feed = ET.Element(f"{{{OPDS_NAMESPACE}}}feed")
-    _feed_header(feed, request, user, title=title, self_url=self_url, kind="acquisition")
+    _feed_header(
+        feed, request, user, title=title, self_url=self_url, kind="acquisition"
+    )
     for lf in files:
         entry = _sub(feed, "entry")
         _sub(entry, "id", f"yamtrack:library:{user.pk}:file:{lf.pk}")
@@ -411,6 +413,7 @@ def opds_root(request):
 @login_not_required
 @require_http_methods(["GET", "HEAD"])
 def opds_up_next(request):
+    """Return the OPDS "Up Next" (in-progress) acquisition feed."""
     user = _basic_auth_user(request)
     if user is None:
         return _require_basic_auth(request)
@@ -426,6 +429,7 @@ def opds_up_next(request):
 @login_not_required
 @require_http_methods(["GET", "HEAD"])
 def opds_want_to_read(request):
+    """Return the OPDS "Want to Read" (planning) acquisition feed."""
     user = _basic_auth_user(request)
     if user is None:
         return _require_basic_auth(request)
@@ -441,6 +445,7 @@ def opds_want_to_read(request):
 @login_not_required
 @require_http_methods(["GET", "HEAD"])
 def opds_recently_added(request):
+    """Return the OPDS "Recently Added" acquisition feed."""
     user = _basic_auth_user(request)
     if user is None:
         return _require_basic_auth(request)
@@ -456,6 +461,7 @@ def opds_recently_added(request):
 @login_not_required
 @require_http_methods(["GET", "HEAD"])
 def opds_unmatched(request):
+    """Return the OPDS "Unmatched" acquisition feed."""
     user = _basic_auth_user(request)
     if user is None:
         return _require_basic_auth(request)
@@ -471,6 +477,7 @@ def opds_unmatched(request):
 @login_not_required
 @require_http_methods(["GET", "HEAD"])
 def opds_all(request):
+    """Return the OPDS "All" acquisition feed."""
     user = _basic_auth_user(request)
     if user is None:
         return _require_basic_auth(request)

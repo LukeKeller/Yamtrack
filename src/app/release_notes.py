@@ -30,7 +30,7 @@ RELEASE_NOTES = [
         "date": "2026-05-31",
         "title": "New name and look: say hello to Stackwise",
         "highlights": [
-            'This fork now goes by <strong>Stackwise</strong>. The name, the browser tab titles, the sidebar, the install prompt and the app icon have all been updated — same app, same data, just its own identity distinct from upstream Yamtrack.',
+            "This fork now goes by <strong>Stackwise</strong>. The name, the browser tab titles, the sidebar, the install prompt and the app icon have all been updated — same app, same data, just its own identity distinct from upstream Yamtrack.",
             "A new <strong>stacked-layers app icon</strong> in indigo with a warm amber top layer replaces the old mark across the favicon, home-screen and installed-app icons.",
         ],
         "fixes": [],
