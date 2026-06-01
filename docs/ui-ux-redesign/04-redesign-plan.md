@@ -323,7 +323,7 @@ right-side drawers on desktop and bottom sheets on mobile.
 - No template that exists today gets *deleted* — they get
   refactored. URL patterns don't change.
 - Per `CLAUDE.md`'s fork-package shipping flow, each phase that
-  changes user-facing surfaces gets a bump-marker commit on `dev`
+  changes user-facing surfaces gets a bump-marker commit on `main`
   and a corresponding `yamtrack_ynh` bump.
 
 ### Theming validation
@@ -353,7 +353,7 @@ Each phase ships behind a soft toggle (just the feature branch). If
 the live demo (yamtrack.fuzzygrim.com isn't this fork's, but the
 homelab deployment is) reports a regression:
 
-1. Revert the merge commit on `dev`.
+1. Revert the merge commit on `main`.
 2. Bump `yamtrack_ynh` to the prior commit.
 3. The next deploy reverts.
 
@@ -377,7 +377,7 @@ These would be improvements but aren't part of this redesign:
 
 The redesign is done when:
 
-1. All 8 phases have shipped to `dev`.
+1. All 8 phases have shipped to `main`.
 2. The README screenshots are updated.
 3. The seven themes render correctly under Playwright snapshots.
 4. `grep -rn "bg-\[#" src/templates` returns zero results.

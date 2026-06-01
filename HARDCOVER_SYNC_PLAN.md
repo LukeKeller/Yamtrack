@@ -35,7 +35,7 @@ Take notes on: how OAuth/token state is stored, how the importer signals success
 
 **0.3. Open issue #488 on the upstream repo.** Comment that you're working on Hardcover two-way sync and ask whether the maintainer would prefer (a) you build it as a self-contained integration like Trakt, or (b) you build a small REST API first that this and other integrations could consume. Their answer changes the project shape significantly. Don't wait forever for a response — give it a week, then proceed with option (a). Either way, opening the conversation early avoids redoing work.
 
-**0.4. Decide on fork strategy.** Fork from the `dev` branch. Set up two long-lived branches in your fork: `dev` (tracks upstream, you rebase periodically) and `feature/hardcover-sync` (your work). When upstream releases, rebase your feature branch on `dev`. Keep the feature branch in a state you could open as a PR at any moment.
+**0.4. Decide on fork strategy.** This fork (`LukeKeller/Yamtrack`) integrates on `main` — feature work, bump markers, and the source pin all live there. Branch your work off `main` (e.g., `feature/hardcover-sync`) and keep `main` in sync with upstream by merging `upstream/dev` into it periodically (upstream develops on `dev`; this fork does not). When upstream releases, sync `main` and rebase your feature branch on `main`. Keep the feature branch in a state you could open as a PR at any moment.
 
 **0.5. Stand up a local dev environment.** The README has the recipe — clone, install requirements-dev, set env vars, run `python manage.py migrate`, run server + Celery + Tailwind. Verify you can log in, add a book via Hardcover (the existing read-only provider), and that the book appears in your library. This validates your environment before you start changing code.
 
@@ -431,7 +431,7 @@ Update `Environment-Variables.md` with the new vars.
 
 ## Phase 11: Rollout
 
-**11.1. Branch hygiene.** Keep `feature/hardcover-sync` rebased on upstream `dev` weekly. When a release happens upstream, rebase and re-test.
+**11.1. Branch hygiene.** Keep `feature/hardcover-sync` rebased on `main` weekly (sync `main` from `upstream/dev` first). When a release happens upstream, sync, rebase, and re-test.
 
 **11.2. Self-host first.** Run your fork in your own deployment for at least two weeks before opening the PR. Catch the bugs that only appear with a real library and time.
 

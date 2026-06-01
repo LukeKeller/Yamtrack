@@ -1,6 +1,6 @@
 # 01 — Current state audit
 
-Snapshot of the Yamtrack UI as of commit `874e45b` (dev / fork branch
+Snapshot of the Yamtrack UI as of commit `874e45b` (main / fork branch
 `claude/ui-ux-audit-redesign-UFa0c`). Numbers in parentheses are file
 paths inside `src/templates/` so findings stay anchored to code.
 
