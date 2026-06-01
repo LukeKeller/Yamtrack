@@ -38,6 +38,11 @@ ProtectKernelTunables=yes
 LockPersonality=yes
 SystemCallArchitectures=native
 SystemCallFilter=~@clock @debug @module @mount @obsolete @reboot @setuid @swap @cpu-emulation @privileged
+# Re-allow @chown: @privileged (denied above) includes chown/fchown/lchown, which
+# the import tasks need when processing large uploads (epub/zip). Without this the
+# upload 502s. A deny line followed by an allow line is the supported systemd
+# pattern for carving one group back out.
+SystemCallFilter=@chown
 
 # Denying access to capabilities that should not be relevant for webapps
 # Doc: https://man7.org/linux/man-pages/man7/capabilities.7.html
